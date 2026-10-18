@@ -1,11 +1,63 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const levels = [
+  { slug: '6eme', label: '6ème' },
+  { slug: '5eme', label: '5ème' },
+  { slug: '4eme', label: '4ème' },
+  { slug: '3eme', label: '3ème' },
+];
 ---
 
-<Layout>
-	<Welcome />
+<Layout title="Choix du niveau">
+  <section class="welcome">
+    <h2>Sélectionnez votre niveau</h2>
+  </section>
+
+  <div class="level-grid">
+    {levels.map((lvl) => (
+      <a href={`/${lvl.slug}`} class="level-btn">
+        <span>{lvl.label}</span>
+        <span class="arrow">&rarr;</span>
+      </a>
+    ))}
+  </div>
 </Layout>
+
+<style>
+  .welcome {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+  .welcome h2 {
+    font-weight: 400;
+    color: var(--text-muted);
+  }
+  .level-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1.5rem;
+  }
+  .level-btn {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem 1.5rem;
+    text-decoration: none;
+    color: var(--text);
+    font-size: 1.5rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+  }
+  .level-btn:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    color: var(--primary);
+  }
+  .arrow {
+    font-size: 1.2rem;
+  }
+</style>

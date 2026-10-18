@@ -1,0 +1,355 @@
+---
+---
+
+<div class="tempo-game">
+  <div class="game-header">
+    <span class="game-badge">Atelier interactif</span>
+    <h3>Défi : Tiens le tempo régulier !</h3>
+  </div>
+
+  <div class="target-box">
+    <p>Objectif à maintenir 8 secondes :</p>
+    <div id="target-term" class="target-term">LENTO</div>
+    <p id="target-desc" class="target-desc">Lent (50 - 80 BPM)</p>
+  </div>
+
+  <!-- Barre de progression de régularité -->
+  <div class="stability-container">
+    <div class="stability-label">
+      <span>Régularité tenue :</span>
+      <span id="stability-text">0 / 8 sec</span>
+    </div>
+    <div class="progress-bar">
+      <div id="progress-fill" class="progress-fill"></div>
+    </div>
+  </div>
+
+  <div class="interactive-area">
+    <button id="tap-btn" class="tap-button">
+      <span class="btn-label">TAPE EN RYTHME</span>
+      <span id="live-bpm" class="bpm-indicator">-- BPM</span>
+    </button>
+  </div>
+
+  <div id="feedback-msg" class="feedback-msg neutral">
+    Tape régulièrement sur le bouton pour lancer le chrono...
+  </div>
+
+  <button id="next-btn" class="next-button" style="display: none;">
+    🎯 Nouveau défi !
+  </button>
+</div>
+
+<script>
+  // Plages de BPM ajustées avec un plafond pour Presto (max 210 BPM)
+  const TEMPOS = [
+    { term: 'LENTO', label: 'Lent', min: 50, max: 80 },
+    { term: 'MODERATO', label: 'Modéré', min: 80, max: 110 },
+    { term: 'ALLEGRO', label: 'Rapide', min: 120, max: 150 },
+    { term: 'PRESTO', label: 'Très rapide', min: 155, max: 210 }
+  ];
+
+  let currentTargetIdx = 0;
+  let tapTimes: number[] = [];
+  let isSuccess = false;
+  
+  let consecutiveValidMs = 0;
+  let lastTapTime: number | null = null;
+  const REQUIRED_STABILITY_MS = 8000; // 8 secondes requises
+
+  const targetTermEl = document.getElementById('target-term')!;
+  const targetDescEl = document.getElementById('target-desc')!;
+  const tapBtn = document.getElementById('tap-btn')!;
+  const liveBpmEl = document.getElementById('live-bpm')!;
+  const feedbackMsg = document.getElementById('feedback-msg')!;
+  const nextBtn = document.getElementById('next-btn')!;
+  const progressFill = document.getElementById('progress-fill')!;
+  const stabilityText = document.getElementById('stability-text')!;
+
+  function getTermForBpm(bpm: number): string {
+    if (bpm < 80) return 'LENTO';
+    if (bpm < 110) return 'MODERATO';
+    if (bpm < 155) return 'ALLEGRO';
+    if (bpm <= 210) return 'PRESTO';
+    return 'TROP RAPIDE';
+  }
+
+  function resetProgress() {
+    consecutiveValidMs = 0;
+    progressFill.style.width = '0%';
+    stabilityText.textContent = '0 / 8 sec';
+  }
+
+  function setRandomTarget() {
+    isSuccess = false;
+    tapTimes = [];
+    lastTapTime = null;
+    resetProgress();
+
+    let newIdx = currentTargetIdx;
+    while (newIdx === currentTargetIdx) {
+      newIdx = Math.floor(Math.random() * TEMPOS.length);
+    }
+    currentTargetIdx = newIdx;
+    const target = TEMPOS[currentTargetIdx];
+
+    targetTermEl.textContent = target.term;
+    targetDescEl.textContent = `${target.label} (${target.min} - ${target.max} BPM)`;
+    liveBpmEl.textContent = '-- BPM';
+    feedbackMsg.textContent = 'Tape régulièrement pour lancer la mesure...';
+    feedbackMsg.className = 'feedback-msg neutral';
+    nextBtn.style.display = 'none';
+  }
+
+  function handleTap() {
+    if (isSuccess) return;
+
+    const now = performance.now();
+    
+    // Pause de plus de 2 sec
+    if (lastTapTime && (now - lastTapTime > 2000)) {
+      tapTimes = [];
+      resetProgress();
+      feedbackMsg.textContent = 'Pause détectée. Garde la pulsation régulière !';
+      feedbackMsg.className = 'feedback-msg warning';
+    }
+
+    const interval = lastTapTime ? now - lastTapTime : 0;
+    lastTapTime = now;
+    tapTimes.push(now);
+
+    if (tapTimes.length > 5) tapTimes.shift();
+
+    if (tapTimes.length < 3) {
+      feedbackMsg.textContent = 'Continue de taper...';
+      return;
+    }
+
+    // Calcul BPM moyen
+    let totalIntervals = 0;
+    for (let i = 1; i < tapTimes.length; i++) {
+      totalIntervals += (tapTimes[i] - tapTimes[i - 1]);
+    }
+    const avgInterval = totalIntervals / (tapTimes.length - 1);
+    const bpm = Math.round(60000 / avgInterval);
+
+    liveBpmEl.textContent = `${bpm} BPM`;
+
+    const target = TEMPOS[currentTargetIdx];
+    const detectedTerm = getTermForBpm(bpm);
+
+    // Vérification du tempo
+    if (bpm >= target.min && bpm <= target.max) {
+      consecutiveValidMs += interval;
+      
+      const progressPercent = Math.min(100, (consecutiveValidMs / REQUIRED_STABILITY_MS) * 100);
+      const secondsDone = (consecutiveValidMs / 1000).toFixed(1);
+      
+      progressFill.style.width = `${progressPercent}%`;
+      stabilityText.textContent = `${secondsDone} / 8 sec`;
+
+      if (consecutiveValidMs >= REQUIRED_STABILITY_MS) {
+        isSuccess = true;
+        feedbackMsg.textContent = `🎯 Bravo ! Tu as maintenu le tempo ${target.term} pendant 8 secondes !`;
+        feedbackMsg.className = 'feedback-msg success';
+        nextBtn.style.display = 'inline-block';
+      } else {
+        feedbackMsg.textContent = `Très bien ! Tiens cette vitesse encore un peu...`;
+        feedbackMsg.className = 'feedback-msg progress';
+      }
+    } else {
+      resetProgress();
+      if (detectedTerm === 'TROP RAPIDE') {
+        feedbackMsg.textContent = `Hop hop hop ! Tu bourrines là (plus de 210 BPM) ! Reste maître de ton tempo.`;
+      } else {
+        feedbackMsg.textContent = `Attention, là tu es en train de taper ${detectedTerm} ! Ajuste ta vitesse.`;
+      }
+      feedbackMsg.className = 'feedback-msg warning';
+    }
+  }
+
+  tapBtn.addEventListener('click', handleTap);
+  nextBtn.addEventListener('click', setRandomTarget);
+
+  setRandomTarget();
+</script>
+
+<style>
+  .tempo-game {
+    background: #0f172a;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2rem;
+  }
+
+  .game-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .game-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--primary);
+    background: #1e293b;
+    border: 1px solid var(--border);
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+  }
+
+  .game-header h3 {
+    margin: 0;
+    color: var(--text);
+  }
+
+  .target-box {
+    background: #1e293b;
+    border: 1px solid var(--border);
+    padding: 0.8rem 1.5rem;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .target-box p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .target-term {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--primary);
+    letter-spacing: 0.05em;
+    margin: 0.2rem 0;
+  }
+
+  .target-desc {
+    font-size: 0.8rem !important;
+  }
+
+  .stability-container {
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .stability-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 10px;
+    background: #1e293b;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--primary);
+    transition: width 0.15s ease-out;
+  }
+
+  .tap-button {
+    background: #1e293b;
+    border: 2px solid var(--primary);
+    color: var(--text);
+    padding: 1.8rem 2rem;
+    border-radius: 50%;
+    width: 170px;
+    height: 170px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    user-select: none;
+    touch-action: manipulation;
+    transition: transform 0.05s ease;
+  }
+
+  .tap-button:active {
+    transform: scale(0.95);
+    background: #0284c7;
+  }
+
+  .btn-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+
+  .bpm-indicator {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  .feedback-msg {
+    padding: 0.8rem 1.2rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .feedback-msg.neutral {
+    background: #1e293b;
+    color: var(--text-muted);
+  }
+
+  .feedback-msg.progress {
+    background: #0f2942;
+    border: 1px solid #0284c7;
+    color: #38bdf8;
+  }
+
+  .feedback-msg.warning {
+    background: #451a03;
+    border: 1px solid #f97316;
+    color: #fdba74;
+  }
+
+  .feedback-msg.success {
+    background: #064e3b;
+    border: 1px solid #10b981;
+    color: #6ee7b7;
+  }
+
+  .next-button {
+    background: var(--primary);
+    color: #0f172a;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+
+  .next-button:hover {
+    transform: translateY(-2px);
+  }
+</style>

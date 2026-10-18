@@ -1,0 +1,342 @@
+---
+---
+
+<div class="nuances-card">
+  <div class="nuances-header">
+    <span class="badge">Expérimentation</span>
+    <h4>Échelle des Nuances</h4>
+  </div>
+
+  <div class="visualizer-box">
+    <div class="nuance-symbol" id="nuanceSymbol">mf</div>
+    <div class="nuance-info">
+      <span id="nuanceName" class="nuance-name">Mezzo Forte</span>
+      <span id="nuanceDesc" class="nuance-desc">Moyennement fort</span>
+    </div>
+    
+    <div class="wave-container">
+      <div class="wave-bar" id="waveBar"></div>
+    </div>
+  </div>
+
+  <div class="controls-box">
+    <div class="slider-container">
+      <span class="step-label">pp</span>
+      <input type="range" id="nuanceRange" min="0" max="5" step="1" value="3" aria-label="Niveau de nuance" />
+      <span class="step-label">ff</span>
+    </div>
+
+    <div class="button-group">
+      <button id="btnPlay" class="btn-action">▶ Écouter la séquence</button>
+      <button id="btnCrescendo" class="btn-secondary">⤢ Crescendo (&lt;)</button>
+      <button id="btnDecrescendo" class="btn-secondary">⤡ Decrescendo (&gt;)</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const NUANCES = [
+    { symbol: 'pp', name: 'Pianissimo', desc: 'Très doux', gain: 0.03 },
+    { symbol: 'p',  name: 'Piano', desc: 'Doux', gain: 0.10 },
+    { symbol: 'mp', name: 'Mezzo Piano', desc: 'Moyennement doux', gain: 0.22 },
+    { symbol: 'mf', name: 'Mezzo Forte', desc: 'Moyennement fort', gain: 0.42 },
+    { symbol: 'f',  name: 'Forte', desc: 'Fort', gain: 0.68 },
+    { symbol: 'ff', name: 'Fortissimo', desc: 'Très fort', gain: 0.95 }
+  ];
+
+  // Gamme pentatonique majeure (Do3, Ré3, Mi3, Sol3, La3, Do4, Ré4, Mi4, Sol4, La4)
+  const PENTATONIC_SCALE = [
+    130.81, 146.83, 164.81, 196.00, 220.00,
+    261.63, 293.66, 329.63, 392.00, 440.00
+  ];
+
+  let audioCtx: AudioContext | null = null;
+  let masterGain: GainNode | null = null;
+  let isPlaying = false;
+  let isAnim = false;
+  let timerId: number | null = null;
+  let lastNoteIndex = -1;
+
+  const nuanceRange = document.getElementById('nuanceRange') as HTMLInputElement;
+  const nuanceSymbol = document.getElementById('nuanceSymbol')!;
+  const nuanceName = document.getElementById('nuanceName')!;
+  const nuanceDesc = document.getElementById('nuanceDesc')!;
+  const waveBar = document.getElementById('waveBar')!;
+  const btnPlay = document.getElementById('btnPlay') as HTMLButtonElement;
+  const btnCrescendo = document.getElementById('btnCrescendo') as HTMLButtonElement;
+  const btnDecrescendo = document.getElementById('btnDecrescendo') as HTMLButtonElement;
+
+  function updateUI(index: number) {
+    const item = NUANCES[index];
+    nuanceSymbol.textContent = item.symbol;
+    nuanceName.textContent = item.name;
+    nuanceDesc.textContent = item.desc;
+    
+    const pct = Math.round((item.gain) * 100);
+    waveBar.style.height = `${Math.max(8, pct)}%`;
+
+    if (masterGain && audioCtx) {
+      masterGain.gain.setTargetAtTime(item.gain, audioCtx.currentTime, 0.08);
+    }
+  }
+
+  function initAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      masterGain = audioCtx.createGain();
+      masterGain.connect(audioCtx.destination);
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  }
+
+  // Joue une note aléatoire enrichie de la gamme pentatonique
+  function playRandomNote() {
+    if (!audioCtx || !masterGain || !isPlaying) return;
+
+    // Sélection d'une note aléatoire (en évitant de répéter immédiatement la même)
+    let randomIndex: number;
+    do {
+      randomIndex = Math.floor(Math.random() * PENTATONIC_SCALE.length);
+    } while (randomIndex === lastNoteIndex && PENTATONIC_SCALE.length > 1);
+    lastNoteIndex = randomIndex;
+
+    const freq = PENTATONIC_SCALE[randomIndex];
+    const now = audioCtx.currentTime;
+
+    // 1. Oscillateur principal (Fondamentale)
+    const osc1 = audioCtx.createOscillator();
+    const gain1 = audioCtx.createGain();
+    osc1.type = 'triangle';
+    osc1.frequency.setValueAtTime(freq, now);
+
+    // Enveloppe d'amplitude douce
+    gain1.gain.setValueAtTime(0, now);
+    gain1.gain.linearRampToValueAtTime(0.7, now + 0.04);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+    osc1.connect(gain1);
+    gain1.connect(masterGain);
+
+    osc1.start(now);
+    osc1.stop(now + 0.5);
+
+    // 2. Oscillateur secondaire (Harmonique à l'octave supérieure pour la clarté)
+    const osc2 = audioCtx.createOscillator();
+    const gain2 = audioCtx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(freq * 2, now);
+
+    gain2.gain.setValueAtTime(0, now);
+    gain2.gain.linearRampToValueAtTime(0.2, now + 0.03);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+    osc2.connect(gain2);
+    gain2.connect(masterGain);
+
+    osc2.start(now);
+    osc2.stop(now + 0.4);
+  }
+
+  function togglePlay() {
+    initAudio();
+    if (!audioCtx) return;
+
+    if (isPlaying) {
+      isPlaying = false;
+      if (timerId) clearInterval(timerId);
+      btnPlay.textContent = '▶ Écouter la séquence';
+      btnPlay.classList.remove('active');
+    } else {
+      isPlaying = true;
+      
+      const idx = parseInt(nuanceRange.value, 10);
+      if (masterGain) masterGain.gain.setValueAtTime(NUANCES[idx].gain, audioCtx.currentTime);
+
+      playRandomNote();
+      timerId = window.setInterval(playRandomNote, 320); // Tempo régulier et fluide (~185 BPM)
+
+      btnPlay.textContent = '⏹ Arrêter';
+      btnPlay.classList.add('active');
+    }
+  }
+
+  function animateNuance(targetIdx: number) {
+    if (isAnim) return;
+    isAnim = true;
+    if (!isPlaying) togglePlay();
+
+    let current = parseInt(nuanceRange.value, 10);
+    const step = targetIdx > current ? 1 : -1;
+
+    const interval = setInterval(() => {
+      if (current === targetIdx) {
+        clearInterval(interval);
+        isAnim = false;
+        return;
+      }
+      current += step;
+      nuanceRange.value = current.toString();
+      updateUI(current);
+    }, 700);
+  }
+
+  nuanceRange.addEventListener('input', (e) => {
+    const val = parseInt((e.target as HTMLInputElement).value, 10);
+    updateUI(val);
+  });
+
+  btnPlay.addEventListener('click', togglePlay);
+  btnCrescendo.addEventListener('click', () => animateNuance(5));
+  btnDecrescendo.addEventListener('click', () => animateNuance(0));
+
+  updateUI(3);
+</script>
+
+<style>
+  .nuances-card {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .nuances-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .badge {
+    background: #0284c7;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+  }
+
+  .nuances-header h4 {
+    margin: 0;
+    color: #f1f5f9;
+    font-size: 1.1rem;
+  }
+
+  .visualizer-box {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nuance-symbol {
+    font-family: 'Times New Roman', serif;
+    font-style: italic;
+    font-weight: bold;
+    font-size: 3.2rem;
+    color: #38bdf8;
+    min-width: 70px;
+    text-align: center;
+  }
+
+  .nuance-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .nuance-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #f8fafc;
+  }
+
+  .nuance-desc {
+    font-size: 0.9rem;
+    color: #94a3b8;
+  }
+
+  .wave-container {
+    width: 60px;
+    height: 60px;
+    background: #0f172a;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .wave-bar {
+    width: 24px;
+    background: #38bdf8;
+    border-radius: 3px;
+    transition: height 0.2s ease;
+  }
+
+  .controls-box {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .slider-container {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .step-label {
+    font-family: serif;
+    font-style: italic;
+    font-weight: bold;
+    color: #94a3b8;
+  }
+
+  input[type="range"] {
+    flex: 1;
+    accent-color: #38bdf8;
+    cursor: pointer;
+  }
+
+  .button-group {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+
+  .btn-action, .btn-secondary {
+    border: none;
+    border-radius: 6px;
+    padding: 0.6rem 1rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .btn-action {
+    background: #0284c7;
+    color: #ffffff;
+  }
+
+  .btn-action.active {
+    background: #e11d48;
+  }
+
+  .btn-secondary {
+    background: #334155;
+    color: #f1f5f9;
+  }
+
+  .btn-secondary:hover {
+    background: #475569;
+  }
+</style>

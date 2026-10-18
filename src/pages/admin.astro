@@ -1,0 +1,105 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { siteData } from '../data/sequences';
+---
+
+<Layout title="Sommaire Admin - Toutes les pages">
+  <div class="admin-page">
+    <h2>Sommaire technique du site</h2>
+    <p class="subtitle">Page réservée au professeur pour tester toutes les URLs en un clic.</p>
+
+    <div class="levels-grid">
+      {Object.values(siteData).map((level) => (
+        <section class="level-box">
+          <h3>{level.title}</h3>
+          <p class="level-url">
+            <a href={`/${level.slug}`} target="_blank">📄 Page d'accueil du niveau (/{level.slug})</a>
+          </p>
+          <ul>
+            {level.sequences.map((seq, idx) => (
+              <li>
+                <span class="num">S{idx + 1}</span>
+                <a href={`/${level.slug}/${seq.slug}`} target="_blank">
+                  {seq.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .admin-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .subtitle {
+    color: var(--text-muted);
+    margin-top: -1rem;
+    font-size: 0.95rem;
+  }
+  .levels-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+  }
+  .level-box {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.2rem;
+  }
+  .level-box h3 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    color: var(--primary);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+  }
+  .level-url {
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+  }
+  .level-url a {
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+  .level-url a:hover {
+    color: var(--primary);
+  }
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.9rem;
+  }
+  .num {
+    background: #0f172a;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+  }
+  li a {
+    color: var(--text);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+  li a:hover {
+    color: var(--primary);
+  }
+</style>

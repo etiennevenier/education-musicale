@@ -1,0 +1,128 @@
+---
+interface Props {
+  badge?: string;
+  title: string;
+  url: string;
+  description?: string;
+}
+
+const { badge, title, url, description } = Astro.props;
+
+// Transformation de l'URL standard YouTube en URL d'intégration iframe
+function getEmbedUrl(youtubeUrl: string) {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = youtubeUrl.match(regExp);
+  return match && match[2].length === 11
+    ? `https://www.youtube.com/embed/${match[2]}`
+    : null;
+}
+
+const embedUrl = getEmbedUrl(url);
+---
+
+<div class="video-card">
+  <div class="video-embed-container">
+    {embedUrl ? (
+      <iframe
+        src={embedUrl}
+        title={title}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+        class="video-iframe"
+      ></iframe>
+    ) : (
+      <div class="video-placeholder">Lecteur non disponible</div>
+    )}
+  </div>
+
+  <div class="video-card-content">
+    <div class="video-card-header">
+      {badge && <span class="video-badge">{badge}</span>}
+      <h4 class="video-title">{title}</h4>
+    </div>
+
+    {/* La description ne s'affiche QUE si elle est renseignée */}
+    {description && <p class="video-desc">{description}</p>}
+  </div>
+</div>
+
+<style>
+  .video-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.2s;
+  }
+
+  .video-card:hover {
+    border-color: #38bdf8;
+  }
+
+  .video-embed-container {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%; /* Ratio 16:9 */
+    background: #0f172a;
+  }
+
+  .video-iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  .video-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-size: 0.85rem;
+  }
+
+  .video-card-content {
+    padding: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .video-card-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .video-badge {
+    align-self: flex-start;
+    background: #0284c7;
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+  }
+
+  .video-title {
+    margin: 0;
+    color: #f8fafc;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .video-desc {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+</style>

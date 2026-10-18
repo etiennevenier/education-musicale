@@ -1,0 +1,354 @@
+---
+---
+
+<div class="timbre-card">
+  <div class="timbre-header">
+    <span class="badge">Expérimentation</span>
+    <h4>Laboratoire de Timbre & Formes d'Ondes</h4>
+  </div>
+
+  <!-- Moniteur de forme d'onde -->
+  <div class="visualizer-box">
+    <canvas id="waveCanvas" width="400" height="120"></canvas>
+    <div class="timbre-info">
+      <span id="timbreName" class="timbre-name">Onde Sinusoïdale</span>
+      <span id="timbreDesc" class="timbre-desc">Son pur et très doux (famille des flûtes / sifflotement)</span>
+    </div>
+  </div>
+
+  <!-- Choix du timbre / forme d'onde -->
+  <div class="controls-section">
+    <span class="section-label">1. Choisis un timbre (Forme d'onde) :</span>
+    <div class="wave-buttons">
+      <button class="btn-wave active" data-type="sine" data-name="Onde Sinusoïdale" data-desc="Son pur et très doux (proche de la flûte à bec ou du sifflotement)">
+        🌊 Sinus (Doux)
+      </button>
+      <button class="btn-wave" data-type="triangle" data-name="Onde Triangle" data-desc="Son doux mais plus chaud (proche du violoncelle ou de la clarinette)">
+        🔺 Triangle (Chaud)
+      </button>
+      <button class="btn-wave" data-type="square" data-name="Onde Carrée" data-desc="Son creux et boisé (proche du hautbois ou de la clarinette basse)">
+        🔲 Carrée (Boisé)
+      </button>
+      <button class="btn-wave" data-type="sawtooth" data-name="Onde Dents de Scie" data-desc="Son riche et incisif (proche de la trompette, des cuivres ou du synthé)">
+        📐 Scie (Incisif / Cuivré)
+      </button>
+    </div>
+
+    <!-- Choix de la note à jouer -->
+    <span class="section-label">2. Joue une note :</span>
+    <div class="note-buttons">
+      <button class="btn-note" data-freq="261.63">Do (C4)</button>
+      <button class="btn-note" data-freq="329.63">Mi (E4)</button>
+      <button class="btn-note" data-freq="392.00">Sol (G4)</button>
+      <button class="btn-note" data-freq="523.25">Do (C5)</button>
+      <button id="btnStop" class="btn-stop">⏹ Arrêter</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let audioCtx: AudioContext | null = null;
+  let osc: OscillatorNode | null = null;
+  let gainNode: GainNode | null = null;
+  let currentWaveType: OscillatorType = 'sine';
+  let isPlaying = false;
+  let animId: number | null = null;
+
+  const canvas = document.getElementById('waveCanvas') as HTMLCanvasElement;
+  const ctx = canvas.getContext('2d')!;
+  const timbreName = document.getElementById('timbreName')!;
+  const timbreDesc = document.getElementById('timbreDesc')!;
+  const waveButtons = document.querySelectorAll('.btn-wave');
+  const noteButtons = document.querySelectorAll('.btn-note');
+  const btnStop = document.getElementById('btnStop') as HTMLButtonElement;
+
+  function initAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  }
+
+  function playNote(freq: number) {
+    initAudio();
+    if (!audioCtx) return;
+
+    // Arrêter la note précédente si elle joue
+    stopAudio();
+
+    osc = audioCtx.createOscillator();
+    gainNode = audioCtx.createGain();
+
+    osc.type = currentWaveType;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+    // Enveloppe d'attaque
+    gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.05);
+
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    osc.start();
+    isPlaying = true;
+    drawWave();
+  }
+
+  function stopAudio() {
+    if (osc && gainNode && audioCtx) {
+      gainNode.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+      setTimeout(() => {
+        if (osc) {
+          osc.stop();
+          osc.disconnect();
+          osc = null;
+        }
+      }, 50);
+    }
+    isPlaying = false;
+    if (animId) cancelAnimationFrame(animId);
+    drawStaticWave();
+  }
+
+  // Dessin de l'onde sur le Canvas
+  function drawStaticWave() {
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.strokeStyle = '#334155';
+    ctx.beginPath();
+    ctx.moveTo(0, h / 2);
+    ctx.lineTo(w, h / 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+
+    const cycles = 4;
+    for (let x = 0; x < w; x++) {
+      const t = (x / w) * cycles * 2 * Math.PI;
+      let y = 0;
+
+      if (currentWaveType === 'sine') {
+        y = Math.sin(t);
+      } else if (currentWaveType === 'triangle') {
+        y = Math.asin(Math.sin(t)) / (Math.PI / 2);
+      } else if (currentWaveType === 'square') {
+        y = Math.sin(t) >= 0 ? 0.7 : -0.7;
+      } else if (currentWaveType === 'sawtooth') {
+        y = -((t / Math.PI) % 2) + 1;
+      }
+
+      const pixelY = h / 2 - y * (h / 3);
+      if (x === 0) ctx.moveTo(x, pixelY);
+      else ctx.lineTo(x, pixelY);
+    }
+    ctx.stroke();
+  }
+
+  let phase = 0;
+  function drawWave() {
+    if (!isPlaying) return;
+    const w = canvas.width;
+    const h = canvas.height;
+
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+
+    const cycles = 4;
+    phase += 0.08;
+
+    for (let x = 0; x < w; x++) {
+      const t = (x / w) * cycles * 2 * Math.PI + phase;
+      let y = 0;
+
+      if (currentWaveType === 'sine') {
+        y = Math.sin(t);
+      } else if (currentWaveType === 'triangle') {
+        y = Math.asin(Math.sin(t)) / (Math.PI / 2);
+      } else if (currentWaveType === 'square') {
+        y = Math.sin(t) >= 0 ? 0.7 : -0.7;
+      } else if (currentWaveType === 'sawtooth') {
+        y = -((t / Math.PI) % 2) + 1;
+      }
+
+      const pixelY = h / 2 - y * (h / 3);
+      if (x === 0) ctx.moveTo(x, pixelY);
+      else ctx.lineTo(x, pixelY);
+    }
+    ctx.stroke();
+
+    animId = requestAnimationFrame(drawWave);
+  }
+
+  // Événements des boutons de timbre
+  waveButtons.forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      waveButtons.forEach((b) => b.classList.remove('active'));
+      const target = e.currentTarget as HTMLButtonElement;
+      target.classList.add('active');
+
+      currentWaveType = target.dataset.type as OscillatorType;
+      timbreName.textContent = target.dataset.name!;
+      timbreDesc.textContent = target.dataset.desc!;
+
+      if (osc) {
+        osc.type = currentWaveType;
+      } else {
+        drawStaticWave();
+      }
+    });
+  });
+
+  // Événements des boutons de notes
+  noteButtons.forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      const freq = parseFloat((e.currentTarget as HTMLButtonElement).dataset.freq!);
+      playNote(freq);
+    });
+  });
+
+  btnStop.addEventListener('click', stopAudio);
+
+  drawStaticWave();
+</script>
+
+<style>
+  .timbre-card {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .timbre-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .badge {
+    background: #8b5cf6;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+  }
+
+  .timbre-header h4 {
+    margin: 0;
+    color: #f1f5f9;
+    font-size: 1.1rem;
+  }
+
+  .visualizer-box {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  #waveCanvas {
+    width: 100%;
+    max-width: 400px;
+    height: 120px;
+    border-radius: 6px;
+    background: #1e293b;
+  }
+
+  .timbre-info {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .timbre-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #f8fafc;
+  }
+
+  .timbre-desc {
+    font-size: 0.85rem;
+    color: #94a3b8;
+  }
+
+  .controls-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .section-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #cbd5e1;
+  }
+
+  .wave-buttons, .note-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .btn-wave, .btn-note, .btn-stop {
+    border: 1px solid #475569;
+    background: #1e293b;
+    color: #f1f5f9;
+    padding: 0.5rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-wave:hover, .btn-note:hover {
+    background: #334155;
+    border-color: #38bdf8;
+  }
+
+  .btn-wave.active {
+    background: #8b5cf6;
+    border-color: #8b5cf6;
+    color: #ffffff;
+  }
+
+  .btn-note {
+    background: #0284c7;
+    border-color: #0284c7;
+  }
+
+  .btn-note:hover {
+    background: #0369a1;
+  }
+
+  .btn-stop {
+    background: #e11d48;
+    border-color: #e11d48;
+    margin-left: auto;
+  }
+
+  .btn-stop:hover {
+    background: #be123c;
+  }
+</style>

@@ -1,0 +1,190 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { siteData } from '../../data/sequences';
+import PulseVsRythme from '../../components/PulseVsRythme.astro';
+import TapTempo from '../../components/TapTempo.astro';
+import NuancesInteractive from '../../components/NuancesInteractive.astro';
+import NuancesQuiz from '../../components/NuancesQuiz.astro';
+import FuzeauQuiz from '../../components/FuzeauQuiz.astro';
+import VideoCard from '../../components/VideoCard.astro';
+import AstucesTimbre from '../../components/AstucesTimbre.astro';
+import PlansSonoresQuiz from '../../components/PlansSonoresQuiz.astro';
+import HymneQuiz from '../../components/HymneQuiz.astro';
+import HymneVideoAnalyzer from '../../components/HymneVideoAnalyzer.astro';
+
+export function getStaticPaths() {
+  const paths: { params: { level: string; sequence: string } }[] = [];
+
+  Object.keys(siteData).forEach((levelKey) => {
+    const level = siteData[levelKey];
+    level.sequences.forEach((seq) => {
+      paths.push({
+        params: {
+          level: level.slug,
+          sequence: seq.slug,
+        },
+      });
+    });
+  });
+
+  return paths;
+}
+
+const { level, sequence } = Astro.params;
+const levelData = siteData[level || ''];
+const sequenceData = levelData?.sequences.find((s) => s.slug === sequence);
+
+if (!levelData || !sequenceData) {
+  return Astro.redirect('/404');
+}
+
+const isTempoSequence = sequenceData.slug === 'musique-et-tempo';
+const isNuancesSequence = sequenceData.slug === 'musique-et-nuances';
+const isTimbreSequence = sequenceData.slug === 'musique-et-timbre';
+---
+
+<Layout title={`${levelData.title} — ${sequenceData.title}`}>
+  <main class="sequence-container">
+    <header class="sequence-header">
+      <span class="sequence-badge">{levelData.title}</span>
+      <h2>{sequenceData.title}</h2>
+      {sequenceData.description && <p class="sequence-desc">{sequenceData.description}</p>}
+    </header>
+
+    {/* Outils interactifs pour la séquence Tempo */}
+    {isTempoSequence && (
+      <section class="section-block">
+        <h3>Outils et Expérimentations</h3>
+        <div class="tools-grid">
+          <TapTempo />
+          <PulseVsRythme />
+        </div>
+      </section>
+    )}
+
+    {/* Outils interactifs pour la séquence Nuances */}
+    {isNuancesSequence && (
+      <section class="section-block">
+        <h3>Outils et Expérimentations</h3>
+        <div class="tools-grid">
+          <NuancesInteractive />
+          <NuancesQuiz />
+        </div>
+      </section>
+    )}
+
+    {/* Outil interactif pour la séquence Timbre */}
+    {isTimbreSequence && (
+      <section class="section-block">
+        <h3>Outils et Expérimentations</h3>
+        <FuzeauQuiz />
+        <AstucesTimbre />
+      </section>
+    )}
+
+    {/* Outil interactif pour la séquence Plans Sonores */}
+{sequenceData.slug === 'musique-et-plans-sonores' && (
+  <section class="section-block">
+    <h3>Outils et Expérimentations</h3>
+    <PlansSonoresQuiz />
+  </section>
+)}
+
+ {/* Outils interactifs pour la séquence Musique et Hymnes */}
+{sequenceData.slug === 'musique-et-hymnes' && (
+  <div class="sequence-tools" style="display: flex; flex-direction: column; gap: 2rem;">
+    <section class="section-block">
+      <h3>1. Quiz : Hymne ou Chanson personnelle ?</h3>
+      <HymneQuiz />
+    </section>
+
+    <section class="section-block">
+      <h3>2. Atelier d'Analyse : Le Pouvoir de Rassemblement</h3>
+      <HymneVideoAnalyzer />
+    </section>
+  </div>
+)}
+
+    {/* Section Vidéos dynamiques */}
+    {sequenceData.videos && sequenceData.videos.length > 0 && (
+      <section class="section-block">
+        <h3>Ressources Vidéos</h3>
+        <div class="video-grid">
+          {sequenceData.videos.map((vid) => (
+            <VideoCard
+              badge={vid.badge}
+              title={vid.title}
+              url={vid.url}
+              description={vid.description}
+            />
+          ))}
+        </div>
+      </section>
+    )}
+   
+  </main>
+</Layout>
+
+<style>
+  .sequence-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .sequence-header {
+    text-align: center;
+  }
+
+  .sequence-badge {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--primary, #38bdf8);
+    background: #1e293b;
+    border: 1px solid var(--border, #334155);
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+  }
+
+  .sequence-header h2 {
+    margin: 0.6rem 0 0.2rem 0;
+    font-size: 1.8rem;
+    color: var(--text, #f1f5f9);
+  }
+
+  .sequence-desc {
+    margin: 0;
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.95rem;
+  }
+
+  .section-block {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .section-block h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--text, #f1f5f9);
+    border-bottom: 2px solid var(--border, #334155);
+    padding-bottom: 0.4rem;
+  }
+
+  .tools-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+</style>

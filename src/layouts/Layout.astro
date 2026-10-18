@@ -1,23 +1,84 @@
+---
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+const isHome = Astro.url.pathname === '/';
+---
+
 <!doctype html>
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
-	</head>
-	<body>
-		<slot />
-	</body>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{title} - Éducation Musicale</title>
+  </head>
+  <body>
+    <header class="site-header">
+      <h1><a href="/">Éducation Musicale</a></h1>
+      {!isHome && (
+        <a href="/" class="back-link">&larr; Changer de niveau</a>
+      )}
+    </header>
+
+    <main class="container">
+      <slot />
+    </main>
+  </body>
 </html>
 
-<style>
-	html,
-	body {
-		margin: 0;
-		width: 100%;
-		height: 100%;
-	}
+<style is:global>
+  :root {
+    --bg: #0f172a;           /* Fond sombre profond (slate-900) */
+    --card-bg: #1e293b;      /* Fond de carte légèrement plus clair (slate-800) */
+    --border: #334155;       /* Bordures très subtiles (slate-700) */
+    --text: #f8fafc;         /* Texte principal blanc cassé doux (slate-50) */
+    --text-muted: #94a3b8;   /* Texte secondaire lisible (slate-400) */
+    --primary: #38bdf8;      /* Accentuation bleu néon/cyan (sky-400) */
+    --primary-bg: #0369a1;   /* Fond d'accentuation discret */
+  }
+
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    color: var(--text);
+    background-color: var(--bg);
+    margin: 0;
+    padding: 2rem 1rem;
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .site-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .site-header h1 {
+    font-weight: 400;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .site-header h1 a {
+    text-decoration: none;
+    color: var(--text);
+  }
+
+  .back-link {
+    display: inline-block;
+    margin-top: 0.5rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+
+  .back-link:hover {
+    color: var(--primary);
+  }
 </style>

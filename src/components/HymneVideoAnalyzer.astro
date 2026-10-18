@@ -1,0 +1,664 @@
+---
+import { hymneVideosList } from '../data/hymnesData';
+---
+
+<div id="hvCard" class="fuzeau-card hymne-video-card">
+  <div class="fuzeau-header">
+    <span class="badge">Analyseur Pédagogique</span>
+    <h4>Analyse : Le Pouvoir de Rassemblement</h4>
+  </div>
+
+  <!-- Progression de la partie -->
+  <div id="hvProgressBox" class="progress-box">
+    <div class="progress-text">
+      <span id="hvProgressLabel">Vidéo 1 / {hymneVideosList.length}</span>
+      <span id="hvScoreLabel" class="score-label">Score : 0</span>
+    </div>
+    <div class="progress-bar"><div id="hvProgressFill" class="progress-fill"></div></div>
+  </div>
+
+  <!-- Layout 2 colonnes (container query ≥ 700px) -->
+  <div id="hvLayout" class="hv-layout">
+    <!-- Colonne gauche : lecteur + titre -->
+    <div class="hv-player-col">
+      <div class="video-wrap">
+        <iframe
+          id="hvPlayer"
+          title="Vidéo à analyser"
+          allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen
+        ></iframe>
+      </div>
+      <p id="hvVideoTitle" class="video-title"></p>
+      <a id="hvVideoLink" class="video-link" target="_blank" rel="noopener noreferrer">
+        ↗ La vidéo ne s'affiche pas ? Ouvrir sur YouTube
+      </a>
+    </div>
+
+    <!-- Colonne droite : questionnaire en 2 étapes -->
+    <div class="hv-quiz-col question-container">
+      <div class="hv-step">
+        <p class="step-title">1. Qui est le sujet principal ?</p>
+        <div class="options-toggle">
+          <button type="button" class="btn-option" data-group="subject" data-value="single">👤 Un seul individu</button>
+          <button type="button" class="btn-option" data-group="subject" data-value="group">👥 Un GROUPE / Une communauté</button>
+        </div>
+      </div>
+
+      <div class="hv-step">
+        <p class="step-title">2. Quel est le but recherché ?</p>
+        <div class="options-toggle">
+          <button type="button" class="btn-option" data-group="goal" data-value="personal">💬 Raconter sa vie</button>
+          <button type="button" class="btn-option" data-group="goal" data-value="unite">🤝 UNIR et représenter</button>
+        </div>
+      </div>
+
+      <button id="hvBtnValidate" type="button" class="btn-validate btn-validate-full" disabled>
+        Valider mon analyse
+      </button>
+    </div>
+  </div>
+
+  <div id="hvQuizFeedback" class="feedback-msg hidden"></div>
+
+  <!-- Suivant -->
+  <div id="hvActionFooter" class="action-footer">
+    <button id="hvBtnNext" class="btn-next" disabled>Vidéo Suivante ➔</button>
+  </div>
+
+  <!-- Écran de résultat final -->
+  <div id="hvResultContainer" class="result-container hidden"></div>
+</div>
+
+<script>
+  import { hymneVideosList } from '../data/hymnesData';
+  import type { HymneVideoItem } from '../data/hymnesData';
+
+  type Subject = HymneVideoItem['subject'];
+  type Goal = HymneVideoItem['goal'];
+
+  let currentVideo: HymneVideoItem | null = null;
+  let selectedSubject: Subject | null = null;
+  let selectedGoal: Goal | null = null;
+  let isAnswered = false;
+
+  // État de la partie
+  let queue: HymneVideoItem[] = [];
+  let videoIndex = 0;
+  let score = 0;
+
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+  const card = $<HTMLDivElement>('hvCard');
+  const progressBox = $<HTMLDivElement>('hvProgressBox');
+  const progressLabel = $<HTMLSpanElement>('hvProgressLabel');
+  const scoreLabel = $<HTMLSpanElement>('hvScoreLabel');
+  const progressFill = $<HTMLDivElement>('hvProgressFill');
+  const layout = $<HTMLDivElement>('hvLayout');
+  const player = $<HTMLIFrameElement>('hvPlayer');
+  const videoTitle = $<HTMLParagraphElement>('hvVideoTitle');
+  const videoLink = $<HTMLAnchorElement>('hvVideoLink');
+  const btnValidate = $<HTMLButtonElement>('hvBtnValidate');
+  const quizFeedback = $<HTMLDivElement>('hvQuizFeedback');
+  const actionFooter = $<HTMLDivElement>('hvActionFooter');
+  const resultContainer = $<HTMLDivElement>('hvResultContainer');
+  const btnNext = $<HTMLButtonElement>('hvBtnNext');
+
+  const toggleButtons = Array.from(card.querySelectorAll<HTMLButtonElement>('.btn-option'));
+
+  // --- Utilitaires -------------------------------------------------------
+
+  function shuffle<T>(array: T[]): T[] {
+    const a = [...array];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  // https://www.youtube.com/watch?v=XXXX  ou  https://youtu.be/XXXX  ->  identifiant XXXX
+  function getYouTubeId(url: string): string | null {
+    try {
+      const u = new URL(url);
+      if (u.hostname === 'youtu.be') return u.pathname.slice(1) || null;
+      if (u.pathname.startsWith('/embed/')) return u.pathname.split('/')[2] || null;
+      return u.searchParams.get('v');
+    } catch {
+      return null;
+    }
+  }
+
+  // Version « embed » (domaine sans cookies de suivi, plus adapté à l'école)
+  function toEmbedUrl(url: string): string | null {
+    const id = getYouTubeId(url);
+    return id ? `https://www.youtube-nocookie.com/embed/${id}?rel=0` : null;
+  }
+
+  // --- Progression et score ----------------------------------------------
+
+  function updateProgress() {
+    const total = queue.length;
+    progressLabel.textContent = `Vidéo ${videoIndex + 1} / ${total}`;
+    scoreLabel.textContent = `Score : ${score}`;
+    // La barre avance quand la vidéo a été analysée
+    const done = videoIndex + (isAnswered ? 1 : 0);
+    progressFill.style.width = `${(done / total) * 100}%`;
+  }
+
+  function updateNextButton() {
+    const isLast = videoIndex >= queue.length - 1;
+    btnNext.textContent = isLast ? '🏁 Voir mon score' : 'Vidéo Suivante ➔';
+    btnNext.disabled = !isAnswered;
+  }
+
+  function updateValidateButton() {
+    btnValidate.disabled = isAnswered || !selectedSubject || !selectedGoal;
+  }
+
+  // --- Choix de l'élève (boutons toggle) ---------------------------------
+
+  function onToggleClick(btn: HTMLButtonElement) {
+    if (isAnswered) return;
+    const group = btn.dataset.group;
+    const value = btn.dataset.value;
+    if (!group || !value) return;
+
+    // Un seul bouton sélectionné par étape ; on peut changer d'avis avant de valider
+    toggleButtons
+      .filter(b => b.dataset.group === group)
+      .forEach(b => b.classList.toggle('selected', b === btn));
+
+    if (group === 'subject') selectedSubject = value as Subject;
+    if (group === 'goal') selectedGoal = value as Goal;
+
+    updateValidateButton();
+  }
+
+  toggleButtons.forEach(btn => btn.addEventListener('click', () => onToggleClick(btn)));
+
+  function resetChoices() {
+    selectedSubject = null;
+    selectedGoal = null;
+    toggleButtons.forEach(b => {
+      b.disabled = false;
+      b.classList.remove('selected', 'correct', 'incorrect');
+    });
+    updateValidateButton();
+  }
+
+  // --- Partie : démarrage, vidéos, résultat ------------------------------
+
+  function startGame() {
+    score = 0;
+    videoIndex = 0;
+
+    // Les 15 vidéos, chacune une seule fois, dans un ordre aléatoire
+    queue = shuffle(hymneVideosList);
+
+    resultContainer.classList.add('hidden');
+    resultContainer.innerHTML = '';
+    progressBox.classList.remove('hidden');
+    layout.classList.remove('hidden');
+    actionFooter.classList.remove('hidden');
+
+    loadVideo();
+  }
+
+  function loadVideo() {
+    isAnswered = false;
+    quizFeedback.className = 'feedback-msg hidden';
+
+    const video = queue[videoIndex];
+    currentVideo = video;
+
+    resetChoices();
+    updateProgress();
+    updateNextButton();
+
+    // Changer le src remplace (et donc arrête) la vidéo précédente
+    const embedUrl = toEmbedUrl(video.url);
+    if (embedUrl) player.src = embedUrl;
+    else player.removeAttribute('src');
+    player.title = video.title;
+    videoTitle.textContent = video.title;
+    videoLink.href = video.url;
+  }
+
+  function validateAnalysis() {
+    if (isAnswered || !currentVideo || !selectedSubject || !selectedGoal) return;
+    isAnswered = true;
+
+    const isCorrect =
+      selectedSubject === currentVideo.subject && selectedGoal === currentVideo.goal;
+
+    // Bonne réponse en vert (même si l'élève s'est trompé : il voit la correction),
+    // choix erroné en rouge
+    toggleButtons.forEach(b => {
+      b.disabled = true;
+      b.classList.remove('selected');
+      const expected = b.dataset.group === 'subject' ? currentVideo!.subject : currentVideo!.goal;
+      const chosen = b.dataset.group === 'subject' ? selectedSubject : selectedGoal;
+      if (b.dataset.value === expected) b.classList.add('correct');
+      else if (b.dataset.value === chosen) b.classList.add('incorrect');
+    });
+
+    if (isCorrect) {
+      score++;
+      quizFeedback.textContent = `✨ Excellent ! ${currentVideo.explanation}`;
+      quizFeedback.className = 'feedback-msg success';
+    } else {
+      quizFeedback.textContent = `❌ Erreur d'analyse ! ${currentVideo.explanation}`;
+      quizFeedback.className = 'feedback-msg error';
+    }
+
+    updateValidateButton();
+    updateProgress();
+    updateNextButton();
+  }
+
+  function getResultMessage(note: number, total: number) {
+    const ratio = note / total;
+    if (ratio === 1) return { emoji: '🏆', text: "Parfait ! Tu sais exactement reconnaître le pouvoir de rassemblement d'une musique !" };
+    if (ratio >= 0.8) return { emoji: '🌟', text: 'Excellent travail, tu analyses très bien ce qui fait un hymne !' };
+    if (ratio >= 0.5) return { emoji: '👍', text: 'Bien joué ! Encore un petit effort pour progresser.' };
+    return { emoji: '💪', text: "Continue à t'entraîner, tu vas y arriver !" };
+  }
+
+  function showResult() {
+    const total = queue.length;
+    const { emoji, text } = getResultMessage(score, total);
+
+    // On coupe la vidéo en cours de lecture
+    player.removeAttribute('src');
+
+    progressBox.classList.add('hidden');
+    layout.classList.add('hidden');
+    actionFooter.classList.add('hidden');
+    quizFeedback.className = 'feedback-msg hidden';
+
+    resultContainer.innerHTML = `
+      <div class="result-emoji">${emoji}</div>
+      <p class="result-title">Analyse terminée !</p>
+      <p class="result-score"><span class="result-note">${score}</span> / ${total}</p>
+      <p class="result-text">${text}</p>
+      <button id="hvBtnRestart" class="btn-restart">🔄 Recommencer</button>
+    `;
+    resultContainer.classList.remove('hidden');
+    $<HTMLButtonElement>('hvBtnRestart').addEventListener('click', startGame);
+  }
+
+  // --- Événements ---------------------------------------------------------
+
+  function goToNext() {
+    if (!isAnswered) return;
+    if (videoIndex >= queue.length - 1) {
+      showResult();
+    } else {
+      videoIndex++;
+      loadVideo();
+    }
+  }
+
+  btnValidate.addEventListener('click', validateAnalysis);
+  btnNext.addEventListener('click', goToNext);
+
+  startGame();
+</script>
+
+<!--
+  is:global est indispensable : Astro "scope" les styles avec un attribut
+  data-astro-cid ajouté uniquement aux éléments du template. Les éléments créés par
+  le script (écran de résultat) ne l'ont pas et ne recevraient aucun style. Tous les
+  sélecteurs sont préfixés par .fuzeau-card pour ne pas affecter le reste du site.
+  Ce CSS reprend celui de FuzeauQuiz / PlansSonoresQuiz ; les blocs « Layout 2
+  colonnes », « Lecteur vidéo » et « Questionnaire » sont propres à ce composant.
+-->
+<style is:global>
+  .fuzeau-card {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+    container-type: inline-size;
+  }
+
+  .fuzeau-card * {
+    box-sizing: border-box;
+  }
+
+  .fuzeau-card .hidden {
+    display: none !important;
+  }
+
+  .fuzeau-card .fuzeau-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .fuzeau-card .badge {
+    background: #e11d48;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+  }
+
+  .fuzeau-card .fuzeau-header h4 {
+    margin: 0;
+    color: #f1f5f9;
+    font-size: 1.1rem;
+  }
+
+  /* --- Progression --- */
+  .fuzeau-card .progress-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .fuzeau-card .progress-text {
+    display: flex;
+    justify-content: space-between;
+    color: #cbd5e1;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .fuzeau-card .score-label {
+    color: #38bdf8;
+  }
+
+  .fuzeau-card .progress-bar {
+    height: 8px;
+    background: #1e293b;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .fuzeau-card .progress-fill {
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, #0284c7, #38bdf8);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+  }
+
+  /* --- Layout 2 colonnes : 1 colonne en mobile, 2 colonnes dès 700px de large --- */
+  .fuzeau-card .hv-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+    width: 100%;
+  }
+
+  @container (min-width: 700px) {
+    .fuzeau-card .hv-layout {
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+      align-items: start;
+    }
+  }
+
+  /* --- Lecteur vidéo (colonne gauche) --- */
+  .fuzeau-card .hv-player-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+
+  .fuzeau-card .video-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border: 2px solid #334155;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .fuzeau-card .video-wrap iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  .fuzeau-card .video-title {
+    margin: 0;
+    color: #f1f5f9;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  .fuzeau-card .video-link {
+    color: #38bdf8;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .fuzeau-card .video-link:hover {
+    text-decoration: underline;
+  }
+
+  /* --- Questionnaire (colonne droite) --- */
+  .fuzeau-card .question-container {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 1.25rem;
+    text-align: center;
+    overflow: hidden;
+    color: #f1f5f9;
+  }
+
+  .fuzeau-card .hv-quiz-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-width: 0;
+    text-align: left;
+  }
+
+  .fuzeau-card .hv-step {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .fuzeau-card .step-title {
+    margin: 0;
+    color: #f8fafc;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .fuzeau-card .options-toggle {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.6rem;
+    width: 100%;
+  }
+
+  /* --- Boutons de réponse : même style que les boutons de PlansSonoresQuiz --- */
+  .fuzeau-card .btn-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 56px;
+    padding: 0.75rem 1rem;
+    background: #1e293b;
+    color: #f8fafc;
+    border: 2px solid #475569;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .fuzeau-card .btn-option:hover:not(:disabled) {
+    border-color: #38bdf8;
+    transform: scale(1.02);
+  }
+
+  .fuzeau-card .btn-option:disabled {
+    cursor: default;
+  }
+
+  /* Choix en cours (avant validation) : doit rester AVANT .correct / .incorrect */
+  .fuzeau-card .btn-option.selected {
+    background: #0c4a6e;
+    border-color: #38bdf8;
+    color: #e0f2fe;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.45);
+  }
+
+  .fuzeau-card .btn-option.correct {
+    background: #064e3b;
+    border-color: #10b981;
+    color: #a7f3d0;
+    box-shadow: 0 0 10px #10b981;
+  }
+
+  .fuzeau-card .btn-option.incorrect {
+    background: #881337;
+    border-color: #f43f5e;
+    color: #fecdd3;
+    box-shadow: 0 0 10px #f43f5e;
+  }
+
+  .fuzeau-card .btn-validate {
+    background: #0284c7;
+    color: #fff;
+    border: none;
+    padding: 0 1.25rem;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+
+  .fuzeau-card .btn-validate-full {
+    width: 100%;
+    padding: 0.8rem 1.25rem;
+  }
+
+  .fuzeau-card .btn-validate:hover:not(:disabled) {
+    background: #0369a1;
+  }
+
+  .fuzeau-card .btn-validate:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .fuzeau-card .action-footer {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .fuzeau-card .btn-next {
+    background: #334155;
+    color: #f1f5f9;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .fuzeau-card .btn-next:hover:not(:disabled) {
+    background: #475569;
+  }
+
+  .fuzeau-card .btn-next:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .fuzeau-card .feedback-msg {
+    padding: 0.75rem;
+    border-radius: 6px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .fuzeau-card .feedback-msg.success {
+    background: #064e3b;
+    color: #a7f3d0;
+  }
+
+  .fuzeau-card .feedback-msg.error {
+    background: #881337;
+    color: #fecdd3;
+  }
+
+  /* --- Écran de résultat --- */
+  .fuzeau-card .result-container {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 2rem 1.25rem;
+    text-align: center;
+    color: #f1f5f9;
+  }
+
+  .fuzeau-card .result-emoji {
+    font-size: 3rem;
+    line-height: 1;
+  }
+
+  .fuzeau-card .result-title {
+    margin: 0.75rem 0 0.25rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #cbd5e1;
+  }
+
+  .fuzeau-card .result-score {
+    margin: 0 0 0.5rem;
+    font-size: 1.6rem;
+    font-weight: 800;
+  }
+
+  .fuzeau-card .result-note {
+    font-size: 3rem;
+    color: #38bdf8;
+  }
+
+  .fuzeau-card .result-text {
+    margin: 0 0 1.25rem;
+    color: #e2e8f0;
+  }
+
+  .fuzeau-card .btn-restart {
+    background: #0284c7;
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.75rem;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+
+  .fuzeau-card .btn-restart:hover {
+    background: #0369a1;
+  }
+</style>
