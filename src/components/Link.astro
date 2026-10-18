@@ -1,0 +1,18 @@
+---
+interface Props {
+  href: string;
+  class?: string;
+  [key: string]: any;
+}
+
+const { href, class: className, ...props } = Astro.props;
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const finalHref = href.startsWith('http') || href.startsWith('#')
+  ? href
+  : `${base}${href.startsWith('/') ? href : '/' + href}`;
+---
+
+<a href={finalHref} class={className} {...props}>
+  <slot />
+</a>

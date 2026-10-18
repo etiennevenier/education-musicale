@@ -24,7 +24,7 @@ const activeSeq = data.sequences[activeIdx];
 
   <div class="choices-container">
     {/* Option 1 : Séquence en cours */}
-    <a href={`/${data.slug}/${activeSeq.slug}`} class="choice-card primary">
+    <a href={`/education-musicale/${data.slug}/${activeSeq.slug}`} class="choice-card primary">
       <span class="tag">En ce moment</span>
       <span class="seq-num">Séquence {activeIdx + 1}</span>
       <h3>{activeSeq.title}</h3>
@@ -32,7 +32,7 @@ const activeSeq = data.sequences[activeIdx];
     </a>
 
     {/* Option 2 : Entraînement */}
-    <a href="/autres/exercices" class="choice-card secondary">
+    <a href="/education-musicale/autres/exercices" class="choice-card secondary">
       <span class="tag training">Espace autonome</span>
       <h3>Entraînement</h3>
       <p>Exercices, lecture de notes, vocalises & outils numériques</p>

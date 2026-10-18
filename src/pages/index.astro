@@ -7,6 +7,8 @@ const levels = [
   { slug: '4eme', label: '4ème' },
   { slug: '3eme', label: '3ème' },
 ];
+
+const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 
 <Layout title="Choix du niveau">
@@ -16,7 +18,7 @@ const levels = [
 
   <div class="level-grid">
     {levels.map((lvl) => (
-      <a href={`/${lvl.slug}`} class="level-btn">
+      <a href={`${baseUrl}/${lvl.slug}`} class="level-btn">
         <span>{lvl.label}</span>
         <span class="arrow">&rarr;</span>
       </a>
