@@ -1,0 +1,182 @@
+---
+import VideoCard from './VideoCard.astro';
+
+interface OperaVideo {
+  badge: string;
+  title: string;
+  youtubeId: string;
+}
+
+interface OperaTab {
+  id: string;
+  label: string;
+  videos: OperaVideo[];
+}
+
+const tabs: OperaTab[] = [
+  {
+    id: 'cours',
+    label: 'Cours',
+    videos: [
+      { badge: 'Capsule', title: 'Capsule', youtubeId: 'qsfJISMPwJo' },
+      { badge: 'Écoute', title: 'Comédie musicale', youtubeId: 'vV67aiXimTw' },
+      { badge: 'Projet musical', title: 'Stromae — Carmen', youtubeId: 'UKftOH54iNU' },
+      { badge: 'Vocalise', title: 'Vocalise', youtubeId: 'CRXPn9eKCd8' },
+    ],
+  },
+  {
+    id: 'carmen',
+    label: 'Carmen',
+    videos: [
+      { badge: 'Écoute', title: 'Carmen — Bizet', youtubeId: 'K2snTkaD64U' },
+      { badge: 'Écoute', title: 'Carmen — Bizet', youtubeId: 'POacDjS1EBo' },
+      { badge: 'Écoute', title: 'Carmen — Bizet', youtubeId: 'KJ_HHRJf0xg' },
+      { badge: 'Notions', title: 'Carmen', youtubeId: 'Gth5bcPWfJ4' },
+    ],
+  },
+];
+---
+
+<div class="opera-course">
+  <div class="opera-tabs" role="tablist" aria-label="Musique et Opéra">
+    {tabs.map((tab, index) => (
+      <button
+        type="button"
+        role="tab"
+        id={`opera-tab-${tab.id}`}
+        class="opera-tab"
+        aria-controls={`opera-panel-${tab.id}`}
+        aria-selected={index === 0 ? 'true' : 'false'}
+        tabindex={index === 0 ? 0 : -1}
+        data-tab={tab.id}
+      >
+        {tab.label}
+      </button>
+    ))}
+  </div>
+
+  {tabs.map((tab, index) => (
+    <div
+      role="tabpanel"
+      id={`opera-panel-${tab.id}`}
+      class="opera-panel"
+      aria-labelledby={`opera-tab-${tab.id}`}
+      hidden={index !== 0}
+      data-panel={tab.id}
+    >
+      <div class="opera-videos">
+        {tab.videos.map((video) => (
+          <VideoCard
+            badge={video.badge}
+            title={video.title}
+            url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+          />
+        ))}
+      </div>
+    </div>
+  ))}
+</div>
+
+<script>
+  const tabs = document.querySelectorAll<HTMLButtonElement>('.opera-tab');
+
+  const selectTab = (tab: HTMLButtonElement) => {
+    const root = tab.closest('.opera-course');
+    if (!root) return;
+
+    root.querySelectorAll<HTMLButtonElement>('.opera-tab').forEach((item) => {
+      const isActive = item === tab;
+      item.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      item.tabIndex = isActive ? 0 : -1;
+    });
+
+    root.querySelectorAll<HTMLElement>('.opera-panel').forEach((panel) => {
+      panel.hidden = panel.dataset.panel !== tab.dataset.tab;
+    });
+  };
+
+  tabs.forEach((tab, index) => {
+    tab.addEventListener('click', () => selectTab(tab));
+    tab.addEventListener('keydown', (event) => {
+      if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+      event.preventDefault();
+      const nextIndex =
+        event.key === 'ArrowRight'
+          ? (index + 1) % tabs.length
+          : (index - 1 + tabs.length) % tabs.length;
+      tabs[nextIndex].focus();
+      selectTab(tabs[nextIndex]);
+    });
+  });
+</script>
+
+<style>
+  .opera-course {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .opera-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .opera-tab {
+    flex: 1 1 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.9rem 1.25rem;
+    border-radius: 12px;
+    border: 1px solid var(--border, #334155);
+    background: #1e293b;
+    color: var(--text-muted, #94a3b8);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+  }
+
+  .opera-tab::before {
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+
+  .opera-tab[data-tab='cours']::before {
+    content: '🎬';
+  }
+
+  .opera-tab[data-tab='carmen']::before {
+    content: '💃';
+  }
+
+  .opera-tab:hover {
+    border-color: var(--primary, #38bdf8);
+    color: var(--text, #f1f5f9);
+  }
+
+  .opera-tab[aria-selected='true'] {
+    border-color: var(--primary, #38bdf8);
+    color: var(--text, #f1f5f9);
+    box-shadow: 0 0 0 1px var(--primary, #38bdf8), 0 0 16px rgba(56, 189, 248, 0.25);
+  }
+
+  .opera-tab:focus-visible {
+    outline: 2px solid var(--primary, #38bdf8);
+    outline-offset: 2px;
+  }
+
+  .opera-panel[hidden] {
+    display: none;
+  }
+
+  .opera-videos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+</style>

@@ -1,0 +1,182 @@
+---
+import VideoCard from './VideoCard.astro';
+
+interface RisquesVideo {
+  badge: string;
+  title: string;
+  youtubeId: string;
+}
+
+interface RisquesTab {
+  id: string;
+  label: string;
+  videos: RisquesVideo[];
+}
+
+const tabs: RisquesTab[] = [
+  {
+    id: 'cours',
+    label: 'Cours',
+    videos: [
+      {
+        badge: 'Documentaire',
+        title: 'Documentaire — Musique et Risques Auditifs',
+        youtubeId: 'bAWJtcEhWu8',
+      },
+      {
+        badge: 'Projet musical',
+        title: 'Projet musical — Musique et Risques Auditifs',
+        youtubeId: 'iCNzaVI9m9Q',
+      },
+      {
+        badge: 'Documentaire',
+        title: 'Documentaire — Risques auditifs',
+        youtubeId: '3CNcgG0G37g',
+      },
+      {
+        badge: 'Interview',
+        title: 'Interview — Musique et Risques Auditifs',
+        youtubeId: 'TH3w91cGKyM',
+      },
+    ],
+  },
+];
+---
+
+<div class="risques-course">
+  <div class="risques-tabs" role="tablist" aria-label="Musique et Risques Auditifs">
+    {tabs.map((tab, index) => (
+      <button
+        type="button"
+        role="tab"
+        id={`risques-tab-${tab.id}`}
+        class="risques-tab"
+        aria-controls={`risques-panel-${tab.id}`}
+        aria-selected={index === 0 ? 'true' : 'false'}
+        tabindex={index === 0 ? 0 : -1}
+        data-tab={tab.id}
+      >
+        {tab.label}
+      </button>
+    ))}
+  </div>
+
+  {tabs.map((tab, index) => (
+    <div
+      role="tabpanel"
+      id={`risques-panel-${tab.id}`}
+      class="risques-panel"
+      aria-labelledby={`risques-tab-${tab.id}`}
+      hidden={index !== 0}
+      data-panel={tab.id}
+    >
+      <div class="risques-videos">
+        {tab.videos.map((video) => (
+          <VideoCard
+            badge={video.badge}
+            title={video.title}
+            url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+          />
+        ))}
+      </div>
+    </div>
+  ))}
+</div>
+
+<script>
+  const risquesRoot = document.querySelector<HTMLElement>('.risques-course');
+
+  if (risquesRoot) {
+    const tabs = risquesRoot.querySelectorAll<HTMLButtonElement>('.risques-tab');
+
+    const selectTab = (tab: HTMLButtonElement) => {
+      risquesRoot.querySelectorAll<HTMLButtonElement>('.risques-tab').forEach((item) => {
+        const isActive = item === tab;
+        item.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        item.tabIndex = isActive ? 0 : -1;
+      });
+
+      risquesRoot.querySelectorAll<HTMLElement>('.risques-panel').forEach((panel) => {
+        panel.hidden = panel.dataset.panel !== tab.dataset.tab;
+      });
+    };
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => selectTab(tab));
+      tab.addEventListener('keydown', (event) => {
+        if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+        event.preventDefault();
+        const nextIndex =
+          event.key === 'ArrowRight'
+            ? (index + 1) % tabs.length
+            : (index - 1 + tabs.length) % tabs.length;
+        tabs[nextIndex].focus();
+        selectTab(tabs[nextIndex]);
+      });
+    });
+  }
+</script>
+
+<style>
+  .risques-course {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .risques-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .risques-tab {
+    flex: 1 1 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.9rem 1.25rem;
+    border-radius: 12px;
+    border: 1px solid var(--border, #334155);
+    background: #1e293b;
+    color: var(--text-muted, #94a3b8);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+  }
+
+  .risques-tab::before {
+    content: '🔊';
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+
+  .risques-tab:hover {
+    border-color: var(--primary, #38bdf8);
+    color: var(--text, #f1f5f9);
+  }
+
+  .risques-tab[aria-selected='true'] {
+    border-color: var(--primary, #38bdf8);
+    color: var(--text, #f1f5f9);
+    box-shadow: 0 0 0 1px var(--primary, #38bdf8), 0 0 16px rgba(56, 189, 248, 0.25);
+  }
+
+  .risques-tab:focus-visible {
+    outline: 2px solid var(--primary, #38bdf8);
+    outline-offset: 2px;
+  }
+
+  .risques-panel[hidden] {
+    display: none;
+  }
+
+  .risques-videos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+</style>
+

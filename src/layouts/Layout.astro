@@ -1,9 +1,18 @@
 ---
 interface Props {
   title: string;
+  wide?: boolean;
+  backLabel?: string;
+  /** En-tête du site sur mobile : complet, réduit au lien retour, ou masqué. */
+  mobileHeader?: 'full' | 'minimal' | 'hidden';
 }
 
-const { title } = Astro.props;
+const {
+  title,
+  wide = false,
+  backLabel = 'Changer de niveau',
+  mobileHeader = 'full',
+} = Astro.props;
 const isHome = Astro.url.pathname === '/';
 ---
 
@@ -14,15 +23,22 @@ const isHome = Astro.url.pathname === '/';
     <meta name="viewport" content="width=device-width" />
     <title>{title} - Éducation Musicale</title>
   </head>
-  <body>
+  <body
+    class:list={[
+      {
+        'mobile-header-minimal': mobileHeader === 'minimal',
+        'mobile-header-hidden': mobileHeader === 'hidden',
+      },
+    ]}
+  >
     <header class="site-header">
       <h1><a href="/education-musicale/">Éducation Musicale</a></h1>
       {!isHome && (
-        <a href="/education-musicale/" class="back-link">&larr; Changer de niveau</a>
+        <a href="/education-musicale/" class="back-link">&larr; {backLabel}</a>
       )}
     </header>
 
-    <main class="container">
+    <main class:list={['container', { wide }]}>
       <slot />
     </main>
   </body>
@@ -39,6 +55,19 @@ const isHome = Astro.url.pathname === '/';
     --primary-bg: #0369a1;   /* Fond d'accentuation discret */
   }
 
+  /* Aucun débordement latéral, quelle que soit la largeur d'écran */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    max-width: 100%;
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+  }
+
   body {
     font-family: system-ui, -apple-system, sans-serif;
     color: var(--text);
@@ -46,11 +75,23 @@ const isHome = Astro.url.pathname === '/';
     margin: 0;
     padding: 2rem 1rem;
     min-height: 100vh;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  img,
+  svg {
+    max-width: 100%;
   }
 
   .container {
+    width: 100%;
     max-width: 800px;
     margin: 0 auto;
+  }
+
+  .container.wide {
+    max-width: 1120px;
   }
 
   .site-header {
@@ -80,5 +121,121 @@ const isHome = Astro.url.pathname === '/';
 
   .back-link:hover {
     color: var(--primary);
+  }
+
+  /* Utilitaire d'affichage partagé (sections des outils d'entraînement) */
+  .hidden {
+    display: none !important;
+  }
+
+  /* Bouton de retour en tête de chaque outil d'entraînement */
+  .hub-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 44px;
+    margin: 0 0 1rem;
+    padding: 0.55rem 1rem;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid #cbd5e1;
+    border-radius: 9999px;
+    color: #475569;
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    touch-action: manipulation;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+    transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+  }
+
+  .hub-back:hover {
+    color: #1d4ed8;
+    border-color: #60a5fa;
+    background: #eff6ff;
+  }
+
+  .hub-back:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+  }
+
+  /* Mobile : alléger l'en-tête pour rendre la main au contenu utile */
+  @media (max-width: 640px) {
+    /* Hub : uniquement un lien retour discret */
+    body.mobile-header-minimal {
+      padding-top: 0.75rem;
+    }
+
+    body.mobile-header-minimal .site-header {
+      margin-bottom: 1rem;
+      text-align: left;
+    }
+
+    body.mobile-header-minimal .site-header h1 {
+      display: none;
+    }
+
+    body.mobile-header-minimal .back-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 40px;
+      margin-top: 0;
+      padding: 0 14px;
+      border: 1px solid var(--border);
+      border-radius: 9999px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    /* Pages d'outils : en-tête global supprimé (le bouton retour vit dans l'outil) */
+    body.mobile-header-hidden {
+      padding-top: 0.75rem;
+    }
+
+    body.mobile-header-hidden .site-header {
+      display: none;
+    }
+  }
+
+  /* Paysage sur téléphone (≤ 900 px de large) ou fenêtre basse (≤ 500 px de haut) :
+     le grand en-tête bleu du site consomme la hauteur utile de l'outil.
+     On le supprime et on ne garde qu'une pastille retour compacte, afin de ne
+     jamais laisser une page sans navigation. Les <header> internes aux outils
+     (ex. #tool-rhythm header, .notes-header) ne sont pas concernés. */
+  @media (max-width: 900px) and (orientation: landscape), (max-height: 500px) {
+    body {
+      padding-top: 0.5rem;
+      padding-bottom: 0.75rem;
+    }
+
+    .site-header {
+      margin-bottom: 0.5rem;
+      text-align: left;
+    }
+
+    /* Le titre « Éducation Musicale » est le plus gros poste de hauteur */
+    .site-header h1 {
+      display: none;
+    }
+
+    .site-header .back-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 36px;
+      margin-top: 0;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    /* Pages d'outils d'entraînement : en-tête global totalement masqué
+       (le retour « ← Entraînement » se trouve dans l'outil lui-même). */
+    body.mobile-header-hidden .site-header {
+      display: none !important;
+    }
   }
 </style>

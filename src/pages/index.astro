@@ -24,6 +24,16 @@ const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
       </a>
     ))}
   </div>
+
+  <section class="training-entry">
+    <a href={`${baseUrl}/entrainement`} class="training-link">
+      <span class="training-link-text">
+        <strong>Entraînement libre</strong>
+        <small>Lecture de notes, rythme, piano et tracé des clefs</small>
+      </span>
+      <span class="arrow" aria-hidden="true">&rarr;</span>
+    </a>
+  </section>
 </Layout>
 
 <style>
@@ -61,5 +71,38 @@ const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
   }
   .arrow {
     font-size: 1.2rem;
+  }
+  .training-entry {
+    margin-top: 2rem;
+  }
+  .training-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px dashed var(--primary);
+    border-radius: 12px;
+    color: var(--text);
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+  .training-link:hover {
+    background: rgba(56, 189, 248, 0.16);
+    transform: translateY(-2px);
+    color: var(--primary);
+  }
+  .training-link-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .training-link-text strong {
+    font-size: 1.15rem;
+  }
+  .training-link-text small {
+    color: var(--text-muted);
+    font-size: 0.9rem;
   }
 </style>

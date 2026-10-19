@@ -15,6 +15,17 @@ import VoixBlindTest from '../../components/VoixBlindTest.astro';
 import OstinatoQuiz from '../../components/OstinatoQuiz.astro';
 import MoyenAgeCourse from '../../components/MoyenAgeCourse.astro';
 import JazzCourse from '../../components/JazzCourse.astro';
+import HerosCourse from '../../components/HerosCourse.astro';
+import OperaCourse from '../../components/OperaCourse.astro';
+import CinemaCourse from '../../components/CinemaCourse.astro';
+import BruitsCourse from '../../components/BruitsCourse.astro';
+import RockCourse from '../../components/RockCourse.astro';
+import RecyclageCourse from '../../components/RecyclageCourse.astro';
+import EngagementCourse from '../../components/EngagementCourse.astro';
+import PubCourse from '../../components/PubCourse.astro';
+import RisquesAuditifsCourse from '../../components/RisquesAuditifsCourse.astro';
+import RapCourse from '../../components/RapCourse.astro';
+import MetissageCourse from '../../components/MetissageCourse.astro';
 
 export function getStaticPaths() {
   const paths: { params: { level: string; sequence: string } }[] = [];
@@ -48,6 +59,17 @@ const isTimbreSequence = sequenceData.slug === 'musique-et-timbre';
 const isRepetitionSequence = sequenceData.slug === 'musique-et-repetition';
 const isMoyenAgeSequence = sequenceData.slug === 'musique-et-moyen-age';
 const isJazzSequence = sequenceData.slug === 'musique-et-jazz';
+const isHerosSequence = sequenceData.slug === 'musique-et-heros';
+const isOperaSequence = sequenceData.slug === 'musique-et-opera';
+const isCinemaSequence = sequenceData.slug === 'musique-et-cinema';
+const isBruitsSequence = sequenceData.slug === 'musique-et-bruits';
+const isRockSequence = sequenceData.slug === 'musique-et-rock';
+const isRecyclageSequence = sequenceData.slug === 'musique-et-recyclage';
+const isEngagementSequence = sequenceData.slug === 'musique-et-engagement';
+const isPubSequence = sequenceData.slug === 'musique-et-pub';
+const isRisquesAuditifsSequence = sequenceData.slug === 'musique-et-risques-auditifs';
+const isRapSequence = sequenceData.slug === 'musique-et-rap';
+const isMetissageSequence = sequenceData.slug === 'musique-et-metissage';
 ---
 
 <Layout title={`${levelData.title} — ${sequenceData.title}`}>
@@ -63,6 +85,39 @@ const isJazzSequence = sequenceData.slug === 'musique-et-jazz';
 
     {/* Parcours complet pour la séquence Musique et Jazz */}
     {isJazzSequence && <JazzCourse />}
+
+    {/* Parcours complet pour la séquence Musique et Héros */}
+    {isHerosSequence && <HerosCourse />}
+
+    {/* Parcours complet pour la séquence Musique et Opéra */}
+    {isOperaSequence && <OperaCourse />}
+
+    {/* Parcours complet pour la séquence Musique et Cinéma */}
+    {isCinemaSequence && <CinemaCourse />}
+
+    {/* Parcours complet pour la séquence Musique et Bruits */}
+    {isBruitsSequence && <BruitsCourse />}
+
+    {/* Parcours complet pour la séquence Musique et Rock */}
+    {isRockSequence && <RockCourse />}
+
+    {/* Parcours complet pour la séquence Musique et Recyclage */}
+    {isRecyclageSequence && <RecyclageCourse />}
+
+    {/* Parcours complet pour la séquence Musique et Engagement */}
+    {isEngagementSequence && <EngagementCourse />}
+
+    {/* Parcours complet pour la séquence Musique et Publicité */}
+    {isPubSequence && <PubCourse />}
+
+    {/* Parcours complet pour la séquence Musique et Risques Auditifs */}
+    {isRisquesAuditifsSequence && <RisquesAuditifsCourse />}
+
+    {/* Parcours complet pour la séquence Musique et Rap */}
+    {isRapSequence && <RapCourse />}
+
+    {/* Parcours complet pour la séquence Musique et Métissage */}
+    {isMetissageSequence && <MetissageCourse />}
 
     {/* Outils interactifs pour la séquence Tempo */}
     {isTempoSequence && (

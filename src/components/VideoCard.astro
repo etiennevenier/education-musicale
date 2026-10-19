@@ -1,8 +1,8 @@
 ---
-// Standard : seuls le badge et le titre sont affichés (aucune description).
+// Standard : seuls le lecteur et le badge de catégorie sont affichés (ni titre ni description).
 interface Props {
   badge?: string;
-  title: string;
+  title: string; // Libellé d'accessibilité de l'iframe uniquement
   url: string;
 }
 
@@ -37,10 +37,7 @@ const embedUrl = getEmbedUrl(url);
   </div>
 
   <div class="video-card-content">
-    <div class="video-card-header">
-      {badge && <span class="video-badge">{badge}</span>}
-      <h4 class="video-title">{title}</h4>
-    </div>
+    {badge && <span class="video-badge">{badge}</span>}
   </div>
 </div>
 
@@ -86,16 +83,10 @@ const embedUrl = getEmbedUrl(url);
   }
 
   .video-card-content {
-    padding: 0.85rem;
+    padding: 0.6rem 0.85rem;
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
-  }
-
-  .video-card-header {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
   }
 
   .video-badge {
@@ -107,13 +98,5 @@ const embedUrl = getEmbedUrl(url);
     text-transform: uppercase;
     padding: 0.15rem 0.4rem;
     border-radius: 4px;
-  }
-
-  .video-title {
-    margin: 0;
-    color: #f8fafc;
-    font-size: 0.95rem;
-    font-weight: 700;
-    line-height: 1.3;
   }
 </style>

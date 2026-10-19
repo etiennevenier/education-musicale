@@ -1,0 +1,187 @@
+---
+import VideoCard from './VideoCard.astro';
+
+interface PubVideo {
+  badge: string;
+  title: string;
+  youtubeId: string;
+}
+
+interface PubTab {
+  id: string;
+  label: string;
+  videos: PubVideo[];
+}
+
+const tabs: PubTab[] = [
+  {
+    id: 'cours',
+    label: 'Cours',
+    videos: [
+      {
+        badge: 'Capsule pédagogique',
+        title: 'Capsule pédagogique — Musique et Publicité',
+        youtubeId: 'lNpTQ6Hycg0',
+      },
+      {
+        badge: 'Projet musical',
+        title: 'Projet musical — Musique et Publicité',
+        youtubeId: 'HP-5fvykK78',
+      },
+      {
+        badge: 'Publicité Toyota',
+        title: 'Publicité Toyota',
+        youtubeId: 'J91VaDSQ6ow',
+      },
+      {
+        badge: 'Publicité Loto',
+        title: 'Publicité Loto',
+        youtubeId: 'UD8raZfrA8E',
+      },
+      {
+        badge: 'Comparaisons',
+        title: 'Comparaisons — Musique et Publicité',
+        youtubeId: 'r72Vl9MWjog',
+      },
+    ],
+  },
+];
+---
+
+<div class="pub-course">
+  <div class="pub-tabs" role="tablist" aria-label="Musique et Publicité">
+    {tabs.map((tab, index) => (
+      <button
+        type="button"
+        role="tab"
+        id={`pub-tab-${tab.id}`}
+        class="pub-tab"
+        aria-controls={`pub-panel-${tab.id}`}
+        aria-selected={index === 0 ? 'true' : 'false'}
+        tabindex={index === 0 ? 0 : -1}
+        data-tab={tab.id}
+      >
+        {tab.label}
+      </button>
+    ))}
+  </div>
+
+  {tabs.map((tab, index) => (
+    <div
+      role="tabpanel"
+      id={`pub-panel-${tab.id}`}
+      class="pub-panel"
+      aria-labelledby={`pub-tab-${tab.id}`}
+      hidden={index !== 0}
+      data-panel={tab.id}
+    >
+      <div class="pub-videos">
+        {tab.videos.map((video) => (
+          <VideoCard
+            badge={video.badge}
+            title={video.title}
+            url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+          />
+        ))}
+      </div>
+    </div>
+  ))}
+</div>
+
+<script>
+  const pubRoot = document.querySelector<HTMLElement>('.pub-course');
+
+  if (pubRoot) {
+    const tabs = pubRoot.querySelectorAll<HTMLButtonElement>('.pub-tab');
+
+    const selectTab = (tab: HTMLButtonElement) => {
+      pubRoot.querySelectorAll<HTMLButtonElement>('.pub-tab').forEach((item) => {
+        const isActive = item === tab;
+        item.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        item.tabIndex = isActive ? 0 : -1;
+      });
+
+      pubRoot.querySelectorAll<HTMLElement>('.pub-panel').forEach((panel) => {
+        panel.hidden = panel.dataset.panel !== tab.dataset.tab;
+      });
+    };
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => selectTab(tab));
+      tab.addEventListener('keydown', (event) => {
+        if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+        event.preventDefault();
+        const nextIndex =
+          event.key === 'ArrowRight'
+            ? (index + 1) % tabs.length
+            : (index - 1 + tabs.length) % tabs.length;
+        tabs[nextIndex].focus();
+        selectTab(tabs[nextIndex]);
+      });
+    });
+  }
+</script>
+
+<style>
+  .pub-course {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .pub-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .pub-tab {
+    flex: 1 1 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.9rem 1.25rem;
+    border-radius: 12px;
+    border: 1px solid var(--border, #334155);
+    background: #1e293b;
+    color: var(--text-muted, #94a3b8);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+  }
+
+  .pub-tab::before {
+    content: '📢';
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+
+  .pub-tab:hover {
+    border-color: var(--primary, #38bdf8);
+    color: var(--text, #f1f5f9);
+  }
+
+  .pub-tab[aria-selected='true'] {
+    border-color: var(--primary, #38bdf8);
+    color: var(--text, #f1f5f9);
+    box-shadow: 0 0 0 1px var(--primary, #38bdf8), 0 0 16px rgba(56, 189, 248, 0.25);
+  }
+
+  .pub-tab:focus-visible {
+    outline: 2px solid var(--primary, #38bdf8);
+    outline-offset: 2px;
+  }
+
+  .pub-panel[hidden] {
+    display: none;
+  }
+
+  .pub-videos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+</style>
+

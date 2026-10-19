@@ -388,7 +388,12 @@ export const siteData: Record<string, LevelData> = {
         title: 'Musique et Jazz',
         description: 'Le swing, le scat et l’improvisation à travers les œuvres et le projet musical.',
       },
-      { slug: 'musique-et-heros', title: 'Musique et Héros' },
+      {
+        slug: 'musique-et-heros',
+        title: 'Musique et Héros',
+        description:
+          'C‘est quoi une musique héroïque ? Pourquoi certains éléments la rendent héroïque ?',
+      },
     ],
   },
   '4eme': {
@@ -407,21 +412,10 @@ export const siteData: Record<string, LevelData> = {
     slug: '3eme',
     sequences: [
       { slug: 'musique-et-engagement', title: 'Musique et Engagement' },
-      { slug: 'musique-et-pub', title: 'Musique et Pub' },
+      { slug: 'musique-et-pub', title: 'Musique et Publicité' },
       { slug: 'musique-et-risques-auditifs', title: 'Musique et Risques Auditifs' },
       { slug: 'musique-et-rap', title: 'Musique et Rap' },
       { slug: 'musique-et-metissage', title: 'Musique et Métissage' },
-    ],
-  },
-  'autres': {
-    title: 'Entraînement',
-    slug: 'autres',
-    sequences: [
-      { slug: 'exercices', title: 'Exercices' },
-      { slug: 'les-instruments', title: 'Les instruments' },
-      { slug: 'notions', title: 'Lecture de notes' },
-      { slug: 'tadaaaaa', title: 'Numérique' },
-      { slug: 'echauffements-vocaux', title: 'Échauffements vocaux' },
     ],
   },
 };

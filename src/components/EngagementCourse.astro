@@ -1,0 +1,402 @@
+---
+import VideoCard from './VideoCard.astro';
+import { relativeUrl } from '../utils/navigation';
+
+interface EngagementVideo {
+  badge: string;
+  title: string;
+  youtubeId: string;
+}
+
+interface EngagementTab {
+  id: string;
+  label: string;
+  videos: EngagementVideo[];
+}
+
+const tabs: EngagementTab[] = [
+  {
+    id: 'sunday-bloody-sunday',
+    label: 'Sunday Bloody Sunday',
+    videos: [
+      { badge: 'Paroles', title: 'Sunday Bloody Sunday — Paroles', youtubeId: 'zhMD7nt1LIg' },
+      { badge: 'Instrumental', title: 'Sunday Bloody Sunday — Instrumental', youtubeId: 'wQSMtpaK2VE' },
+      { badge: 'Reportage', title: 'Sunday Bloody Sunday — Reportage', youtubeId: 'VvrLpTwEwY8' },
+      { badge: 'France Culture', title: 'Sunday Bloody Sunday — France Culture', youtubeId: 'UlpmtSADI7Y' },
+    ],
+  },
+];
+
+const memorialImage = relativeUrl('/musique-engagee/Bloody_Sunday_memorial.jpg');
+---
+
+<div class="engagement-course">
+  <div class="engagement-tabs" role="tablist" aria-label="Musique et Engagement">
+    {tabs.map((tab, index) => (
+      <button
+        type="button"
+        role="tab"
+        id={`engagement-tab-${tab.id}`}
+        class="engagement-tab"
+        aria-controls={`engagement-panel-${tab.id}`}
+        aria-selected={index === 0 ? 'true' : 'false'}
+        tabindex={index === 0 ? 0 : -1}
+        data-tab={tab.id}
+      >
+        {tab.label}
+      </button>
+    ))}
+  </div>
+
+  {tabs.map((tab, index) => (
+    <div
+      role="tabpanel"
+      id={`engagement-panel-${tab.id}`}
+      class="engagement-panel"
+      aria-labelledby={`engagement-tab-${tab.id}`}
+      hidden={index !== 0}
+      data-panel={tab.id}
+    >
+      <div class="engagement-videos">
+        {tab.videos.map((video) => (
+          <VideoCard
+            badge={video.badge}
+            title={video.title}
+            url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+          />
+        ))}
+      </div>
+
+      <div class="engagement-media">
+        <button
+          type="button"
+          class="engagement-thumb"
+          data-lightbox-open
+          aria-label="Agrandir l'image — Mémorial du Bloody Sunday"
+        >
+          <img
+            src={memorialImage}
+            width="1200"
+            height="1600"
+            alt="Mémorial du Bloody Sunday à Derry, avec les noms des victimes gravés dans la pierre"
+            loading="lazy"
+          />
+          <span class="engagement-thumb-badge">Mémorial du Bloody Sunday</span>
+        </button>
+      </div>
+    </div>
+  ))}
+
+  <dialog class="engagement-lightbox" aria-label="Mémorial du Bloody Sunday">
+    <button type="button" class="engagement-lightbox-close" aria-label="Fermer">×</button>
+    <img
+      src={memorialImage}
+      width="1200"
+      height="1600"
+      alt="Mémorial du Bloody Sunday à Derry, avec les noms des victimes gravés dans la pierre"
+    />
+  </dialog>
+</div>
+
+<script>
+  const engagementRoot = document.querySelector<HTMLElement>('.engagement-course');
+
+  if (engagementRoot) {
+    const tabs = engagementRoot.querySelectorAll<HTMLButtonElement>('.engagement-tab');
+
+    const selectTab = (tab: HTMLButtonElement) => {
+      engagementRoot.querySelectorAll<HTMLButtonElement>('.engagement-tab').forEach((item) => {
+        const isActive = item === tab;
+        item.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        item.tabIndex = isActive ? 0 : -1;
+      });
+
+      engagementRoot.querySelectorAll<HTMLElement>('.engagement-panel').forEach((panel) => {
+        panel.hidden = panel.dataset.panel !== tab.dataset.tab;
+      });
+    };
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => selectTab(tab));
+      tab.addEventListener('keydown', (event) => {
+        if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+        event.preventDefault();
+        const nextIndex =
+          event.key === 'ArrowRight'
+            ? (index + 1) % tabs.length
+            : (index - 1 + tabs.length) % tabs.length;
+        tabs[nextIndex].focus();
+        selectTab(tabs[nextIndex]);
+      });
+    });
+
+    const lightbox = engagementRoot.querySelector<HTMLDialogElement>('.engagement-lightbox');
+    const openButton = engagementRoot.querySelector<HTMLButtonElement>('[data-lightbox-open]');
+    const closeButton = lightbox?.querySelector<HTMLButtonElement>('.engagement-lightbox-close');
+
+    if (lightbox && openButton) {
+      openButton.addEventListener('click', () => lightbox.showModal());
+      closeButton?.addEventListener('click', () => lightbox.close());
+      lightbox.addEventListener('click', (event) => {
+        if (event.target === lightbox) lightbox.close();
+      });
+    }
+  }
+</script>
+
+<style>
+  .engagement-course {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .engagement-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .engagement-tab {
+    flex: 1 1 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.9rem 1.25rem;
+    border-radius: 12px;
+    border: 1px solid var(--border, #334155);
+    background: #1e293b;
+    color: var(--text-muted, #94a3b8);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+  }
+
+  .engagement-tab::before {
+    content: '🎸';
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+
+  .engagement-tab:hover {
+    border-color: var(--primary, #38bdf8);
+    color: var(--text, #f1f5f9);
+  }
+
+  .engagement-tab[aria-selected='true'] {
+    border-color: var(--primary, #38bdf8);
+    color: var(--text, #f1f5f9);
+    box-shadow: 0 0 0 1px var(--primary, #38bdf8), 0 0 16px rgba(56, 189, 248, 0.25);
+  }
+
+  .engagement-tab:focus-visible {
+    outline: 2px solid var(--primary, #38bdf8);
+    outline-offset: 2px;
+  }
+
+  .engagement-panel[hidden] {
+    display: none;
+  }
+
+  .engagement-videos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  .engagement-media {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border, #334155);
+    display: flex;
+    justify-content: center;
+  }
+
+  .engagement-thumb {
+    position: relative;
+    display: block;
+    width: 100%;
+    max-width: 260px;
+    padding: 0;
+    background: #0f172a;
+    border: 1px solid var(--border, #334155);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.32);
+    cursor: zoom-in;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .engagement-thumb::before {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    z-index: 1;
+    height: 45%;
+    background: linear-gradient(to top, rgba(15, 23, 42, 0.78), transparent);
+    pointer-events: none;
+  }
+
+  .engagement-thumb::after {
+    content: '🔍';
+    position: absolute;
+    top: 0.55rem;
+    right: 0.55rem;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.8rem;
+    height: 1.8rem;
+    background: rgba(15, 23, 42, 0.78);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 9999px;
+    font-size: 0.85rem;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .engagement-thumb img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    transition: transform 0.25s ease;
+  }
+
+  .engagement-thumb:hover {
+    border-color: var(--primary, #38bdf8);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42), 0 0 0 1px var(--primary, #38bdf8);
+    transform: translateY(-2px);
+  }
+
+  .engagement-thumb:hover img {
+    transform: scale(1.03);
+  }
+
+  .engagement-thumb:active {
+    transform: translateY(0) scale(0.99);
+  }
+
+  .engagement-thumb:focus-visible {
+    outline: 2px solid var(--primary, #38bdf8);
+    outline-offset: 2px;
+  }
+
+  .engagement-thumb-badge {
+    position: absolute;
+    left: 0.55rem;
+    bottom: 0.55rem;
+    z-index: 2;
+    max-width: calc(100% - 1.1rem);
+    padding: 0.3rem 0.55rem;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 9999px;
+    color: #e2e8f0;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: left;
+    backdrop-filter: blur(6px);
+    pointer-events: none;
+  }
+
+  .engagement-lightbox {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    overflow: visible;
+  }
+
+  .engagement-lightbox[open] {
+    animation: engagement-zoom 0.2s ease-out;
+  }
+
+  .engagement-lightbox::backdrop {
+    background: rgba(15, 23, 42, 0.9);
+    backdrop-filter: blur(6px);
+  }
+
+  .engagement-lightbox[open]::backdrop {
+    animation: engagement-fade 0.2s ease-out;
+  }
+
+  .engagement-lightbox img {
+    display: block;
+    width: auto;
+    max-width: min(94vw, 1100px);
+    max-height: 88vh;
+    border-radius: 14px;
+    background: #0f172a;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  }
+
+  .engagement-lightbox-close {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    background: #1e293b;
+    border: 1px solid var(--border, #334155);
+    border-radius: 9999px;
+    color: var(--text, #f1f5f9);
+    font: inherit;
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+
+  .engagement-lightbox-close:hover {
+    border-color: var(--primary, #38bdf8);
+    color: var(--primary, #38bdf8);
+  }
+
+  .engagement-lightbox-close:focus-visible {
+    outline: 2px solid var(--primary, #38bdf8);
+    outline-offset: 2px;
+  }
+
+  @keyframes engagement-zoom {
+    from {
+      opacity: 0;
+      transform: scale(0.94);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes engagement-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .engagement-lightbox[open],
+    .engagement-lightbox[open]::backdrop {
+      animation: none;
+    }
+
+    .engagement-thumb,
+    .engagement-thumb img {
+      transition: none;
+    }
+  }
+</style>
+

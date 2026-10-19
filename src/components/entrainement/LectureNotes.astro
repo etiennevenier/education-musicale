@@ -1,0 +1,892 @@
+---
+// Outil « Lecture de notes » — structure, contenus et logique repris du portail pédagogique d'origine.
+---
+
+<section id="tool-notes">
+  <div class="notes-card">
+    <!-- HEADER -->
+    <header class="notes-header">
+      <a class="hub-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
+        <span aria-hidden="true">←</span>
+        <span class="hub-back-text">Retour à l'entraînement</span>
+        <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
+      </a>
+      <h1>Lecture de Notes</h1>
+      <p>Entraînement progressif pour l'éducation musicale, codé par Monsieur Venier</p>
+    </header>
+
+    <!-- MENU DE SELECTION DES NIVEAUX -->
+    <div id="menu-section" class="notes-menu">
+      <p class="notes-menu-title">Choisis ton niveau (série de 10 notes) :</p>
+      <div class="notes-levels">
+        <button class="level-btn" data-level="1">
+          <span class="level-title">Niveau 1 (Clé de Sol)</span>
+          <span class="level-desc">Do3 au Do4 (portée simple)</span>
+        </button>
+        <button class="level-btn" data-level="2">
+          <span class="level-title">Niveau 1 (Clé de Fa)</span>
+          <span class="level-desc">Do2 au Do3 (portée simple)</span>
+        </button>
+        <button class="level-btn" data-level="3">
+          <span class="level-title">Niveau 2 (Clé de Sol)</span>
+          <span class="level-desc">Avec lignes supplémentaires</span>
+        </button>
+        <button class="level-btn" data-level="4">
+          <span class="level-title">Niveau 2 (Clé de Fa)</span>
+          <span class="level-desc">Avec lignes supplémentaires</span>
+        </button>
+        <button class="level-btn is-eval" data-level="5">
+          <span class="level-title">Niveau 3 (Évaluation Double Clé)</span>
+          <span class="level-desc">Mélange Clé de Sol &amp; Fa (limites Niveau 1)</span>
+        </button>
+        <button class="level-btn is-eval" data-level="6">
+          <span class="level-title">Niveau 4 (Évaluation Double Clé Élargie)</span>
+          <span class="level-desc">Mélange Clé de Sol &amp; Fa (avec lignes suppl.)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- SECTION EXERCICE -->
+    <div id="exercise-section" class="hidden notes-exercise">
+      <div class="notes-status">
+        <span id="level-indicator">Niveau X</span>
+        <span id="progress-indicator">Question 1 / 10</span>
+      </div>
+
+      <!-- Portée musicale SVG grand format -->
+      <div class="notes-staff">
+        <svg id="staff-svg" viewBox="0 0 650 260" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+
+      <!-- Feedback message -->
+      <div id="feedback-msg" class="feedback-msg" aria-live="polite"></div>
+
+      <!-- Boutons de réponses géants -->
+      <div class="notes-answers">
+        <button class="note-btn" data-note="Do">Do</button>
+        <button class="note-btn" data-note="Ré">Ré</button>
+        <button class="note-btn" data-note="Mi">Mi</button>
+        <button class="note-btn" data-note="Fa">Fa</button>
+        <button class="note-btn" data-note="Sol">Sol</button>
+        <button class="note-btn" data-note="La">La</button>
+        <button class="note-btn" data-note="Si">Si</button>
+      </div>
+
+      <div class="notes-back">
+        <button type="button" id="back-to-menu-link">← Choisir un autre niveau</button>
+      </div>
+    </div>
+
+    <!-- SECTION SCORE FINAL -->
+    <div id="score-section" class="hidden notes-score">
+      <h2>Session Terminée !</h2>
+      <p>Voici ton score pour cette série de 10 notes :</p>
+      <div id="final-score">10 / 10</div>
+
+      <div class="notes-score-actions">
+        <button type="button" id="restart-btn">Recommencer ce niveau</button>
+        <button type="button" id="back-to-menu-from-score">Retour au menu des niveaux</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONSEIL PORTRAIT : affiché uniquement sur smartphone en paysage -->
+  <div id="notes-rotate-hint" class="notes-rotate-hint" role="dialog" aria-labelledby="notes-rotate-text">
+    <div class="notes-rotate-card">
+      <p id="notes-rotate-text">
+        📱 Pour un meilleur confort de lecture des notes, nous vous conseillons de repasser votre téléphone en mode portrait.
+      </p>
+      <button type="button" id="notes-rotate-continue" class="notes-rotate-continue">
+        Continuer en paysage
+      </button>
+    </div>
+  </div>
+</section>
+
+<style is:global>
+#tool-notes {
+  width: 100%;
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 12px;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+  color: #0f172a;
+  position: relative;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+#tool-notes .notes-card { width: 100%; min-width: 0; padding: 8px; }
+
+#tool-notes .notes-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+#tool-notes .notes-header > .hub-back {
+  margin-bottom: 1.25rem;
+}
+
+#tool-notes .hub-back-text-short {
+  display: none;
+}
+
+#tool-notes .notes-header h1 {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.9rem, 5vw, 3rem);
+  line-height: 1.1;
+  font-weight: 900;
+  color: #2563eb;
+}
+
+#tool-notes .notes-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+
+#tool-notes .notes-menu-title {
+  margin: 0 0 1.5rem;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #334155;
+}
+
+#tool-notes .notes-levels {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+#tool-notes .level-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-align: left;
+  padding: 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  background: #ffffff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+#tool-notes .level-btn:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+#tool-notes .level-btn.is-eval { background: #f8fafc; }
+
+#tool-notes .level-btn .level-title {
+  color: #2563eb;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+#tool-notes .level-btn.is-eval .level-title { color: #7c3aed; }
+
+#tool-notes .level-btn .level-desc {
+  color: #64748b;
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+#tool-notes .notes-exercise {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+#tool-notes .notes-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  padding: 0.75rem 1rem;
+  background: #f1f5f9;
+  border-radius: 16px;
+  color: #475569;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+#tool-notes #progress-indicator { color: #2563eb; }
+
+#tool-notes .notes-staff {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  max-width: 100%;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 24px;
+  overflow-x: auto;
+  box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.06);
+}
+
+#tool-notes #staff-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: min(650px, 100%);
+  max-height: 48vh;
+}
+
+#tool-notes .feedback-msg {
+  height: 2.25rem;
+  line-height: 2.25rem;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.5rem;
+}
+
+#tool-notes .feedback-msg.correct { color: #059669; }
+#tool-notes .feedback-msg.incorrect { color: #e11d48; }
+#tool-notes .notes-answers {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+#tool-notes .note-btn {
+  padding: 1.25rem 0.25rem;
+  min-height: 56px;
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  color: #334155;
+  font: inherit;
+  font-size: 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.1s ease;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+#tool-notes .note-btn:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+#tool-notes .note-btn:active { transform: scale(0.95); }
+
+#tool-notes .note-btn[data-note="Si"] { grid-column: span 2; }
+
+#tool-notes .notes-back {
+  padding-top: 0.5rem;
+  text-align: center;
+}
+
+#tool-notes #back-to-menu-link {
+  padding: 0.25rem;
+  border: 0;
+  background: none;
+  color: #64748b;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+#tool-notes #back-to-menu-link:hover { color: #1e293b; }
+
+#tool-notes .notes-score {
+  padding: 2rem 0;
+  text-align: center;
+}
+
+#tool-notes .notes-score h2 {
+  margin: 0 0 0.75rem;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 700;
+  color: #1e293b;
+}
+
+#tool-notes .notes-score p {
+  margin: 0;
+  color: #475569;
+  font-size: 1.25rem;
+}
+
+#tool-notes #final-score {
+  margin: 1rem 0;
+  color: #2563eb;
+  font-size: clamp(3rem, 10vw, 4.5rem);
+  font-weight: 900;
+  line-height: 1;
+}
+
+#tool-notes .notes-score-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 28rem;
+  margin: 1.5rem auto 0;
+}
+
+#tool-notes .notes-score-actions button {
+  padding: 1.25rem 1.5rem;
+  border: 0;
+  border-radius: 16px;
+  font: inherit;
+  font-size: 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#tool-notes #restart-btn {
+  background: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 10px 20px -8px rgba(37, 99, 235, 0.6);
+}
+
+#tool-notes #restart-btn:hover { background: #1d4ed8; }
+
+#tool-notes #back-to-menu-from-score {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+#tool-notes #back-to-menu-from-score:hover { background: #e2e8f0; }
+
+@media (min-width: 640px) {
+  #tool-notes { padding: 32px; }
+  #tool-notes .notes-card { padding: 48px; }
+  #tool-notes .notes-levels { grid-template-columns: 1fr 1fr; }
+  #tool-notes .level-btn { padding: 1.5rem; }
+  #tool-notes .level-btn.is-eval { grid-column: span 2; }
+  #tool-notes .notes-staff { padding: 2rem; }
+  #tool-notes #staff-svg { max-height: none; }
+  #tool-notes .notes-answers { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.75rem; }
+  #tool-notes .note-btn[data-note="Si"] { grid-column: span 1; }
+}
+
+/* Mode exercice compact sur smartphone et en paysage bas */
+@media (max-width: 640px), (max-width: 900px) and (orientation: landscape), (max-height: 500px) {
+  #tool-notes { padding: 8px; border-radius: 16px; }
+  #tool-notes .notes-card { padding: 4px; }
+  #tool-notes .notes-header { margin-bottom: 0.75rem; text-align: left; }
+  #tool-notes .notes-header h1,
+  #tool-notes .notes-header p { display: none; }
+  #tool-notes .notes-header > .hub-back { min-height: 40px; margin: 0; padding: 0 12px; font-size: 14px; }
+  #tool-notes .hub-back-text { display: none; }
+  #tool-notes .hub-back-text-short { display: inline; }
+  #tool-notes .notes-menu-title { margin-bottom: 0.5rem; font-size: 1rem; }
+  #tool-notes .notes-levels { gap: 0.75rem; }
+  #tool-notes .level-btn { padding: 10px 14px; }
+  #tool-notes .level-title { font-size: 1.05rem; }
+  #tool-notes .level-desc { font-size: 0.9rem; }
+  #tool-notes .notes-status { padding: 6px 12px; font-size: 0.95rem; border-radius: 12px; }
+  #tool-notes .notes-staff { padding: 4px; border-radius: 16px; }
+  #tool-notes .feedback-msg { height: 1.75rem; line-height: 1.75rem; font-size: 1.1rem; }
+  #tool-notes .notes-answers { gap: 6px; }
+  #tool-notes .note-btn { min-height: 48px; padding: 8px 4px; font-size: 1.05rem; border-radius: 14px; }
+  #tool-notes .notes-score { padding: 1rem 0; }
+  #tool-notes .notes-score-actions button { padding: 1rem; font-size: 1.1rem; }
+}
+
+/* ----- Portrait smartphone : l'outil épouse exactement la hauteur de l'écran ----- */
+@media (max-width: 640px) and (orientation: portrait) {
+  html:has(#tool-notes),
+  body:has(#tool-notes) {
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+
+  body:has(#tool-notes) {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 0.35rem 0.5rem 0.5rem;
+  }
+
+  main.container:has(#tool-notes) {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 0;
+  }
+
+  #tool-notes {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    padding: 6px;
+  }
+
+  #tool-notes .notes-card {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 2px;
+  }
+
+  #tool-notes .notes-header {
+    flex: 0 0 auto;
+    margin-bottom: 0.4rem;
+  }
+
+  #tool-notes #menu-section,
+  #tool-notes #exercise-section,
+  #tool-notes #score-section {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    gap: 0.4rem;
+  }
+
+  #tool-notes .notes-menu-title {
+    flex: 0 0 auto;
+    margin-bottom: 0.35rem;
+  }
+
+  /* Les cartes de niveau se partagent la hauteur restante */
+  #tool-notes .notes-levels {
+    flex: 1 1 auto;
+    min-height: 0;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+
+  #tool-notes .level-btn {
+    justify-content: center;
+    min-height: 0;
+    padding: 6px 10px;
+    overflow: hidden;
+  }
+
+  #tool-notes .level-btn.is-eval { grid-column: span 2; }
+  #tool-notes .level-title { font-size: 0.98rem; line-height: 1.2; }
+  #tool-notes .level-desc { font-size: 0.78rem; line-height: 1.25; }
+
+  #tool-notes #exercise-section { justify-content: space-between; }
+
+  /* La portée absorbe l'espace libre et reste centrée */
+  #tool-notes .notes-staff {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 52dvh;
+    padding: 2px;
+  }
+
+  #tool-notes #staff-svg { max-height: 100%; }
+
+  #tool-notes .notes-status,
+  #tool-notes .feedback-msg,
+  #tool-notes .notes-answers,
+  #tool-notes .notes-back { flex: 0 0 auto; }
+
+  #tool-notes .notes-back { padding-top: 0; }
+
+  #tool-notes #score-section { justify-content: center; gap: 0.75rem; }
+  #tool-notes #score-section.notes-score { padding: 0; }
+}
+
+/* ----- Conseil « repassez en portrait » : smartphone en paysage uniquement ----- */
+#tool-notes .notes-rotate-hint { display: none; }
+
+@media (max-width: 900px) and (orientation: landscape) {
+  #tool-notes .notes-rotate-hint {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.55);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+  }
+
+  #tool-notes .notes-rotate-hint.is-dismissed { display: none; }
+
+  #tool-notes .notes-rotate-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.85rem;
+    width: min(24rem, 100%);
+    padding: 1.1rem 1.25rem;
+    background: #ffffff;
+    border-radius: 18px;
+    color: #0f172a;
+    text-align: center;
+    box-shadow: 0 20px 40px -16px rgba(15, 23, 42, 0.55);
+  }
+
+  #tool-notes .notes-rotate-card p {
+    margin: 0;
+    font-size: 0.98rem;
+    font-weight: 600;
+    line-height: 1.45;
+  }
+
+  #tool-notes .notes-rotate-continue {
+    min-height: 44px;
+    padding: 0 20px;
+    border: 0;
+    border-radius: 9999px;
+    background: #2563eb;
+    color: #ffffff;
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  #tool-notes .notes-rotate-continue:hover { background: #1d4ed8; }
+}
+</style>
+
+<script>
+(function () {
+    'use strict';
+
+    /* ------------------------------------------------------------------
+       Types — Astro compile le contenu des balises <script> en TypeScript.
+    ------------------------------------------------------------------ */
+    type Clef = 'treble' | 'bass';
+    type NoteObj = { name: string; step: number; clef: Clef };
+    type SvgAttrs = Record<string, string | number>;
+
+    const NS = 'http://www.w3.org/2000/svg';
+
+    /* ------------------------------------------------------------------
+       Accès au DOM : vérifié une fois, avec un type précis ensuite.
+    ------------------------------------------------------------------ */
+    function mustElement(selector: string): HTMLElement {
+        const el = document.querySelector(selector);
+        if (!(el instanceof HTMLElement)) throw new Error(`Élément introuvable : ${selector}`);
+        return el;
+    }
+
+    function mustSvg(selector: string): SVGSVGElement {
+        const el = document.querySelector(selector);
+        if (!(el instanceof SVGSVGElement)) throw new Error(`SVG introuvable : ${selector}`);
+        return el;
+    }
+
+    function queryButtons(scope: ParentNode, selector: string): HTMLButtonElement[] {
+        const found: HTMLButtonElement[] = [];
+        scope.querySelectorAll(selector).forEach(el => {
+            if (el instanceof HTMLButtonElement) found.push(el);
+        });
+        return found;
+    }
+
+    let currentLevel = 1;
+    let currentQuestion = 0;
+    let score = 0;
+    let currentNoteObj: NoteObj | null = null;
+    let isWaiting = false;
+
+    function getLevelPool(level: number): NoteObj[] {
+        let pool: NoteObj[] = [];
+        if (level === 1) { // Clé de Sol - Do3 au Do4
+            pool = [
+                {name: 'Do', step: -2, clef: 'treble'},
+                {name: 'Ré', step: -1, clef: 'treble'},
+                {name: 'Mi', step: 0, clef: 'treble'},
+                {name: 'Fa', step: 1, clef: 'treble'},
+                {name: 'Sol', step: 2, clef: 'treble'},
+                {name: 'La', step: 3, clef: 'treble'},
+                {name: 'Si', step: 4, clef: 'treble'},
+                {name: 'Do', step: 5, clef: 'treble'}
+            ];
+        } else if (level === 2) { // Clé de Fa - Do2 au Do3
+            pool = [
+                {name: 'Do', step: 3, clef: 'bass'},
+                {name: 'Ré', step: 4, clef: 'bass'},
+                {name: 'Mi', step: 5, clef: 'bass'},
+                {name: 'Fa', step: 6, clef: 'bass'},
+                {name: 'Sol', step: 7, clef: 'bass'},
+                {name: 'La', step: 8, clef: 'bass'},
+                {name: 'Si', step: 9, clef: 'bass'},
+                {name: 'Do', step: 10, clef: 'bass'}
+            ];
+        } else if (level === 3) { // Niveau 2 Clé de Sol (Lignes supp)
+            pool = [
+                {name: 'La', step: -4, clef: 'treble'},
+                {name: 'Si', step: -3, clef: 'treble'},
+                {name: 'Do', step: -2, clef: 'treble'},
+                {name: 'Ré', step: -1, clef: 'treble'},
+                {name: 'Mi', step: 0, clef: 'treble'},
+                {name: 'Fa', step: 1, clef: 'treble'},
+                {name: 'Sol', step: 2, clef: 'treble'},
+                {name: 'La', step: 3, clef: 'treble'},
+                {name: 'Si', step: 4, clef: 'treble'},
+                {name: 'Do', step: 5, clef: 'treble'},
+                {name: 'Ré', step: 6, clef: 'treble'},
+                {name: 'Mi', step: 7, clef: 'treble'},
+                {name: 'Fa', step: 8, clef: 'treble'},
+                {name: 'Sol', step: 9, clef: 'treble'},
+                {name: 'La', step: 10, clef: 'treble'},
+                {name: 'Si', step: 11, clef: 'treble'},
+                {name: 'Do', step: 12, clef: 'treble'}
+            ];
+        } else if (level === 4) { // Niveau 2 Clé de Fa (Lignes supp)
+            pool = [
+                {name: 'Do', step: -4, clef: 'bass'},
+                {name: 'Ré', step: -3, clef: 'bass'},
+                {name: 'Mi', step: -2, clef: 'bass'},
+                {name: 'Fa', step: -1, clef: 'bass'},
+                {name: 'Sol', step: 0, clef: 'bass'},
+                {name: 'La', step: 1, clef: 'bass'},
+                {name: 'Si', step: 2, clef: 'bass'},
+                {name: 'Do', step: 3, clef: 'bass'},
+                {name: 'Ré', step: 4, clef: 'bass'},
+                {name: 'Mi', step: 5, clef: 'bass'},
+                {name: 'Fa', step: 6, clef: 'bass'},
+                {name: 'Sol', step: 7, clef: 'bass'},
+                {name: 'La', step: 8, clef: 'bass'},
+                {name: 'Si', step: 9, clef: 'bass'},
+                {name: 'Do', step: 10, clef: 'bass'},
+                {name: 'Ré', step: 11, clef: 'bass'},
+                {name: 'Mi', step: 12, clef: 'bass'}
+            ];
+        } else if (level === 5) {
+            pool = [...getLevelPool(1), ...getLevelPool(2)];
+        } else if (level === 6) {
+            // Double clé élargie : le Do central (sol: step -2 / fa: step 10) sert de frontière
+            // entre les deux portées -> on retire les notes qui empiéteraient sur l'autre portée.
+            pool = [
+                ...getLevelPool(3).filter(n => n.step >= -2),   // sol : pas de Si/La graves
+                ...getLevelPool(4).filter(n => n.step <= 10)    // fa : pas de Ré/Mi aigus
+            ];
+        }
+        return pool;
+    }
+
+    function startLevel(lvl: number): void {
+        currentLevel = lvl;
+        currentQuestion = 0;
+        score = 0;
+        
+        mustElement('#menu-section').classList.add('hidden');
+        mustElement('#score-section').classList.add('hidden');
+        mustElement('#exercise-section').classList.remove('hidden');
+
+        const titles: Record<number, string> = {
+            1: "Niveau 1 — Clé de Sol",
+            2: "Niveau 1 — Clé de Fa",
+            3: "Niveau 2 — Clé de Sol (Lignes supp.)",
+            4: "Niveau 2 — Clé de Fa (Lignes supp.)",
+            5: "Niveau 3 — Évaluation (Double Clé)",
+            6: "Niveau 4 — Évaluation (Double Clé élargie)"
+        };
+        mustElement('#level-indicator').innerText = titles[lvl];
+
+        nextQuestion();
+    }
+
+    function nextQuestion(): void {
+        if (currentQuestion >= 10) {
+            endGame();
+            return;
+        }
+        currentQuestion++;
+        mustElement('#progress-indicator').innerText = `Question ${currentQuestion} / 10`;
+        mustElement('#feedback-msg').innerText = '';
+        isWaiting = false;
+
+        const pool = getLevelPool(currentLevel);
+        let nextNoteObj: NoteObj;
+        
+        // Tire au sort tant que la note est identique à la précédente (si le pool a plus d'1 note)
+        do {
+            const randomIndex = Math.floor(Math.random() * pool.length);
+            nextNoteObj = pool[randomIndex];
+        } while (pool.length > 1 && currentNoteObj && nextNoteObj.name === currentNoteObj.name && nextNoteObj.step === currentNoteObj.step);
+
+        currentNoteObj = nextNoteObj;
+        drawStaff(nextNoteObj);
+    }
+
+    function drawStaff(noteObj: NoteObj): void {
+        const svg = mustSvg('#staff-svg');
+        svg.innerHTML = '';
+
+        const STEP = 11;                                   // demi-écart entre deux lignes (écart = 22)
+        const isDouble = (currentLevel === 5 || currentLevel === 6);
+        const isBass = noteObj.clef === 'bass';
+        const INK = '#334155';
+
+        // === Réglage des clés ===
+        // size = font-size ; dy = distance entre la ligne de repère et la ligne de base du texte
+        const CLEF: Record<Clef, { char: string; size: number; dy: number }> = {
+            treble: { char: '𝄞', size: 205, dy: 40 },
+            bass:   { char: '𝄢', size: 116, dy: 51 }
+        };
+
+        const el = (name: string, attrs: SvgAttrs): SVGElement => {
+            const e = document.createElementNS(NS, name);
+            if (!(e instanceof SVGElement)) throw new Error(`Élément SVG invalide : ${name}`);
+            for (const k in attrs) e.setAttribute(k, String(attrs[k]));
+            return e;
+        };
+
+        const drawLines = (lines: number[], x1: number, x2: number): void => lines.forEach(y =>
+            svg.appendChild(el('line', { x1, y1: y, x2, y2: y, stroke: INK, 'stroke-width': 2.5 })));
+
+        const drawClef = (type: Clef, x: number, lines: number[]): void => {
+            const c = CLEF[type];
+            const refLine = (type === 'treble') ? lines[3] : lines[1];   // lignes classées de haut en bas
+            const t = el('text', { x, y: refLine + c.dy, 'font-family': 'serif', 'font-size': c.size, fill: '#1e293b' });
+            t.textContent = c.char;
+            svg.appendChild(t);
+        };
+
+        // === Mise en page : portée simple ou double portée fixe ===
+        let activeLines: number[];
+        if (isDouble) {
+            // Écart (en px) entre la 1re ligne du bas de la clé de sol et la 5e ligne (haut) de la clé de fa
+            const STAFF_GAP = 110;
+            const trebleLines = [56, 78, 100, 122, 144];
+            const bassTop = trebleLines[4] + STAFF_GAP;                       // 254
+            const bassLines = [0, 1, 2, 3, 4].map(i => bassTop + i * 22);      // 254 → 342
+            const topY = trebleLines[0];
+            const botY = bassLines[4];
+            const VB_H = botY + 68;                                            // marge pour les notes/lignes supp. sous la portée de fa
+            svg.setAttribute('viewBox', `10 0 610 ${VB_H}`);
+            const X1 = 70;
+            drawLines(trebleLines, X1, 590);
+            drawLines(bassLines, X1, 590);
+
+            // Barre de liaison + accolade à gauche (hauteur adaptée à l'écart)
+            const k = (botY - topY) / 242;                                      // facteur d'échelle vs. l'ancienne accolade (56 → 298)
+            const by = (v: number): number => +(topY + (v - 56) * k).toFixed(1);                // convertit l'ancienne coordonnée y
+            svg.appendChild(el('line', { x1: X1, y1: topY, x2: X1, y2: botY, stroke: INK, 'stroke-width': 3 }));
+            svg.appendChild(el('path', {
+                d: `M 68 ${by(56)} C 54 ${by(62)} 54 ${by(92)} 54 ${by(120)} C 54 ${by(144)} 46 ${by(168)} 34 ${by(177)} C 46 ${by(186)} 54 ${by(210)} 54 ${by(234)} C 54 ${by(262)} 54 ${by(292)} 68 ${by(298)}`,
+                fill: 'none', stroke: INK, 'stroke-width': 3, 'stroke-linecap': 'round'
+            }));
+
+            drawClef('treble', 86, trebleLines);
+            drawClef('bass', 86, bassLines);
+            activeLines = isBass ? bassLines : trebleLines;
+        } else {
+            svg.setAttribute('viewBox', '30 0 590 260');
+            const lines = [80, 102, 124, 146, 168];
+            drawLines(lines, 60, 590);
+            drawClef(isBass ? 'bass' : 'treble', 78, lines);
+            activeLines = lines;
+        }
+
+        // === Note ===
+        const baseLineY = activeLines[4];                  // ligne du bas de la portée concernée
+        const noteX = 350;
+        const noteY = baseLineY - (noteObj.step * STEP);
+
+        // Lignes supplémentaires
+        const ledger = (y: number): void => { svg.appendChild(el('line', {
+            x1: noteX - 22, y1: y, x2: noteX + 22, y2: y, stroke: INK, 'stroke-width': 2.5
+        })); };
+
+        if (noteObj.step <= -2) {
+            for (let s = -2; s >= noteObj.step; s -= 2) ledger(baseLineY - s * STEP);
+        } else if (noteObj.step >= 10) {
+            for (let s = 10; s <= noteObj.step; s += 2) ledger(baseLineY - s * STEP);
+        }
+
+        // Tête de note
+        svg.appendChild(el('ellipse', { cx: noteX, cy: noteY, rx: 12, ry: 9, fill: '#0f172a' }));
+
+        // Queue de note
+        const stem = (noteObj.step <= 4)
+            ? { x1: noteX + 11, y1: noteY, x2: noteX + 11, y2: noteY - 55 }
+            : { x1: noteX - 11, y1: noteY, x2: noteX - 11, y2: noteY + 55 };
+        svg.appendChild(el('line', { ...stem, stroke: '#0f172a', 'stroke-width': 2.5 }));
+    }
+
+    function checkAnswer(selectedNote: string | null): void {
+        if (isWaiting || !currentNoteObj) return;
+        isWaiting = true;
+
+        const feedbackEl = mustElement('#feedback-msg');
+
+        if (selectedNote === currentNoteObj.name) {
+            score++;
+            feedbackEl.textContent = "Correct ! 🎉";
+            feedbackEl.className = "feedback-msg correct";
+        } else {
+            feedbackEl.textContent = `Incorrect. C'était ${currentNoteObj.name}.`;
+            feedbackEl.className = "feedback-msg incorrect";
+        }
+
+        setTimeout(() => {
+            nextQuestion();
+        }, 500);
+    }
+
+    function endGame(): void {
+        mustElement('#exercise-section').classList.add('hidden');
+        mustElement('#score-section').classList.remove('hidden');
+        mustElement('#final-score').innerText = `${score} / 10`;
+    }
+
+    function returnToNotesMenu(): void {
+        mustElement('#exercise-section').classList.add('hidden');
+        mustElement('#score-section').classList.add('hidden');
+        mustElement('#menu-section').classList.remove('hidden');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        queryButtons(document, '.level-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const lvl = parseInt(btn.getAttribute('data-level') ?? '', 10);
+                startLevel(lvl);
+            });
+        });
+
+        queryButtons(document, '.note-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                checkAnswer(btn.getAttribute('data-note'));
+            });
+        });
+
+        const backLink = document.querySelector('#back-to-menu-link');
+        if (backLink) backLink.addEventListener('click', returnToNotesMenu);
+
+        const backScoreLink = document.querySelector('#back-to-menu-from-score');
+        if (backScoreLink) backScoreLink.addEventListener('click', returnToNotesMenu);
+
+        const restartBtn = document.querySelector('#restart-btn');
+        if (restartBtn) restartBtn.addEventListener('click', () => startLevel(currentLevel));
+
+        const rotateHint = document.querySelector('#notes-rotate-hint');
+        if (rotateHint instanceof HTMLElement) {
+            const dismissRotateHint = (): void => {
+                rotateHint.classList.add('is-dismissed');
+            };
+            const rotateContinue = document.querySelector('#notes-rotate-continue');
+            if (rotateContinue) rotateContinue.addEventListener('click', dismissRotateHint);
+            rotateHint.addEventListener('click', (event: MouseEvent) => {
+                if (event.target === rotateHint) dismissRotateHint();
+            });
+        }
+    }); 
+})();
+</script>

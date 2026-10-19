@@ -1,0 +1,1459 @@
+---
+// Outil « Lecture rythmique » — repris intégralement du portail pédagogique d'origine.
+---
+
+<div id="tool-rhythm">
+  <div class="app">
+    <header>
+        <h1>Lecture rythmique : tape le rythme</h1>
+        <p class="lead">Écoute la mesure d'introduction, puis tape le rythme écrit avec la barre d'espace.</p>
+        <p class="lead">Education Musicale - Monsieur Venier</p>
+    </header>
+
+    <section class="controls" aria-label="Réglages">
+        <a class="hub-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
+            <span aria-hidden="true">←</span>
+            <span class="hub-back-text">Retour à l'entraînement</span>
+            <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
+        </a>
+        <button class="btn" id="rt-btnGenerate">Générer un nouveau rythme</button>
+
+        <label class="field">Chiffrage
+            <select id="rt-ts">
+                <option value="4" selected>4 TEMPS</option>
+                <option value="3">3 TEMPS</option>
+            </select>
+        </label>
+
+        <label class="field">Longueur
+            <select id="rt-measures">
+                <option value="2" selected>2 mesures</option>
+                <option value="4">4 mesures</option>
+            </select>
+        </label>
+
+        <label class="field">Niveau
+            <select id="rt-level">
+                <option value="1" selected>Niveau 1 : noire et soupir</option>
+                <option value="2">Niveau 2 : + blanche</option>
+                <option value="3">Niveau 3 : + 2 croches</option>
+                <option value="4">Niveau 4 : + croche seule et demi-soupir</option>
+            </select>
+        </label>
+
+        <label class="field tempo">
+            <span>Tempo : <span class="tempo-value" id="rt-bpmLabel">80 BPM</span></span>
+            <input type="range" id="rt-bpm" min="40" max="160" step="1" value="80">
+        </label>
+
+        <button class="btn primary" id="rt-btnStart">Démarrer l'exercice</button>
+    </section>
+
+    <section class="status" id="rt-status" aria-live="polite">
+        <div class="phase" id="rt-phase">Prêt ?<small>Clique sur « Démarrer l'exercice ».</small></div>
+        <div class="beats" id="rt-beats" aria-hidden="true"></div>
+    </section>
+
+    <div class="sheet">
+        <svg id="rt-board" viewBox="0 0 1060 275" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Rythme à reproduire">
+            <rect id="rt-hl" visibility="hidden" rx="12" ry="12" fill="#1f9d62" fill-opacity="0.10" stroke="#1f9d62" stroke-width="2.5"/>
+            <g id="rt-gStatic"></g>
+            <g id="rt-gNotes"></g>
+            <g id="rt-gResults"></g>
+        </svg>
+    </div>
+
+    <p class="rt-scroll-hint" aria-hidden="true">↔ Fais glisser la partition pour voir toutes les mesures</p>
+
+    <button class="tap-btn" id="rt-btnTap">TAPER<small>ou appuie sur la barre d'espace</small></button>
+
+    <section class="result" id="rt-result" hidden>
+        <div class="score" id="rt-score"></div>
+        <div>
+            <div class="verdict" id="rt-verdict"></div>
+            <div class="chips" id="rt-chips"></div>
+        </div>
+    </section>
+
+    <section class="replay" id="rt-replay" hidden aria-label="Réécoute">
+        <span class="replay-title">Réécouter</span>
+        <button class="btn" id="rt-btnPlayQ">▶ Jouer la question</button>
+        <button class="btn" id="rt-btnPlayA">▶ Jouer ma réponse</button>
+    </section>
+
+    <div class="legend">
+        <span><i style="background:var(--green)"></i>Parfait : à ±50 ms</span>
+        <span><i style="background:var(--orange)"></i>Correct : à ±100 ms</span>
+        <span><i style="background:var(--red)"></i>Raté : trop tôt, trop tard ou manqué</span>
+    </div>
+  </div>
+</div>
+
+<style is:global>
+#tool-rhythm {
+  width: 100%;
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 12px;
+  background: #eef2fb;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+  position: relative;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+@media (min-width: 640px) {
+  #tool-rhythm { padding: 32px; }
+}
+#tool-rhythm {
+        --desk: #eef2fb;
+        --paper: #fbfcff;
+        --ink: #1b2a8a;
+        --text: #1f2a44;
+        --muted: #5d6b8a;
+        --line: #cfd9ef;
+        --blue: #2c4fd6;
+        --blue-soft: #e4ebff;
+        --green: #1f9d62;
+        --orange: #e8890c;
+        --red: #d9382f;
+    }
+#tool-rhythm .app { width: 100%; max-width: min(1040px, 100%); min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+#tool-rhythm h1 { margin: 0; font-size: clamp(22px, 4vw, 30px); font-weight: 800; letter-spacing: -0.01em; }
+#tool-rhythm .lead { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
+#tool-rhythm .controls {
+        background: #fff;
+        border: 2px solid var(--line);
+        border-radius: 16px;
+        padding: 14px 16px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 14px 22px;
+        max-width: 100%;
+    }
+/* Lien de retour intégré à la barre de commandes (pas de bandeau séparé) */
+#tool-rhythm .controls > .hub-back {
+        margin: 0;
+        min-height: 40px;
+        padding: 0 14px;
+        font-size: 14px;
+        flex: 0 0 auto;
+    }
+#tool-rhythm .hub-back-text-short { display: none; }
+#tool-rhythm .field { display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: var(--muted); font-weight: 600; }
+#tool-rhythm .field.tempo { min-width: 200px; flex: 1 1 200px; }
+#tool-rhythm .field input[type="range"] { width: 100%; accent-color: var(--blue); }
+#tool-rhythm .tempo-value { color: var(--text); font-weight: 800; font-size: 16px; }
+#tool-rhythm select {
+        font: inherit; font-size: 15px; font-weight: 600; color: var(--text);
+        background: #fff; border: 2px solid #b9c7e6; border-radius: 10px; padding: 7px 10px;
+    }
+#tool-rhythm select:disabled,
+#tool-rhythm input:disabled { opacity: 0.5; }
+#tool-rhythm .check { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); font-weight: 600; cursor: pointer; user-select: none; }
+#tool-rhythm .check input { width: 18px; height: 18px; accent-color: var(--blue); }
+#tool-rhythm .btn {
+        font: inherit; font-weight: 700; font-size: 15px; cursor: pointer;
+        border-radius: 999px; padding: 10px 20px;
+        color: var(--blue); background: #fff; border: 2px solid #b9c7e6;
+    }
+#tool-rhythm .btn:hover:not(:disabled) { background: var(--blue-soft); }
+#tool-rhythm .btn:disabled { opacity: 0.4; cursor: default; }
+#tool-rhythm .btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; font-size: 16px; padding: 11px 26px; }
+#tool-rhythm .btn.primary:hover:not(:disabled) { background: #2442b8; }
+#tool-rhythm .btn.primary.running { background: var(--red); border-color: var(--red); }
+#tool-rhythm .status {
+        display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+        background: #fff; border: 2px solid var(--line); border-left: 8px solid var(--blue);
+        border-radius: 14px; padding: 12px 18px; min-height: 76px;
+    }
+#tool-rhythm .status.intro { border-left-color: var(--orange); }
+#tool-rhythm .status.rec { border-left-color: var(--green); }
+#tool-rhythm .phase { font-size: 19px; font-weight: 800; }
+#tool-rhythm .phase small { display: block; font-size: 14px; font-weight: 600; color: var(--muted); margin-top: 2px; }
+#tool-rhythm .beats { display: flex; align-items: center; gap: 12px; }
+#tool-rhythm .beat-dot {
+        width: 34px; height: 34px; border-radius: 50%;
+        border: 3px solid #b9c7e6; background: #fff;
+        display: grid; place-items: center; font-weight: 800; font-size: 15px; color: var(--muted);
+        transition: transform .08s;
+    }
+#tool-rhythm .status.intro .beat-dot.on { background: var(--orange); border-color: var(--orange); color: #fff; transform: scale(1.25); }
+#tool-rhythm .status.rec .beat-dot.on { background: var(--green); border-color: var(--green); color: #fff; transform: scale(1.25); }
+#tool-rhythm .status.replay .beat-dot.on { background: var(--blue); border-color: var(--blue); color: #fff; transform: scale(1.25); }
+#tool-rhythm .sheet {
+        background: var(--paper); border: 2px solid var(--line); border-radius: 16px;
+        max-width: 100%;
+        overflow-x: auto; box-shadow: 0 8px 22px rgba(44, 79, 214, 0.08);
+    }
+#tool-rhythm #rt-board { display: block; width: 100%; min-width: 780px; height: auto; }
+#tool-rhythm .tap-btn {
+        width: 100%; border: 0; border-radius: 20px;
+        background: linear-gradient(180deg, #3a5ce8, #2c4fd6);
+        color: #fff; font: inherit; font-size: 26px; font-weight: 800;
+        padding: 26px 16px 22px; cursor: pointer;
+        box-shadow: 0 6px 0 #1f3aa6, 0 12px 24px rgba(44, 79, 214, 0.25);
+        touch-action: manipulation; user-select: none; -webkit-user-select: none;
+        transition: transform .05s, box-shadow .05s;
+    }
+#tool-rhythm .tap-btn small { display: block; font-size: 14px; font-weight: 600; opacity: 0.85; margin-top: 4px; }
+#tool-rhythm .tap-btn.hit { transform: translateY(5px); box-shadow: 0 1px 0 #1f3aa6, 0 4px 10px rgba(44, 79, 214, 0.25); }
+#tool-rhythm .result {
+        background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 16px 20px;
+        display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px;
+    }
+#tool-rhythm .result[hidden],
+#tool-rhythm .replay[hidden] { display: none; }
+#tool-rhythm .score { font-size: 44px; font-weight: 800; line-height: 1; }
+#tool-rhythm .score small { display: block; font-size: 15px; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
+#tool-rhythm .verdict { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+#tool-rhythm .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+#tool-rhythm .chip { font-size: 14px; font-weight: 700; padding: 4px 12px; border-radius: 999px; color: #fff; }
+#tool-rhythm .chip.green { background: var(--green); }
+#tool-rhythm .chip.orange { background: var(--orange); }
+#tool-rhythm .chip.red { background: var(--red); }
+#tool-rhythm .chip.gray { background: #7a879f; }
+#tool-rhythm .replay {
+        background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 14px 20px;
+        display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px;
+    }
+#tool-rhythm .replay-title { font-size: 16px; font-weight: 800; margin-right: 6px; }
+#tool-rhythm .replay .btn { font-size: 16px; padding: 11px 22px; }
+#tool-rhythm .replay .btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+#tool-rhythm .legend { display: flex; flex-wrap: wrap; gap: 8px 22px; justify-content: center; font-size: 14px; color: var(--muted); font-weight: 600; }
+#tool-rhythm .legend span { display: inline-flex; align-items: center; gap: 7px; }
+#tool-rhythm .legend i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+#tool-rhythm :focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+#tool-rhythm .beat-dot,
+#tool-rhythm .tap-btn { transition: none; }
+}
+
+#tool-rhythm {font-family: ui-rounded, "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text);}
+        #tool-rhythm .app { min-width: 0; }
+        #tool-rhythm .controls { padding: 12px; }
+        #tool-rhythm .field.tempo { min-width: min(200px, 100%); }
+        #tool-rhythm select { min-height: 48px; font-size: 16px; }            /* 16 px : évite le zoom automatique d'iOS au focus */
+        #tool-rhythm .field input[type="range"] { height: 48px; margin: 0; }
+        #tool-rhythm .check { min-height: 48px; }
+        #tool-rhythm .check input { width: 24px; height: 24px; }
+        #tool-rhythm .btn { min-height: 48px; }
+        #tool-rhythm .sheet { overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+        #tool-rhythm .tap-btn { min-height: 120px; touch-action: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+        #tool-rhythm .rt-scroll-hint { display: none; margin: -6px 0 0; text-align: center; font-size: 13px; color: var(--muted); font-weight: 600; }
+        @media (max-width: 820px) { #tool-rhythm .rt-scroll-hint { display: block; } }
+        @media (hover: none) and (pointer: coarse) { #tool-rhythm .tap-btn small { display: none; } }   /* « barre d'espace » n'a pas de sens au doigt */
+        @media (max-width: 640px) {
+            /* Barre de commandes compacte : le retour reste sur la même ligne */
+            #tool-rhythm .app { gap: 10px; }
+            #tool-rhythm header h1 { font-size: 18px; }
+            #tool-rhythm .lead { font-size: 13px; }
+            #tool-rhythm .lead + .lead { display: none; }   /* signature redondante sur petit écran */
+
+            #tool-rhythm .controls { gap: 6px 8px; padding: 8px; border-radius: 12px; }
+            #tool-rhythm .controls > .hub-back {
+                min-height: 40px;
+                padding: 0 10px;
+                font-size: 14px;
+            }
+            #tool-rhythm .hub-back-text { display: none; }
+            #tool-rhythm .hub-back-text-short { display: inline; }
+
+            #tool-rhythm .controls > .btn {
+                width: auto;
+                flex: 1 1 auto;
+                min-height: 40px;
+                padding: 6px 12px;
+                font-size: 14px;
+            }
+            #tool-rhythm .controls .field { flex: 1 1 30%; min-width: 0; font-size: 12px; }
+            #tool-rhythm .controls .field.tempo { flex: 1 1 100%; }
+            #tool-rhythm .controls select { width: 100%; min-height: 40px; padding: 4px 8px; }
+            #tool-rhythm .field input[type="range"] { height: 40px; }
+
+            #tool-rhythm .status { padding: 8px 10px; min-height: 0; gap: 8px; }
+            #tool-rhythm .phase { font-size: 15px; }
+            #tool-rhythm .phase small { font-size: 12px; }
+            #tool-rhythm .beat-dot { width: 28px; height: 28px; font-size: 12px; }
+            #tool-rhythm .tap-btn { min-height: 96px; padding: 16px 12px 14px; font-size: 22px; }
+            #tool-rhythm .tap-btn small { font-size: 12px; }
+            #tool-rhythm .result, #tool-rhythm .replay { padding: 10px; }
+            #tool-rhythm .replay .btn { flex: 1 1 100%; }
+            #tool-rhythm .score { font-size: 32px; }
+            #tool-rhythm .legend { display: none; }
+        }
+        /* Très petits écrans : on conserve le libellé « Entraînement », resserré */
+        @media (max-width: 400px) {
+            #tool-rhythm .controls > .hub-back {
+                min-width: 0;
+                padding: 0 9px;
+                font-size: 13px;
+            }
+        }
+        /* ----- Lecture rythmique : portrait tactile → demander le paysage ----- */
+        @media (pointer: coarse) and (orientation: portrait) {
+            #tool-rhythm:not(.hidden) {
+                position: relative;
+                min-height: 100dvh;
+                height: 100dvh;
+                overflow: hidden;
+            }
+            #tool-rhythm:not(.hidden) > .app {
+                visibility: hidden;
+                pointer-events: none;
+            }
+            #tool-rhythm:not(.hidden)::before {
+                content: "📱🔄";
+                position: absolute;
+                inset: 0;
+                z-index: 40;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding-bottom: 4.5rem;
+                font-size: 3.25rem;
+                line-height: 1;
+                background: rgba(238, 242, 251, 0.97);
+                pointer-events: none;
+            }
+            #tool-rhythm:not(.hidden)::after {
+                content: "Veuillez tourner votre appareil en mode paysage pour un confort optimal";
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                z-index: 41;
+                width: min(22rem, 86%);
+                margin-top: 2.4rem;
+                transform: translate(-50%, 0);
+                text-align: center;
+                font-weight: 800;
+                font-size: 1.05rem;
+                line-height: 1.45;
+                color: #1f2a44;
+                pointer-events: none;
+            }
+        }
+
+        /* ----- Lecture rythmique : paysage bas → tout tient sans scroll vertical ----- */
+        /* pointer: coarse : n'affecte pas l'affichage ordinateur (souris). */
+        @media (pointer: coarse) and (orientation: landscape) and (max-height: 550px) {
+            html:has(#tool-rhythm:not(.hidden)),
+            body:has(#tool-rhythm:not(.hidden)) {
+                height: 100dvh;
+                max-height: 100dvh;
+                overflow: hidden;
+            }
+            body:has(#tool-rhythm:not(.hidden)) {
+                padding: 0;
+                margin: 0;
+                justify-content: stretch;
+                align-items: stretch;
+            }
+
+            #tool-rhythm:not(.hidden) {
+                height: 100vh;
+                height: 100dvh;
+                max-height: 100dvh;
+                width: 100%;
+                max-width: none;
+                margin: 0;
+                padding: 0;
+                border-radius: 0;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+                overflow: hidden;
+                gap: 0;
+            }
+
+            /* Le retour fait partie de la barre : compact et libellé court */
+            #tool-rhythm .controls > .hub-back {
+                min-height: 32px;
+                padding: 0 8px;
+                font-size: 12px;
+            }
+            #tool-rhythm .hub-back-text { display: none; }
+            #tool-rhythm .hub-back-text-short { display: inline; }
+
+            #tool-rhythm .app {
+                flex: 1 1 auto;
+                min-height: 0;
+                width: 100%;
+                max-width: none;
+                padding: 0;
+                gap: 0;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+                overflow: hidden;
+            }
+
+            #tool-rhythm header { display: none; }
+
+            #tool-rhythm .controls {
+                flex-shrink: 0;
+                flex-wrap: nowrap;
+                align-items: center;
+                gap: 8px 12px;
+                margin: 0;
+                padding: 2px 8px;
+                border: 0;
+                border-bottom: 1px solid var(--line);
+                border-radius: 0;
+                overflow-x: auto;
+                overflow-y: hidden;
+                white-space: nowrap;
+                -webkit-overflow-scrolling: touch;
+                touch-action: pan-x;
+            }
+            #tool-rhythm label.field:has(#rt-ts),
+            #tool-rhythm label.field:has(#rt-measures),
+            #tool-rhythm label.check { display: none !important; }
+
+            /* Tempo masqué pour faire de la place */
+            #tool-rhythm .field.tempo { display: none !important; }
+
+            /* Niveau (1 à 4) réaffiché dans la barre du haut */
+            #tool-rhythm label.field:has(#rt-level) {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                flex: 0 0 auto;
+                min-width: 0;
+                gap: 0;
+                font-size: 0;            /* masque le mot « Niveau » : il figure déjà dans chaque option */
+            }
+            #tool-rhythm #rt-level {
+                font-size: 16px;         /* 16 px minimum : évite le zoom automatique d'iOS */
+                height: 32px;
+                min-height: 32px;
+                padding: 0 8px;
+                width: 10.5rem;
+                max-width: 10.5rem;
+                text-overflow: ellipsis;
+            }
+
+            /* Bouton « Générer un nouveau rythme » : visible et compact dans la barre du haut */
+            #tool-rhythm #rt-btnGenerate {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                flex: 0 0 auto;
+                width: auto;
+                min-height: 32px;
+                padding: 4px 14px;
+                font-size: 13px;
+                white-space: nowrap;
+            }
+
+            #tool-rhythm .btn.primary {
+                min-height: 32px;
+                padding: 4px 14px;
+                font-size: 13px;
+                flex: 0 0 auto;
+                margin-left: auto;
+            }
+
+            #tool-rhythm .status {
+                flex-shrink: 0;
+                min-height: 0;
+                margin: 0;
+                padding: 2px 10px;
+                gap: 8px;
+                justify-content: space-between;
+                align-items: center;
+                background: transparent;
+                border: 0;
+                border-radius: 0;
+            }
+            #tool-rhythm .status::before {
+                content: "👉 Tapote directement sur la partition pour saisir ton rythme";
+                font-size: 12px;
+                font-weight: 700;
+                color: var(--muted);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                flex: 1 1 auto;
+                min-width: 0;
+            }
+            #tool-rhythm .phase { display: none; }
+            #tool-rhythm .beats { gap: 6px; flex-shrink: 0; }
+            #tool-rhythm .beat-dot {
+                width: 18px;
+                height: 18px;
+                font-size: 10px;
+                border-width: 2px;
+            }
+
+            #tool-rhythm .sheet {
+                flex: 1 1 auto;
+                min-height: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                border: 0;
+                border-radius: 0;
+                box-shadow: none;
+                display: flex;
+                align-items: stretch;
+                justify-content: stretch;
+                overflow: hidden;
+                cursor: pointer;
+                touch-action: manipulation;
+                -webkit-user-select: none;
+                user-select: none;
+                -webkit-tap-highlight-color: transparent;
+            }
+            #tool-rhythm .sheet:active {
+                background: #eef3ff;
+            }
+            #tool-rhythm #rt-board {
+                display: block;
+                flex: 1 1 auto;
+                min-width: 0;
+                min-height: 0;
+                width: 100%;
+                height: 100%;
+                max-width: none;
+                max-height: none;
+                margin: 0;
+                padding: 0;
+            }
+            #tool-rhythm .rt-scroll-hint,
+            #tool-rhythm .tap-btn { display: none; }
+
+            #tool-rhythm .legend { display: none; }
+            #tool-rhythm .result,
+            #tool-rhythm .replay {
+                flex-shrink: 0;
+                padding: 4px 10px;
+                gap: 6px 12px;
+                border-radius: 10px;
+            }
+            #tool-rhythm .score { font-size: 22px; }
+            #tool-rhythm .score small { font-size: 11px; margin-bottom: 0; }
+            #tool-rhythm .verdict { font-size: 13px; margin-bottom: 2px; }
+            #tool-rhythm .replay .btn {
+                min-height: 32px;
+                padding: 4px 10px;
+                flex: 0 1 auto;
+            }
+            #tool-rhythm:has(#rt-result:not([hidden])) .sheet,
+            #tool-rhythm:has(#rt-replay:not([hidden])) .sheet {
+                flex: 1 1 auto;
+                min-height: 0;
+            }
+        }
+</style>
+
+<script>
+(function () {
+    'use strict';
+
+    /* =====================================================================
+       0. TYPES — Astro compile le contenu des balises <script> en TypeScript.
+    ===================================================================== */
+    type ElemType = 'quarter' | 'rest' | 'half' | 'eighths' | 'eighth_rest' | 'rest_eighth';
+    type ElemDef = { len: number; hits: number[] };
+    type LevelDef = { weights: Partial<Record<ElemType, number>>; required?: ElemType[]; startWithNote: boolean };
+    type RhythmElement = { type: ElemType; start: number; len: number };
+    type Rhythm = { ts: number; measures: number; totalBeats: number; elements: RhythmElement[]; hits: number[] };
+    type NotePart = { el: SVGElement; attr: string };
+    type SvgAttrs = Record<string, string | number>;
+    type ClockEvent =
+        | { type: 'click'; time: number; accent: boolean; soft: boolean }
+        | { type: 'perc'; time: number; variant: 'model' | 'tap' };
+    type Grade = 'perfect' | 'good' | 'off' | 'miss';
+    type TapPair = { i: number; j: number; d: number };
+    type NoteResult = { exp: number; tap: number | null; grade: Grade; ms: number | null };
+    type Evaluation = { notes: NoteResult[]; extras: number[]; perfect: number; good: number; bad: number; percent: number };
+    type ToolState = 'idle' | 'running' | 'result';
+    type ReplayKind = 'q' | 'a';
+
+    /* =====================================================================
+       ACCÈS AU DOM — chaque recherche est vérifiée une fois (garde instanceof),
+       puis le type précis est conservé partout ailleurs.
+    ===================================================================== */
+    function byId(id: string): HTMLElement {
+        const el = document.getElementById(id);
+        if (!(el instanceof HTMLElement)) throw new Error(`Élément introuvable : ${id}`);
+        return el;
+    }
+    function byIdSvg(id: string): SVGElement {
+        const el = document.getElementById(id);
+        if (!(el instanceof SVGElement)) throw new Error(`Élément SVG introuvable : ${id}`);
+        return el;
+    }
+    function byIdButton(id: string): HTMLButtonElement {
+        const el = document.getElementById(id);
+        if (!(el instanceof HTMLButtonElement)) throw new Error(`Bouton introuvable : ${id}`);
+        return el;
+    }
+    function byIdInput(id: string): HTMLInputElement {
+        const el = document.getElementById(id);
+        if (!(el instanceof HTMLInputElement)) throw new Error(`Champ introuvable : ${id}`);
+        return el;
+    }
+    function byIdSelect(id: string): HTMLSelectElement {
+        const el = document.getElementById(id);
+        if (!(el instanceof HTMLSelectElement)) throw new Error(`Liste introuvable : ${id}`);
+        return el;
+    }
+
+    // Conteneur de l'outil dans la plateforme (sert à savoir s'il est affiché)
+    const toolEl = byId('tool-rhythm');
+
+    /* =====================================================================
+       1. RÉGLAGES
+    ===================================================================== */
+    const PERFECT_MS = 50;          // écart max pour « Parfait » (vert)
+    const GOOD_MS = 100;            // écart max pour « Correct » (orange)
+    const LOOKAHEAD = 0.12;         // s : on planifie les sons à l'avance de 120 ms
+    const SCHEDULER_MS = 25;        // ms : fréquence de la boucle de planification
+    const LEAD_IN = 0.30;           // s : délai avant le tout premier coup d'intro
+    const ACCEPT_BEFORE = 0.25;     // s : frappes acceptées juste avant le début de l'enregistrement
+    const ACCEPT_AFTER = 0.30;      // s : ... et juste après sa fin
+    const REPLAY_TAIL = 0.45;       // s : on laisse sonner la fin avant d'arrêter une réécoute
+    const GOOD_WEIGHT = 0.7;        // score d'une note « correcte » (une note « parfaite » = 1)
+    const EXTRA_PENALTY = 0.25;     // pénalité par frappe en trop (en « notes »)
+    const USER_OFFSET_MS = 0;       // décalage manuel de tous les temps de frappe, si besoin (ms)
+    
+    const GREEN = '#1f9d62', ORANGE = '#e8890c', RED = '#d9382f', INK = '#1b2a8a', PAPER = '#fbfcff';
+
+    /* =====================================================================
+       2. GÉOMÉTRIE DE LA PARTITION (SVG)
+       La partition est découpée en « lignes » de 2 mesures :
+         2 mesures = 1 ligne ; 4 mesures = 2 lignes l'une sous l'autre.
+       Chaque ligne garde la même largeur (TOTAL_W), donc les notes restent aussi lisibles
+       qu'avec 2 mesures. Une croche = 1 « slot ».
+    ===================================================================== */
+    const NS = 'http://www.w3.org/2000/svg';
+    const MEASURES_PER_ROW = 2;     // mesures par ligne de portée
+    const SYS_X = 30;               // trait de début de portée
+    const XS = 130;                 // x du slot 0 de chaque ligne (première note)
+    const TOTAL_W = 900;            // largeur occupée par UNE ligne (2 mesures)
+    const XE = XS + TOTAL_W;        // x de la fin d'une ligne
+    const STAFF_Y = 105;            // ligne rythmique (une seule ligne) dans une ligne de portée
+    const VIEW_W = 1060;            // largeur du viewBox
+    const ROW_VIEW_H = 272;         // hauteur d'une ligne : notes, pulsations, marqueurs de résultat
+    const ROW_H = 270;              // décalage vertical entre deux lignes de portée
+    const BAR_PAD = 30;             // les barres de mesure sont 30 px avant la première note de la mesure
+    const HL_TOP = 16, HL_H = 246;  // position et hauteur du cadre de surbrillance d'une mesure
+
+    const gStatic = byIdSvg('rt-gStatic');
+    const gNotes = byIdSvg('rt-gNotes');
+    const gResults = byIdSvg('rt-gResults');
+    const board = byIdSvg('rt-board');
+    const hl = byIdSvg('rt-hl');    // le cadre de surbrillance de la mesure en cours
+
+    function el(name: string, attrs: SvgAttrs, parent?: SVGElement): SVGElement {
+        const e = document.createElementNS(NS, name) as SVGElement;
+        for (const k in attrs) e.setAttribute(k, String(attrs[k]));
+        if (parent) parent.appendChild(e);
+        return e;
+    }
+
+    // Géométrie courante, recalculée à chaque nouvel exercice
+    const geo = { ts: 4, measures: 2, rows: 1, slotsPerRow: 16, slotW: 56 };
+    function setGeometry(ts: number, measures: number): void {
+        geo.ts = ts;
+        geo.measures = measures;
+        geo.rows = Math.ceil(measures / MEASURES_PER_ROW);
+        geo.slotsPerRow = MEASURES_PER_ROW * ts * 2;       // croches par ligne
+        geo.slotW = TOTAL_W / geo.slotsPerRow;             // largeur d'une croche
+    }
+    const rowOfSlot = (s: number): number => Math.floor(s / geo.slotsPerRow);               // ligne de portée d'un slot
+    const localX = (s: number): number => XS + (s % geo.slotsPerRow) * geo.slotW;           // x d'un slot dans sa ligne
+
+    // Un groupe SVG par ligne de portée (décalé vers le bas pour les lignes suivantes)
+    let staticRows: SVGElement[] = [], noteRows: SVGElement[] = [], resultRows: SVGElement[] = [];
+    const rowGroup = (parent: SVGElement, r: number): SVGElement => el('g', { transform: `translate(0 ${r * ROW_H})` }, parent);
+
+    function resetResultRows() {
+        gResults.innerHTML = '';
+        resultRows = [];
+        for (let r = 0; r < geo.rows; r++) resultRows.push(rowGroup(gResults, r));
+    }
+
+    /* =====================================================================
+       3. FIGURES ET NIVEAUX
+       len  = durée en temps (noires) ; hits = croches (dans le temps) où l'on doit taper
+    ===================================================================== */
+    const ELEM: Record<ElemType, ElemDef> = {
+        quarter:     { len: 1, hits: [0] },       // noire
+        rest:        { len: 1, hits: [] },        // soupir
+        half:        { len: 2, hits: [0] },       // blanche
+        eighths:     { len: 1, hits: [0, 1] },    // 2 croches groupées sur un temps
+        eighth_rest: { len: 1, hits: [0] },       // croche seule + demi-soupir
+        rest_eighth: { len: 1, hits: [1] }        // demi-soupir + croche seule
+    };
+
+    const LEVELS: Record<string, LevelDef> = {
+        1: { weights: { quarter: 65, rest: 35 },
+             required: ['rest'], startWithNote: true },
+        2: { weights: { quarter: 50, rest: 22, half: 28 },
+             required: ['half'], startWithNote: true },
+        3: { weights: { quarter: 36, rest: 16, half: 20, eighths: 28 },
+             required: ['eighths'], startWithNote: true },
+        4: { weights: { quarter: 26, rest: 12, half: 14, eighths: 22, eighth_rest: 13, rest_eighth: 13 },
+             required: ['eighth_rest', 'rest_eighth'], startWithNote: false }
+    };
+
+    function pickWeighted<T extends string>(weights: Partial<Record<T, number>>): T {
+        const entries = Object.entries(weights) as [T, number][];
+        let r = Math.random() * entries.reduce((s, e) => s + e[1], 0);
+        for (const [k, w] of entries) { if ((r -= w) < 0) return k; }
+        return entries[0][0];
+    }
+
+    /* Génère l'exercice mesure par mesure : on remplit chaque mesure avec des figures
+       dont la durée totale est EXACTEMENT égale au nombre de temps du chiffrage (3 ou 4). */
+    function generateRhythm(levelKey: string, beatsPerMeasure: number, measures: number): Rhythm {
+        const lv = LEVELS[levelKey];
+        const totalBeats = measures * beatsPerMeasure;
+        const minHits = Math.ceil(totalBeats / 2.5);        // nombre minimum de sons à taper (3 pour 6 temps, 4 pour 8, 5 pour 12, 7 pour 16)
+        // une blanche ne démarre que sur un temps « fort » (1 ou 3 en 4/4 ; 1 ou 2 en 3/4)
+        const halfStarts: number[] = beatsPerMeasure === 4 ? [0, 2] : [0, 1];
+
+        let elements: RhythmElement[] = [], hits: number[] = [], tries = 0;
+        do {
+            elements = [];
+            for (let m = 0; m < measures; m++) {
+                let pos = 0;
+                while (pos < beatsPerMeasure) {
+                    const remaining = beatsPerMeasure - pos;
+                    const allowed: Partial<Record<ElemType, number>> = {};
+                    for (const k of Object.keys(lv.weights) as ElemType[]) {
+                        if (ELEM[k].len > remaining) continue;                 // ne dépasse pas la barre de mesure
+                        if (k === 'half' && !halfStarts.includes(pos)) continue;
+                        allowed[k] = lv.weights[k] ?? 0;
+                    }
+                    const type = pickWeighted(allowed);
+                    elements.push({ type, start: m * beatsPerMeasure + pos, len: ELEM[type].len });
+                    pos += ELEM[type].len;
+                }
+            }
+            hits = [];
+            elements.forEach(e => ELEM[e.type].hits.forEach(h => hits.push(e.start * 2 + h)));
+            tries++;
+        } while (!acceptable(elements, hits, lv, minHits) && tries < 3000);
+
+        return { ts: beatsPerMeasure, measures, totalBeats, elements, hits };
+    }
+
+    function acceptable(elements: RhythmElement[], hits: number[], lv: LevelDef, minHits: number): boolean {
+        if (hits.length < minHits) return false;
+        if (lv.startWithNote && !ELEM[elements[0].type].hits.includes(0)) return false;       // commence par un son
+        const required = lv.required;
+        if (required && !elements.some(e => required.includes(e.type))) return false;         // contient la figure du niveau
+        for (let i = 2; i < elements.length; i++) {                                           // pas 3 soupirs d'affilée
+            if (elements[i].type === 'rest' && elements[i - 1].type === 'rest' && elements[i - 2].type === 'rest') return false;
+        }
+        return true;
+    }
+
+    /* =====================================================================
+       4. DESSIN DE LA PARTITION ET SURBRILLANCE DE LA MESURE
+    ===================================================================== */
+    let rhythm: Rhythm = { ts: 4, measures: 2, totalBeats: 8, elements: [], hits: [] };
+    let noteParts: Record<number, NotePart[]> = {};   // slot -> [{el, attr}] pour colorer chaque note
+
+    function drawQuarterRest(x: number, parent: SVGElement): void {
+        const y = STAFF_Y;
+        el('path', {
+            d: `M${x + 5} ${y - 31} L${x - 6} ${y - 15} L${x + 6} ${y + 1} L${x - 5} ${y + 15} C${x + 10} ${y + 10} ${x + 11} ${y + 27} ${x - 2} ${y + 31}`,
+            fill: 'none', stroke: INK, 'stroke-width': 6.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round'
+        }, parent);
+    }
+
+    function drawEighthRest(x: number, parent: SVGElement): void {
+        const y = STAFF_Y;
+        el('circle', { cx: x - 7, cy: y - 11, r: 5.8, fill: INK }, parent);
+        el('path', {
+            d: `M${x - 7} ${y - 5} C${x + 1} ${y - 4} ${x + 7} ${y - 9} ${x + 9} ${y - 17} L${x - 4} ${y + 24}`,
+            fill: 'none', stroke: INK, 'stroke-width': 4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round'
+        }, parent);
+    }
+
+    // Tête de note + hampe (+ crochet) ; `open` = tête creuse (blanche). Retourne le x de la hampe.
+    // `slot` est le numéro de croche depuis le début de l'exercice : on en déduit la ligne de portée.
+    function drawNoteHead(slot: number, withFlag: boolean, open: boolean): number {
+        const parent = noteRows[rowOfSlot(slot)];
+        const x = localX(slot), y = STAFF_Y, top = y - 58, sx = x + 7.9;
+        const head = open
+            ? el('ellipse', { cx: x, cy: y, rx: 8.8, ry: 6.2, fill: PAPER, stroke: INK, 'stroke-width': 3, transform: `rotate(-20 ${x} ${y})` }, parent)
+            : el('ellipse', { cx: x, cy: y, rx: 8.8, ry: 6.5, fill: INK, transform: `rotate(-20 ${x} ${y})` }, parent);
+        const stem = el('line', { x1: sx, y1: y - 2, x2: sx, y2: top, stroke: INK, 'stroke-width': 3, 'stroke-linecap': 'butt' }, parent);
+        const parts: NotePart[] = [{ el: head, attr: open ? 'stroke' : 'fill' }, { el: stem, attr: 'stroke' }];
+        if (withFlag) {
+            const flag = el('path', {
+                d: `M${sx} ${top} C${sx + 2} ${top + 12} ${sx + 22} ${top + 14} ${sx + 15} ${top + 36}`,
+                fill: 'none', stroke: INK, 'stroke-width': 5, 'stroke-linecap': 'round'
+            }, parent);
+            parts.push({ el: flag, attr: 'stroke' });
+        }
+        noteParts[slot] = parts;
+        return sx;
+    }
+
+    function drawRhythm(): void {
+        const ts = rhythm.ts;
+        setGeometry(ts, rhythm.measures);
+        gStatic.innerHTML = ''; gNotes.innerHTML = '';
+        noteParts = {};
+        hideHighlight();
+
+        // Le viewBox grandit avec le nombre de lignes de portée (1 ligne = 2 mesures)
+        board.setAttribute('viewBox', `0 0 ${VIEW_W} ${ROW_VIEW_H + (geo.rows - 1) * ROW_H}`);
+        board.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+        staticRows = []; noteRows = [];
+        for (let r = 0; r < geo.rows; r++) {
+            staticRows.push(rowGroup(gStatic, r));
+            noteRows.push(rowGroup(gNotes, r));
+        }
+        resetResultRows();
+
+        const measSlots = ts * 2;                       // croches par mesure
+        for (let r = 0; r < geo.rows; r++) {
+            const g = staticRows[r];
+            const isLastRow = r === geo.rows - 1;
+
+            // Ligne rythmique, trait de début de portée
+            el('line', { x1: SYS_X, y1: STAFF_Y, x2: XE - 18, y2: STAFF_Y, stroke: '#3b4a6b', 'stroke-width': 2.5 }, g);
+            el('line', { x1: SYS_X, y1: STAFF_Y - 24, x2: SYS_X, y2: STAFF_Y + 24, stroke: '#3b4a6b', 'stroke-width': 2.5 }, g);
+
+            // Barres de mesure intermédiaires, puis barre de fin de ligne (épaisse seulement à la toute fin)
+            for (let mi = 1; mi < MEASURES_PER_ROW; mi++) {
+                const bx = XS + mi * measSlots * geo.slotW - BAR_PAD;
+                el('line', { x1: bx, y1: STAFF_Y - 24, x2: bx, y2: STAFF_Y + 24, stroke: '#3b4a6b', 'stroke-width': 2.5 }, g);
+            }
+            el('line', { x1: XE - 18, y1: STAFF_Y - 24, x2: XE - 18, y2: STAFF_Y + 24, stroke: '#3b4a6b', 'stroke-width': isLastRow ? 4.5 : 2.5 }, g);
+
+            // Chiffrage (3/4 ou 4/4) : seulement au début de la première ligne
+            if (r === 0) {
+                [[ts, STAFF_Y - 13], [4, STAFF_Y + 15]].forEach(([n, cy]) => {
+                    const t = el('text', { x: 74, y: cy + 11, 'font-size': 34, 'font-weight': 800, 'text-anchor': 'middle', fill: '#3b4a6b', 'font-family': 'Georgia, serif' }, g);
+                    t.textContent = String(n);
+                });
+            }
+
+            // Numéro de chaque mesure, en petit, en haut à gauche de la mesure
+            for (let mi = 0; mi < MEASURES_PER_ROW; mi++) {
+                const mx = (mi === 0 ? XS - BAR_PAD : XS + mi * measSlots * geo.slotW - BAR_PAD) + 12;
+                const t = el('text', { x: mx, y: 34, 'font-size': 13, 'font-weight': 800, fill: '#8b98b5', 'font-family': 'system-ui, sans-serif' }, g);
+                t.textContent = String(r * MEASURES_PER_ROW + mi + 1);
+            }
+
+            // Pulsation écrite sous la ligne : 1 + 2 + 3 (+ 4 +), mesure après mesure
+            for (let s = 0; s < geo.slotsPerRow; s++) {
+                const onBeat = s % 2 === 0;
+                const t = el('text', {
+                    x: XS + s * geo.slotW, y: 152, 'text-anchor': 'middle',
+                    'font-size': onBeat ? 20 : 17, 'font-weight': onBeat ? 800 : 600,
+                    fill: onBeat ? '#6b7a99' : '#a3afc6', 'font-family': 'system-ui, sans-serif'
+                }, g);
+                t.textContent = onBeat ? String((s / 2) % ts + 1) : '+';
+            }
+        }
+
+        // Figures (chacune est dessinée dans la ligne de portée qui la contient)
+        rhythm.elements.forEach(e => {
+            const s0 = e.start * 2, s1 = s0 + 1;
+            const parent = noteRows[rowOfSlot(s0)];
+            switch (e.type) {
+                case 'quarter':     drawNoteHead(s0, false, false); break;
+                case 'half':        drawNoteHead(s0, false, true); break;
+                case 'rest':        drawQuarterRest(localX(s0), parent); break;
+                case 'eighths': {
+                    const sxA = drawNoteHead(s0, false, false), sxB = drawNoteHead(s1, false, false);
+                    el('rect', { x: sxA - 1.5, y: STAFF_Y - 58, width: sxB - sxA + 3, height: 8, fill: INK }, parent);   // la barre de croches
+                    break;
+                }
+                case 'eighth_rest': drawNoteHead(s0, true, false); drawEighthRest(localX(s1), parent); break;
+                case 'rest_eighth': drawEighthRest(localX(s0), parent); drawNoteHead(s1, true, false); break;
+            }
+        });
+    }
+
+    function colorNote(slot: number, color: string): void {
+        (noteParts[slot] || []).forEach(p => p.el.setAttribute(p.attr, color));
+    }
+
+    /* ---------- Surbrillance de la mesure en cours (style EarMaster) ----------
+       Un seul cadre coloré entoure la mesure entière. Il change net de mesure
+       à l'instant exact du premier temps de la mesure suivante (pas d'animation). */
+    let hlKey = '';
+
+    function measureBox(m: number): { x: number; y: number; w: number; h: number } {
+        const r = Math.floor(m / MEASURES_PER_ROW);              // ligne de portée
+        const mi = m % MEASURES_PER_ROW;                         // mesure dans la ligne (0 ou 1)
+        const measW = geo.ts * 2 * geo.slotW;                    // largeur d'une mesure
+        const left = (mi === 0 ? XS - BAR_PAD : XS + mi * measW - BAR_PAD) + 3;
+        const right = (mi === MEASURES_PER_ROW - 1 ? XE - 18 : XS + (mi + 1) * measW - BAR_PAD) - 3;
+        return { x: left, y: HL_TOP + r * ROW_H, w: right - left, h: HL_H };
+    }
+
+    // mode 'rec' = tu joues (vert) ; mode 'replay' = réécoute (bleu), comme le bandeau d'état
+    function setHighlight(m: number, mode: 'rec' | 'replay'): void {
+        const key = m + ':' + mode;
+        if (key === hlKey) return;
+        hlKey = key;
+        const b = measureBox(m);
+        const color = mode === 'replay' ? '#2c4fd6' : '#1f9d62';
+        hl.setAttribute('x', String(b.x)); hl.setAttribute('y', String(b.y));
+        hl.setAttribute('width', String(b.w)); hl.setAttribute('height', String(b.h));
+        hl.setAttribute('fill', color); hl.setAttribute('stroke', color);
+        hl.setAttribute('visibility', 'visible');
+        // Smartphone : la partition défile horizontalement, on garde la mesure active au centre
+        const sheet = board.parentElement;
+        if (sheet && sheet.scrollWidth > sheet.clientWidth + 2) {
+            const scale = board.getBoundingClientRect().width / VIEW_W;
+            sheet.scrollTo({ left: Math.max(0, (b.x + b.w / 2) * scale - sheet.clientWidth / 2), behavior: 'smooth' });
+        }
+    }
+
+    function hideHighlight(): void {
+        hlKey = '';
+        hl.setAttribute('visibility', 'hidden');
+    }
+
+    /* =====================================================================
+       5. AUDIO : horloge Web Audio + planificateur « lookahead »
+    ===================================================================== */
+    let ctx: AudioContext | null = null;
+    let noiseBuffer: AudioBuffer | null = null;
+    let bus: GainNode | null = null;   // sortie des sons planifiés : on peut la couper d'un coup (arrêt d'une réécoute)
+
+    /** Crée le contexte Web Audio (repli sur le constructeur préfixé de Safari). */
+    function createAudioContext(): AudioContext {
+        const Ctor = window.AudioContext || window.webkitAudioContext;
+        if (!Ctor) throw new Error('Web Audio API non disponible');
+        return new Ctor();
+    }
+
+    function getCtx(): AudioContext {
+        if (!ctx) {
+            ctx = createAudioContext();
+            noiseBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.05), ctx.sampleRate);
+            const d = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        }
+        if (ctx.state === 'suspended') ctx.resume();
+        return ctx;
+    }
+    function newBus(): void {
+        const ac = getCtx();
+        killBus();
+        bus = ac.createGain();
+        bus.connect(ac.destination);
+    }
+    function killBus(): void {
+        if (bus) { try { bus.disconnect(); } catch { /* déjà déconnecté */ } bus = null; }
+    }
+
+    // Latence de sortie : ce que l'élève ENTEND à l'instant t correspond au temps audio (t - latence).
+    function latency(): number {
+        return (ctx && (ctx.outputLatency || ctx.baseLatency)) || 0;
+    }
+    const audioNow = (): number => getCtx().currentTime - latency();
+
+    // Clic de métronome planifié à l'instant précis `time` (horloge audio)
+    function playClick(time: number, accent: boolean, soft: boolean): void {
+        const ac = getCtx();
+        const out = bus || ac.destination;
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(accent ? 1568 : 1046, time);
+        const vol = soft ? 0.22 : 0.5;
+        gain.gain.setValueAtTime(vol, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.07);
+        osc.connect(gain); gain.connect(out);
+        osc.start(time); osc.stop(time + 0.08);
+    }
+
+    // Percussion à l'instant `time`. variant 'tap' = le son de frappe de l'élève ;
+    // variant 'model' = un son de bois plus aigu, pour reconnaître « la question ».
+    function playPerc(time: number, variant: 'tap' | 'model', out?: AudioNode | null): void {
+        const ac = getCtx();
+        const dest = out || ac.destination;
+        const osc = ac.createOscillator();
+        const g = ac.createGain();
+        if (variant === 'model') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(900, time);
+            osc.frequency.exponentialRampToValueAtTime(620, time + 0.06);
+            g.gain.setValueAtTime(0.7, time);
+            g.gain.exponentialRampToValueAtTime(0.001, time + 0.13);
+            osc.connect(g); g.connect(dest);
+            osc.start(time); osc.stop(time + 0.14);
+            return;
+        }
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(520, time);
+        osc.frequency.exponentialRampToValueAtTime(140, time + 0.09);
+        g.gain.setValueAtTime(0.9, time);
+        g.gain.exponentialRampToValueAtTime(0.001, time + 0.14);
+        osc.connect(g); g.connect(dest);
+        osc.start(time); osc.stop(time + 0.15);
+
+        const n = ac.createBufferSource();
+        const ng = ac.createGain();
+        n.buffer = noiseBuffer;
+        ng.gain.setValueAtTime(0.35, time);
+        ng.gain.exponentialRampToValueAtTime(0.001, time + 0.04);
+        n.connect(ng); ng.connect(dest);
+        n.start(time);
+    }
+
+    /* =====================================================================
+       6. ÉVALUATION : comparaison des frappes et des temps attendus
+       Toutes les valeurs sont en secondes, relatives au début de la mesure 1
+       de l'enregistrement (0 = premier temps de la première mesure).
+    ===================================================================== */
+    function evaluate(expected: number[], taps: number[], beatDur: number): Evaluation {
+        const radius = Math.min(0.35, beatDur * 0.5);    // distance max pour associer une frappe à une note
+        const pairs: TapPair[] = [];
+        expected.forEach((e, i) => taps.forEach((t, j) => {
+            const d = t - e;
+            if (Math.abs(d) <= radius) pairs.push({ i, j, d });
+        }));
+        pairs.sort((a, b) => Math.abs(a.d) - Math.abs(b.d));   // on associe d'abord les paires les plus proches
+
+        const noteTap: (TapPair | null)[] = expected.map(() => null);
+        const usedTap: boolean[] = taps.map(() => false);
+        pairs.forEach(p => {
+            if (noteTap[p.i] === null && !usedTap[p.j]) { noteTap[p.i] = p; usedTap[p.j] = true; }
+        });
+
+        const notes: NoteResult[] = expected.map((e, i) => {
+            const p = noteTap[i];
+            if (!p) return { exp: e, tap: null, grade: 'miss', ms: null };
+            const ms = p.d * 1000;
+            const a = Math.abs(ms);
+            return { exp: e, tap: taps[p.j], ms, grade: a <= PERFECT_MS ? 'perfect' : a <= GOOD_MS ? 'good' : 'off' };
+        });
+        const extras = taps.filter((_t, j) => !usedTap[j]);
+
+        const perfect = notes.filter(n => n.grade === 'perfect').length;
+        const good = notes.filter(n => n.grade === 'good').length;
+        const bad = notes.length - perfect - good;               // trop tôt / trop tard / manquées
+        const points = perfect + GOOD_WEIGHT * good - EXTRA_PENALTY * extras.length;
+        const percent = Math.max(0, Math.min(100, Math.round(100 * points / notes.length)));
+        return { notes, extras, perfect, good, bad, percent };
+    }
+
+    /* =====================================================================
+       7. ÉTAT, EXERCICE, RÉÉCOUTE ET BOUCLE D'ANIMATION
+    ===================================================================== */
+    const ui = {
+        status: byId('rt-status'), phase: byId('rt-phase'), beats: byId('rt-beats'),
+        dots: [] as HTMLElement[],
+        btnStart: byIdButton('rt-btnStart'), btnGenerate: byIdButton('rt-btnGenerate'), btnTap: byIdButton('rt-btnTap'),
+        bpm: byIdInput('rt-bpm'), bpmLabel: byId('rt-bpmLabel'),
+        level: byIdSelect('rt-level'), ts: byIdSelect('rt-ts'), measures: byIdSelect('rt-measures'),
+        result: byId('rt-result'), score: byId('rt-score'), verdict: byId('rt-verdict'), chips: byId('rt-chips'),
+        replay: byId('rt-replay'), btnPlayQ: byIdButton('rt-btnPlayQ'), btnPlayA: byIdButton('rt-btnPlayA')
+    };
+    const rtMobileLandscapeMq = window.matchMedia('(pointer: coarse) and (orientation: landscape) and (max-height: 550px)');
+
+    let state: ToolState = 'idle';       // 'idle' | 'running' | 'result'
+    let replayKind: ReplayKind | null = null;   // null | 'q' (question) | 'a' (réponse de l'élève)
+    let beatDur = 0.75, T0 = 0, recStart = 0, recEnd = 0;
+    let events: ClockEvent[] = [], nextEvent = 0;
+    let schedTimer: ReturnType<typeof setInterval> | null = null;
+    let rafId: number | null = null;
+    let taps: number[] = [];             // frappes retenues (secondes, relatives à recStart)
+
+    // Temps (s, relatif au début de l'exercice) -> position (x, ligne de portée) sur la partition.
+    // `rowHint` force la ligne (pour rattacher une frappe à la ligne de sa note) ; sinon on la déduit du temps.
+    function tapXY(rel: number, rowHint?: number): { x: number; r: number } {
+        const pos = rel / (beatDur / 2);                                   // en croches depuis le début
+        const r = rowHint !== undefined ? rowHint
+                : Math.max(0, Math.min(geo.rows - 1, Math.floor(pos / geo.slotsPerRow)));
+        const x = XS + (pos - r * geo.slotsPerRow) * geo.slotW;
+        return { x: Math.max(XS - 75, Math.min(XE + 25, x)), r };
+    }
+
+    function buildDots(n: number): void {
+        ui.beats.innerHTML = '';
+        ui.dots = [];
+        for (let i = 1; i <= n; i++) {
+            const d = document.createElement('span');
+            d.className = 'beat-dot';
+            d.textContent = String(i);
+            ui.beats.appendChild(d);
+            ui.dots.push(d);
+        }
+    }
+    function setPhase(mode: string, title: string, sub?: string): void {
+        ui.status.className = 'status ' + mode;
+        ui.phase.innerHTML = title + (sub ? '<small>' + sub + '</small>' : '');
+    }
+    function lightDot(index: number): void {
+        ui.dots.forEach((d, i) => d.classList.toggle('on', i === index));
+    }
+
+    // Boucle de planification : programme les sons un peu à l'avance sur l'horloge audio
+    function scheduler(): void {
+        const ac = getCtx();
+        while (nextEvent < events.length && events[nextEvent].time < ac.currentTime + LOOKAHEAD) {
+            const e = events[nextEvent++];
+            if (e.type === 'click') playClick(e.time, e.accent, e.soft);
+            else playPerc(e.time, e.variant, bus);
+        }
+    }
+    function runScheduler(): void {
+        nextEvent = 0;
+        scheduler();
+        schedTimer = setInterval(scheduler, SCHEDULER_MS);
+    }
+    function stopTimers(): void {
+        if (schedTimer !== null) { clearInterval(schedTimer); schedTimer = null; }
+        if (rafId !== null) cancelAnimationFrame(rafId);
+        rafId = null;
+    }
+
+    // Prépare la ligne de temps : chronologie (T0, recStart, recEnd) + clics de métronome
+    function buildClock(softMetronomeInRec: boolean): void {
+        const ts = rhythm.ts, total = rhythm.totalBeats;
+        T0 = getCtx().currentTime + LEAD_IN;            // 1er coup d'intro
+        recStart = T0 + ts * beatDur;                   // début de la mesure 1 de l'exercice
+        recEnd = recStart + total * beatDur;
+        events = [];
+        for (let i = 0; i < ts; i++) events.push({ type: 'click', time: T0 + i * beatDur, accent: i === 0, soft: false });
+        if (softMetronomeInRec) {
+            for (let i = 0; i < total; i++) events.push({ type: 'click', time: recStart + i * beatDur, accent: i % ts === 0, soft: true });
+        }
+    }
+
+    /* ---------- Exercice ---------- */
+    function startExercise(): void {
+        stopReplay(true);
+        getCtx(); newBus();
+        clearResults();
+        beatDur = 60 / Number(ui.bpm.value);
+        taps = [];
+        if (rtMobileLandscapeMq.matches) {
+            ui.ts.value = '4';
+            ui.measures.value = '2';
+        }
+        buildClock(true);   // le métronome accompagne toujours la réponse de l'élève
+        runScheduler();
+
+        state = 'running';
+        ui.btnStart.textContent = 'Arrêter';
+        ui.btnStart.classList.add('running');
+        setControlsDisabled(true);
+        rafId = requestAnimationFrame(frame);
+    }
+
+    // Le nombre de mesures n'est jamais verrouillé : le changer en cours d'exercice l'interrompt et en génère un nouveau
+    function setControlsDisabled(v: boolean): void {
+        ui.btnGenerate.disabled = v; ui.bpm.disabled = v; ui.level.disabled = v; ui.ts.disabled = v;
+    }
+
+    function backToIdle(): void {
+        ui.btnStart.textContent = state === 'result' ? 'Recommencer' : 'Démarrer l\'exercice';
+        ui.btnStart.classList.remove('running');
+        setControlsDisabled(false);
+        hideHighlight();
+        lightDot(-1);
+    }
+
+    function cancelExercise(): void {
+        stopTimers(); killBus();
+        state = 'idle';
+        resetResultRows();
+        backToIdle();
+        setPhase('', 'Exercice arrêté', 'Clique sur « Démarrer l\'exercice » pour réessayer.');
+    }
+
+    // Une image d'animation : tout est calculé à partir de l'horloge audio (exercice ET réécoute)
+    function frame(): void {
+        if (state !== 'running' && !replayKind) return;
+        const now = audioNow();
+        const ts = rhythm.ts, total = rhythm.totalBeats, nMeasures = rhythm.measures;
+        const beatPos = (now - T0) / beatDur;           // position en temps depuis le 1er coup d'intro
+
+        if (beatPos < 0) {
+            setPhase('intro', 'Prépare-toi…', 'La mesure d\'introduction arrive.');
+            lightDot(-1);
+            hideHighlight();
+        } else if (beatPos < ts) {
+            const n = Math.floor(beatPos);
+            setPhase('intro', 'Mesure d\'introduction', 'Écoute le tempo : ' + (n + 1) + ' sur ' + ts);
+            lightDot(n);
+            hideHighlight();
+        } else if (beatPos < ts + total) {
+            const rb = beatPos - ts;                    // temps écoulés depuis le début de l'exercice
+            const measure = Math.min(nMeasures - 1, Math.floor(rb / ts));      // 0, 1, 2, 3...
+            if (replayKind) {
+                setPhase('replay', replayKind === 'q' ? 'Écoute la question' : 'Écoute ta réponse', 'Mesure ' + (measure + 1) + ' sur ' + nMeasures);
+            } else {
+                setPhase('rec', 'À toi ! Mesure ' + (measure + 1) + ' sur ' + nMeasures, 'Barre d\'espace ou bouton TAPER');
+            }
+            lightDot(Math.floor(rb) % ts);
+            setHighlight(measure, replayKind ? 'replay' : 'rec');    // la mesure entière est mise en valeur
+        } else {
+            // terminé : plus de surbrillance, on attend les dernières frappes / la fin du son
+            hideHighlight();
+            lightDot(-1);
+            if (!replayKind) setPhase('', 'Mesures terminées', 'Calcul du résultat…');
+        }
+
+        if (replayKind) {
+            if (now >= recEnd + REPLAY_TAIL) { stopReplay(false); return; }
+        } else if (now >= recEnd + ACCEPT_AFTER) { finishExercise(); return; }
+        rafId = requestAnimationFrame(frame);
+    }
+
+    /* ---------- Réécoute : « Jouer la question » / « Jouer ma réponse » ---------- */
+    function setReplayButtons(): void {
+        ui.btnPlayQ.textContent = replayKind === 'q' ? '■ Arrêter la lecture' : '▶ Jouer la question';
+        ui.btnPlayA.textContent = replayKind === 'a' ? '■ Arrêter la lecture' : '▶ Jouer ma réponse';
+        ui.btnPlayQ.classList.toggle('active', replayKind === 'q');
+        ui.btnPlayA.classList.toggle('active', replayKind === 'a');
+        ui.btnPlayA.disabled = taps.length === 0 && replayKind !== 'a';
+        ui.btnPlayA.title = taps.length === 0 ? 'Aucune frappe enregistrée' : '';
+    }
+
+    function startReplay(kind: ReplayKind): void {
+        if (state !== 'result') return;
+        const same = replayKind === kind;
+        stopReplay(false);
+        if (same) return;                                 // un second clic sur le même bouton = arrêt
+
+        getCtx(); newBus();
+        replayKind = kind;
+        buildClock(true);                                 // mesure d'intro + métronome discret : même cadre pour les deux
+        if (kind === 'q') {
+            // la question : les temps théoriques exacts
+            rhythm.hits.forEach(s => events.push({ type: 'perc', time: recStart + s * beatDur / 2, variant: 'model' }));
+        } else {
+            // la réponse : les frappes réelles de l'élève, à leurs temps enregistrés
+            taps.forEach(rel => events.push({ type: 'perc', time: recStart + rel, variant: 'tap' }));
+        }
+        events.sort((a, b) => a.time - b.time);
+        runScheduler();
+        setReplayButtons();
+        rafId = requestAnimationFrame(frame);
+    }
+
+    function stopReplay(silent: boolean): void {
+        if (!replayKind) return;
+        replayKind = null;
+        stopTimers(); killBus();
+        hideHighlight();
+        lightDot(-1);
+        setReplayButtons();
+        if (!silent && state === 'result') {
+            setPhase('', 'Résultat', 'Réécoute la question ou ta réponse, ou clique sur « Recommencer ».');
+        }
+    }
+
+    /* =====================================================================
+       8. FRAPPES DE L'UTILISATEUR
+    ===================================================================== */
+    function onTap(): void {
+        const ac = getCtx();
+        playPerc(ac.currentTime, 'tap');                 // retour sonore immédiat
+        ui.btnTap.classList.add('hit');
+        setTimeout(() => ui.btnTap.classList.remove('hit'), 90);
+
+        if (state !== 'running') return;
+        const rel = audioNow() + USER_OFFSET_MS / 1000 - recStart;
+        if (rel >= -ACCEPT_BEFORE && rel <= rhythm.totalBeats * beatDur + ACCEPT_AFTER) {
+            taps.push(rel);
+            // petite pastille grise pendant l'enregistrement, pour voir où l'on a frappé
+            if (rel >= 0) {
+                const p = tapXY(rel);
+                el('circle', { cx: p.x, cy: 200, r: 5, fill: '#b9c7e6' }, resultRows[p.r]);
+            }
+        }
+    }
+
+    ui.btnTap.addEventListener('pointerdown', e => { e.preventDefault(); onTap(); });
+    ui.btnTap.addEventListener('contextmenu', e => e.preventDefault());
+    // Mobile paysage : le bouton TAPER est masqué ; un tap sur la partition appelle la même logique.
+    const rtSheetEl = toolEl.querySelector('.sheet');
+    if (!(rtSheetEl instanceof HTMLElement)) throw new Error('Partition de l\'outil introuvable');
+    function onSheetTap(e: PointerEvent): void {
+        if (!rtMobileLandscapeMq.matches) return;
+        e.preventDefault();
+        onTap();
+    }
+    rtSheetEl.addEventListener('pointerdown', onSheetTap);
+    rtSheetEl.addEventListener('contextmenu', e => {
+        if (rtMobileLandscapeMq.matches) e.preventDefault();
+    });
+    if (rtMobileLandscapeMq.addEventListener) {
+        rtMobileLandscapeMq.addEventListener('change', () => {
+            if (rtMobileLandscapeMq.matches && state !== 'running') newRhythm();
+        });
+    }
+    // La barre d'espace sert à taper. On bloque son comportement par défaut (défilement / clic sur bouton).
+    document.addEventListener('keydown', e => {
+        if (e.code !== 'Space') return;
+        if (toolEl.classList.contains('hidden')) return;      // la barre d'espace ne sert qu'à cet outil, et seulement s'il est affiché
+        const target = e.target;
+        const tag = target instanceof HTMLElement ? target.tagName.toLowerCase() : '';
+        if (tag === 'select' || (target instanceof HTMLInputElement && target.type !== 'range' && target.type !== 'checkbox')) return;
+        e.preventDefault();
+        if (!e.repeat) onTap();
+    });
+    document.addEventListener('keyup', e => { if (e.code === 'Space' && !toolEl.classList.contains('hidden')) e.preventDefault(); });
+
+    // Tactile (iOS / Safari) : le contexte audio ne se débloque qu'au relâchement du doigt (pointerup / touchend)
+    function unlockAudioOnTouch(): void {
+        if (toolEl.classList.contains('hidden')) return;
+        getCtx();
+        if (ctx && ctx.state === 'running') {
+            document.removeEventListener('pointerup', unlockAudioOnTouch, true);
+            document.removeEventListener('touchend', unlockAudioOnTouch, true);
+        }
+    }
+    document.addEventListener('pointerup', unlockAudioOnTouch, true);
+    document.addEventListener('touchend', unlockAudioOnTouch, true);
+
+    /* =====================================================================
+       9. RÉSULTAT
+    ===================================================================== */
+    function clearResults(): void {
+        resetResultRows();
+        ui.result.hidden = true;
+        ui.replay.hidden = true;
+        Object.keys(noteParts).forEach(s => colorNote(Number(s), INK));
+    }
+
+    const gradeColor = (g: Grade): string => g === 'perfect' ? GREEN : g === 'good' ? ORANGE : RED;
+
+    function finishExercise(): void {
+        stopTimers(); killBus();
+        state = 'result';
+        backToIdle();
+
+        const expected = rhythm.hits.map(s => s * beatDur / 2);       // temps théoriques (s) de chaque note
+        const res = evaluate(expected, taps, beatDur);
+        drawResults(res);
+        showScore(res);
+        ui.replay.hidden = false;
+        setReplayButtons();
+        setPhase('', 'Résultat', 'Réécoute la question ou ta réponse, ou clique sur « Recommencer ».');
+    }
+
+    function drawResults(res: Evaluation): void {
+        resetResultRows();
+        const labels: { x: number; r: number; str: string; color: string }[] = [];   // étiquettes sous les repères (placées ensuite sans chevauchement)
+        res.notes.forEach((n, i) => {
+            const slot = rhythm.hits[i];
+            const r = rowOfSlot(slot);                                 // chaque note est annotée dans SA ligne de portée
+            const g = resultRows[r];
+            const color = gradeColor(n.grade);
+            const ex = localX(slot);
+            colorNote(slot, color);
+
+            // repère de la position théorique
+            el('line', { x1: ex, y1: 166, x2: ex, y2: 180, stroke: '#9aa7c2', 'stroke-width': 2 }, g);
+
+            if (n.tap === null) {                                     // note manquée : croix rouge
+                el('path', { d: `M${ex - 6} 194 L${ex + 6} 206 M${ex + 6} 194 L${ex - 6} 206`, stroke: RED, 'stroke-width': 3.5, 'stroke-linecap': 'round' }, g);
+                labels.push({ x: ex, r, str: 'manqué', color: RED });
+            } else {
+                const tx = tapXY(n.tap, r).x;
+                if (Math.abs(tx - ex) > 3) el('line', { x1: ex, y1: 180, x2: tx, y2: 193, stroke: color, 'stroke-width': 2 }, g);
+                el('circle', { cx: tx, cy: 200, r: 7.5, fill: color }, g);
+                const ms = n.ms ?? 0;
+                const sign = ms > 0 ? '+' : ms < 0 ? '−' : '';
+                const label = n.grade === 'off' ? (ms < 0 ? 'trop tôt' : 'trop tard') : sign + Math.round(Math.abs(ms)) + ' ms';
+                labels.push({ x: tx, r, str: label, color });
+            }
+        });
+        res.extras.forEach(t => {                                      // frappes en trop : cercle vide rouge
+            const p = tapXY(t);
+            el('circle', { cx: p.x, cy: 200, r: 6.5, fill: 'none', stroke: RED, 'stroke-width': 2.5 }, resultRows[p.r]);
+            labels.push({ x: p.x, r: p.r, str: 'en trop', color: RED });
+        });
+
+        // Étiquettes : deux rangées par ligne de portée, pour éviter qu'elles se chevauchent quand les notes sont proches
+        for (let r = 0; r < geo.rows; r++) {
+            const lastX = [-1e9, -1e9];
+            labels.filter(l => l.r === r).sort((a, b) => a.x - b.x).forEach(l => {
+                const row = (l.x - lastX[0] >= 62) ? 0 : (l.x - lastX[1] >= 62) ? 1 : 0;
+                lastX[row] = l.x;
+                const t = el('text', { x: l.x, y: row === 0 ? 232 : 250, 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 700, fill: l.color, 'font-family': 'system-ui, sans-serif' }, resultRows[r]);
+                t.textContent = l.str;
+            });
+        }
+    }
+
+    function showScore(res: Evaluation): void {
+        const p = res.percent;
+        const color = p >= 85 ? GREEN : p >= 60 ? ORANGE : RED;
+        ui.score.innerHTML = '<small>Précision</small>' + p + ' %';
+        ui.score.style.color = color;
+        ui.verdict.textContent = p >= 90 ? 'Excellent !' : p >= 75 ? 'Bien joué !' : p >= 50 ? 'Pas mal, encore un essai !' : 'On y retourne tranquillement.';
+
+        const plural = (n: number, one: string, many: string): string => n + ' ' + (n > 1 ? many : one);
+        ui.chips.innerHTML = '';
+        const chip = (cls: string, str: string): void => { const c = document.createElement('span'); c.className = 'chip ' + cls; c.textContent = str; ui.chips.appendChild(c); };
+        chip('green', plural(res.perfect, 'parfaite', 'parfaites'));
+        chip('orange', plural(res.good, 'correcte', 'correctes'));
+        chip('red', plural(res.bad, 'ratée', 'ratées'));
+        if (res.extras.length) chip('gray', plural(res.extras.length, 'frappe en trop', 'frappes en trop'));
+        ui.result.hidden = false;
+    }
+
+    /* =====================================================================
+       10. COMMANDES
+    ===================================================================== */
+    function newRhythm(): void {
+        stopReplay(true); stopTimers(); killBus();
+        state = 'idle';
+        taps = [];
+        if (rtMobileLandscapeMq.matches) {
+            ui.ts.value = '4';
+            ui.measures.value = '2';
+        }
+        rhythm = generateRhythm(ui.level.value, Number(ui.ts.value), Number(ui.measures.value));
+        buildDots(rhythm.ts);
+        drawRhythm();                                                 // recalcule aussi la géométrie (largeur, lignes de portée)
+        ui.result.hidden = true;
+        ui.replay.hidden = true;
+        backToIdle();
+        setPhase('', 'Prêt ?', 'Clique sur « Démarrer l\'exercice ».');
+    }
+
+    ui.btnGenerate.addEventListener('click', () => { newRhythm(); ui.btnGenerate.blur(); });
+    ui.level.addEventListener('change', () => { newRhythm(); ui.level.blur(); });
+    ui.ts.addEventListener('change', () => { newRhythm(); ui.ts.blur(); });
+    ui.measures.addEventListener('change', () => {
+        if (state === 'running') cancelExercise();                    // changement en plein exercice : on l'arrête puis on en génère un nouveau
+        newRhythm();
+        ui.measures.blur();
+    });
+    ui.bpm.addEventListener('input', () => { ui.bpmLabel.textContent = ui.bpm.value + ' BPM'; });
+    ui.btnStart.addEventListener('click', () => {
+        ui.btnStart.blur();                                           // pour que la barre d'espace ne « re-clique » pas sur ce bouton
+        if (state === 'running') cancelExercise(); else startExercise();
+    });
+    ui.btnPlayQ.addEventListener('click', () => { startReplay('q'); ui.btnPlayQ.blur(); });
+    ui.btnPlayA.addEventListener('click', () => { startReplay('a'); ui.btnPlayA.blur(); });
+
+    newRhythm();
+
+    // Interface utilisée par la plateforme : coupe proprement exercice et réécoute quand on quitte l'outil
+    window.RhythmTool = {
+        stop() {
+            stopReplay(true);
+            if (state === 'running') {
+                cancelExercise();
+                setPhase('', 'Prêt ?', 'Clique sur « Démarrer l\'exercice ».');
+            }
+        },
+    };
+})();
+</script>

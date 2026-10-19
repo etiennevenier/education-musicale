@@ -1,0 +1,328 @@
+---
+// Outil « Piano interactif » — repris intégralement du portail pédagogique d'origine.
+---
+
+<div id="tool-piano">
+  <div class="piano-body">
+            <a class="hub-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
+                <span aria-hidden="true">←</span>
+                <span class="hub-back-text">Retour à l'entraînement</span>
+                <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
+            </a>
+            <div class="piano-head">
+                <h1 class="piano-title">Clavier &amp; Partition Interactive</h1>
+                <p class="piano-subtitle">Clique sur une touche pour entendre le son et voir la note sur la partition</p>
+            </div>
+            <div id="piano-note-display" class="piano-info-note">Clique sur une touche 🎹</div>
+            <div class="piano-staff-container">
+                <svg id="piano-staff-svg" viewBox="0 0 650 190"></svg>
+            </div>
+            <div class="piano-wrapper">
+                <div id="piano" class="piano"></div>
+            </div>
+            <p class="piano-scroll-hint" aria-hidden="true">↔ Fais défiler le clavier (glisser du doigt, barre de défilement ou Maj + molette) pour accéder aux 88 touches</p>
+  </div>
+</div>
+
+<style is:global>
+#tool-piano {
+  width: 100%;
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 12px;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+  color: #0f172a;
+  position: relative;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+@media (min-width: 640px) {
+  #tool-piano { padding: 32px; }
+}
+        #tool-piano .piano-title { color:#2563eb; margin:0 0 2px 0; font-size:22px; text-align:center; font-weight:700; }
+        #tool-piano .piano-subtitle { color:#64748b; margin:0; font-size:13px; text-align:center; }
+        #tool-piano .piano-body > .hub-back { min-height: 40px; margin: 0; padding: 0 14px; font-size: 14px; }
+        #tool-piano .hub-back-text-short { display: none; }
+        #tool-piano .piano-body { width:100%; max-width:800px; margin:0 auto; display:flex; flex-direction:column; gap:15px; align-items:center; }
+        #tool-piano .piano-info-note { font-size:14px; font-weight:bold; color:#1e293b; background:#eff6ff; border:1px solid #bfdbfe; padding:6px 16px; border-radius:8px; min-width:150px; text-align:center; }
+        #tool-piano .piano-staff-container { background:#f8fafc; border:2px solid #e2e8f0; border-radius:14px; width:100%; height:260px; display:flex; justify-content:center; align-items:center; box-sizing:border-box; }
+        #tool-piano #piano-staff-svg { width:100%; max-width:650px; height:250px; }
+        #tool-piano .piano-wrapper { background:#1e293b; padding:10px; border-radius:14px; box-shadow:0 6px 15px rgba(0,0,0,0.15); width:100%; overflow-x:auto; display:flex; justify-content:center; box-sizing:border-box; }
+        #tool-piano .piano { display:flex; position:relative; height:110px; width:max-content; }
+        #tool-piano .white-key { width:28px; height:110px; background:#fff; border:1px solid #cbd5e1; border-radius:0 0 4px 4px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:6px; font-size:9px; font-weight:bold; color:#64748b; cursor:pointer; box-sizing:border-box; z-index:1; user-select:none; touch-action:manipulation; }
+        #tool-piano .white-key:hover { background:#f1f5f9; }
+        #tool-piano .white-key.active { background:#3b82f6 !important; color:#fff; }
+        #tool-piano .black-key { position:absolute; width:18px; height:65px; background:#0f172a; border-radius:0 0 3px 3px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:4px; font-size:8px; color:#94a3b8; cursor:pointer; box-sizing:border-box; z-index:3; user-select:none; touch-action:manipulation; }
+        #tool-piano .black-key:hover { background:#334155; }
+        #tool-piano .black-key.active { background:#2563eb !important; color:#fff; }
+        #tool-piano { --wk: 48px; --bk: 30px; --kh: 150px; --bkh: 92px; }
+        @media (hover: hover) and (pointer: fine) and (min-width: 820px) {
+            #tool-piano { --wk: 28px; --bk: 18px; --kh: 110px; --bkh: 65px; }   /* clavier d'origine pour souris */
+        }
+        #tool-piano .piano-body { min-width: 0; }
+        #tool-piano .piano-staff-container { height: auto; padding: 6px; overflow-x: auto; }
+        #tool-piano #piano-staff-svg { width: 100%; height: auto; max-width: 650px; display: block; }
+        /* flex-start + marges auto sur .piano : le début du clavier reste accessible quand il déborde */
+        #tool-piano .piano-wrapper { max-width: 100%; justify-content: flex-start; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
+        #tool-piano .piano { height: var(--kh); margin: 0 auto; flex: 0 0 auto; }
+        #tool-piano .white-key { flex: 0 0 var(--wk); width: var(--wk); height: var(--kh); font-size: 12px; -webkit-touch-callout: none; }
+        #tool-piano .black-key { width: var(--bk); height: var(--bkh); font-size: 10px; -webkit-touch-callout: none; }
+        #tool-piano .piano-wrapper { scrollbar-width: auto; scrollbar-color: #64748b #334155; padding-bottom: 12px; }
+        #tool-piano .piano-wrapper::-webkit-scrollbar { height: 14px; }
+        #tool-piano .piano-wrapper::-webkit-scrollbar-track { background: #334155; border-radius: 7px; }
+        #tool-piano .piano-wrapper::-webkit-scrollbar-thumb { background: #64748b; border-radius: 7px; }
+        #tool-piano .white-key.c-key { color: #2563eb; }   /* repère visuel : les Do portent leur numéro d'octave */
+        #tool-piano .piano-scroll-hint { display: block; margin: -6px 0 0; text-align: center; font-size: 13px; color: #64748b; font-weight: 600; }
+        /* Mobile/paysage bas : retour compact en tête d'outil, titre et sous-titre masqués */
+        @media (max-width: 640px), (max-width: 900px) and (orientation: landscape), (max-height: 500px) {
+            #tool-piano { padding: 10px; border-radius: 16px; }
+            #tool-piano .piano-body { gap: 8px; }
+            #tool-piano .piano-head { display: none; }
+            #tool-piano .piano-body > .hub-back { align-self: flex-start; margin: 0; padding: 0 12px; font-size: 14px; }
+            #tool-piano .hub-back-text { display: none; }
+            #tool-piano .hub-back-text-short { display: inline; }
+            #tool-piano .piano-scroll-hint { margin-top: -2px; font-size: 11px; line-height: 1.35; }
+        }
+</style>
+
+<script>
+    (function () {
+        /* Types — Astro compile le contenu des balises <script> en TypeScript. */
+        type KeyType = 'white' | 'black';
+        type PianoKey = { note: string; type: KeyType; midi: number };
+        type SvgAttrs = Record<string, string | number>;
+
+        // Clavier complet de 88 touches : La0 (MIDI 21) → Do8 (MIDI 108) = 52 blanches + 36 noires
+        const NOTE_NAMES = ['Do', 'Do#', 'Ré', 'Ré#', 'Mi', 'Fa', 'Fa#', 'Sol', 'Sol#', 'La', 'La#', 'Si'];
+        const BLACK_PITCH_CLASSES = [1, 3, 6, 8, 10];
+        const keysData: PianoKey[] = [];
+        for (let midi = 21; midi <= 108; midi++) {
+            const pc = midi % 12;
+            keysData.push({
+                note: NOTE_NAMES[pc] + (Math.floor(midi / 12) - 1),   // Do4 = MIDI 60
+                type: BLACK_PITCH_CLASSES.includes(pc) ? 'black' : 'white',
+                midi: midi
+            });
+        }
+
+        const SVGNS = 'http://www.w3.org/2000/svg';
+        let pianoAudioCtx: AudioContext | null = null;
+
+        /* ---------- Accès au DOM (garde instanceof) ---------- */
+        function mustElement(selector: string): HTMLElement {
+            const el = document.querySelector(selector);
+            if (!(el instanceof HTMLElement)) throw new Error(`Élément introuvable : ${selector}`);
+            return el;
+        }
+
+        function mustSvg(selector: string): SVGSVGElement {
+            const el = document.querySelector(selector);
+            if (!(el instanceof SVGSVGElement)) throw new Error(`SVG introuvable : ${selector}`);
+            return el;
+        }
+
+        /** Contexte Web Audio (avec repli sur le constructeur préfixé de Safari). */
+        function createAudioContext(): AudioContext {
+            const Ctor = window.AudioContext || window.webkitAudioContext;
+            if (!Ctor) throw new Error('Web Audio API non disponible');
+            return new Ctor();
+        }
+
+        function playPianoNote(midiNumber: number): void {
+            if (!pianoAudioCtx) {
+                pianoAudioCtx = createAudioContext();
+            }
+            const ac = pianoAudioCtx;
+            if (ac.state === 'suspended') ac.resume();
+
+            const freq = 440 * Math.pow(2, (midiNumber - 69) / 12);
+            const t = ac.currentTime;
+            const osc = ac.createOscillator();
+            const gain = ac.createGain();
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, t);
+            gain.gain.setValueAtTime(0.4, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 1.0);
+
+            osc.connect(gain);
+            gain.connect(ac.destination);
+            osc.start();
+            osc.stop(t + 1.0);
+        }
+
+        // Chaque touche gère sa propre surbrillance : on peut jouer plusieurs doigts à la fois
+        function highlightKey(element: HTMLElement): void {
+            element.classList.add('active');
+            setTimeout(() => element.classList.remove('active'), 250);
+        }
+
+        function getDiatonicStep(noteName: string): number {
+            const baseName = noteName.replace(/[0-9#]/g, '');
+            const octaveMatch = noteName.match(/[0-9]+/);
+            const octave = octaveMatch ? parseInt(octaveMatch[0], 10) : 0;
+            const order: Record<string, number> = { 'Do': 0, 'Ré': 1, 'Mi': 2, 'Fa': 3, 'Sol': 4, 'La': 5, 'Si': 6 };
+            return octave * 7 + (order[baseName] || 0);
+        }
+
+        function svgEl(name: 'line', attrs: SvgAttrs): SVGLineElement;
+        function svgEl(name: 'ellipse', attrs: SvgAttrs): SVGEllipseElement;
+        function svgEl(name: 'text', attrs: SvgAttrs): SVGTextElement;
+        function svgEl(name: string, attrs: SvgAttrs): SVGElement;
+        function svgEl(name: string, attrs: SvgAttrs): SVGElement {
+            const el = document.createElementNS(SVGNS, name) as SVGElement;
+            for (const k in attrs) el.setAttribute(k, String(attrs[k]));
+            return el;
+        }
+
+        function updateStaff(keyObj: PianoKey | null): void {
+            const svg = mustSvg('#piano-staff-svg');
+            svg.innerHTML = '';
+
+            const trebleLines = [35, 46, 57, 68, 79];
+            const bassLines   = [115, 126, 137, 148, 159];
+
+            [trebleLines, bassLines].forEach(lines => {
+                lines.forEach(y => svg.appendChild(svgEl('line', {
+                    x1: 50, y1: y, x2: 600, y2: y, stroke: '#334155', 'stroke-width': 2
+                })));
+            });
+
+            const trebleClef = svgEl('text', { x: 65, y: 80, 'font-family': 'serif', 'font-size': 80, fill: '#1e293b' });
+            trebleClef.textContent = '𝄞';
+            svg.appendChild(trebleClef);
+
+            const bassClef = svgEl('text', { x: 65, y: 154, 'font-family': 'serif', 'font-size': 56, fill: '#1e293b' });
+            bassClef.textContent = '𝄢';
+            svg.appendChild(bassClef);
+
+            if (!keyObj) return; // portée vide au départ
+
+            mustElement('#piano-note-display').textContent = `Note : ${keyObj.note}`;
+
+            const stepSize = 5.5;
+            const noteX = 325;
+            const isBass = keyObj.midi < 60;
+            const activeLines = isBass ? bassLines : trebleLines;
+            // Au-delà de ce que la portée peut afficher, on note à l'octave (8va / 15ma / 8vb / 15mb)
+            let shiftOct = 0, ottava = '';
+            if (!isBass) {
+                if (keyObj.midi > 96)      { shiftOct = 2;  ottava = '15ma'; }
+                else if (keyObj.midi > 84) { shiftOct = 1;  ottava = '8va'; }
+            } else {
+                if (keyObj.midi < 24)      { shiftOct = -2; ottava = '15mb'; }
+                else if (keyObj.midi < 36) { shiftOct = -1; ottava = '8vb'; }
+            }
+            const steps = getDiatonicStep(keyObj.note) - shiftOct * 7;
+            let noteY: number;
+
+            if (!isBass) {
+                // Clé de Sol : Sol4 sur la 2e ligne (y = 68)
+                noteY = 68 - ((steps - getDiatonicStep('Sol4')) * stepSize);
+            } else {
+                // Clé de Fa : Ré3 sur la ligne du milieu (y = 137)
+                noteY = 137 - ((steps - getDiatonicStep('Ré3')) * stepSize);
+            }
+
+            // Lignes supplémentaires
+            const addLedger = (yPos: number): void => { svg.appendChild(svgEl('line', {
+                x1: noteX - 14, y1: yPos, x2: noteX + 14, y2: yPos, stroke: '#334155', 'stroke-width': 2
+            })); };
+            if (noteY < activeLines[0] - 2) {
+                for (let y = activeLines[0] - 11; y >= noteY - 3; y -= 11) addLedger(y);
+            } else if (noteY > activeLines[4] + 2) {
+                for (let y = activeLines[4] + 11; y <= noteY + 3; y += 11) addLedger(y);
+            }
+
+            svg.appendChild(svgEl('ellipse', { cx: noteX, cy: noteY, rx: 7, ry: 5.5, fill: '#0f172a' }));
+
+            if (ottava) {
+                const label = svgEl('text', { x: noteX + 20, y: noteY + 5, 'font-size': 15, 'font-style': 'italic', 'font-weight': 'bold', fill: '#2563eb' });
+                label.textContent = ottava;
+                svg.appendChild(label);
+            }
+
+            if (keyObj.note.includes('#')) {
+                const sharp = svgEl('text', { x: noteX - 18, y: noteY + 4, 'font-size': 16, 'font-weight': 'bold', fill: '#0f172a' });
+                sharp.textContent = '♯';
+                svg.appendChild(sharp);
+            }
+
+            // Hampe : vers le haut si la note est sur/au-dessus du milieu de la portée... (corrigé : lineY n'existait pas)
+            const middleLine = activeLines[2];
+            const stem = noteY >= middleLine
+                ? svgEl('line', { x1: noteX + 6, y1: noteY, x2: noteX + 6, y2: noteY - 26, stroke: '#0f172a', 'stroke-width': 2 })
+                : svgEl('line', { x1: noteX - 6, y1: noteY, x2: noteX - 6, y2: noteY + 26, stroke: '#0f172a', 'stroke-width': 2 });
+            svg.appendChild(stem);
+        }
+
+        // Construction du clavier
+        const pianoEl = mustElement('#piano');
+        let whiteCount = 0;   // touches blanches déjà posées : sert à placer les touches noires
+        let middleCKey: HTMLDivElement | null = null;
+        const touchPending = new Map<number, { x: number; y: number }>();   // doigts posés sur une touche, en attente de savoir si c'est un appui ou un défilement
+        keysData.forEach(k => {
+            const keyDiv = document.createElement('div');
+            keyDiv.className = k.type === 'white' ? 'white-key' : 'black-key';
+            if (k.type === 'white') {
+                const isC = k.note.startsWith('Do');
+                keyDiv.textContent = isC ? k.note : k.note.replace(/[0-9]/g, '');   // les Do portent leur octave
+                if (isC) keyDiv.classList.add('c-key');
+                if (k.midi === 60) middleCKey = keyDiv;
+                whiteCount++;
+            } else {
+                // Position calculée à partir des variables CSS : le clavier s'agrandit sur écran tactile
+                keyDiv.style.left = 'calc(var(--wk) * ' + whiteCount + ' - var(--bk) / 2)';
+            }
+            // pointerdown = souris + tactile (tablette / TNI)
+            keyDiv.addEventListener('contextmenu', e => e.preventDefault());
+            const trigger = () => {
+                playPianoNote(k.midi);
+                highlightKey(keyDiv);
+                updateStaff(k);
+            };
+            keyDiv.addEventListener('pointerdown', e => {
+                if (e.pointerType === 'touch') {
+                    // Tactile : le clavier est très large et se fait défiler au doigt.
+                    // On joue au relâchement, seulement si le doigt n'a pas glissé (sinon : simple défilement).
+                    touchPending.set(e.pointerId, { x: e.clientX, y: e.clientY });
+                    return;
+                }
+                trigger();   // souris / stylet : réaction immédiate
+            });
+            keyDiv.addEventListener('pointerup', e => {
+                if (e.pointerType !== 'touch') return;
+                const start = touchPending.get(e.pointerId);
+                touchPending.delete(e.pointerId);
+                if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 10) trigger();
+            });
+            keyDiv.addEventListener('pointercancel', e => touchPending.delete(e.pointerId));
+            pianoEl.appendChild(keyDiv);
+        });
+
+        // Au premier affichage de l'outil, on centre le clavier sur le Do central (Do4)
+        const pianoWrapper = pianoEl.parentElement;
+        if (!pianoWrapper) throw new Error('Conteneur du clavier introuvable');
+        let pianoCentered = false;
+        const centerOnMiddleC = (): void => {
+            if (pianoCentered || !middleCKey || pianoWrapper.clientWidth === 0) return;
+            pianoCentered = true;
+            const kr = middleCKey.getBoundingClientRect();
+            const wr = pianoWrapper.getBoundingClientRect();
+            pianoWrapper.scrollLeft += (kr.left - wr.left) - (pianoWrapper.clientWidth - kr.width) / 2;
+        };
+        if (window.ResizeObserver) new ResizeObserver(centerOnMiddleC).observe(pianoWrapper);   // se déclenche quand l'outil devient visible
+        else centerOnMiddleC();
+
+        // Tactile (iOS / Safari) : on relance le contexte audio au relâchement du doigt
+        const unlockPianoAudio = (): void => {
+            if (pianoAudioCtx && pianoAudioCtx.state === 'suspended') pianoAudioCtx.resume();
+        };
+        document.addEventListener('pointerup', unlockPianoAudio, true);
+        document.addEventListener('touchend', unlockPianoAudio, true);
+
+        updateStaff(null); // dessine les deux portées dès l'ouverture
+    })();
+</script>

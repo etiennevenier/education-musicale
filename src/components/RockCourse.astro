@@ -1,0 +1,398 @@
+---
+import VideoCard from './VideoCard.astro';
+import rythmeImage from '../assets/Rythme Walk This Way.jpg';
+
+interface RockVideo {
+  badge: string;
+  title: string;
+  youtubeId: string;
+}
+
+interface RockTab {
+  id: string;
+  label: string;
+  videos: RockVideo[];
+  /** Bloc de ressources complémentaires affiché sous la grille vidéo. */
+  resources?: boolean;
+}
+
+const tabs: RockTab[] = [
+  {
+    id: 'cours',
+    label: 'Cours',
+    videos: [
+      { badge: 'Capsule', title: 'Capsule', youtubeId: 'A-2lfV36Lxk' },
+      { badge: 'Cours', title: 'Cours', youtubeId: 'wcqA4KOiwaU' },
+      { badge: 'Cours', title: 'Cours', youtubeId: 'vMauSMeaJqk' },
+      { badge: 'Woodstock', title: 'Woodstock', youtubeId: '9bEnbKfuOCY' },
+      { badge: 'Projet musical', title: 'Projet musical', youtubeId: 'LtDlfPYzs38' },
+    ],
+  },
+  {
+    id: 'aerosmith',
+    label: 'Walk This Way',
+    videos: [
+      { badge: 'Original', title: 'Walk This Way — Aerosmith', youtubeId: '4c8O2n1Gfto' },
+      { badge: 'Feat Run D.M.C', title: 'Walk This Way — Run D.M.C. & Aerosmith', youtubeId: 'xUScFNXAq0w' },
+      { badge: 'Rythme', title: 'Walk This Way — rythme', youtubeId: 'u7KGzZsrOZg' },
+    ],
+    resources: true,
+  },
+  {
+    id: 'help',
+    label: 'Help',
+    videos: [
+      { badge: 'Beatles', title: 'Help — The Beatles', youtubeId: '2Q_ZzBGPdqE' },
+      { badge: 'Deep Purple', title: 'Help — Deep Purple', youtubeId: 'OyEOYJDjGGM' },
+      { badge: 'Carpenters', title: 'Help — Carpenters', youtubeId: 'YsD4W3-xdnI' },
+      { badge: 'Carpenters Live', title: 'Help — Carpenters (live)', youtubeId: 'YMxq9N-t4wQ' },
+    ],
+  },
+];
+
+const articleUrl = 'https://hardforce.com/actu/35694/lejourou-run-dmc-aerosmith-walk-this-way';
+---
+
+<div class="rock-course">
+  <div class="rock-tabs" role="tablist" aria-label="Musique et Rock">
+    {tabs.map((tab, index) => (
+      <button
+        type="button"
+        role="tab"
+        id={`rock-tab-${tab.id}`}
+        class="rock-tab"
+        aria-controls={`rock-panel-${tab.id}`}
+        aria-selected={index === 0 ? 'true' : 'false'}
+        tabindex={index === 0 ? 0 : -1}
+        data-tab={tab.id}
+      >
+        {tab.label}
+      </button>
+    ))}
+  </div>
+
+  {tabs.map((tab, index) => (
+    <div
+      role="tabpanel"
+      id={`rock-panel-${tab.id}`}
+      class="rock-panel"
+      aria-labelledby={`rock-tab-${tab.id}`}
+      hidden={index !== 0}
+      data-panel={tab.id}
+    >
+      <div class="rock-videos">
+        {tab.videos.map((video) => (
+          <VideoCard
+            badge={video.badge}
+            title={video.title}
+            url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+          />
+        ))}
+      </div>
+
+      {tab.resources && (
+        <div class="rock-resources">
+          <button
+            type="button"
+            class="rock-rhythm"
+            data-lightbox-open
+            aria-label="Agrandir le schéma rythmique de Walk This Way"
+          >
+            <img
+              src={rythmeImage.src}
+              width={rythmeImage.width}
+              height={rythmeImage.height}
+              alt="Schéma rythmique de Walk This Way"
+              loading="lazy"
+            />
+          </button>
+
+          <a
+            class="rock-article"
+            href={articleUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Article : Le jour où Run D.M.C. &amp; Aerosmith ont enregistré Walk This Way
+            <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+      )}
+    </div>
+  ))}
+
+  <dialog class="rock-lightbox" aria-label="Schéma rythmique de Walk This Way">
+    <button type="button" class="rock-lightbox-close" aria-label="Fermer">×</button>
+    <img
+      src={rythmeImage.src}
+      width={rythmeImage.width}
+      height={rythmeImage.height}
+      alt="Schéma rythmique de Walk This Way"
+    />
+  </dialog>
+</div>
+
+<script>
+  const tabs = document.querySelectorAll<HTMLButtonElement>('.rock-tab');
+
+  const selectTab = (tab: HTMLButtonElement) => {
+    const root = tab.closest('.rock-course');
+    if (!root) return;
+
+    root.querySelectorAll<HTMLButtonElement>('.rock-tab').forEach((item) => {
+      const isActive = item === tab;
+      item.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      item.tabIndex = isActive ? 0 : -1;
+    });
+
+    root.querySelectorAll<HTMLElement>('.rock-panel').forEach((panel) => {
+      panel.hidden = panel.dataset.panel !== tab.dataset.tab;
+    });
+  };
+
+  tabs.forEach((tab, index) => {
+    tab.addEventListener('click', () => selectTab(tab));
+    tab.addEventListener('keydown', (event) => {
+      if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+      event.preventDefault();
+      const nextIndex =
+        event.key === 'ArrowRight'
+          ? (index + 1) % tabs.length
+          : (index - 1 + tabs.length) % tabs.length;
+      tabs[nextIndex].focus();
+      selectTab(tabs[nextIndex]);
+    });
+  });
+
+  const lightbox = document.querySelector<HTMLDialogElement>('.rock-lightbox');
+  const openButton = document.querySelector<HTMLButtonElement>('[data-lightbox-open]');
+
+  if (lightbox && openButton) {
+    const closeButton = lightbox.querySelector<HTMLButtonElement>('.rock-lightbox-close');
+
+    openButton.addEventListener('click', () => lightbox.showModal());
+    closeButton?.addEventListener('click', () => lightbox.close());
+    lightbox.addEventListener('click', (event) => {
+      if (event.target === lightbox) lightbox.close();
+    });
+  }
+</script>
+
+<style>
+  .rock-course {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .rock-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .rock-tab {
+    flex: 1 1 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.9rem 1.25rem;
+    border-radius: 12px;
+    border: 1px solid var(--border, #334155);
+    background: #1e293b;
+    color: var(--text-muted, #94a3b8);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+  }
+
+  .rock-tab::before {
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+
+  .rock-tab[data-tab='cours']::before {
+    content: '🎸';
+  }
+
+  .rock-tab[data-tab='aerosmith']::before {
+    content: '🎤';
+  }
+
+  .rock-tab[data-tab='help']::before {
+    content: '🎶';
+  }
+
+  .rock-tab:hover {
+    border-color: var(--primary, #38bdf8);
+    color: var(--text, #f1f5f9);
+  }
+
+  .rock-tab[aria-selected='true'] {
+    border-color: var(--primary, #38bdf8);
+    color: var(--text, #f1f5f9);
+    box-shadow: 0 0 0 1px var(--primary, #38bdf8), 0 0 16px rgba(56, 189, 248, 0.25);
+  }
+
+  .rock-tab:focus-visible {
+    outline: 2px solid var(--primary, #38bdf8);
+    outline-offset: 2px;
+  }
+
+  .rock-panel[hidden] {
+    display: none;
+  }
+
+  .rock-videos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  .rock-resources {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border, #334155);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  .rock-rhythm {
+    position: relative;
+    display: block;
+    width: 100%;
+    max-width: 220px;
+    padding: 0.5rem;
+    background: #f8fafc;
+    border: 1px solid var(--border, #334155);
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+    cursor: zoom-in;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .rock-rhythm::after {
+    content: '🔍';
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    background: rgba(15, 23, 42, 0.75);
+    border-radius: 9999px;
+    font-size: 0.85rem;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .rock-rhythm:hover {
+    border-color: var(--primary, #38bdf8);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--primary, #38bdf8);
+    transform: translateY(-2px) scale(1.03);
+  }
+
+  .rock-rhythm:active {
+    transform: translateY(0) scale(0.99);
+  }
+
+  .rock-rhythm:focus-visible {
+    outline: 2px solid var(--primary, #38bdf8);
+    outline-offset: 2px;
+  }
+
+  .rock-rhythm img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 9px;
+  }
+
+  .rock-lightbox {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    overflow: visible;
+  }
+
+  .rock-lightbox::backdrop {
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(4px);
+  }
+
+  .rock-lightbox img {
+    display: block;
+    width: auto;
+    max-width: min(92vw, 640px);
+    max-height: 86vh;
+    padding: 0.5rem;
+    background: #f8fafc;
+    border-radius: 14px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  }
+
+  .rock-lightbox-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    background: #1e293b;
+    border: 1px solid var(--border, #334155);
+    border-radius: 9999px;
+    color: var(--text, #f1f5f9);
+    font: inherit;
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+
+  .rock-lightbox-close:hover {
+    border-color: var(--primary, #38bdf8);
+    color: var(--primary, #38bdf8);
+  }
+
+  .rock-lightbox-close:focus-visible {
+    outline: 2px solid var(--primary, #38bdf8);
+    outline-offset: 2px;
+  }
+
+  .rock-article {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 100%;
+    padding: 0.7rem 1.1rem;
+    background: #1e293b;
+    border: 1px solid var(--border, #334155);
+    border-radius: 9999px;
+    color: var(--text, #f1f5f9);
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+
+  .rock-article:hover {
+    border-color: var(--primary, #38bdf8);
+    color: var(--primary, #38bdf8);
+  }
+
+  .rock-article:focus-visible {
+    outline: 2px solid var(--primary, #38bdf8);
+    outline-offset: 2px;
+  }
+</style>

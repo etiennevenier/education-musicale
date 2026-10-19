@@ -53,56 +53,60 @@
 </div>
 
 <script>
-  import { fuzeauInstruments as instruments } from '../data/fuzeauInstruments';
+  import { fuzeauInstruments as instruments, type Instrument } from '../data/fuzeauInstruments';
   import { relativeUrl } from '../utils/navigation';
   import { playAudio, stopAudio } from '../utils/audioManager';
 
+  type QuizMode = 'audio' | 'image' | 'assoc';
+  type QuizLevel = 'vert' | 'jaune' | 'rouge' | 'all';
+  type ResultMessage = { emoji: string; text: string };
+
   // Les fichiers sont dans /public : on préfixe les URLs avec le BASE_URL d'Astro
   // pour qu'elles restent valides en local et sur GitHub Pages (/education-musicale).
-  const fuzeauInstruments = instruments.map((instrument) => ({
+  const fuzeauInstruments: Instrument[] = instruments.map((instrument) => ({
     ...instrument,
     audioUrl: relativeUrl(instrument.audioUrl),
     imageUrl: relativeUrl(instrument.imageUrl),
   }));
 
-  let currentInstrument = null;
-  let currentMode = 'audio';
-  let currentLevel = 'vert';
+  let currentInstrument: Instrument | null = null;
+  let currentMode: QuizMode = 'audio';
+  let currentLevel: QuizLevel = 'vert';
   let isAnswered = false;
 
   // État de la partie
-  let queue = [];
+  let queue: Instrument[] = [];
   let questionIndex = 0;
   let score = 0;
 
   // Passage automatique à la question suivante après une BONNE réponse uniquement
   const AUTO_NEXT_DELAY = 1200; // en millisecondes
-  let autoNextTimer = null;
+  let autoNextTimer: ReturnType<typeof setTimeout> | null = null;
 
-  function clearAutoNext() {
-    if (autoNextTimer) {
+  function clearAutoNext(): void {
+    if (autoNextTimer !== null) {
       clearTimeout(autoNextTimer);
       autoNextTimer = null;
     }
   }
 
-  const levelSelect = document.getElementById('levelSelect');
-  const modeSelect = document.getElementById('modeSelect');
-  const progressBox = document.getElementById('progressBox');
-  const progressLabel = document.getElementById('progressLabel');
-  const scoreLabel = document.getElementById('scoreLabel');
-  const progressFill = document.getElementById('progressFill');
-  const questionContainer = document.getElementById('questionContainer');
-  const optionsContainer = document.getElementById('optionsContainer');
-  const quizFeedback = document.getElementById('quizFeedback');
-  const actionFooter = document.getElementById('actionFooter');
-  const resultContainer = document.getElementById('resultContainer');
-  const btnNext = document.getElementById('btnNext');
+  const levelSelect = document.getElementById('levelSelect') as HTMLSelectElement;
+  const modeSelect = document.getElementById('modeSelect') as HTMLSelectElement;
+  const progressBox = document.getElementById('progressBox') as HTMLDivElement;
+  const progressLabel = document.getElementById('progressLabel') as HTMLSpanElement;
+  const scoreLabel = document.getElementById('scoreLabel') as HTMLSpanElement;
+  const progressFill = document.getElementById('progressFill') as HTMLDivElement;
+  const questionContainer = document.getElementById('questionContainer') as HTMLDivElement;
+  const optionsContainer = document.getElementById('optionsContainer') as HTMLDivElement;
+  const quizFeedback = document.getElementById('quizFeedback') as HTMLDivElement;
+  const actionFooter = document.getElementById('actionFooter') as HTMLDivElement;
+  const resultContainer = document.getElementById('resultContainer') as HTMLDivElement;
+  const btnNext = document.getElementById('btnNext') as HTMLButtonElement;
 
   // --- Utilitaires -------------------------------------------------------
 
   // Minuscules + suppression des accents ("Flûte" -> "flute")
-  function normalize(str) {
+  function normalize(str: string): string {
     return str
       .toLowerCase()
       .normalize('NFD')
@@ -111,15 +115,15 @@
 
   // Normalisation pour la comparaison de réponses libres :
   // sans accents, sans article, sans ponctuation ni espaces
-  function normalizeAnswer(str) {
+  function normalizeAnswer(str: string): string {
     return normalize(str)
       .trim()
       .replace(/^(le|la|les|l'|un|une|des|du|de la|de l'|d')\s*/i, '')
       .replace(/[^a-z0-9]/g, '');
   }
 
-  function levenshtein(a, b) {
-    const dp = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+  function levenshtein(a: string, b: string): number {
+    const dp: number[][] = Array.from({ length: a.length + 1 }, (_, i) => [i]);
     for (let j = 1; j <= b.length; j++) dp[0][j] = j;
     for (let i = 1; i <= a.length; i++) {
       for (let j = 1; j <= b.length; j++) {
@@ -134,7 +138,7 @@
   }
 
   // Réponse libre correcte ? (tolère 1 faute de frappe sur les noms de 5 lettres et +)
-  function isTypedAnswerCorrect(typed, expectedName) {
+  function isTypedAnswerCorrect(typed: string, expectedName: string): boolean {
     const t = normalizeAnswer(typed);
     const e = normalizeAnswer(expectedName);
     if (!t) return false;
@@ -142,7 +146,7 @@
     return e.length >= 5 && levenshtein(t, e) <= 1;
   }
 
-  function shuffle(array) {
+  function shuffle<T>(array: readonly T[]): T[] {
     const a = [...array];
     for (let i = a.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -151,7 +155,7 @@
     return a;
   }
 
-  function getFilteredInstruments() {
+  function getFilteredInstruments(): Instrument[] {
     if (currentLevel === 'all') {
       return fuzeauInstruments;
     }
@@ -159,7 +163,7 @@
   }
 
   // Mode 3 : 1 bonne réponse + 3 leurres piochés dans tout le catalogue
-  function getRandomOptions(correctItem, count = 4) {
+  function getRandomOptions(correctItem: Instrument, count = 4): Instrument[] {
     const otherItems = fuzeauInstruments.filter(i => i.id !== correctItem.id);
     const options = [correctItem, ...shuffle(otherItems).slice(0, count - 1)];
     return shuffle(options);
@@ -168,21 +172,22 @@
   // --- Lecture audio -----------------------------------------------------
   // Le gestionnaire centralisé coupe systématiquement l'extrait précédent,
   // applique le volume master et évite tout chevauchement de sons.
-  function playSound(url) {
+  function playSound(url: string): void {
     void playAudio(url);
   }
 
-  function stopSound() {
+  function stopSound(): void {
     stopAudio();
   }
 
   // Si une image ne charge pas, on réessaie une fois avec l'autre encodage des accents
-  function attachImageFallback(root) {
-    root.querySelectorAll('img').forEach(img => {
+  function attachImageFallback(root: ParentNode): void {
+    root.querySelectorAll('img').forEach((img) => {
       img.addEventListener('error', () => {
         if (img.dataset.retry) return;
         img.dataset.retry = '1';
         const original = img.getAttribute('src');
+        if (!original) return;
         const alt = original.normalize('NFD');
         if (alt !== original) img.src = alt;
       });
@@ -191,7 +196,7 @@
 
   // --- Progression et score ----------------------------------------------
 
-  function updateProgress() {
+  function updateProgress(): void {
     const total = queue.length;
     progressLabel.textContent = `Question ${questionIndex + 1} / ${total}`;
     scoreLabel.textContent = `Score : ${score}`;
@@ -200,7 +205,7 @@
     progressFill.style.width = `${(done / total) * 100}%`;
   }
 
-  function updateNextButton() {
+  function updateNextButton(): void {
     const isLast = questionIndex >= queue.length - 1;
     btnNext.textContent = isLast ? '🏁 Voir mon score' : 'Question Suivante ➔';
     btnNext.disabled = !isAnswered;
@@ -209,7 +214,7 @@
   // --- Saisie avec suggestions (modes 1 et 2) ----------------------------
   // La liste n'apparaît que lorsque l'élève a tapé au moins une lettre.
 
-  function buildSearchBox() {
+  function buildSearchBox(): HTMLDivElement {
     const pool = [...getFilteredInstruments()].sort((a, b) =>
       a.name.localeCompare(b.name, 'fr')
     );
@@ -233,20 +238,20 @@
       <ul class="search-list hidden" role="listbox"></ul>
     `;
 
-    const input = wrapper.querySelector('.search-input');
-    const list = wrapper.querySelector('.search-list');
-    const btnValidate = wrapper.querySelector('.btn-validate');
-    let matches = [];
+    const input = wrapper.querySelector('.search-input') as HTMLInputElement;
+    const list = wrapper.querySelector('.search-list') as HTMLUListElement;
+    const btnValidate = wrapper.querySelector('.btn-validate') as HTMLButtonElement;
+    let matches: Instrument[] = [];
     let activeIndex = -1; // -1 = aucune suggestion sélectionnée au clavier
 
-    function finish(isCorrect) {
+    function finish(isCorrect: boolean): void {
       input.disabled = true;
       btnValidate.disabled = true;
       list.classList.add('hidden');
       checkAnswer(isCorrect, input);
     }
 
-    function computeMatches() {
+    function computeMatches(): void {
       const q = normalize(input.value.trim());
       if (!q) {
         matches = [];
@@ -261,7 +266,7 @@
       );
     }
 
-    function renderList() {
+    function renderList(): void {
       computeMatches();
       list.innerHTML = '';
 
@@ -297,17 +302,21 @@
     }
 
     // Clic sur une suggestion : validation immédiate
-    function choose(inst) {
+    function choose(inst: Instrument): void {
       if (isAnswered) return;
+      const instrument = currentInstrument;
+      if (!instrument) return;
       input.value = inst.name;
-      finish(inst.id === currentInstrument.id);
+      finish(inst.id === instrument.id);
     }
 
     // Validation du texte tel qu'il est écrit
-    function submitTyped() {
+    function submitTyped(): void {
       if (isAnswered) return;
+      const instrument = currentInstrument;
+      if (!instrument) return;
       if (!input.value.trim()) return;
-      finish(isTypedAnswerCorrect(input.value, currentInstrument.name));
+      finish(isTypedAnswerCorrect(input.value, instrument.name));
     }
 
     input.addEventListener('input', () => {
@@ -315,7 +324,7 @@
       renderList();
     });
 
-    input.addEventListener('keydown', (e) => {
+    input.addEventListener('keydown', (e: KeyboardEvent) => {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         if (matches.length) activeIndex = (activeIndex + 1) % matches.length;
@@ -342,7 +351,7 @@
   // --- Partie : démarrage, questions, résultat ---------------------------
 
   // autoPlay = true : le son démarre tout de suite (modes 1 et 3 uniquement)
-  function startGame(autoPlay = false) {
+  function startGame(autoPlay = false): void {
     clearAutoNext();
     stopSound();
     score = 0;
@@ -365,13 +374,14 @@
   // autoPlay = false par défaut : à la toute première question (chargement de
   // la page) le son ne se lance pas. Il se lance seulement après un clic
   // « Question Suivante » ou « Recommencer ».
-  function loadQuestion(autoPlay = false) {
+  function loadQuestion(autoPlay = false): void {
     clearAutoNext();
     isAnswered = false;
     quizFeedback.className = 'feedback-msg hidden';
     stopSound();
 
-    currentInstrument = queue[questionIndex];
+    const instrument = queue[questionIndex];
+    currentInstrument = instrument;
     updateProgress();
     updateNextButton();
 
@@ -386,8 +396,8 @@
           <button id="btnPlaySound" class="btn-play-sound">🔊 Écouter l'extrait</button>
         </div>
       `;
-      document.getElementById('btnPlaySound').addEventListener('click', () => playSound(currentInstrument.audioUrl));
-      if (autoPlay) playSound(currentInstrument.audioUrl);
+      (document.getElementById('btnPlaySound') as HTMLButtonElement).addEventListener('click', () => playSound(instrument.audioUrl));
+      if (autoPlay) playSound(instrument.audioUrl);
 
       optionsContainer.className = 'options-search';
       optionsContainer.appendChild(buildSearchBox());
@@ -399,7 +409,7 @@
         <div class="image-q-box">
           <p>Quel est le nom de cet instrument ?</p>
           <div class="q-img-wrap">
-            <img src="${currentInstrument.imageUrl}" alt="Instrument à identifier" class="q-img" />
+            <img src="${instrument.imageUrl}" alt="Instrument à identifier" class="q-img" />
           </div>
         </div>
       `;
@@ -411,7 +421,7 @@
 
     // 3. Association Son ↔ Image (4 propositions : 1 bonne + 3 leurres)
     else if (currentMode === 'assoc') {
-      const options = getRandomOptions(currentInstrument, 4);
+      const options = getRandomOptions(instrument, 4);
 
       questionContainer.innerHTML = `
         <div class="audio-q-box">
@@ -419,34 +429,36 @@
           <button id="btnPlaySound" class="btn-play-sound">🔊 Écouter le son</button>
         </div>
       `;
-      document.getElementById('btnPlaySound').addEventListener('click', () => playSound(currentInstrument.audioUrl));
-      if (autoPlay) playSound(currentInstrument.audioUrl);
+      (document.getElementById('btnPlaySound') as HTMLButtonElement).addEventListener('click', () => playSound(instrument.audioUrl));
+      if (autoPlay) playSound(instrument.audioUrl);
 
       optionsContainer.className = 'options-grid-images';
       options.forEach(opt => {
         const card = document.createElement('div');
         card.className = 'card-image-option';
         card.innerHTML = `<img src="${opt.imageUrl}" alt="${opt.name}" />`;
-        card.addEventListener('click', () => checkAnswer(opt.id === currentInstrument.id, card));
+        card.addEventListener('click', () => checkAnswer(opt.id === instrument.id, card));
         optionsContainer.appendChild(card);
       });
       attachImageFallback(optionsContainer);
     }
   }
 
-  function checkAnswer(isCorrect, element) {
+  function checkAnswer(isCorrect: boolean, element: HTMLElement): void {
     if (isAnswered) return;
+    const instrument = currentInstrument;
+    if (!instrument) return;
     isAnswered = true;
 
     if (isCorrect) {
       score++;
       element.classList.add('correct');
-      quizFeedback.textContent = `🎉 Bravo ! C'est bien : ${currentInstrument.name}`;
+      quizFeedback.textContent = `🎉 Bravo ! C'est bien : ${instrument.name}`;
       quizFeedback.className = 'feedback-msg success';
       autoNextTimer = setTimeout(goToNext, AUTO_NEXT_DELAY);
     } else {
       element.classList.add('incorrect');
-      quizFeedback.textContent = `❌ Dommage ! La bonne réponse était : ${currentInstrument.name}`;
+      quizFeedback.textContent = `❌ Dommage ! La bonne réponse était : ${instrument.name}`;
       quizFeedback.className = 'feedback-msg error';
     }
 
@@ -454,7 +466,7 @@
     updateNextButton();
   }
 
-  function getResultMessage(note, total) {
+  function getResultMessage(note: number, total: number): ResultMessage {
     const ratio = note / total;
     if (ratio === 1) return { emoji: '🏆', text: "Parfait ! Tu as l'oreille d'un musicien d'orchestre !" };
     if (ratio >= 0.8) return { emoji: '🌟', text: 'Excellent travail, tu reconnais très bien les timbres !' };
@@ -462,7 +474,7 @@
     return { emoji: '💪', text: "Continue à t'entraîner, tu vas y arriver !" };
   }
 
-  function showResult() {
+  function showResult(): void {
     stopSound();
     const total = queue.length;
     const { emoji, text } = getResultMessage(score, total);
@@ -481,24 +493,24 @@
       <button id="btnRestart" class="btn-restart">🔄 Recommencer</button>
     `;
     resultContainer.classList.remove('hidden');
-    document.getElementById('btnRestart').addEventListener('click', () => startGame(true));
+    (document.getElementById('btnRestart') as HTMLButtonElement).addEventListener('click', () => startGame(true));
   }
 
   // --- Événements ---------------------------------------------------------
 
   // Changer le niveau ou le mode relance une nouvelle partie
-  levelSelect.addEventListener('change', (e) => {
-    currentLevel = e.target.value;
+  levelSelect.addEventListener('change', (): void => {
+    currentLevel = levelSelect.value as QuizLevel;
     startGame();
   });
 
-  modeSelect.addEventListener('change', (e) => {
-    currentMode = e.target.value;
+  modeSelect.addEventListener('change', (): void => {
+    currentMode = modeSelect.value as QuizMode;
     startGame();
   });
 
   // Utilisé par le bouton « Suivant » ET par le minuteur après une bonne réponse
-  function goToNext() {
+  function goToNext(): void {
     clearAutoNext();
     if (!isAnswered) return;
     if (questionIndex >= queue.length - 1) {
