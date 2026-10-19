@@ -1,0 +1,527 @@
+---
+import { jazzQuizQuestions, JAZZ_QUESTIONS_PER_GAME } from '../data/jazzQuizData';
+
+const questionsPerGame = Math.min(JAZZ_QUESTIONS_PER_GAME, jazzQuizQuestions.length);
+---
+
+<div class="jazz-quiz-card">
+  <div class="jq-header">
+    <span class="jq-badge">Quiz de connaissances</span>
+    <h4>Connais-tu bien le jazz ?</h4>
+  </div>
+
+  <p class="jq-instruction">
+    {questionsPerGame} questions pour vérifier ce que tu as retenu du cours. Une seule bonne réponse
+    par question.
+  </p>
+
+  <div id="jqProgressBox" class="jq-progress-box">
+    <div class="jq-progress-text">
+      <span id="jqProgressLabel">Question 1 / {questionsPerGame}</span>
+      <span id="jqScoreLabel" class="jq-score-label">Score : 0 / {questionsPerGame}</span>
+    </div>
+    <div class="jq-progress-bar"><div id="jqProgressFill" class="jq-progress-fill"></div></div>
+  </div>
+
+  <div id="jqQuestionContainer" class="jq-question-container"></div>
+
+  <div id="jqOptionsContainer" class="jq-options-grid"></div>
+
+  <div id="jqFeedback" class="jq-feedback hidden" aria-live="polite"></div>
+
+  <div id="jqActionFooter" class="jq-action-footer">
+    <button id="jqBtnNext" class="jq-btn-next" type="button" disabled>
+      Question suivante ➔
+    </button>
+  </div>
+
+  <div id="jqResultContainer" class="jq-result-container hidden" aria-live="polite"></div>
+</div>
+
+<script>
+  import {
+    jazzQuizQuestions,
+    JAZZ_QUESTIONS_PER_GAME,
+    type JazzQuizQuestion,
+  } from '../data/jazzQuizData';
+
+  interface QuizEntry {
+    question: JazzQuizQuestion;
+    options: string[];
+  }
+
+  const QUESTIONS_PER_GAME = Math.min(JAZZ_QUESTIONS_PER_GAME, jazzQuizQuestions.length);
+
+  // Passage automatique à la question suivante après une bonne réponse.
+  const AUTO_NEXT_DELAY = 2500;
+
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+  const progressBox = $<HTMLDivElement>('jqProgressBox');
+  const progressLabel = $<HTMLSpanElement>('jqProgressLabel');
+  const scoreLabel = $<HTMLSpanElement>('jqScoreLabel');
+  const progressFill = $<HTMLDivElement>('jqProgressFill');
+  const questionContainer = $<HTMLDivElement>('jqQuestionContainer');
+  const optionsContainer = $<HTMLDivElement>('jqOptionsContainer');
+  const quizFeedback = $<HTMLDivElement>('jqFeedback');
+  const actionFooter = $<HTMLDivElement>('jqActionFooter');
+  const btnNext = $<HTMLButtonElement>('jqBtnNext');
+  const resultContainer = $<HTMLDivElement>('jqResultContainer');
+
+  let queue: QuizEntry[] = [];
+  let questionIndex = 0;
+  let score = 0;
+  let isAnswered = false;
+  let currentEntry: QuizEntry | null = null;
+  let autoNextTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // Mélange de Fisher-Yates.
+  function shuffle<T>(array: readonly T[]): T[] {
+    const a = [...array];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function clearAutoNext() {
+    if (autoNextTimer) {
+      clearTimeout(autoNextTimer);
+      autoNextTimer = null;
+    }
+  }
+
+  function updateProgress() {
+    progressLabel.textContent = `Question ${questionIndex + 1} / ${queue.length}`;
+    scoreLabel.textContent = `Score : ${score} / ${queue.length}`;
+    const done = questionIndex + (isAnswered ? 1 : 0);
+    progressFill.style.width = `${(done / queue.length) * 100}%`;
+  }
+
+  function updateNextButton() {
+    const isLast = questionIndex >= queue.length - 1;
+    btnNext.textContent = isLast ? '🏁 Voir mon score' : 'Question suivante ➔';
+    btnNext.disabled = !isAnswered;
+  }
+
+  function startGame() {
+    clearAutoNext();
+    score = 0;
+    questionIndex = 0;
+
+    queue = shuffle(jazzQuizQuestions)
+      .slice(0, QUESTIONS_PER_GAME)
+      .map((question) => ({ question, options: shuffle(question.options) }));
+
+    resultContainer.classList.add('hidden');
+    resultContainer.innerHTML = '';
+    progressBox.classList.remove('hidden');
+    questionContainer.classList.remove('hidden');
+    optionsContainer.classList.remove('hidden');
+    actionFooter.classList.remove('hidden');
+
+    loadQuestion();
+  }
+
+  function loadQuestion() {
+    clearAutoNext();
+    isAnswered = false;
+    quizFeedback.className = 'jq-feedback hidden';
+    quizFeedback.textContent = '';
+
+    const entry = queue[questionIndex];
+    currentEntry = entry;
+    updateProgress();
+    updateNextButton();
+
+    questionContainer.innerHTML = `
+      <span class="jq-question-number">Question ${questionIndex + 1}</span>
+      <p class="jq-question-text"></p>
+    `;
+    // textContent : le texte de la question est affiché tel quel.
+    questionContainer.querySelector('.jq-question-text')!.textContent = entry.question.question;
+
+    optionsContainer.innerHTML = '';
+    entry.options.forEach((option, index) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'jq-option';
+      btn.dataset.option = option;
+      btn.innerHTML = `<span class="jq-option-letter">${String.fromCharCode(65 + index)}</span><span class="jq-option-text"></span>`;
+      // textContent : les propositions sont affichées telles quelles.
+      btn.querySelector('.jq-option-text')!.textContent = option;
+      btn.addEventListener('click', () => checkAnswer(option, btn));
+      optionsContainer.appendChild(btn);
+    });
+  }
+
+  function checkAnswer(option: string, button: HTMLButtonElement) {
+    if (isAnswered || !currentEntry) return;
+    isAnswered = true;
+
+    optionsContainer
+      .querySelectorAll<HTMLButtonElement>('.jq-option')
+      .forEach((btn) => (btn.disabled = true));
+
+    const isCorrect = option === currentEntry.question.correctAnswer;
+
+    if (isCorrect) {
+      score++;
+      button.classList.add('correct');
+      quizFeedback.textContent = `✨ Bravo ! ${currentEntry.question.explanation}`;
+      quizFeedback.className = 'jq-feedback success';
+      autoNextTimer = setTimeout(goToNext, AUTO_NEXT_DELAY);
+    } else {
+      button.classList.add('incorrect');
+      const goodAnswer = Array.from(
+        optionsContainer.querySelectorAll<HTMLButtonElement>('.jq-option')
+      ).find((btn) => btn.dataset.option === currentEntry?.question.correctAnswer);
+      goodAnswer?.classList.add('correct');
+      quizFeedback.textContent = `❌ Dommage ! La bonne réponse est « ${currentEntry.question.correctAnswer} ». ${currentEntry.question.explanation}`;
+      quizFeedback.className = 'jq-feedback error';
+    }
+
+    updateProgress();
+    updateNextButton();
+  }
+
+  function getResultMessage(note: number, total: number) {
+    const ratio = note / total;
+    if (ratio === 1) {
+      return { emoji: '🏆', text: 'Parfait ! Tu maîtrises le cours sur le jazz.' };
+    }
+    if (ratio >= 0.8) {
+      return { emoji: '🌟', text: 'Excellent ! Encore une petite révision pour viser le sans-faute.' };
+    }
+    if (ratio >= 0.5) {
+      return { emoji: '👍', text: 'Bien joué ! Relis la fiche de cours et retente ta chance.' };
+    }
+    return { emoji: '💪', text: 'Continue à réviser la fiche de cours, tu vas y arriver !' };
+  }
+
+  function showResult() {
+    const total = queue.length;
+    const { emoji, text } = getResultMessage(score, total);
+
+    progressBox.classList.add('hidden');
+    questionContainer.classList.add('hidden');
+    optionsContainer.classList.add('hidden');
+    actionFooter.classList.add('hidden');
+    quizFeedback.className = 'jq-feedback hidden';
+
+    resultContainer.innerHTML = `
+      <div class="jq-result-emoji">${emoji}</div>
+      <p class="jq-result-title">Quiz terminé !</p>
+      <p class="jq-result-score"><span class="jq-result-note">${score}</span> / ${total}</p>
+      <p class="jq-result-text">${text}</p>
+      <button id="jqBtnRestart" class="jq-btn-restart" type="button">🔄 Refaire le quiz</button>
+    `;
+    resultContainer.classList.remove('hidden');
+    $<HTMLButtonElement>('jqBtnRestart').addEventListener('click', startGame);
+  }
+
+  // Utilisé par le bouton « suivante » ET par le minuteur après une bonne réponse.
+  function goToNext() {
+    clearAutoNext();
+    if (!isAnswered) return;
+    if (questionIndex >= queue.length - 1) {
+      showResult();
+    } else {
+      questionIndex++;
+      loadQuestion();
+    }
+  }
+
+  btnNext.addEventListener('click', goToNext);
+
+  startGame();
+</script>
+
+<style is:global>
+  /*
+    Styles globaux limités au préfixe .jazz-quiz-card : les boutons de réponse
+    sont créés dynamiquement par le script et ne recevraient pas les styles
+    « scoped » d'Astro.
+  */
+  .jazz-quiz-card {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  .jazz-quiz-card * {
+    box-sizing: border-box;
+  }
+
+  .jazz-quiz-card .hidden {
+    display: none !important;
+  }
+
+  .jazz-quiz-card .jq-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .jazz-quiz-card .jq-badge {
+    background: #e11d48;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+  }
+
+  .jazz-quiz-card .jq-header h4 {
+    margin: 0;
+    color: #f1f5f9;
+    font-size: 1.1rem;
+  }
+
+  .jazz-quiz-card .jq-instruction {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .jazz-quiz-card .jq-progress-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .jazz-quiz-card .jq-progress-text {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    color: #cbd5e1;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .jazz-quiz-card .jq-score-label {
+    color: #38bdf8;
+  }
+
+  .jazz-quiz-card .jq-progress-bar {
+    height: 8px;
+    background: #1e293b;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .jazz-quiz-card .jq-progress-fill {
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, #0284c7, #38bdf8);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+  }
+
+  .jazz-quiz-card .jq-question-container {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 1.25rem;
+    text-align: center;
+    color: #f1f5f9;
+  }
+
+  .jazz-quiz-card .jq-question-number {
+    display: inline-block;
+    color: #38bdf8;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.4rem;
+  }
+
+  .jazz-quiz-card .jq-question-text {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.45;
+  }
+
+  .jazz-quiz-card .jq-options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0.65rem;
+  }
+
+  .jazz-quiz-card .jq-option {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    background: #1e293b;
+    color: #f1f5f9;
+    border: 2px solid #334155;
+    border-radius: 8px;
+    padding: 0.75rem 0.9rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .jazz-quiz-card .jq-option:hover:not(:disabled) {
+    border-color: #38bdf8;
+    background: #0f172a;
+  }
+
+  .jazz-quiz-card .jq-option:disabled {
+    cursor: default;
+    opacity: 1;
+  }
+
+  .jazz-quiz-card .jq-option-letter {
+    flex-shrink: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #334155;
+    color: #e2e8f0;
+    font-size: 0.78rem;
+    font-weight: 800;
+  }
+
+  .jazz-quiz-card .jq-option.correct {
+    background: #064e3b;
+    border-color: #10b981;
+    color: #a7f3d0;
+  }
+
+  .jazz-quiz-card .jq-option.correct .jq-option-letter {
+    background: #10b981;
+    color: #022c22;
+  }
+
+  .jazz-quiz-card .jq-option.incorrect {
+    background: #881337;
+    border-color: #f43f5e;
+    color: #fecdd3;
+  }
+
+  .jazz-quiz-card .jq-option.incorrect .jq-option-letter {
+    background: #f43f5e;
+    color: #4c0519;
+  }
+
+  .jazz-quiz-card .jq-feedback {
+    padding: 0.75rem;
+    border-radius: 6px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.45;
+  }
+
+  .jazz-quiz-card .jq-feedback.success {
+    background: #064e3b;
+    color: #a7f3d0;
+  }
+
+  .jazz-quiz-card .jq-feedback.error {
+    background: #881337;
+    color: #fecdd3;
+  }
+
+  .jazz-quiz-card .jq-action-footer {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .jazz-quiz-card .jq-btn-next {
+    background: #334155;
+    color: #f1f5f9;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .jazz-quiz-card .jq-btn-next:hover:not(:disabled) {
+    background: #475569;
+  }
+
+  .jazz-quiz-card .jq-btn-next:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .jazz-quiz-card .jq-result-container {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 2rem 1.25rem;
+    text-align: center;
+    color: #f1f5f9;
+  }
+
+  .jazz-quiz-card .jq-result-emoji {
+    font-size: 3rem;
+    line-height: 1;
+  }
+
+  .jazz-quiz-card .jq-result-title {
+    margin: 0.75rem 0 0.25rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #cbd5e1;
+  }
+
+  .jazz-quiz-card .jq-result-score {
+    margin: 0 0 0.5rem;
+    font-size: 1.6rem;
+    font-weight: 800;
+  }
+
+  .jazz-quiz-card .jq-result-note {
+    font-size: 3rem;
+    color: #38bdf8;
+  }
+
+  .jazz-quiz-card .jq-result-text {
+    margin: 0 0 1.25rem;
+    color: #e2e8f0;
+  }
+
+  .jazz-quiz-card .jq-btn-restart {
+    background: #0284c7;
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.75rem;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+
+  .jazz-quiz-card .jq-btn-restart:hover {
+    background: #0369a1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .jazz-quiz-card .jq-progress-fill,
+    .jazz-quiz-card .jq-option {
+      transition: none;
+    }
+  }
+</style>
+

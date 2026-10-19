@@ -8,6 +8,12 @@ astro dev --background
 
 Manage the background server with `astro dev stop`, `astro dev status`, and `astro dev logs`.
 
+## Conventions de contenu
+
+- La section vidéos s'intitule toujours **« Ressources Vidéos »** (ne jamais utiliser « Œuvres et exemples » ni une autre variante).
+- Les cartes vidéo affichent uniquement le badge (ex. « Capsule ») et le titre : aucune description sous la vidéo.
+- Le composant `src/components/VideoCard.astro` ne possède volontairement pas de prop `description` ; ne pas la réintroduire.
+
 ## Documentation
 
 Full documentation: https://docs.astro.build

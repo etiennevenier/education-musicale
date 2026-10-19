@@ -49,6 +49,16 @@ import { plansSonoresList } from '../data/plansSonoresData';
 <script>
   import { plansSonoresList, allInstrumentsList } from '../data/plansSonoresData';
   import type { PlansSonoresItem } from '../data/plansSonoresData';
+  import { relativeUrl } from '../utils/navigation';
+  import {
+    getAudioState,
+    getCurrentAudioUrl,
+    onAudioEvent,
+    pauseAudio,
+    playAudio,
+    resumeAudio,
+    stopAudio,
+  } from '../utils/audioManager';
 
   type QuestionFilter = 'all' | PlansSonoresItem['type'];
   type PlayState = 'idle' | 'playing' | 'paused' | 'ended';
@@ -62,7 +72,6 @@ import { plansSonoresList } from '../data/plansSonoresData';
   let currentQuestion: PlansSonoresItem | null = null;
   let currentFilter: QuestionFilter = 'all';
   let isAnswered = false;
-  let audioPlayer: HTMLAudioElement | null = null;
   let btnPlay: HTMLButtonElement | null = null;
 
   // État de la partie
@@ -185,11 +194,8 @@ import { plansSonoresList } from '../data/plansSonoresData';
   }
 
   // --- Lecture audio -----------------------------------------------------
-  // Un seul lecteur actif à la fois. Chaque appel de playSound() reçoit un
-  // "jeton" (playToken) : si l'élève change de question avant que la promesse
-  // de audio.play() ne soit résolue, l'ancien extrait est coupé au lieu de
-  // se lancer par-dessus le nouveau.
-  let playToken = 0;
+  // Le gestionnaire centralisé coupe l'extrait précédent, applique le volume
+  // master et expose l'état réel du lecteur (lecture / pause / fin).
 
   const PLAY_LABELS: Record<PlayState, string> = {
     idle: "🔊 Écouter l'extrait",
@@ -203,53 +209,35 @@ import { plansSonoresList } from '../data/plansSonoresData';
   }
 
   // Le libellé du bouton suit l'état réel du lecteur (lecture / pause / fin)
-  function bindAudioEvents(audio: HTMLAudioElement, token: number) {
-    const isCurrent = () => audio === audioPlayer && token === playToken;
-    audio.addEventListener('play', () => { if (isCurrent()) setPlayState('playing'); });
-    audio.addEventListener('pause', () => { if (isCurrent() && !audio.ended) setPlayState('paused'); });
-    audio.addEventListener('ended', () => { if (isCurrent()) setPlayState('ended'); });
-  }
+  onAudioEvent('statechange', ({ state }) => {
+    if (state === 'playing') setPlayState('playing');
+    else if (state === 'paused') setPlayState('paused');
+    else if (state === 'ended') setPlayState('ended');
+    else if (state === 'idle' || state === 'error') setPlayState('idle');
+  });
 
-  function playSound(url: string, allowRetry = true) {
-    stopSound();
-    const token = ++playToken;
-    const audio = new Audio(url);
-    audioPlayer = audio;
-    bindAudioEvents(audio, token);
-
-    // Fichier introuvable (accents encodés autrement) : on réessaie une fois en NFD
-    audio.addEventListener('error', () => {
-      if (token !== playToken || !allowRetry) return;
-      const retryUrl = url.normalize('NFD');
-      if (retryUrl !== url) playSound(retryUrl, false);
-    }, { once: true });
-
-    // audio.play() renvoie une promesse : elle est rejetée si le navigateur
-    // bloque la lecture (NotAllowedError) ou si l'extrait est interrompu.
-    // Dans les deux cas on ignore l'erreur : le bouton "Écouter" reste disponible.
-    audio.play()
-      .then(() => {
-        // La question a changé pendant le chargement : on coupe cet extrait
-        if (token !== playToken) audio.pause();
-      })
-      .catch(() => {});
+  // Les MP3 sont dans /public : on ajoute le BASE_URL d'Astro (GitHub Pages).
+  function playSound(url: string) {
+    void playAudio(relativeUrl(url));
   }
 
   function stopSound() {
-    playToken++; // invalide toute promesse de lecture encore en attente
-    if (audioPlayer) {
-      const old = audioPlayer;
-      audioPlayer = null;
-      old.pause();
-    }
+    stopAudio();
   }
 
   // Bouton unique : écouter -> pause -> reprendre -> réécouter
   function togglePlay() {
     if (!currentQuestion) return;
-    if (audioPlayer && !audioPlayer.ended) {
-      if (audioPlayer.paused) audioPlayer.play().catch(() => {});
-      else audioPlayer.pause();
+
+    const url = relativeUrl(currentQuestion.audioUrl);
+    const state = getAudioState();
+
+    if (state === 'playing') {
+      pauseAudio();
+      return;
+    }
+    if (state === 'paused' && getCurrentAudioUrl() === url) {
+      void resumeAudio();
       return;
     }
     playSound(currentQuestion.audioUrl);

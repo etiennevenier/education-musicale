@@ -1,0 +1,744 @@
+---
+import { ostinatoQuestions, OSTINATO_QUESTIONS_PER_GAME } from '../data/ostinatoData';
+
+const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions.length);
+---
+
+<div class="fuzeau-card ostinato-card">
+  <div class="fuzeau-header">
+    <span class="badge">Atelier Ostinato</span>
+    <h4>Quiz Audio : L'Ostinato</h4>
+  </div>
+
+
+
+  <!-- Progression -->
+  <div id="ostinatoProgressBox" class="progress-box">
+    <div class="progress-text">
+      <span id="ostinatoProgressLabel">Question 1 / {questionsPerGame}</span>
+      <span id="ostinatoScoreLabel" class="score-label">Score : 0 / {questionsPerGame}</span>
+    </div>
+    <div class="progress-bar"><div id="ostinatoProgressFill" class="progress-fill"></div></div>
+  </div>
+
+  <!-- Question et lecteur audio -->
+  <div id="ostinatoQuestionContainer" class="question-container"></div>
+
+  <!-- Réponses (boutons ou saisie numérique) -->
+  <div id="ostinatoOptionsContainer" class="options-choice"></div>
+
+  <div id="ostinatoFeedback" class="feedback-msg hidden" aria-live="polite"></div>
+
+  <!-- Validation / question suivante -->
+  <div id="ostinatoActionFooter" class="action-footer">
+    <button id="ostinatoBtnNext" class="btn-next" disabled>Question Suivante ➔</button>
+  </div>
+
+  <!-- Résultat final -->
+  <div id="ostinatoResultContainer" class="result-container hidden" aria-live="polite"></div>
+</div>
+
+<script>
+  import {
+    ostinatoQuestions,
+    OSTINATO_QUESTIONS_PER_GAME,
+    type OstinatoChoiceQuestion,
+    type OstinatoNumberQuestion,
+    type OstinatoQuestion,
+  } from '../data/ostinatoData';
+  import { relativeUrl } from '../utils/navigation';
+  import {
+    getAudioState,
+    getCurrentAudioUrl,
+    onAudioEvent,
+    pauseAudio,
+    playAudio,
+    resumeAudio,
+    stopAudio,
+  } from '../utils/audioManager';
+
+  type PlayState = 'idle' | 'playing' | 'paused' | 'ended';
+
+  const PLAY_LABELS: Record<PlayState, string> = {
+    idle: "🔊 Écouter l'extrait",
+    playing: '⏸ Mettre en pause',
+    paused: '▶️ Reprendre',
+    ended: '🔁 Réécouter',
+  };
+
+  // Passage automatique à la question suivante après une bonne réponse.
+  const AUTO_NEXT_DELAY = 1400;
+
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+  const progressBox = $<HTMLDivElement>('ostinatoProgressBox');
+  const progressLabel = $<HTMLSpanElement>('ostinatoProgressLabel');
+  const scoreLabel = $<HTMLSpanElement>('ostinatoScoreLabel');
+  const progressFill = $<HTMLDivElement>('ostinatoProgressFill');
+  const questionContainer = $<HTMLDivElement>('ostinatoQuestionContainer');
+  const optionsContainer = $<HTMLDivElement>('ostinatoOptionsContainer');
+  const quizFeedback = $<HTMLDivElement>('ostinatoFeedback');
+  const actionFooter = $<HTMLDivElement>('ostinatoActionFooter');
+  const btnNext = $<HTMLButtonElement>('ostinatoBtnNext');
+  const resultContainer = $<HTMLDivElement>('ostinatoResultContainer');
+
+  let queue: OstinatoQuestion[] = [];
+  let questionIndex = 0;
+  let score = 0;
+  let isAnswered = false;
+  let currentQuestion: OstinatoQuestion | null = null;
+  let btnPlay: HTMLButtonElement | null = null;
+  let autoNextTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // Mélange de Fisher-Yates : tirage sans doublon.
+  function shuffle<T>(array: T[]): T[] {
+    const a = [...array];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function clearAutoNext() {
+    if (autoNextTimer) {
+      clearTimeout(autoNextTimer);
+      autoNextTimer = null;
+    }
+  }
+
+  function setPlayState(state: PlayState) {
+    if (btnPlay) btnPlay.textContent = PLAY_LABELS[state];
+  }
+
+  // Le libellé du bouton suit l'état réel du lecteur partagé.
+  onAudioEvent('statechange', ({ state }) => {
+    if (state === 'playing') setPlayState('playing');
+    else if (state === 'paused') setPlayState('paused');
+    else if (state === 'ended') setPlayState('ended');
+    else if (state === 'idle' || state === 'error') setPlayState('idle');
+  });
+
+  // Les MP3 sont dans /public : on ajoute le BASE_URL d'Astro.
+  // Les noms accentués (Mélodique) sont gérés par le retry NFD de l'audioManager.
+  function questionUrl(question: OstinatoQuestion): string {
+    return relativeUrl(question.audioUrl);
+  }
+
+  function sameTrack(currentUrl: string | null, expectedUrl: string): boolean {
+    if (!currentUrl) return false;
+    return currentUrl.normalize('NFC') === expectedUrl.normalize('NFC');
+  }
+
+  // Bouton unique : écouter → pause → reprendre → réécouter.
+  function togglePlay() {
+    if (!currentQuestion) return;
+
+    const url = questionUrl(currentQuestion);
+    const state = getAudioState();
+
+    if (state === 'playing') {
+      pauseAudio();
+      return;
+    }
+    if (state === 'paused' && sameTrack(getCurrentAudioUrl(), url)) {
+      void resumeAudio();
+      return;
+    }
+    void playAudio(url);
+  }
+
+  function updateProgress() {
+    const total = queue.length;
+    progressLabel.textContent = `Question ${questionIndex + 1} / ${total}`;
+    scoreLabel.textContent = `Score : ${score} / ${total}`;
+    const done = questionIndex + (isAnswered ? 1 : 0);
+    progressFill.style.width = `${total ? (done / total) * 100 : 0}%`;
+  }
+
+  function updateNextButton() {
+    const isLast = questionIndex >= queue.length - 1;
+    btnNext.textContent = isLast ? '🏁 Voir mon score' : 'Question Suivante ➔';
+    btnNext.disabled = !isAnswered;
+  }
+
+  function formatAnswer(question: OstinatoQuestion): string {
+    return question.kind === 'choice'
+      ? question.correctAnswer.toLowerCase()
+      : String(question.correctAnswer);
+  }
+
+  function successMessage(question: OstinatoQuestion): string {
+    if (question.kind === 'choice') {
+      return `✨ Bravo ! C'est un ostinato ${question.correctAnswer.toLowerCase()}.`;
+    }
+    return `✨ Bravo ! L'ostinato est bien répété ${question.correctAnswer} fois.`;
+  }
+
+  function finishAnswer(isCorrect: boolean) {
+    if (!currentQuestion || isAnswered) return;
+    isAnswered = true;
+
+    if (isCorrect) {
+      score += 1;
+      quizFeedback.textContent = successMessage(currentQuestion);
+      quizFeedback.className = 'feedback-msg success';
+      autoNextTimer = setTimeout(goToNext, AUTO_NEXT_DELAY);
+    } else {
+      quizFeedback.textContent = `❌ Dommage ! La bonne réponse était : ${formatAnswer(currentQuestion)}.`;
+      quizFeedback.className = 'feedback-msg error';
+    }
+
+    updateProgress();
+    updateNextButton();
+  }
+
+  // --- Construction des réponses ------------------------------------------
+
+  function buildChoiceOptions(question: OstinatoChoiceQuestion) {
+    question.options.forEach((label) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn-option';
+      btn.textContent = label;
+
+      btn.addEventListener('click', () => {
+        if (isAnswered) return;
+
+        optionsContainer.querySelectorAll<HTMLButtonElement>('.btn-option').forEach((b) => {
+          b.disabled = true;
+        });
+
+        const isCorrect = label === question.correctAnswer;
+        if (isCorrect) {
+          btn.classList.add('correct');
+        } else {
+          btn.classList.add('incorrect');
+          optionsContainer.querySelectorAll<HTMLButtonElement>('.btn-option').forEach((b) => {
+            if (b.textContent === question.correctAnswer) b.classList.add('correct');
+          });
+        }
+
+        finishAnswer(isCorrect);
+      });
+
+      optionsContainer.appendChild(btn);
+    });
+  }
+
+  function buildNumberInput(question: OstinatoNumberQuestion) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'number-box';
+    wrapper.innerHTML = `
+      <div class="number-row">
+        <input
+          type="number"
+          class="number-input"
+          min="0"
+          step="1"
+          inputmode="numeric"
+          placeholder="Entre le nombre de répétitions…"
+          aria-label="Nombre de répétitions"
+        />
+        <button type="button" class="btn-validate">Valider</button>
+      </div>
+    `;
+
+    const input = wrapper.querySelector('.number-input') as HTMLInputElement;
+    const validate = wrapper.querySelector('.btn-validate') as HTMLButtonElement;
+
+    function submit() {
+      if (isAnswered) return;
+
+      const raw = input.value.trim();
+      const value = Number.parseInt(raw, 10);
+
+      if (raw === '' || !Number.isFinite(value) || value < 0) {
+        quizFeedback.textContent = 'Écris un nombre entier avant de valider.';
+        quizFeedback.className = 'feedback-msg warning';
+        return;
+      }
+
+      input.disabled = true;
+      validate.disabled = true;
+
+      const isCorrect = value === question.correctAnswer;
+      input.classList.add(isCorrect ? 'correct' : 'incorrect');
+      finishAnswer(isCorrect);
+    }
+
+    validate.addEventListener('click', submit);
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        submit();
+      }
+    });
+
+    optionsContainer.appendChild(wrapper);
+  }
+
+  // --- Déroulement de la partie -------------------------------------------
+
+  function loadQuestion() {
+    clearAutoNext();
+    isAnswered = false;
+    stopAudio();
+    quizFeedback.className = 'feedback-msg hidden';
+    quizFeedback.textContent = '';
+
+    const question = queue[questionIndex];
+    if (!question) return;
+    currentQuestion = question;
+
+    updateProgress();
+    updateNextButton();
+
+    questionContainer.innerHTML = `
+      <div class="audio-q-box">
+        <p>${question.prompt}</p>
+        <button type="button" id="ostinatoBtnPlay" class="btn-play-sound">${PLAY_LABELS.idle}</button>
+      </div>
+    `;
+    btnPlay = $<HTMLButtonElement>('ostinatoBtnPlay');
+    btnPlay.addEventListener('click', togglePlay);
+
+    optionsContainer.innerHTML = '';
+
+    if (question.kind === 'choice') {
+      optionsContainer.className = 'options-choice';
+      buildChoiceOptions(question);
+    } else {
+      optionsContainer.className = 'options-number';
+      buildNumberInput(question);
+    }
+  }
+
+  function startGame() {
+    clearAutoNext();
+    stopAudio();
+
+    score = 0;
+    questionIndex = 0;
+    currentQuestion = null;
+
+    // Tirage de 10 questions parmi toutes celles du quiz, dans un ordre aléatoire.
+    queue = shuffle(ostinatoQuestions).slice(0, OSTINATO_QUESTIONS_PER_GAME);
+
+    resultContainer.classList.add('hidden');
+    resultContainer.innerHTML = '';
+    progressBox.classList.remove('hidden');
+    questionContainer.classList.remove('hidden');
+    optionsContainer.classList.remove('hidden');
+    actionFooter.classList.remove('hidden');
+
+    loadQuestion();
+  }
+
+  function goToNext() {
+    clearAutoNext();
+    if (!isAnswered) return;
+
+    if (questionIndex >= queue.length - 1) {
+      showResult();
+    } else {
+      questionIndex += 1;
+      loadQuestion();
+    }
+  }
+
+  function getResultMessage(note: number, total: number) {
+    const ratio = total > 0 ? note / total : 0;
+    if (ratio === 1) return { emoji: '🏆', text: "Parfait ! Tu maîtrises l'ostinato sur le bout des doigts !" };
+    if (ratio >= 0.8) return { emoji: '🌟', text: 'Excellent ! Tu reconnais très bien les ostinatos et leurs répétitions.' };
+    if (ratio >= 0.5) return { emoji: '👍', text: "Bien joué ! Continue à écouter pour compter les répétitions avec précision." };
+    return { emoji: '💪', text: "Continue à t'entraîner : réécoute chaque extrait et repère bien le retour de l'ostinato." };
+  }
+
+  function showResult() {
+    clearAutoNext();
+    stopAudio();
+
+    const total = queue.length;
+    const { emoji, text } = getResultMessage(score, total);
+
+    progressBox.classList.add('hidden');
+    questionContainer.classList.add('hidden');
+    optionsContainer.classList.add('hidden');
+    actionFooter.classList.add('hidden');
+    quizFeedback.className = 'feedback-msg hidden';
+
+    resultContainer.innerHTML = `
+      <div class="result-emoji">${emoji}</div>
+      <p class="result-title">Partie terminée !</p>
+      <p class="result-score"><span class="result-note">${score}</span> / ${total}</p>
+      <p class="result-text">${text}</p>
+      <button id="ostinatoBtnRestart" class="btn-restart">🔄 Recommencer</button>
+    `;
+    resultContainer.classList.remove('hidden');
+    $<HTMLButtonElement>('ostinatoBtnRestart').addEventListener('click', startGame);
+  }
+
+  // --- Événements ---------------------------------------------------------
+
+  btnNext.addEventListener('click', goToNext);
+
+  startGame();
+</script>
+
+<!--
+  Même charte graphique que FuzeauQuiz.astro et PlansSonoresQuiz.astro.
+  is:global est nécessaire : les boutons et les champs sont créés par le script
+  et ne reçoivent donc pas l'attribut de scope d'Astro.
+-->
+<style is:global>
+  .fuzeau-card {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+    container-type: inline-size;
+  }
+
+  .fuzeau-card * {
+    box-sizing: border-box;
+  }
+
+  .fuzeau-card .hidden {
+    display: none !important;
+  }
+
+  .fuzeau-card .fuzeau-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .fuzeau-card .badge {
+    background: #e11d48;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+  }
+
+  .fuzeau-card .fuzeau-header h4 {
+    margin: 0;
+    color: #f1f5f9;
+    font-size: 1.1rem;
+  }
+
+  .fuzeau-card .quiz-instruction {
+    margin: 0;
+    color: #cbd5e1;
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
+  .fuzeau-card .progress-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .fuzeau-card .progress-text {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    color: #cbd5e1;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .fuzeau-card .score-label {
+    color: #38bdf8;
+  }
+
+  .fuzeau-card .progress-bar {
+    height: 8px;
+    background: #1e293b;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .fuzeau-card .progress-fill {
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, #0284c7, #38bdf8);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+  }
+
+  .fuzeau-card .question-container {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 1.25rem;
+    text-align: center;
+    overflow: hidden;
+    color: #f1f5f9;
+  }
+
+  .fuzeau-card .question-container p {
+    margin: 0 0 0.75rem;
+  }
+
+  .fuzeau-card .question-container p:last-of-type {
+    margin-bottom: 0.9rem;
+  }
+
+  .fuzeau-card .btn-play-sound {
+    background: #0284c7;
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+
+  .fuzeau-card .btn-play-sound:hover {
+    background: #0369a1;
+  }
+
+  /* --- Partie A : boutons de réponse --- */
+  .fuzeau-card .options-choice {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  @container (min-width: 520px) {
+    .fuzeau-card .options-choice {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .fuzeau-card .btn-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 64px;
+    padding: 0.75rem 1rem;
+    background: #1e293b;
+    color: #f8fafc;
+    border: 2px solid #475569;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .fuzeau-card .btn-option:hover:not(:disabled) {
+    border-color: #38bdf8;
+    transform: scale(1.02);
+  }
+
+  .fuzeau-card .btn-option:disabled {
+    cursor: default;
+  }
+
+  .fuzeau-card .btn-option.correct {
+    background: #064e3b;
+    border-color: #10b981;
+    color: #a7f3d0;
+    box-shadow: 0 0 10px #10b981;
+  }
+
+  .fuzeau-card .btn-option.incorrect {
+    background: #881337;
+    border-color: #f43f5e;
+    color: #fecdd3;
+    box-shadow: 0 0 10px #f43f5e;
+  }
+
+  /* --- Parties B et C : saisie du nombre de répétitions --- */
+  .fuzeau-card .options-number {
+    display: block;
+    width: 100%;
+  }
+
+  .fuzeau-card .number-box {
+    width: 100%;
+  }
+
+  .fuzeau-card .number-row {
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .fuzeau-card .number-input {
+    flex: 1;
+    min-width: 0;
+    background: #1e293b;
+    color: #f8fafc;
+    border: 2px solid #475569;
+    border-radius: 6px;
+    padding: 0.75rem 0.9rem;
+    font-size: 1rem;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .fuzeau-card .number-input:focus {
+    outline: none;
+    border-color: #38bdf8;
+  }
+
+  .fuzeau-card .number-input::placeholder {
+    color: #94a3b8;
+    font-weight: 400;
+  }
+
+  .fuzeau-card .number-input:disabled {
+    opacity: 1;
+    cursor: default;
+  }
+
+  .fuzeau-card .number-input.correct {
+    background: #064e3b;
+    border-color: #10b981;
+    color: #a7f3d0;
+  }
+
+  .fuzeau-card .number-input.incorrect {
+    background: #881337;
+    border-color: #f43f5e;
+    color: #fecdd3;
+  }
+
+  .fuzeau-card .btn-validate {
+    background: #0284c7;
+    color: #fff;
+    border: none;
+    padding: 0 1.25rem;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+
+  .fuzeau-card .btn-validate:hover:not(:disabled) {
+    background: #0369a1;
+  }
+
+  .fuzeau-card .btn-validate:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  /* --- Navigation et feedback --- */
+  .fuzeau-card .action-footer {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .fuzeau-card .btn-next {
+    background: #334155;
+    color: #f1f5f9;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .fuzeau-card .btn-next:hover:not(:disabled) {
+    background: #475569;
+  }
+
+  .fuzeau-card .btn-next:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .fuzeau-card .feedback-msg {
+    padding: 0.75rem;
+    border-radius: 6px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .fuzeau-card .feedback-msg.success {
+    background: #064e3b;
+    color: #a7f3d0;
+  }
+
+  .fuzeau-card .feedback-msg.error {
+    background: #881337;
+    color: #fecdd3;
+  }
+
+  .fuzeau-card .feedback-msg.warning {
+    background: #78350f;
+    color: #fde68a;
+  }
+
+  /* --- Écran de résultat --- */
+  .fuzeau-card .result-container {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 2rem 1.25rem;
+    text-align: center;
+    color: #f1f5f9;
+  }
+
+  .fuzeau-card .result-emoji {
+    font-size: 3rem;
+    line-height: 1;
+  }
+
+  .fuzeau-card .result-title {
+    margin: 0.75rem 0 0.25rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #cbd5e1;
+  }
+
+  .fuzeau-card .result-score {
+    margin: 0 0 0.5rem;
+    font-size: 1.6rem;
+    font-weight: 800;
+  }
+
+  .fuzeau-card .result-note {
+    font-size: 3rem;
+    color: #38bdf8;
+  }
+
+  .fuzeau-card .result-text {
+    margin: 0 0 1.25rem;
+    color: #e2e8f0;
+  }
+
+  .fuzeau-card .btn-restart {
+    background: #0284c7;
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.75rem;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+
+  .fuzeau-card .btn-restart:hover {
+    background: #0369a1;
+  }
+</style>

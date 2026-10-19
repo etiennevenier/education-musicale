@@ -1,0 +1,529 @@
+---
+import VideoCard from './VideoCard.astro';
+import JazzQuiz from './JazzQuiz.astro';
+
+const mainTabs = [
+  { id: 'histoire', icon: '🎷', label: "L'Histoire & le Style" },
+  { id: 'scat', icon: '🎤', label: "Le Scat" },
+  { id: 'projet', icon: '🎶', label: 'Projet Musical' },
+  { id: 'quiz', icon: '🎯', label: 'Quiz' },
+];
+
+const historyVideos = [
+  {
+    badge: 'Capsule',
+    title: 'Le jazz : présentation',
+    url: 'https://www.youtube.com/watch?v=1YHP6Fq_MTo',
+  },
+  {
+    badge: 'Œuvre de référence',
+    title: 'When The Saints — Louis Armstrong',
+    url: 'https://www.youtube.com/watch?v=2eUzdTF3P2M',
+  },
+  {
+    badge: 'Analyse',
+    title: 'When The Saints — analyse',
+    url: 'https://www.youtube.com/watch?v=RtW5JWnZJ30',
+  },
+  
+];
+
+const scatVideos = [
+  {
+    badge: 'Le Livre de la Jungle',
+    title: 'Être un homme comme vous — Roi Louis',
+    url: 'https://www.youtube.com/watch?v=JtIXCCEvFEM',
+  },
+  {
+    badge: 'Vocalises',
+    title: 'Laughing in Rhythm',
+    url: 'https://www.youtube.com/watch?v=KZouh1Ouyw4',
+  },
+  {
+    badge: 'Tuto',
+    title: 'Bobby McFerrin — Tuto scat',
+    url: 'https://www.youtube.com/watch?v=Kd7g0Og1JuA',
+  },
+  {
+    badge: 'Tuto',
+    title: 'L’invention du scat',
+    url: 'https://www.youtube.com/watch?v=IoiC-twgVoI',
+  },
+];
+
+const projectVideos = [
+  {
+    badge: 'Projet musical',
+    title: "It Don't Mean A Thing — entraînement avec mélodie",
+    url: 'https://www.youtube.com/watch?v=JOjoqk0IEPY',
+  },
+  {
+    badge: 'Playback',
+    title: "It Don't Mean A Thing — entraînement sans mélodie",
+    url: 'https://www.youtube.com/watch?v=-P5Qg1VVaME',
+  },
+];
+
+const projectIllustrationVideos = [
+  {
+    badge: 'Scat',
+    title: 'Ella Fitzgerald & Duke Ellington',
+    url: 'https://www.youtube.com/watch?v=myRc-3oF1d0',
+  },
+  {
+    badge: 'Duo',
+    title: 'Lady Gaga & Tony Bennett',
+    url: 'https://www.youtube.com/watch?v=LYfF9VKMp4w',
+  },
+];
+---
+
+<div class="jazz-course" id="jazz-course">
+  <div class="main-tabs" role="tablist" aria-label="Thèmes de la séquence Musique et Jazz">
+    {mainTabs.map((tab, index) => (
+      <button
+        type="button"
+        role="tab"
+        id={`jazz-tab-${tab.id}`}
+        aria-controls={`jazz-panel-${tab.id}`}
+        aria-selected={index === 0 ? 'true' : 'false'}
+        tabindex={index === 0 ? 0 : -1}
+        class:list={['main-tab', { 'is-active': index === 0 }]}
+        data-main-tab={tab.id}
+      >
+        <span class="main-tab-icon" aria-hidden="true">{tab.icon}</span>
+        <span class="main-tab-label">{tab.label}</span>
+      </button>
+    ))}
+  </div>
+
+  <div
+    class="main-panel is-active"
+    role="tabpanel"
+    id="jazz-panel-histoire"
+    aria-labelledby="jazz-tab-histoire"
+    tabindex="0"
+    data-main-panel="histoire"
+  >
+    <section class="tab-content" aria-labelledby="jazz-history-title">
+      <h3 id="jazz-history-title">Le jazz : histoire et style</h3>
+
+      <h4 class="videos-title">L’essentiel du cours</h4>
+      <ul class="essentials-grid">
+        <li class="essential-card">
+          <span class="essential-icon" aria-hidden="true">📍</span>
+          <div>
+            <strong>Jazz New Orleans</strong>
+            <p>
+              Il naît début 1900 à La Nouvelle-Orléans.
+            </p>
+          </div>
+        </li>
+        <li class="essential-card">
+          <span class="essential-icon" aria-hidden="true">🎵</span>
+          <div>
+            <strong>Deux piliers</strong>
+            <p>L’improvisation et le swing.</p>
+          </div>
+        </li>
+        <li class="essential-card">
+          <span class="essential-icon" aria-hidden="true">👥</span>
+          <div>
+            <strong>Les effectifs</strong>
+            <p>Trio, Quartet, Quintet, Sextet, Septet, Big Band...</p>
+          </div>
+        </li>
+        <li class="essential-card">
+          <span class="essential-icon" aria-hidden="true">🎼</span>
+          <div>
+            <strong>Deux sections / Deux rôles distincts</strong>
+            <p>
+              Mélodique : thème et chorus. <br> Rythmique : accompagnement (parfois chorus).
+            </p>
+          </div>
+        </li>
+        <li class="essential-card">
+          <span class="essential-icon" aria-hidden="true">🎤</span>
+          <div>
+            <strong>Improvisation</strong>
+            <p>
+              Le chorus est un solo improvisé.
+            </p>
+          </div>
+        </li>
+        <li class="essential-card">
+          <span class="essential-icon" aria-hidden="true">🗣️</span>
+          <div>
+            <strong>Le scat</strong>
+            <p>Une improvisation vocale sur des onomatopées.</p>
+          </div>
+        </li>
+      </ul>
+
+      <h4 class="videos-title">Vidéos du cours</h4>
+      <div class="video-grid">
+        {historyVideos.map((video) => (
+          <VideoCard badge={video.badge} title={video.title} url={video.url} />
+        ))}
+      </div>
+    </section>
+  </div>
+
+  <div
+    class="main-panel"
+    role="tabpanel"
+    id="jazz-panel-scat"
+    aria-labelledby="jazz-tab-scat"
+    tabindex="0"
+    data-main-panel="scat"
+    hidden
+  >
+    <section class="tab-content" aria-labelledby="jazz-scat-title">
+      <h3 id="jazz-scat-title">Le scat</h3>
+
+      <p class="tab-intro">
+        Le <strong>scat</strong> est une improvisation chantée avec des syllabes et des
+        onomatopées sans sens. La voix imite les instruments et invente une mélodie sur le
+        moment.
+      </p>
+
+      <div class="fact-chips">
+        <span class="fact-chip"><strong>Syllabes</strong> « bi », « dou », « shoo-bop »…</span>
+        <span class="fact-chip"><strong>Jeu</strong> Call &amp; response</span>
+        <span class="fact-chip"><strong>Clé</strong> Improviser sur la grille</span>
+      </div>
+
+      <h4 class="videos-title">Écoutes et tutoriels</h4>
+      <div class="video-grid">
+        {scatVideos.map((video) => (
+          <VideoCard badge={video.badge} title={video.title} url={video.url} />
+        ))}
+      </div>
+    </section>
+  </div>
+
+  <div
+    class="main-panel"
+    role="tabpanel"
+    id="jazz-panel-projet"
+    aria-labelledby="jazz-tab-projet"
+    tabindex="0"
+    data-main-panel="projet"
+    hidden
+  >
+    <section class="tab-content" aria-labelledby="jazz-project-title">
+      <h3 id="jazz-project-title">Projet musical — It Don’t Mean A Thing</h3>
+
+      <p class="tab-intro">
+        Un standard de <strong>Duke Ellington</strong> (1931), porté par le swing et le scat.
+      </p>
+
+      <div class="fact-chips">
+        <span class="fact-chip"><strong>Style</strong> Swing</span>
+        <span class="fact-chip"><strong>Forme</strong> AABA</span>
+        <span class="fact-chip"><strong>Instrumentation</strong> Voix &amp; big band</span>
+        <span class="fact-chip"><strong>Langue</strong> Anglais</span>
+      </div>
+
+      <p class="project-brief">
+        Entraîne-toi à chanter le projet musical, puis essaye d’improviser en scat sur la grille.
+      </p>
+
+      <h4 class="videos-title">Vidéos d’entraînement</h4>
+      <div class="video-grid">
+        {projectVideos.map((video) => (
+          <VideoCard badge={video.badge} title={video.title} url={video.url} />
+        ))}
+      </div>
+
+      <h4 class="videos-title videos-title--spaced">Vidéos d’illustration</h4>
+      <div class="video-grid">
+        {projectIllustrationVideos.map((video) => (
+          <VideoCard badge={video.badge} title={video.title} url={video.url} />
+        ))}
+      </div>
+    </section>
+  </div>
+
+  <div
+    class="main-panel"
+    role="tabpanel"
+    id="jazz-panel-quiz"
+    aria-labelledby="jazz-tab-quiz"
+    tabindex="0"
+    data-main-panel="quiz"
+    hidden
+  >
+    <section class="tab-content" aria-labelledby="jazz-quiz-title">
+      <h3 id="jazz-quiz-title">Quiz du cours</h3>
+      <JazzQuiz />
+    </section>
+  </div>
+</div>
+
+<script>
+  const course = document.getElementById('jazz-course');
+
+  if (course) {
+    const tabs = Array.from(
+      course.querySelectorAll<HTMLButtonElement>('.main-tabs [role="tab"]')
+    );
+    const panels = Array.from(
+      course.querySelectorAll<HTMLElement>('.main-panel[data-main-panel]')
+    );
+
+    function activateTab(id: string, focusTab = false) {
+      tabs.forEach((tab) => {
+        const isActive = tab.dataset.mainTab === id;
+        tab.setAttribute('aria-selected', String(isActive));
+        tab.tabIndex = isActive ? 0 : -1;
+        tab.classList.toggle('is-active', isActive);
+        if (isActive && focusTab) tab.focus();
+      });
+
+      panels.forEach((panel) => {
+        const isActive = panel.dataset.mainPanel === id;
+        panel.hidden = !isActive;
+        panel.classList.toggle('is-active', isActive);
+      });
+    }
+
+    function selectTab(id: string, focusTab = false) {
+      if (!id) return;
+      activateTab(id, focusTab);
+      history.replaceState(null, '', `#${id}`);
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        selectTab(tab.dataset.mainTab || '');
+      });
+
+      tab.addEventListener('keydown', (event) => {
+        const currentIndex = tabs.indexOf(tab);
+        let nextIndex: number | null = null;
+
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+          nextIndex = (currentIndex + 1) % tabs.length;
+        } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+          nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+        } else if (event.key === 'Home') {
+          nextIndex = 0;
+        } else if (event.key === 'End') {
+          nextIndex = tabs.length - 1;
+        }
+
+        if (nextIndex !== null) {
+          event.preventDefault();
+          const nextTab = tabs[nextIndex];
+          selectTab(nextTab.dataset.mainTab || '', true);
+        }
+      });
+    });
+
+    const initialTab = window.location.hash.replace('#', '');
+    if (tabs.some((tab) => tab.dataset.mainTab === initialTab)) {
+      activateTab(initialTab);
+    }
+  }
+</script>
+
+<style>
+  .jazz-course {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .main-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+
+  .main-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 0.8rem 0.9rem;
+    color: #94a3b8;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+  }
+
+  .main-tab:hover {
+    color: #f8fafc;
+    border-color: #475569;
+  }
+
+  .main-tab.is-active {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(30, 41, 59, 0.9));
+    border-color: #38bdf8;
+    color: #f8fafc;
+  }
+
+  .main-tab:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 2px;
+  }
+
+  .main-tab-icon {
+    font-size: 1.15rem;
+    line-height: 1;
+  }
+
+  .main-tab-label {
+    line-height: 1.25;
+  }
+
+  .tab-content {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 14px;
+    padding: 1.25rem;
+  }
+
+  .tab-content h3 {
+    margin: 0 0 0.5rem;
+    color: #f8fafc;
+    font-size: 1.3rem;
+  }
+
+  .tab-intro {
+    margin: 0 0 1rem;
+    color: #cbd5e1;
+    line-height: 1.6;
+  }
+
+  .tab-intro strong {
+    color: #f8fafc;
+  }
+
+  .fact-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .fact-chip {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 999px;
+    padding: 0.35rem 0.7rem;
+    color: #e2e8f0;
+    font-size: 0.8rem;
+  }
+
+  .fact-chip strong {
+    color: #38bdf8;
+    margin-right: 0.25rem;
+  }
+
+  .essentials-grid {
+    list-style: none;
+    margin: 0 0 1.25rem;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0.6rem;
+  }
+
+  .essential-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 0.7rem;
+  }
+
+  .essential-icon {
+    flex-shrink: 0;
+    font-size: 1.15rem;
+    line-height: 1.2;
+  }
+
+  .essential-card strong {
+    display: block;
+    margin-bottom: 0.15rem;
+    color: #38bdf8;
+    font-size: 0.82rem;
+  }
+
+  .essential-card p {
+    margin: 0;
+    color: #cbd5e1;
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+
+  .videos-title {
+    margin: 0 0 0.7rem;
+    color: #f8fafc;
+    font-size: 1rem;
+  }
+
+  .videos-title--spaced {
+    margin-top: 1.1rem;
+  }
+
+  .video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  .project-brief {
+    margin: 0 0 1rem;
+    padding: 0.75rem 0.9rem;
+    background: #0f172a;
+    border-left: 3px solid #38bdf8;
+    border-radius: 8px;
+    color: #e2e8f0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .project-note {
+    margin: 0 0 1.25rem;
+    color: #94a3b8;
+    font-size: 0.85rem;
+  }
+
+  @media (max-width: 720px) {
+    .main-tabs {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .main-tab {
+      padding: 0.65rem 0.8rem;
+    }
+
+    .tab-content {
+      padding: 1rem;
+    }
+  }
+
+  @media (max-width: 440px) {
+    .main-tabs {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .main-tab {
+      transition: none;
+    }
+  }
+</style>
+
+

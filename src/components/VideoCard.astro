@@ -1,12 +1,12 @@
 ---
+// Standard : seuls le badge et le titre sont affichés (aucune description).
 interface Props {
   badge?: string;
   title: string;
   url: string;
-  description?: string;
 }
 
-const { badge, title, url, description } = Astro.props;
+const { badge, title, url } = Astro.props;
 
 // Transformation de l'URL standard YouTube en URL d'intégration iframe
 function getEmbedUrl(youtubeUrl: string) {
@@ -28,6 +28,7 @@ const embedUrl = getEmbedUrl(url);
         title={title}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowfullscreen
+        loading="lazy"
         class="video-iframe"
       ></iframe>
     ) : (
@@ -40,9 +41,6 @@ const embedUrl = getEmbedUrl(url);
       {badge && <span class="video-badge">{badge}</span>}
       <h4 class="video-title">{title}</h4>
     </div>
-
-    {/* La description ne s'affiche QUE si elle est renseignée */}
-    {description && <p class="video-desc">{description}</p>}
   </div>
 </div>
 
@@ -117,12 +115,5 @@ const embedUrl = getEmbedUrl(url);
     font-size: 0.95rem;
     font-weight: 700;
     line-height: 1.3;
-  }
-
-  .video-desc {
-    margin: 0;
-    color: #94a3b8;
-    font-size: 0.85rem;
-    line-height: 1.4;
   }
 </style>

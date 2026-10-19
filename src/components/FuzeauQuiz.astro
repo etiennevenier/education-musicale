@@ -1,7 +1,3 @@
----
-import { fuzeauInstruments } from '../data/fuzeauInstruments';
----
-
 <div class="fuzeau-card">
   <div class="fuzeau-header">
     <span class="badge">Atelier Fuzeau</span>
@@ -56,12 +52,23 @@ import { fuzeauInstruments } from '../data/fuzeauInstruments';
   <div id="resultContainer" class="result-container hidden"></div>
 </div>
 
-<script define:vars={{ fuzeauInstruments }}>
+<script>
+  import { fuzeauInstruments as instruments } from '../data/fuzeauInstruments';
+  import { relativeUrl } from '../utils/navigation';
+  import { playAudio, stopAudio } from '../utils/audioManager';
+
+  // Les fichiers sont dans /public : on préfixe les URLs avec le BASE_URL d'Astro
+  // pour qu'elles restent valides en local et sur GitHub Pages (/education-musicale).
+  const fuzeauInstruments = instruments.map((instrument) => ({
+    ...instrument,
+    audioUrl: relativeUrl(instrument.audioUrl),
+    imageUrl: relativeUrl(instrument.imageUrl),
+  }));
+
   let currentInstrument = null;
   let currentMode = 'audio';
   let currentLevel = 'vert';
   let isAnswered = false;
-  let audioPlayer = null;
 
   // État de la partie
   let queue = [];
@@ -159,49 +166,14 @@ import { fuzeauInstruments } from '../data/fuzeauInstruments';
   }
 
   // --- Lecture audio -----------------------------------------------------
-  // Un seul lecteur actif à la fois. Chaque appel de playSound() reçoit un
-  // "jeton" (playToken) : si l'élève change de question avant que la promesse
-  // de audio.play() ne soit résolue, l'ancien extrait est coupé au lieu de
-  // se lancer par-dessus le nouveau.
-  let playToken = 0;
-
+  // Le gestionnaire centralisé coupe systématiquement l'extrait précédent,
+  // applique le volume master et évite tout chevauchement de sons.
   function playSound(url) {
-    stopSound();
-    const token = ++playToken;
-    const audio = new Audio(url);
-    audioPlayer = audio;
-
-    // Fichier introuvable (accents encodés autrement) : on réessaie une fois en NFD
-    audio.addEventListener('error', () => {
-      if (token !== playToken) return;
-      const retryUrl = url.normalize('NFD');
-      if (retryUrl !== url) {
-        const retryAudio = new Audio(retryUrl);
-        audioPlayer = retryAudio;
-        retryAudio.play().catch(() => {});
-      }
-    }, { once: true });
-
-    // audio.play() renvoie une promesse : elle est rejetée si le navigateur
-    // bloque la lecture (NotAllowedError) ou si l'extrait est interrompu.
-    // Dans les deux cas on ignore l'erreur : le bouton "Écouter" reste disponible.
-    const playPromise = audio.play();
-    if (playPromise !== undefined) {
-      playPromise
-        .then(() => {
-          // La question a changé pendant le chargement : on coupe cet extrait
-          if (token !== playToken) audio.pause();
-        })
-        .catch(() => {});
-    }
+    void playAudio(url);
   }
 
   function stopSound() {
-    playToken++; // invalide toute promesse de lecture encore en attente
-    if (audioPlayer) {
-      audioPlayer.pause();
-      audioPlayer = null;
-    }
+    stopAudio();
   }
 
   // Si une image ne charge pas, on réessaie une fois avec l'autre encodage des accents
