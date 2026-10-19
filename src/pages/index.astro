@@ -11,33 +11,53 @@ const levels = [
 const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 
-<Layout title="Choix du niveau">
-  <section class="welcome">
-    <h2>Sélectionnez votre niveau</h2>
-  </section>
+<Layout title="Choix du niveau" siteSubtitle="avec Monsieur Venier">
+  <div id="level-hub">
+    <section class="welcome">
+      <h2>Sélectionnez votre niveau</h2>
+    </section>
 
-  <div class="level-grid">
-    {levels.map((lvl) => (
-      <a href={`${baseUrl}/${lvl.slug}`} class="level-btn">
-        <span>{lvl.label}</span>
-        <span class="arrow">&rarr;</span>
-      </a>
-    ))}
+    <div class="level-grid">
+      {levels.map((lvl) => (
+        <a href={`${baseUrl}/${lvl.slug}`} class="level-btn">
+          <span>{lvl.label}</span>
+          <span class="arrow">&rarr;</span>
+        </a>
+      ))}
+    </div>
   </div>
-
-  <section class="training-entry">
-    <a href={`${baseUrl}/entrainement`} class="training-link">
-      <span class="training-link-text">
-        <strong>Entraînement libre</strong>
-        <small>Lecture de notes, rythme, piano et tracé des clefs</small>
-      </span>
-      <span class="arrow" aria-hidden="true">&rarr;</span>
-    </a>
-  </section>
 </Layout>
 
 <style>
+  /* Centrage global : l'en-tête du site (titre) et le bloc de sélection
+     (sous-titre + cartes) forment un seul ensemble, centré verticalement
+     et horizontalement dans le viewport. */
+  :global(html body) {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    justify-content: safe center;
+    align-items: center;
+    min-height: 100dvh;
+  }
+
+  :global(html main.container) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  #level-hub {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.75rem 0;
+  }
+
   .welcome {
+    width: 100%;
     text-align: center;
     margin-bottom: 2.5rem;
   }
@@ -45,11 +65,15 @@ const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
     font-weight: 400;
     color: var(--text-muted);
   }
+
+  /* Écran large / paysage : les 4 niveaux sur une seule ligne, centrés */
   .level-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    width: 100%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1.5rem;
   }
+
   .level-btn {
     background: var(--card-bg);
     border: 1px solid var(--border);
@@ -62,7 +86,12 @@ const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
     transition: all 0.2s ease;
+  }
+  .level-btn > span:first-child {
+    min-width: 0;
   }
   .level-btn:hover {
     border-color: var(--primary);
@@ -71,38 +100,117 @@ const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
   }
   .arrow {
     font-size: 1.2rem;
+    flex: 0 0 auto;
   }
-  .training-entry {
-    margin-top: 2rem;
+
+  /* Téléphone / petit écran : grille 2 × 2 compacte et centrée */
+  @media (max-width: 760px) {
+    .level-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+      max-width: 520px;
+      margin-inline: auto;
+    }
+
+    .level-btn {
+      padding: 1.15rem 1.1rem;
+      font-size: 1.3rem;
+    }
+
+    .welcome {
+      margin-bottom: 1.75rem;
+    }
   }
-  .training-link {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-    padding: 1.25rem 1.5rem;
-    background: rgba(56, 189, 248, 0.08);
-    border: 1px dashed var(--primary);
-    border-radius: 12px;
-    color: var(--text);
-    text-decoration: none;
-    transition: all 0.2s ease;
+
+  /* Smartphone en portrait : une seule colonne verticale, centrée */
+  @media (max-width: 640px) and (orientation: portrait) {
+    /* Bloc resserré : la signature reste collée au titre et l'ensemble
+       (titres + cartes) se centre sans grand vide au-dessus. */
+    :global(html body .site-header) {
+      margin-bottom: 1.5rem;
+    }
+
+    .level-grid {
+      grid-template-columns: 1fr;
+      width: 100%;
+      max-width: 380px;
+      gap: 1.25rem;
+      margin-inline: auto;
+    }
+
+    .level-btn {
+      width: 100%;
+      min-height: 72px;
+      padding: 1.25rem 1.5rem;
+      font-size: 1.3rem;
+    }
+
+    .welcome {
+      margin-bottom: 1.25rem;
+    }
   }
-  .training-link:hover {
-    background: rgba(56, 189, 248, 0.16);
-    transform: translateY(-2px);
-    color: var(--primary);
+
+  /* Très petits écrans portrait : on resserre pour tout garder à l'écran */
+  @media (max-width: 360px) and (orientation: portrait) {
+    .level-grid {
+      gap: 1rem;
+    }
+
+    .level-btn {
+      min-height: 64px;
+      padding: 1.05rem 1.25rem;
+      font-size: 1.2rem;
+    }
   }
-  .training-link-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-  }
-  .training-link-text strong {
-    font-size: 1.15rem;
-  }
-  .training-link-text small {
-    color: var(--text-muted);
-    font-size: 0.9rem;
+
+  /* Accueil en paysage / fenêtre basse : titre + signature + 4 niveaux
+     regroupés et compactés pour tenir ensemble à l'écran, sans défilement.
+     (Les outils d'entraînement conservent leur en-tête global masqué.) */
+  @media (max-width: 900px) and (orientation: landscape), (max-height: 500px) {
+    :global(html body) {
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+    }
+
+    /* Le titre et sa signature restent visibles sur cette page seulement */
+    :global(html body .site-header) {
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    :global(html body .site-header h1) {
+      display: block;
+      margin: 0;
+      font-size: 1.25rem;
+      line-height: 1.2;
+    }
+
+    :global(html body .site-header .site-subtitle) {
+      display: block;
+      margin: 0.1rem 0 0;
+      font-size: 0.7rem;
+    }
+
+    #level-hub {
+      padding: 0.5rem 0;
+    }
+
+    .welcome {
+      display: none;
+    }
+
+    .level-grid {
+      gap: 0.5rem;
+    }
+
+    .level-btn {
+      min-height: 44px;
+      padding: 0.55rem 0.85rem;
+      font-size: 1.05rem;
+    }
+
+    .arrow {
+      font-size: 1rem;
+    }
   }
 </style>

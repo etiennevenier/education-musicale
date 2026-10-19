@@ -5,6 +5,8 @@ interface Props {
   backLabel?: string;
   /** En-tête du site sur mobile : complet, réduit au lien retour, ou masqué. */
   mobileHeader?: 'full' | 'minimal' | 'hidden';
+  /** Signature discrète affichée sous le titre du site (page d'accueil). */
+  siteSubtitle?: string;
 }
 
 const {
@@ -12,8 +14,10 @@ const {
   wide = false,
   backLabel = 'Changer de niveau',
   mobileHeader = 'full',
+  siteSubtitle,
 } = Astro.props;
-const isHome = Astro.url.pathname === '/';
+const isHome =
+  Astro.url.pathname.replace(/\/+$/, '') === import.meta.env.BASE_URL.replace(/\/+$/, '');
 ---
 
 <!doctype html>
@@ -33,6 +37,7 @@ const isHome = Astro.url.pathname === '/';
   >
     <header class="site-header">
       <h1><a href="/education-musicale/">Éducation Musicale</a></h1>
+      {siteSubtitle && <p class="site-subtitle">{siteSubtitle}</p>}
       {!isHome && (
         <a href="/education-musicale/" class="back-link">&larr; {backLabel}</a>
       )}
@@ -107,6 +112,17 @@ const isHome = Astro.url.pathname === '/';
   .site-header h1 a {
     text-decoration: none;
     color: var(--text);
+  }
+
+  /* Signature discrète sous le titre du site (accueil) :
+     le h1 ayant déjà 0.5rem de marge basse, -0.25rem ici donne 0.25rem réels. */
+  .site-header .site-subtitle {
+    margin: -0.25rem 0 0;
+    font-size: 0.85rem;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    color: #94a3b8;
+    opacity: 0.9;
   }
 
   .back-link {
@@ -216,7 +232,8 @@ const isHome = Astro.url.pathname === '/';
     }
 
     /* Le titre « Éducation Musicale » est le plus gros poste de hauteur */
-    .site-header h1 {
+    .site-header h1,
+    .site-header .site-subtitle {
       display: none;
     }
 
