@@ -1,0 +1,271 @@
+---
+const baseUrl = import.meta.env.BASE_URL;
+---
+
+<div class="blindtest-card" data-base-url={baseUrl}>
+  <div class="header-zone">
+    <h3>👂 Blind Test : Quelle est cette tessiture ?</h3>
+    <p>Écoute l'extrait vocal et devine quelle tessiture chante la phrase musicale !</p>
+  </div>
+
+  <div class="player-zone">
+    <button id="play-btn" class="play-btn">
+      ▶️ Écouter l'extrait vocal
+    </button>
+    <span id="audio-status" class="status-indicator">Extrait prêt à être écouté</span>
+  </div>
+
+  <div class="options-grid">
+    <button class="choice-btn" data-tessiture="soprano">Soprano</button>
+    <button class="choice-btn" data-tessiture="alto">Alto</button>
+    <button class="choice-btn" data-tessiture="tenor">Ténor</button>
+    <button class="choice-btn" data-tessiture="basse">Basse</button>
+  </div>
+
+  <div id="feedback" class="feedback-msg"></div>
+
+  <button id="next-btn" class="next-btn" style="display: none;">
+    🔄 Question suivante
+  </button>
+</div>
+
+<script>
+  type TessitureId = 'soprano' | 'alto' | 'tenor' | 'basse';
+
+  interface TessitureProfile {
+    id: TessitureId;
+    label: string;
+    filePrefix: string;
+  }
+
+  interface AudioTrack {
+    id: TessitureId;
+    label: string;
+    file: string;
+  }
+
+  const TESSITURES: TessitureProfile[] = [
+    { id: 'soprano', label: 'Soprano', filePrefix: 'Soprano' },
+    { id: 'alto', label: 'Alto', filePrefix: 'Alto' },
+    { id: 'tenor', label: 'Ténor', filePrefix: 'Tenor' },
+    { id: 'basse', label: 'Basse', filePrefix: 'Basse' },
+  ];
+
+  const TRACKS_PER_TESSITURE = 6;
+
+  // 24 fichiers MP3 réels, chacun associé à la tessiture attendue.
+  const AUDIO_TRACKS: AudioTrack[] = TESSITURES.flatMap((tessiture) =>
+    Array.from({ length: TRACKS_PER_TESSITURE }, (_, index) => ({
+      id: tessiture.id,
+      label: tessiture.label,
+      file: `/tessitures/${tessiture.filePrefix} ${index + 1}.mp3`,
+    }))
+  );
+
+  const card = document.querySelector('.blindtest-card') as HTMLElement | null;
+  const siteBaseUrl = (card?.dataset.baseUrl ?? '/').replace(/\/$/, '');
+
+  const playBtn = document.getElementById('play-btn') as HTMLButtonElement | null;
+  const statusSpan = document.getElementById('audio-status') as HTMLSpanElement | null;
+  const feedbackDiv = document.getElementById('feedback') as HTMLDivElement | null;
+  const nextBtn = document.getElementById('next-btn') as HTMLButtonElement | null;
+  const choiceBtns = document.querySelectorAll<HTMLButtonElement>('.choice-btn');
+
+  // Un seul élément Audio réutilisé pour toutes les questions.
+  const audio = new Audio();
+  audio.preload = 'auto';
+
+  let currentTrack: AudioTrack = AUDIO_TRACKS[0];
+  let currentTrackIndex = -1;
+  let isPlaying = false;
+  let playbackToken = 0;
+
+  function getTrackUrl(track: AudioTrack): string {
+    // Le préfixe de base est nécessaire sur GitHub Pages (/education-musicale/).
+    return `${siteBaseUrl}${encodeURI(track.file)}`;
+  }
+
+  audio.addEventListener('ended', () => {
+    isPlaying = false;
+    if (playBtn) playBtn.disabled = false;
+    if (statusSpan) statusSpan.textContent = '🎵 Écoute terminée. Choisis ta réponse !';
+  });
+
+  audio.addEventListener('error', () => {
+    isPlaying = false;
+    if (playBtn) playBtn.disabled = false;
+    if (statusSpan) statusSpan.textContent = 'Impossible de lire cet extrait. Réessaie.';
+  });
+
+  function pickRandomQuestion() {
+    playbackToken += 1;
+    audio.pause();
+    audio.currentTime = 0;
+    isPlaying = false;
+
+    // Évite de retomber immédiatement sur le même extrait.
+    let randomIndex = Math.floor(Math.random() * AUDIO_TRACKS.length);
+    if (AUDIO_TRACKS.length > 1 && randomIndex === currentTrackIndex) {
+      randomIndex = (randomIndex + 1) % AUDIO_TRACKS.length;
+    }
+
+    currentTrackIndex = randomIndex;
+    currentTrack = AUDIO_TRACKS[randomIndex];
+
+    audio.src = getTrackUrl(currentTrack);
+    audio.load();
+
+    if (playBtn) playBtn.disabled = false;
+    if (statusSpan) statusSpan.textContent = 'Extrait prêt à être écouté';
+    if (feedbackDiv) {
+      feedbackDiv.textContent = '';
+      feedbackDiv.className = 'feedback-msg';
+    }
+    if (nextBtn) nextBtn.style.display = 'none';
+
+    choiceBtns.forEach((button) => {
+      button.disabled = false;
+      button.classList.remove('correct', 'wrong');
+    });
+  }
+
+  async function playCurrentTrack() {
+    if (isPlaying) return;
+
+    const token = ++playbackToken;
+    isPlaying = true;
+    if (playBtn) playBtn.disabled = true;
+    if (statusSpan) statusSpan.textContent = "🔊 Lecture de l'extrait...";
+
+    try {
+      audio.currentTime = 0;
+      await audio.play();
+    } catch {
+      // Si une nouvelle question a été chargée entre-temps, on ignore l'erreur.
+      if (token !== playbackToken) return;
+      isPlaying = false;
+      if (playBtn) playBtn.disabled = false;
+      if (statusSpan) statusSpan.textContent = 'Impossible de lire cet extrait. Réessaie.';
+    }
+  }
+
+  playBtn?.addEventListener('click', playCurrentTrack);
+
+  choiceBtns.forEach((button) => {
+    button.addEventListener('click', () => {
+      if (button.disabled || !feedbackDiv) return;
+
+      const selected = button.dataset.tessiture;
+
+      if (selected === currentTrack.id) {
+        button.classList.add('correct');
+        feedbackDiv.className = 'feedback-msg success';
+        feedbackDiv.innerHTML = `🎉 <strong>Bravo !</strong> C'était bien la tessiture <strong>${currentTrack.label}</strong>.`;
+        if (nextBtn) nextBtn.style.display = 'inline-block';
+
+        choiceBtns.forEach((choice) => {
+          choice.disabled = true;
+        });
+      } else {
+        button.classList.add('wrong');
+        feedbackDiv.className = 'feedback-msg error';
+        feedbackDiv.innerHTML = "❌ Ce n'est pas cette tessiture. Réécoute l'extrait et réessaie !";
+      }
+    });
+  });
+
+  nextBtn?.addEventListener('click', pickRandomQuestion);
+
+  pickRandomQuestion();
+</script>
+
+<style>
+  .blindtest-card {
+    background: var(--card-bg, #1e1e2e);
+    border: 1px solid var(--border, #313244);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    text-align: center;
+  }
+  .player-zone {
+    margin: 1.5rem 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .play-btn {
+    background: #fab387;
+    color: #11111b;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 20px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+  }
+  .play-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .play-btn:active:not(:disabled) {
+    transform: scale(0.95);
+  }
+  .status-indicator {
+    font-size: 0.9rem;
+    color: var(--text-muted, #a6adc8);
+  }
+  .options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  .choice-btn {
+    background: #313244;
+    color: #cdd6f4;
+    border: 2px solid transparent;
+    padding: 1rem 0.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.05rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+  .choice-btn:hover:not(:disabled) {
+    border-color: var(--primary, #89b4fa);
+    background: #45475a;
+  }
+  .choice-btn.correct {
+    background: rgba(166, 227, 161, 0.2);
+    border-color: #a6e3a1;
+    color: #a6e3a1;
+  }
+  .choice-btn.wrong {
+    background: rgba(243, 139, 168, 0.2);
+    border-color: #f38ba8;
+    color: #f38ba8;
+  }
+  .feedback-msg {
+    min-height: 2rem;
+    font-size: 1.05rem;
+    margin: 1rem 0;
+  }
+  .feedback-msg.success {
+    color: #a6e3a1;
+  }
+  .feedback-msg.error {
+    color: #f38ba8;
+  }
+  .next-btn {
+    background: var(--primary, #89b4fa);
+    color: #11111b;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+</style>
