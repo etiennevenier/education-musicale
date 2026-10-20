@@ -13,9 +13,8 @@
         <header>
             <h1>Lecture Rythmique</h1>
         </header>
-    </div>
 
-    <section class="controls" aria-label="Réglages">
+        <section class="controls" aria-label="Réglages">
         <button class="btn" id="rt-btnGenerate">Générer</button>
 
         <label class="field">Chiffrage
@@ -47,7 +46,8 @@
         </label>
 
         <button class="btn primary" id="rt-btnStart">Démarrer l'exercice</button>
-    </section>
+        </section>
+    </div>
 
     <section class="status" id="rt-status" aria-live="polite">
         <div class="phase" id="rt-phase">Prêt ?<small>Clique sur « Démarrer l'exercice ».</small></div>
@@ -130,6 +130,9 @@
 #tool-rhythm .rhythm-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
 #tool-rhythm .rhythm-top > .hub-back { margin: 0; }
 #tool-rhythm .rhythm-top > header { flex: 1 1 auto; min-width: 0; text-align: center; }
+/* Sur desktop/tablette, les réglages restent sur leur propre ligne, juste sous
+   le titre ; en paysage téléphone (≤ 550 px), ils passent à côté du retour. */
+#tool-rhythm .rhythm-top > .controls { flex: 1 1 100%; margin-top: 6px; }
 #tool-rhythm h1 { margin: 0; color: var(--accent); font-size: clamp(22px, 4vw, 30px); font-weight: 900; letter-spacing: -0.01em; }
 #tool-rhythm .controls {
         background: #fff;
@@ -383,18 +386,32 @@
                 gap: 0;
             }
 
-            /* Le retour reste seul en tête, juste au-dessus de la barre de commandes. */
+            /* Le retour et les réglages s'alignent côte à côte sur une seule ligne. */
             #tool-rhythm .rhythm-top {
-                display: flex;
+                display: flex !important;
                 flex: 0 0 auto;
-                align-items: center;
-                gap: 0;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                gap: 8px;
                 margin: 0 0 4px;
             }
             #tool-rhythm .rhythm-top > header { display: none; }
             #tool-rhythm .rhythm-top > .tool-back {
+                align-self: center;
                 margin: 0;
                 flex: 0 0 auto;
+            }
+            /* Les contrôles occupent la place restante, sans saut de ligne :
+               en cas de manque de largeur, c'est la barre qui défile en X. */
+            #tool-rhythm .rhythm-top > .controls {
+                flex: 1 1 auto;
+                width: auto;
+                min-width: 0;
+                margin: 0;
+                flex-wrap: nowrap;
+                align-items: center;
             }
 
             #tool-rhythm .app {

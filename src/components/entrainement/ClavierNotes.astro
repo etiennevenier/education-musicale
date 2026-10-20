@@ -20,7 +20,6 @@ const whiteKeyCount = keyboard.filter((key) => key.type === 'white').length;
 
   <!-- MENU DES NIVEAUX -->
   <div id="cn-menu" class="cn-menu">
-    <p class="cn-menu-title">Choisis ton niveau :</p>
     <div class="cn-levels">
       <button type="button" class="cn-level-btn" data-level="1">
         <span class="cn-level-title">Niveau 1</span>
@@ -128,14 +127,6 @@ const whiteKeyCount = keyboard.filter((key) => key.type === 'white').length;
     line-height: 1.1;
     font-weight: 900;
     color: var(--accent);
-  }
-
-  #tool-clavier-notes .cn-menu-title {
-    margin: 0 0 1.25rem;
-    text-align: center;
-    font-weight: 700;
-    font-size: 1.2rem;
-    color: #334155;
   }
 
   #tool-clavier-notes .cn-levels {
@@ -481,12 +472,6 @@ const whiteKeyCount = keyboard.filter((key) => key.type === 'white').length;
     #tool-clavier-notes #cn-menu {
       display: flex;
       flex-direction: column;
-    }
-
-    #tool-clavier-notes .cn-menu-title {
-      flex: 0 0 auto;
-      margin-bottom: 0.35rem;
-      font-size: 1rem;
     }
 
     #tool-clavier-notes .cn-levels {

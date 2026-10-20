@@ -224,8 +224,8 @@
                 padding: 0;
                 border-radius: 0;
                 overflow: hidden;
-                --kh: clamp(72px, 32dvh, 140px);
-                --bkh: clamp(46px, 20dvh, 92px);
+                --kh: clamp(90px, 38dvh, 160px);
+                --bkh: clamp(55px, 24dvh, 100px);
             }
 
             #tool-piano .piano-body {
@@ -280,9 +280,10 @@
                 padding: 3px 6px 5px;
                 border-radius: 8px 8px 0 0;
                 /* Marge de sécurité sous le clavier en paysage compact : le clavier
-                   remonte et la portée (flex: 1) se réduit d'autant. */
-                margin-bottom: 30px;
-                margin-bottom: max(30px, env(safe-area-inset-bottom, 30px));
+                   est décollé du bord inférieur de l'écran (~1 à 2 cm) et la
+                   portée (flex: 1) se réduit d'autant. */
+                margin-bottom: 40px;
+                margin-bottom: max(40px, env(safe-area-inset-bottom, 40px));
             }
 
             #tool-piano .piano-wrapper::-webkit-scrollbar { height: 8px; }
@@ -292,7 +293,7 @@
            Le titre est masqué (le retour est présent), la portée est centrée et
            plafonnée à 60dvh, le clavier reste entièrement affiché avec sa marge
            basse complète. */
-        @media (min-width: 768px) and (max-height: 768px) and (orientation: landscape) {
+        @media (min-width: 768px) and (min-height: 551px) and (max-height: 768px) and (orientation: landscape) {
             html:has(#tool-piano),
             body:has(#tool-piano) {
                 height: 100dvh;

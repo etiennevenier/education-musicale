@@ -61,7 +61,6 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
 
     <!-- MENU DE SELECTION DES NIVEAUX -->
     <div id="menu-section" class="notes-menu">
-      <p class="notes-menu-title">Choisis ton niveau (série de 10 notes) :</p>
       <div class="notes-levels">
         <button class="level-btn" data-level="1" aria-label="Niveau 1, clé de sol">
           <span class="level-heading">
@@ -229,14 +228,6 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
   line-height: 1.1;
   font-weight: 900;
   color: var(--accent);
-}
-
-#tool-notes .notes-menu-title {
-  margin: 0 0 1.5rem;
-  text-align: center;
-  font-weight: 700;
-  font-size: 1.25rem;
-  color: #334155;
 }
 
 #tool-notes .notes-levels {
@@ -517,7 +508,6 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
   #tool-notes { padding: 8px; border-radius: 16px; }
   #tool-notes .notes-card { padding: 4px; }
   #tool-notes .notes-header { display: none; }
-  #tool-notes .notes-menu-title { margin-bottom: 0.5rem; font-size: 1rem; }
   #tool-notes .notes-levels { gap: 0.75rem; }
   #tool-notes .level-btn { padding: 10px 14px; }
   #tool-notes .level-title { font-size: 1.05rem; }
@@ -537,6 +527,31 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
   #tool-notes .notes-card { padding: 3px; }
 
   #tool-notes .notes-exercise { gap: 6px; }
+
+  /* Menu de niveaux : le titre a été retiré, les 6 cartes tiennent sur
+     2 colonnes et occupent toute la hauteur, sans défilement vertical. */
+  #tool-notes #menu-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    min-height: 0;
+  }
+
+  #tool-notes .notes-levels {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  #tool-notes .level-btn {
+    min-height: 0;
+    padding: 6px 8px;
+    overflow: hidden;
+  }
+
+  #tool-notes .level-btn .level-title { font-size: 0.95rem; line-height: 1.1; }
+  #tool-notes .level-btn .level-desc { font-size: 0.75rem; line-height: 1.15; }
+  #tool-notes .level-clef--sol { height: 2rem !important; }
+  #tool-notes .level-clef--fa { height: 1.3rem !important; }
 
   #tool-notes .notes-hud {
     gap: 0.15rem 0.7rem;
@@ -629,11 +644,6 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
     flex-direction: column;
     min-height: 0;
     gap: 0.4rem;
-  }
-
-  #tool-notes .notes-menu-title {
-    flex: 0 0 auto;
-    margin-bottom: 0.35rem;
   }
 
   /* Les cartes de niveau se partagent la hauteur restante */
@@ -813,12 +823,6 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
     display: flex;
     flex-direction: column;
     min-height: 0;
-  }
-
-  #tool-notes .notes-menu-title {
-    margin: 0 0 6px;
-    font-size: 0.95rem;
-    line-height: 1.2;
   }
 
   #tool-notes .notes-levels {

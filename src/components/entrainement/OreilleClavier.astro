@@ -22,7 +22,6 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
 
   <!-- MENU DES NIVEAUX -->
   <div id="oc-menu" class="oc-menu">
-    <p class="oc-menu-title">Choisis ton niveau :</p>
     <div class="oc-levels">
       <button type="button" class="oc-level-btn" data-level="1">
         <span class="oc-level-title">Niveau 1</span>
@@ -132,14 +131,6 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
     font-weight: 900;
     color: var(--accent);
   }
-  #tool-oreille-clavier .oc-menu-title {
-    margin: 0 0 1.25rem;
-    text-align: center;
-    font-weight: 700;
-    font-size: 1.2rem;
-    color: #334155;
-  }
-
   #tool-oreille-clavier .oc-levels {
     display: grid;
     grid-template-columns: 1fr;
@@ -488,12 +479,6 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
     #tool-oreille-clavier #oc-menu {
       display: flex;
       flex-direction: column;
-    }
-
-    #tool-oreille-clavier .oc-menu-title {
-      flex: 0 0 auto;
-      margin-bottom: 0.35rem;
-      font-size: 1rem;
     }
 
     #tool-oreille-clavier .oc-levels {

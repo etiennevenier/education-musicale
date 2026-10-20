@@ -165,7 +165,7 @@
     flex: 0 0 auto !important;
     width: 100% !important;
     margin-top: 0 !important;
-    margin-bottom: max(10px, env(safe-area-inset-bottom, 10px)) !important;
+    margin-bottom: max(40px, env(safe-area-inset-bottom, 40px)) !important;
     padding: 6px 8px 14px !important;
     border-radius: 8px 8px 10px 10px !important;
     overflow-x: auto !important;
@@ -271,12 +271,6 @@
   }
 
   /* Menu et bilan : compacts pour ne jamais déborder de 100dvh. */
-  body.mobile-header-hidden #tool-notes .notes-menu-title {
-    flex: 0 0 auto !important;
-    margin-bottom: 0.35rem !important;
-    font-size: 1rem !important;
-  }
-
   body.mobile-header-hidden #tool-notes .notes-levels {
     flex: 1 1 auto !important;
     min-height: 0 !important;
@@ -429,12 +423,14 @@
     justify-content: center !important;
   }
 
-  /* Le bouton de retour reste en tête, l'en-tête de l'outil est masqué. */
+  /* Le bouton de retour reste en tête, l'en-tête de l'outil est masqué.
+     Les réglages passent sur leur propre ligne, sous le retour. */
   body.mobile-header-hidden #tool-rhythm .rhythm-top {
     flex: 0 0 auto !important;
     display: flex !important;
+    flex-wrap: wrap !important;
     align-items: center !important;
-    gap: 8px !important;
+    gap: 4px 8px !important;
     padding: 0 !important;
   }
 
@@ -450,6 +446,14 @@
     align-items: flex-end !important;
     gap: 6px !important;
     padding: 6px !important;
+  }
+
+  /* Les réglages restent sous le retour sur tablette (le retour occupe la
+     première ligne, la barre de réglages toute la seconde). */
+  body.mobile-header-hidden #tool-rhythm .rhythm-top > .controls {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    margin-top: 4px !important;
   }
 
   body.mobile-header-hidden #tool-rhythm .controls .field {
@@ -522,12 +526,6 @@
     min-height: 0 !important;
     gap: 8px !important;
     overflow: hidden !important;
-  }
-
-  body.mobile-header-hidden #tool-clavier-notes .cn-menu-title {
-    flex: 0 0 auto !important;
-    margin-bottom: 0.35rem !important;
-    font-size: 1rem !important;
   }
 
   body.mobile-header-hidden #tool-clavier-notes .cn-levels {
@@ -619,12 +617,6 @@
     overflow: hidden !important;
   }
 
-  body.mobile-header-hidden #tool-oreille-nom .on-menu-title {
-    flex: 0 0 auto !important;
-    margin-bottom: 0.35rem !important;
-    font-size: 1rem !important;
-  }
-
   body.mobile-header-hidden #tool-oreille-nom .on-levels {
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
@@ -710,12 +702,6 @@
     overflow: hidden !important;
   }
 
-  body.mobile-header-hidden #tool-oreille-clavier .oc-menu-title {
-    flex: 0 0 auto !important;
-    margin-bottom: 0.35rem !important;
-    font-size: 1rem !important;
-  }
-
   body.mobile-header-hidden #tool-oreille-clavier .oc-levels {
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
@@ -785,3 +771,33 @@
     margin: 0.5rem 0 !important;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Téléphones en paysage (≤ 550 px de haut) : le bouton de retour et la barre
+   de réglages de la lecture rythmique partagent une seule et même ligne.
+   Ce bloc est placé après le mode compact tablette pour primer à spécificité
+   égale (et annuler le passage à la ligne de la barre de réglages).
+-------------------------------------------------------------------------- */
+@media (orientation: landscape) and (max-height: 550px) {
+  body.mobile-header-hidden #tool-rhythm .rhythm-top {
+    flex-wrap: nowrap !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    margin: 0 0 4px !important;
+  }
+
+  body.mobile-header-hidden #tool-rhythm .rhythm-top > .tool-back {
+    align-self: center !important;
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+  }
+
+  body.mobile-header-hidden #tool-rhythm .rhythm-top > .controls {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    flex-wrap: nowrap !important;
+  }
+}
+
