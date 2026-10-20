@@ -1,5 +1,6 @@
 ---
 import VideoCard from './VideoCard.astro';
+import LaboCinematique from './LaboCinematique.astro';
 
 interface CinemaVideo {
   badge: string;
@@ -13,6 +14,8 @@ interface CinemaTab {
   id: string;
   label: string;
   videos: CinemaVideo[];
+  /** Onglet atelier interactif : affiche le Labo Musique & Image au lieu des vidéos. */
+  kind?: 'videos' | 'labo';
 }
 
 const tabs: CinemaTab[] = [
@@ -78,6 +81,12 @@ const tabs: CinemaTab[] = [
       { badge: 'Projet musical', title: 'Projet musical', youtubeId: 'VZEtQo87n2I' },
     ],
   },
+  {
+    id: 'labo',
+    label: 'Labo Musique & Image',
+    kind: 'labo',
+    videos: [],
+  },
 ];
 ---
 
@@ -108,28 +117,44 @@ const tabs: CinemaTab[] = [
       hidden={index !== 0}
       data-panel={tab.id}
     >
-      <div class="cinema-videos">
-        {tab.videos.map((video) => (
-          <figure class="cinema-video">
-            <VideoCard
-              badge={video.badge}
-              title={video.title}
-              url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
-            />
-            {video.caption && <figcaption class="cinema-caption" set:html={video.caption} />}
-          </figure>
-        ))}
-      </div>
+      {tab.kind === 'labo' ? (
+        <LaboCinematique />
+      ) : (
+        <div class="cinema-videos">
+          {tab.videos.map((video) => (
+            <figure class="cinema-video">
+              <VideoCard
+                badge={video.badge}
+                title={video.title}
+                url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+              />
+              {video.caption && <figcaption class="cinema-caption" set:html={video.caption} />}
+            </figure>
+          ))}
+        </div>
+      )}
     </div>
   ))}
 </div>
 
 <script>
+  import { stopAudio } from '../utils/audioManager';
+
   const tabs = document.querySelectorAll<HTMLButtonElement>('.cinema-tab');
 
   const selectTab = (tab: HTMLButtonElement) => {
     const root = tab.closest('.cinema-course');
     if (!root) return;
+
+    // Coupe le son du Labo (et de tout autre extrait) quand on quitte son onglet.
+    if (tab.dataset.tab !== 'labo') stopAudio();
+
+    root.dispatchEvent(
+      new CustomEvent('cinema:tab-change', {
+        detail: { tab: tab.dataset.tab },
+        bubbles: true,
+      }),
+    );
 
     root.querySelectorAll<HTMLButtonElement>('.cinema-tab').forEach((item) => {
       const isActive = item === tab;
@@ -206,6 +231,10 @@ const tabs: CinemaTab[] = [
 
   .cinema-tab[data-tab='projet-musical']::before {
     content: '🎤';
+  }
+
+  .cinema-tab[data-tab='labo']::before {
+    content: '🎬';
   }
 
   .cinema-tab:hover {

@@ -1,4 +1,5 @@
 ---
+import QuizOpera from './QuizOpera.astro';
 import VideoCard from './VideoCard.astro';
 
 interface OperaVideo {
@@ -10,13 +11,15 @@ interface OperaVideo {
 interface OperaTab {
   id: string;
   label: string;
-  videos: OperaVideo[];
+  kind: 'videos' | 'quiz';
+  videos?: OperaVideo[];
 }
 
 const tabs: OperaTab[] = [
   {
     id: 'cours',
     label: 'Cours',
+    kind: 'videos',
     videos: [
       { badge: 'Capsule', title: 'Capsule', youtubeId: 'qsfJISMPwJo' },
       { badge: 'Écoute', title: 'Comédie musicale', youtubeId: 'vV67aiXimTw' },
@@ -27,12 +30,18 @@ const tabs: OperaTab[] = [
   {
     id: 'carmen',
     label: 'Carmen',
+    kind: 'videos',
     videos: [
       { badge: 'Écoute', title: 'Carmen — Bizet', youtubeId: 'K2snTkaD64U' },
       { badge: 'Écoute', title: 'Carmen — Bizet', youtubeId: 'POacDjS1EBo' },
       { badge: 'Écoute', title: 'Carmen — Bizet', youtubeId: 'KJ_HHRJf0xg' },
       { badge: 'Notions', title: 'Carmen', youtubeId: 'Gth5bcPWfJ4' },
     ],
+  },
+  {
+    id: 'quiz',
+    label: 'Quiz Opéra',
+    kind: 'quiz',
   },
 ];
 ---
@@ -64,25 +73,34 @@ const tabs: OperaTab[] = [
       hidden={index !== 0}
       data-panel={tab.id}
     >
-      <div class="opera-videos">
-        {tab.videos.map((video) => (
-          <VideoCard
-            badge={video.badge}
-            title={video.title}
-            url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
-          />
-        ))}
-      </div>
+      {tab.kind === 'quiz' ? (
+        <QuizOpera />
+      ) : (
+        <div class="opera-videos">
+          {(tab.videos ?? []).map((video) => (
+            <VideoCard
+              badge={video.badge}
+              title={video.title}
+              url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   ))}
 </div>
 
 <script>
+  import { stopAudio } from '../utils/audioManager';
+
   const tabs = document.querySelectorAll<HTMLButtonElement>('.opera-tab');
 
   const selectTab = (tab: HTMLButtonElement) => {
     const root = tab.closest('.opera-course');
     if (!root) return;
+
+    // On coupe l'extrait du quiz dès que l'on quitte son onglet.
+    if (tab.dataset.tab !== 'quiz') stopAudio();
 
     root.querySelectorAll<HTMLButtonElement>('.opera-tab').forEach((item) => {
       const isActive = item === tab;
@@ -151,6 +169,10 @@ const tabs: OperaTab[] = [
 
   .opera-tab[data-tab='carmen']::before {
     content: '💃';
+  }
+
+  .opera-tab[data-tab='quiz']::before {
+    content: '🎧';
   }
 
   .opera-tab:hover {

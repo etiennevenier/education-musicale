@@ -41,6 +41,27 @@ const tools = [
 ---
 
 <Layout title="Entraînement" wide backLabel="Accueil" mobileHeader="minimal">
+  <!-- Bannière d'information : orientation de l'écran (mémorisée localement) -->
+  <aside
+    id="orientation-notice"
+    class="orientation-notice"
+    role="status"
+    aria-label="Conseil d'utilisation"
+    hidden
+  >
+    <p class="orientation-notice-text">
+      💡 N'oublie pas : selon l'outil, adapte toi-même le mode portrait ou paysage pour une expérience optimale !
+    </p>
+    <button
+      type="button"
+      id="orientation-notice-close"
+      class="orientation-notice-close"
+      aria-label="Masquer cette information"
+    >
+      <span aria-hidden="true">✕</span>
+    </button>
+  </aside>
+
   <div id="training-hub">
     <section class="training-header">
       <span class="training-badge">Espace autonome</span>
@@ -62,6 +83,42 @@ const tools = [
   </div>
 </Layout>
 
+<script>
+  const NOTICE_KEY = 'hasSeenOrientationNotice';
+
+  const notice = document.getElementById('orientation-notice');
+  const closeButton = document.getElementById('orientation-notice-close');
+
+  if (notice) {
+    let alreadySeen = false;
+    try {
+      alreadySeen = window.localStorage.getItem(NOTICE_KEY) === 'true';
+    } catch {
+      // localStorage indisponible (navigation privée stricte) : on affiche la bannière.
+      alreadySeen = false;
+    }
+
+    if (!alreadySeen) {
+      notice.hidden = false;
+    }
+
+    closeButton?.addEventListener('click', () => {
+      try {
+        window.localStorage.setItem(NOTICE_KEY, 'true');
+      } catch {
+        // Écriture impossible : la bannière reste simplement masquée pour cette visite.
+      }
+
+      // Disparition en fondu, puis retrait complet de la mise en page.
+      notice.classList.add('is-closing');
+      window.setTimeout(() => {
+        notice.hidden = true;
+        notice.classList.remove('is-closing');
+      }, 180);
+    });
+  }
+</script>
+
 <style>
   /* Centrage global : le hub occupe toute la hauteur disponible et reste
      centré (verticalement et horizontalement), quel que soit le nombre de cartes. */
@@ -77,6 +134,85 @@ const tools = [
     flex-direction: column;
     width: 100%;
     min-height: 0;
+  }
+
+  /* Bannière d'information : orientation de l'écran */
+  #orientation-notice {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    min-width: 0;
+    margin: 0 0 1.25rem;
+    padding: 0.85rem 0.9rem 0.85rem 1.1rem;
+    background:
+      linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(168, 85, 247, 0.16)),
+      var(--card-bg);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    border-radius: 14px;
+    box-shadow: 0 14px 30px -22px rgba(56, 189, 248, 0.8);
+    color: var(--text);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+  }
+
+  /* Fondu de fermeture avant le retrait de la bannière. */
+  #orientation-notice.is-closing {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  /* L'attribut hidden doit primer sur le display: flex ci-dessus. */
+  #orientation-notice[hidden] {
+    display: none;
+  }
+
+  .orientation-notice-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.45;
+    text-wrap: pretty;
+  }
+
+  .orientation-notice-close {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--primary);
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+  }
+
+  .orientation-notice-close:hover,
+  .orientation-notice-close:focus-visible {
+    background: rgba(56, 189, 248, 0.22);
+    border-color: var(--primary);
+    outline: none;
+  }
+
+  .orientation-notice-close:active {
+    transform: scale(0.94);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #orientation-notice,
+    .orientation-notice-close {
+      transition: none;
+    }
   }
 
   #training-hub {
@@ -174,6 +310,25 @@ const tools = [
   @media (max-width: 640px), (max-width: 900px) and (orientation: landscape), (max-height: 500px) {
     .training-header {
       display: none;
+    }
+
+    /* La bannière reste sur une à deux lignes, sans manger la hauteur utile. */
+    #orientation-notice {
+      gap: 0.55rem;
+      margin-bottom: 0.75rem;
+      padding: 0.6rem 0.6rem 0.6rem 0.8rem;
+      border-radius: 12px;
+    }
+
+    .orientation-notice-text {
+      font-size: 0.8rem;
+      line-height: 1.35;
+    }
+
+    .orientation-notice-close {
+      width: 30px;
+      height: 30px;
+      font-size: 0.9rem;
     }
 
     .training-grid {

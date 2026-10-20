@@ -1,5 +1,6 @@
 ---
 import VideoCard from './VideoCard.astro';
+import Bruitomatic from './Bruitomatic.astro';
 
 interface BruitsVideo {
   badge: string;
@@ -10,6 +11,7 @@ interface BruitsVideo {
 interface BruitsTab {
   id: string;
   label: string;
+  kind?: 'videos' | 'bruitomatic';
   videos: BruitsVideo[];
 }
 
@@ -44,6 +46,12 @@ const tabs: BruitsTab[] = [
       { badge: 'Écoute', title: 'Stomp', youtubeId: 'lU4lVmQxHeI' },
     ],
   },
+  {
+    id: 'bruitomatic',
+    label: 'Bruitomatic',
+    kind: 'bruitomatic',
+    videos: [],
+  },
 ];
 ---
 
@@ -74,15 +82,19 @@ const tabs: BruitsTab[] = [
       hidden={index !== 0}
       data-panel={tab.id}
     >
-      <div class="bruits-videos">
-        {tab.videos.map((video) => (
-          <VideoCard
-            badge={video.badge}
-            title={video.title}
-            url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
-          />
-        ))}
-      </div>
+      {tab.kind === 'bruitomatic' ? (
+        <Bruitomatic />
+      ) : (
+        <div class="bruits-videos">
+          {tab.videos.map((video) => (
+            <VideoCard
+              badge={video.badge}
+              title={video.title}
+              url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   ))}
 </div>
@@ -103,6 +115,10 @@ const tabs: BruitsTab[] = [
     root.querySelectorAll<HTMLElement>('.bruits-panel').forEach((panel) => {
       panel.hidden = panel.dataset.panel !== tab.dataset.tab;
     });
+
+    document.dispatchEvent(
+      new CustomEvent('bruits:tab-change', { detail: { tab: tab.dataset.tab } }),
+    );
   };
 
   tabs.forEach((tab, index) => {
@@ -164,6 +180,10 @@ const tabs: BruitsTab[] = [
   }
 
   .bruits-tab[data-tab='stomp']::before {
+    content: '🥁';
+  }
+
+  .bruits-tab[data-tab='bruitomatic']::before {
     content: '🥁';
   }
 

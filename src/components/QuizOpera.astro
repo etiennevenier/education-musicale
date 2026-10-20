@@ -1,0 +1,1011 @@
+---
+import { OPERA_QUIZ_LENGTH } from '../data/operaData';
+---
+
+<section class="opera-quiz" id="operaQuiz" aria-label="Quiz Opéra">
+  <div class="qo-head">
+    <p class="qo-kicker">Quiz Opéra</p>
+    <p class="qo-intro">
+      {OPERA_QUIZ_LENGTH} questions tirées au hasard : théorie, air ou récitatif et blindtest des grands airs.
+    </p>
+  </div>
+
+  <!-- La première question s'affiche directement : pas d'écran intermédiaire. -->
+  <div class="qo-view" id="qoPlayView" tabindex="-1">
+    <div class="qo-topbar">
+      <span class="qo-kind" id="qoKind"></span>
+      <button type="button" class="qo-btn-quit" id="qoBtnRestart">
+        ↩ Recommencer
+      </button>
+    </div>
+
+    <div class="qo-progress">
+      <div class="qo-progress-text">
+        <span id="qoProgressLabel">Question 1 / {OPERA_QUIZ_LENGTH}</span>
+        <span class="qo-score" id="qoScoreLabel">Score : 0 / {OPERA_QUIZ_LENGTH}</span>
+      </div>
+      <div
+        class="qo-progress-bar"
+        id="qoProgressBar"
+        role="progressbar"
+        aria-label="Progression dans le quiz"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="0"
+      >
+        <div class="qo-progress-fill" id="qoProgressFill"></div>
+      </div>
+    </div>
+
+    <p class="qo-question-text" id="qoQuestionText"></p>
+
+    <p class="qo-hint" id="qoHint" hidden>
+      ⚠️ Plusieurs réponses sont possibles : coche-les, puis valide.
+    </p>
+
+    <div class="qo-audio" id="qoAudio" hidden>
+      <button type="button" class="qo-btn-play" id="qoBtnPlay">
+        🔊 Écouter l'extrait
+      </button>
+    </div>
+
+    <div class="qo-options" id="qoOptions"></div>
+
+    <div class="qo-feedback" id="qoFeedback" role="status" aria-live="polite" hidden></div>
+
+    <div class="qo-footer">
+      <button type="button" class="qo-btn-validate" id="qoBtnValidate" hidden>
+        Valider ma réponse
+      </button>
+      <button type="button" class="qo-btn-next" id="qoBtnNext" disabled>
+        Question suivante ➔
+      </button>
+    </div>
+  </div>
+
+  <!-- Bilan final -->
+  <div
+    class="qo-view qo-result"
+    id="qoResult"
+    role="status"
+    aria-live="polite"
+    tabindex="-1"
+    hidden
+  >
+  </div>
+</section>
+
+<script>
+  import {
+    drawOperaQuestions,
+    OPERA_QUIZ_LENGTH,
+    type OperaQuestion,
+  } from '../data/operaData';
+  import { relativeUrl } from '../utils/navigation';
+  import {
+    getAudioState,
+    getCurrentAudioUrl,
+    onAudioEvent,
+    pauseAudio,
+    playAudio,
+    resumeAudio,
+    stopAudio,
+    type AudioState,
+  } from '../utils/audioManager';
+
+  const PLAY_LABELS: Record<AudioState, string> = {
+    idle: "🔊 Écouter l'extrait",
+    loading: '⏳ Chargement…',
+    playing: '⏸ Mettre en pause',
+    paused: '▶️ Reprendre',
+    ended: '🔁 Réécouter',
+    error: '⚠️ Réessayer',
+  };
+
+  const KIND_LABELS: Record<OperaQuestion['kind'], string> = {
+    theory: '🧠 Théorie',
+    ecoute: '🎭 Air ou récitatif',
+    blindtest: '🎧 Blindtest',
+  };
+
+  const $ = <T extends HTMLElement>(id: string) =>
+    document.getElementById(id) as T;
+
+  const playView = $<HTMLDivElement>('qoPlayView');
+  const resultView = $<HTMLDivElement>('qoResult');
+  const kindLabel = $<HTMLSpanElement>('qoKind');
+  const progressLabel = $<HTMLSpanElement>('qoProgressLabel');
+  const scoreLabel = $<HTMLSpanElement>('qoScoreLabel');
+  const progressBar = $<HTMLDivElement>('qoProgressBar');
+  const progressFill = $<HTMLDivElement>('qoProgressFill');
+  const questionText = $<HTMLParagraphElement>('qoQuestionText');
+  const hintText = $<HTMLParagraphElement>('qoHint');
+  const audioBox = $<HTMLDivElement>('qoAudio');
+  const btnPlay = $<HTMLButtonElement>('qoBtnPlay');
+  const optionsBox = $<HTMLDivElement>('qoOptions');
+  const feedbackBox = $<HTMLDivElement>('qoFeedback');
+  const btnValidate = $<HTMLButtonElement>('qoBtnValidate');
+  const btnNext = $<HTMLButtonElement>('qoBtnNext');
+  const btnRestart = $<HTMLButtonElement>('qoBtnRestart');
+
+  const TOTAL = OPERA_QUIZ_LENGTH;
+
+  let session = drawOperaQuestions();
+  let index = 0;
+  let score = 0;
+  let answered = false;
+  let currentQuestion: OperaQuestion | null = null;
+  let currentOptions: string[] = [];
+  let currentAudioUrl: string | null = null;
+  const selected = new Set<string>();
+
+  /**
+   * Lecture automatique : jamais sur la toute première question affichée au
+   * chargement (règles d'autoplay des navigateurs). Elle s'active dès que
+   * l'élève avance dans le quiz ou clique sur « Rejouer ».
+   */
+  let autoPlayEnabled = false;
+
+  /** Minuteur du passage automatique après une bonne réponse. */
+  let advanceTimer: number | null = null;
+
+  const AUTO_ADVANCE_DELAY = 2000;
+
+  function clearAdvanceTimer(): void {
+    if (advanceTimer === null) return;
+    window.clearTimeout(advanceTimer);
+    advanceTimer = null;
+  }
+
+  /** Mélange de Fisher-Yates. */
+  function shuffle<T>(array: readonly T[]): T[] {
+    const a = [...array];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  /** Une question à choix multiples a plusieurs bonnes réponses. */
+  function isMulti(question: OperaQuestion): boolean {
+    return question.correctAnswers.length > 1;
+  }
+
+  function sameTrack(a: string | null, b: string | null): boolean {
+    if (!a || !b) return false;
+    return a.normalize('NFC') === b.normalize('NFC');
+  }
+
+  /**
+   * L'onglet « Quiz Opéra » est masqué au chargement : on évite de lancer un
+   * son que l'élève n'aurait pas demandé (il regarde peut-être une vidéo).
+   */
+  function isQuizVisible(): boolean {
+    return !document.hidden && playView.offsetParent !== null;
+  }
+
+  function updatePlayLabel(): void {
+    const state = getAudioState();
+    const isCurrent = sameTrack(getCurrentAudioUrl(), currentAudioUrl);
+
+    btnPlay.textContent = PLAY_LABELS[isCurrent ? state : 'idle'];
+    btnPlay.disabled = isCurrent && state === 'loading';
+  }
+
+  function updateProgress(): void {
+    progressLabel.textContent = `Question ${index + 1} / ${TOTAL}`;
+    scoreLabel.textContent = `Score : ${score} / ${TOTAL}`;
+
+    const done = index + (answered ? 1 : 0);
+    const percent = Math.round((done / TOTAL) * 100);
+    progressFill.style.width = `${percent}%`;
+    progressBar.setAttribute('aria-valuenow', String(percent));
+  }
+
+  function updateActions(): void {
+    const multi = currentQuestion ? isMulti(currentQuestion) : false;
+
+    btnValidate.hidden = !multi || answered;
+    btnValidate.disabled = answered || selected.size === 0;
+    btnNext.disabled = !answered;
+    btnNext.textContent =
+      index >= TOTAL - 1 ? '🏁 Voir mon score' : 'Question suivante ➔';
+  }
+
+  function buildOptions(question: OperaQuestion): void {
+    optionsBox.innerHTML = '';
+
+    currentOptions.forEach((option) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'qo-option';
+      btn.textContent = option;
+
+      if (isMulti(question)) {
+        btn.setAttribute('aria-pressed', 'false');
+        btn.addEventListener('click', () => toggleOption(option, btn));
+      } else {
+        btn.addEventListener('click', () => {
+          if (answered) return;
+          selected.clear();
+          selected.add(option);
+          validateAnswer();
+        });
+      }
+
+      optionsBox.appendChild(btn);
+    });
+  }
+
+  function toggleOption(option: string, btn: HTMLButtonElement): void {
+    if (answered) return;
+
+    if (selected.has(option)) {
+      selected.delete(option);
+      btn.classList.remove('is-selected');
+      btn.setAttribute('aria-pressed', 'false');
+    } else {
+      selected.add(option);
+      btn.classList.add('is-selected');
+      btn.setAttribute('aria-pressed', 'true');
+    }
+
+    updateActions();
+  }
+
+  function renderQuestion(): void {
+    clearAdvanceTimer();
+    stopAudio();
+    currentAudioUrl = null;
+    answered = false;
+    selected.clear();
+
+    const question = session[index];
+    if (!question) return;
+    currentQuestion = question;
+    // Les propositions sont mélangées à chaque affichage de question.
+    currentOptions = shuffle(question.options);
+
+    kindLabel.textContent = KIND_LABELS[question.kind];
+    questionText.textContent = question.prompt;
+    hintText.hidden = !isMulti(question);
+
+    audioBox.hidden = !question.audioUrl;
+    btnPlay.textContent = PLAY_LABELS.idle;
+    btnPlay.disabled = false;
+
+    if (question.audioUrl) {
+      currentAudioUrl = relativeUrl(question.audioUrl);
+    }
+
+    feedbackBox.hidden = true;
+    feedbackBox.textContent = '';
+    feedbackBox.className = 'qo-feedback';
+
+    buildOptions(question);
+    updateProgress();
+    updateActions();
+
+    // Le focus est posé sur le panneau : la nouvelle question est annoncée et
+    // le focus n'est pas perdu lorsque « Question suivante » se désactive.
+    playView.focus({ preventScroll: true });
+
+    // Lecture automatique de l'extrait, sauf sur la première question au
+    // chargement de la page (le navigateur bloquerait la lecture) et si
+    // l'onglet du quiz est masqué.
+    if (autoPlayEnabled && currentAudioUrl && isQuizVisible()) {
+      void playAudio(currentAudioUrl);
+    }
+  }
+  function validateAnswer(): void {
+    const question = currentQuestion;
+    if (!question || answered) return;
+
+    answered = true;
+
+    const correctSet = new Set(question.correctAnswers);
+    const isCorrect =
+      selected.size === correctSet.size &&
+      [...selected].every((option) => correctSet.has(option));
+
+    if (isCorrect) score += 1;
+
+    optionsBox
+      .querySelectorAll<HTMLButtonElement>('.qo-option')
+      .forEach((btn) => {
+        const option = btn.textContent ?? '';
+        btn.disabled = true;
+        btn.removeAttribute('aria-pressed');
+
+        if (correctSet.has(option)) {
+          btn.classList.add('is-correct');
+        } else if (selected.has(option)) {
+          btn.classList.add('is-wrong');
+        }
+      });
+
+    showFeedback(question, isCorrect);
+    updateProgress();
+    updateActions();
+
+    // Bonne réponse : on laisse 2 s pour lire le feedback, puis on enchaîne.
+    // Mauvaise réponse : l'élève avance lui-même quand il a lu l'explication.
+    if (isCorrect) {
+      clearAdvanceTimer();
+      advanceTimer = window.setTimeout(() => {
+        advanceTimer = null;
+        goToNext();
+      }, AUTO_ADVANCE_DELAY);
+    }
+  }
+
+  function showFeedback(question: OperaQuestion, isCorrect: boolean): void {
+    feedbackBox.innerHTML = '';
+    feedbackBox.className = `qo-feedback ${isCorrect ? 'is-success' : 'is-error'}`;
+
+    const title = document.createElement('strong');
+
+    if (isCorrect) {
+      title.textContent = '✅ Bonne réponse !';
+    } else if (isMulti(question)) {
+      const letters = question.correctAnswers
+        .map((answer) => {
+          const position = currentOptions.indexOf(answer);
+          return position >= 0 ? String.fromCharCode(65 + position) : '';
+        })
+        .filter(Boolean)
+        .join(', ');
+      title.textContent = `❌ Réponse incorrecte — il fallait cocher : ${letters}.`;
+    } else {
+      title.textContent = `❌ Réponse incorrecte — c'était : ${question.correctAnswers[0]}.`;
+    }
+
+    const detail = document.createElement('span');
+    detail.textContent = question.explanation;
+
+    feedbackBox.append(title, detail);
+
+    if (question.clipTitle) {
+      const clip = document.createElement('span');
+      clip.className = 'qo-feedback-clip';
+      clip.textContent = `🎵 ${question.clipTitle}`;
+      feedbackBox.appendChild(clip);
+    }
+
+    if (isCorrect) {
+      const auto = document.createElement('span');
+      auto.className = 'qo-feedback-auto';
+      auto.textContent =
+        index >= TOTAL - 1
+          ? '➡️ Bilan dans 2 secondes…'
+          : '➡️ Question suivante dans 2 secondes…';
+      feedbackBox.appendChild(auto);
+    }
+
+    feedbackBox.hidden = false;
+  }
+
+  function goToNext(): void {
+    if (!answered) return;
+
+    clearAdvanceTimer();
+    // À partir de la deuxième question, l'élève a interagi : on peut lancer
+    // l'extrait automatiquement sans être bloqué par le navigateur.
+    autoPlayEnabled = true;
+
+    if (index >= TOTAL - 1) {
+      showResult();
+      return;
+    }
+
+    index += 1;
+    renderQuestion();
+  }
+
+  function getResultMessage(ratio: number): { emoji: string; text: string } {
+    if (ratio === 1) {
+      return {
+        emoji: '🏆',
+        text: "Sans faute ! Tu maîtrises l'opéra sur le bout des doigts.",
+      };
+    }
+    if (ratio >= 0.8) {
+      return {
+        emoji: '🌟',
+        text: 'Excellent ! Ton oreille et ta culture lyrique sont déjà très solides.',
+      };
+    }
+    if (ratio >= 0.6) {
+      return {
+        emoji: '👍',
+        text: 'Bien joué ! Encore quelques écoutes et tu vises le sans-faute.',
+      };
+    }
+    if (ratio >= 0.4) {
+      return {
+        emoji: '🎧',
+        text: "C'est un bon début : réécoute les extraits et repère bien la différence entre air et récitatif.",
+      };
+    }
+    return {
+      emoji: '💪',
+      text: 'Courage ! Relis les questions de théorie, puis réécoute les airs et les récitatifs.',
+    };
+  }
+
+  function formatNote(noteValue: number, total: number): string {
+    if (!total) return '0';
+    const note = Math.round((noteValue / total) * 20 * 2) / 2;
+    return Number.isInteger(note) ? String(note) : note.toFixed(1).replace('.', ',');
+  }
+  function showResult(): void {
+    clearAdvanceTimer();
+    stopAudio();
+    currentAudioUrl = null;
+
+    const ratio = score / TOTAL;
+    const { emoji, text } = getResultMessage(ratio);
+    const pluriel = score === 1 ? '' : 's';
+
+    playView.hidden = true;
+    resultView.hidden = false;
+    resultView.innerHTML = `
+      <div class="qo-result-emoji" aria-hidden="true">${emoji}</div>
+      <p class="qo-result-kicker">Quiz terminé</p>
+      <p class="qo-result-score">
+        <span class="qo-result-note">${formatNote(score, TOTAL)}</span> / 20
+      </p>
+      <p class="qo-result-detail">${score} bonne${pluriel} réponse${pluriel} sur ${TOTAL}</p>
+      <p class="qo-result-text">${text}</p>
+      <div class="qo-result-actions">
+        <button type="button" class="qo-btn-primary" id="qoBtnReplay">🔁 Rejouer</button>
+      </div>
+    `;
+
+    $<HTMLButtonElement>('qoBtnReplay').addEventListener('click', restartQuiz);
+
+    resultView.focus({ preventScroll: true });
+  }
+
+  function restartQuiz(): void {
+    clearAdvanceTimer();
+    stopAudio();
+    currentAudioUrl = null;
+    // Nouvelle partie : nouveau tirage de 10 questions.
+    session = drawOperaQuestions();
+    index = 0;
+    score = 0;
+    answered = false;
+    currentQuestion = null;
+    currentOptions = [];
+    selected.clear();
+    // Clic sur « Rejouer » = interaction utilisateur : l'audio peut démarrer.
+    autoPlayEnabled = true;
+
+    resultView.hidden = true;
+    resultView.innerHTML = '';
+    playView.hidden = false;
+
+    renderQuestion();
+  }
+
+  // --- Événements ---------------------------------------------------------
+
+  btnValidate.addEventListener('click', validateAnswer);
+  btnNext.addEventListener('click', goToNext);
+  btnRestart.addEventListener('click', restartQuiz);
+
+  btnPlay.addEventListener('click', () => {
+    if (!currentAudioUrl) return;
+
+    const state = getAudioState();
+    const isCurrent = sameTrack(getCurrentAudioUrl(), currentAudioUrl);
+
+    if (isCurrent && state === 'playing') {
+      pauseAudio();
+      return;
+    }
+    if (isCurrent && state === 'paused') {
+      void resumeAudio();
+      return;
+    }
+    void playAudio(currentAudioUrl);
+  });
+
+  // Le lecteur est partagé par toute la page : on ne met à jour le bouton que
+  // lorsque l'extrait en cours est bien celui de la question affichée.
+  onAudioEvent('statechange', () => {
+    if (!currentAudioUrl) return;
+    updatePlayLabel();
+  });
+
+  // Affichage direct de la première question, sans écran intermédiaire.
+  // `autoPlayEnabled` reste false tant que l'élève n'a pas avancé ou rejoué.
+  renderQuestion();
+</script>
+
+<style is:global>
+  #operaQuiz {
+    --oq-surface: #0f172a;
+    --oq-card: #1e293b;
+    --oq-card-hover: #243247;
+    --oq-border: #334155;
+    --oq-text: #f1f5f9;
+    --oq-muted: #94a3b8;
+    --oq-blue: #38bdf8;
+    --oq-gold: #fbbf24;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+    padding: 1.25rem;
+    background:
+      radial-gradient(120% 90% at 0% 0%, rgba(56, 189, 248, 0.1), transparent 60%),
+      radial-gradient(90% 80% at 100% 100%, rgba(251, 191, 36, 0.08), transparent 65%),
+      var(--oq-surface);
+    border: 1px solid var(--oq-border);
+    border-radius: 16px;
+    color: var(--oq-text);
+    container-type: inline-size;
+  }
+
+  #operaQuiz * {
+    box-sizing: border-box;
+  }
+
+  #operaQuiz [hidden] {
+    display: none !important;
+  }
+
+  /* Conteneurs focalisés par le script : pas d'anneau sur tout le panneau. */
+  #operaQuiz .qo-view:focus {
+    outline: none;
+  }
+
+  #operaQuiz .qo-view {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  #operaQuiz .qo-head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  #operaQuiz .qo-kicker {
+    margin: 0;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--oq-gold);
+  }
+
+  #operaQuiz .qo-intro {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: var(--oq-muted);
+  }
+
+  #operaQuiz .qo-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  #operaQuiz .qo-kind {
+    padding: 0.22rem 0.65rem;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 999px;
+    background: rgba(56, 189, 248, 0.12);
+    color: var(--oq-blue);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+  }
+
+  #operaQuiz .qo-btn-quit {
+    padding: 0.35rem 0.7rem;
+    background: transparent;
+    border: 1px solid var(--oq-border);
+    border-radius: 999px;
+    color: var(--oq-muted);
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: color 0.18s ease, border-color 0.18s ease;
+  }
+
+  #operaQuiz .qo-btn-quit:hover {
+    color: var(--oq-text);
+    border-color: var(--oq-blue);
+  }
+
+  #operaQuiz .qo-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  #operaQuiz .qo-progress-text {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--oq-muted);
+  }
+
+  #operaQuiz .qo-score {
+    color: var(--oq-gold);
+  }
+
+  #operaQuiz .qo-progress-bar {
+    height: 8px;
+    border: 1px solid var(--oq-border);
+    border-radius: 999px;
+    background: #0b1220;
+    overflow: hidden;
+  }
+
+  #operaQuiz .qo-progress-fill {
+    width: 0;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--oq-blue), var(--oq-gold));
+    transition: width 0.35s ease;
+  }
+
+  #operaQuiz .qo-question-text {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1.45;
+  }
+
+  #operaQuiz .qo-hint {
+    margin: -0.35rem 0 0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--oq-gold);
+  }
+
+  #operaQuiz .qo-audio {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding: 0.75rem 0.85rem;
+    background: var(--oq-card);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    border-radius: 12px;
+  }
+
+  #operaQuiz .qo-btn-play {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.6rem 1.15rem;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #0284c7, #0ea5e9);
+    color: #f8fafc;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 12px 24px -18px rgba(56, 189, 248, 0.95);
+    transition: filter 0.18s ease, transform 0.18s ease;
+  }
+
+  #operaQuiz .qo-btn-play:hover:not(:disabled) {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+  }
+
+  #operaQuiz .qo-btn-play:disabled {
+    opacity: 0.65;
+    cursor: progress;
+  }
+
+  #operaQuiz .qo-options {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+    counter-reset: qo-option;
+  }
+
+  #operaQuiz .qo-option {
+    counter-increment: qo-option;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    padding: 0.8rem 0.9rem;
+    background: var(--oq-card);
+    border: 2px solid #475569;
+    border-radius: 12px;
+    color: var(--oq-text);
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.4;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
+  }
+
+  #operaQuiz .qo-option::before {
+    content: counter(qo-option, upper-alpha);
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: 1px solid var(--oq-border);
+    border-radius: 50%;
+    background: #0b1220;
+    color: var(--oq-muted);
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+
+  #operaQuiz .qo-option:hover:not(:disabled) {
+    border-color: var(--oq-blue);
+    transform: translateY(-1px);
+  }
+
+  #operaQuiz .qo-option:disabled {
+    cursor: default;
+  }
+
+  #operaQuiz .qo-option.is-selected {
+    background: rgba(56, 189, 248, 0.14);
+    border-color: var(--oq-blue);
+  }
+
+  #operaQuiz .qo-option.is-selected::before {
+    border-color: var(--oq-blue);
+    background: rgba(56, 189, 248, 0.22);
+    color: var(--oq-text);
+  }
+
+  #operaQuiz .qo-option.is-correct {
+    background: rgba(6, 78, 59, 0.85);
+    border-color: #10b981;
+    color: #d1fae5;
+  }
+
+  #operaQuiz .qo-option.is-correct::before {
+    border-color: #10b981;
+    background: #0b1220;
+    color: #a7f3d0;
+  }
+
+  #operaQuiz .qo-option.is-wrong {
+    background: rgba(136, 19, 55, 0.75);
+    border-color: #f43f5e;
+    color: #ffe4e6;
+  }
+
+  #operaQuiz .qo-option.is-wrong::before {
+    border-color: #f43f5e;
+    background: #0b1220;
+    color: #fecdd3;
+  }
+
+  #operaQuiz .qo-feedback {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  #operaQuiz .qo-feedback strong {
+    font-size: 0.95rem;
+  }
+
+  #operaQuiz .qo-feedback.is-success {
+    background: rgba(6, 78, 59, 0.55);
+    border-color: #10b981;
+    color: #d1fae5;
+  }
+
+  #operaQuiz .qo-feedback.is-error {
+    background: rgba(136, 19, 55, 0.45);
+    border-color: #f43f5e;
+    color: #ffe4e6;
+  }
+
+  #operaQuiz .qo-feedback-clip {
+    font-size: 0.8rem;
+    font-weight: 700;
+    opacity: 0.95;
+  }
+
+  #operaQuiz .qo-feedback-auto {
+    font-size: 0.78rem;
+    font-weight: 700;
+    opacity: 0.85;
+  }
+
+  #operaQuiz .qo-footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.75rem;
+  }
+
+  #operaQuiz .qo-btn-validate {
+    padding: 0.65rem 1.2rem;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #d97706, var(--oq-gold));
+    color: #1f1300;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: filter 0.18s ease, transform 0.18s ease;
+  }
+
+  #operaQuiz .qo-btn-validate:hover:not(:disabled) {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+  }
+
+  #operaQuiz .qo-btn-validate:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  #operaQuiz .qo-btn-next {
+    padding: 0.65rem 1.2rem;
+    background: var(--oq-card);
+    border: 1px solid var(--oq-border);
+    border-radius: 10px;
+    color: var(--oq-text);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: border-color 0.18s ease, background-color 0.18s ease;
+  }
+
+  #operaQuiz .qo-btn-next:hover:not(:disabled) {
+    background: var(--oq-card-hover);
+    border-color: var(--oq-blue);
+  }
+
+  #operaQuiz .qo-btn-next:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  #operaQuiz .qo-btn-quit:focus-visible,
+  #operaQuiz .qo-option:focus-visible,
+  #operaQuiz .qo-btn-play:focus-visible,
+  #operaQuiz .qo-btn-validate:focus-visible,
+  #operaQuiz .qo-btn-next:focus-visible,
+  #operaQuiz .qo-btn-primary:focus-visible {
+    outline: 2px solid var(--oq-gold);
+    outline-offset: 2px;
+  }
+
+  #operaQuiz .qo-result {
+    align-items: center;
+    gap: 0.35rem;
+    padding: 1.5rem 1rem;
+    background: var(--oq-card);
+    border: 1px solid var(--oq-border);
+    border-radius: 16px;
+    text-align: center;
+  }
+
+  #operaQuiz .qo-result-emoji {
+    font-size: 3rem;
+    line-height: 1;
+  }
+
+  #operaQuiz .qo-result-kicker {
+    margin: 0.45rem 0 0;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--oq-muted);
+  }
+
+  #operaQuiz .qo-result-score {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--oq-muted);
+  }
+
+  #operaQuiz .qo-result-note {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--oq-gold);
+  }
+
+  #operaQuiz .qo-result-detail {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--oq-text);
+  }
+
+  #operaQuiz .qo-result-text {
+    margin: 0.5rem 0 0;
+    max-width: 46ch;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--oq-muted);
+  }
+
+  #operaQuiz .qo-result-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  #operaQuiz .qo-btn-primary {
+    padding: 0.7rem 1.3rem;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #0284c7, var(--oq-blue));
+    color: #04121f;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: filter 0.18s ease, transform 0.18s ease;
+  }
+
+  #operaQuiz .qo-btn-primary:hover {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+  }
+
+  @container (min-width: 620px) {
+    #operaQuiz .qo-options {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #operaQuiz .qo-option,
+    #operaQuiz .qo-btn-play,
+    #operaQuiz .qo-btn-validate,
+    #operaQuiz .qo-btn-primary,
+    #operaQuiz .qo-progress-fill {
+      transition: none;
+    }
+
+    #operaQuiz .qo-option:hover:not(:disabled),
+    #operaQuiz .qo-btn-play:hover:not(:disabled),
+    #operaQuiz .qo-btn-validate:hover:not(:disabled),
+    #operaQuiz .qo-btn-primary:hover {
+      transform: none;
+    }
+  }
+
+
+
+</style>
