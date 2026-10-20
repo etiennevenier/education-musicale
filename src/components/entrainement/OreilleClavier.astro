@@ -1,0 +1,948 @@
+---
+// Outil « Oreille — Clavier » : une note est jouée, l'élève clique sur la
+// touche du piano qui correspond. Le clavier complet est toujours affiché ;
+// seules les notes de l'ambitus du niveau sont jouées par l'outil.
+import { buildKeyboard } from '../../utils/musicNotes';
+
+const FULL_KEYBOARD = buildKeyboard(60, 72, { spelling: 'natural' });
+const WHITE_KEY_COUNT = FULL_KEYBOARD.filter((key) => key.type === 'white').length;
+const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
+---
+
+<section id="tool-oreille-clavier">
+  <a id="oc-back" class="hub-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
+    <span aria-hidden="true">←</span>
+    <span class="hub-back-text">Retour à l'entraînement</span>
+    <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
+  </a>
+
+  <header class="oc-header">
+    <h1>Oreille — Clavier</h1>
+  </header>
+
+  <!-- MENU DES NIVEAUX -->
+  <div id="oc-menu" class="oc-menu">
+    <p class="oc-menu-title">Choisis ton niveau :</p>
+    <div class="oc-levels">
+      <button type="button" class="oc-level-btn" data-level="1">
+        <span class="oc-level-title">Niveau 1</span>
+        <span class="oc-level-desc">3 touches (Do, Ré, Mi)</span>
+      </button>
+      <button type="button" class="oc-level-btn" data-level="2">
+        <span class="oc-level-title">Niveau 2</span>
+        <span class="oc-level-desc">5 touches (Do à Sol)</span>
+      </button>
+      <button type="button" class="oc-level-btn" data-level="3">
+        <span class="oc-level-title">Niveau 3</span>
+        <span class="oc-level-desc">1 octave (Do à Do)</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- CHALLENGE -->
+  <div id="oc-game" class="oc-game hidden">
+    <div class="oc-hud">
+      <span class="oc-hud-item">Niveau <strong id="oc-level-label">1</strong></span>
+      <span class="oc-hud-item">Question <strong id="oc-progress">1 / 10</strong></span>
+      <span class="oc-hud-item">Score <strong id="oc-score">0 / 10</strong></span>
+      <span class="oc-hud-item oc-hud-time">⏱ <strong id="oc-timer">1:00</strong></span>
+    </div>
+
+    <button type="button" id="oc-replay" class="oc-audio-btn">
+      <span class="oc-audio-icon" aria-hidden="true">🔊</span>
+      <span class="oc-audio-text">Écouter la note</span>
+    </button>
+
+    <div id="oc-keyboard" class="oc-piano" role="group" aria-label="Clavier du piano, de Do4 à Do5">
+      {FULL_KEYBOARD.map((key) => (
+        <button
+          type="button"
+          class:list={['oc-key', `oc-key--${key.type}`]}
+          data-midi={key.midi}
+          aria-label={key.spokenName}
+          style={key.type === 'black'
+            ? `left:calc(${((key.whiteOffset / WHITE_KEY_COUNT) * 100).toFixed(3)}% - ${(BLACK_KEY_WIDTH / 2).toFixed(3)}%);width:${BLACK_KEY_WIDTH.toFixed(3)}%;`
+            : undefined}
+        ></button>
+      ))}
+    </div>
+    <p class="oc-caption">Clique sur la touche que tu entends.</p>
+
+    <p id="oc-feedback" class="oc-feedback" aria-live="polite"></p>
+  </div>
+
+  <!-- BILAN -->
+  <div id="oc-result" class="oc-result hidden" role="status" aria-live="polite" tabindex="-1">
+    <h2>Challenge Over !</h2>
+    <p id="oc-result-reason" class="oc-result-reason"></p>
+
+    <div class="oc-stats">
+      <div class="oc-stat">
+        <span id="oc-result-score" class="oc-stat-value">0 / 10</span>
+        <span class="oc-stat-label">Score</span>
+      </div>
+      <div class="oc-stat">
+        <span id="oc-result-percent" class="oc-stat-value">0 %</span>
+        <span class="oc-stat-label">Réussite</span>
+      </div>
+      <div class="oc-stat">
+        <span id="oc-result-time" class="oc-stat-value">0:00</span>
+        <span class="oc-stat-label">Temps</span>
+      </div>
+    </div>
+
+    <div class="oc-result-actions">
+      <button type="button" id="oc-restart" class="oc-primary-btn">Recommencer le challenge</button>
+    </div>
+  </div>
+</section>
+
+<style is:global>
+  #tool-oreille-clavier {
+    --accent: #7e22ce;
+    --accent-strong: #a855f7;
+    --accent-soft: #faf5ff;
+    --accent-border: #e9d5ff;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 12px;
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+    color: #0f172a;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+
+  @media (min-width: 640px) {
+    #tool-oreille-clavier { padding: 28px 32px 32px; }
+  }
+
+  #tool-oreille-clavier .oc-header {
+    text-align: center;
+    margin-bottom: 1.75rem;
+  }
+
+  #tool-oreille-clavier .oc-header h1 {
+    margin: 0;
+    font-size: clamp(1.7rem, 5vw, 2.7rem);
+    line-height: 1.1;
+    font-weight: 900;
+    color: var(--accent);
+  }
+  #tool-oreille-clavier .oc-menu-title {
+    margin: 0 0 1.25rem;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: #334155;
+  }
+
+  #tool-oreille-clavier .oc-levels {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  @media (min-width: 560px) {
+    #tool-oreille-clavier .oc-levels { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+
+  #tool-oreille-clavier .oc-level-btn {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-height: 64px;
+    padding: 0.9rem 1rem;
+    text-align: left;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    background: #ffffff;
+    color: #334155;
+    font: inherit;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    touch-action: manipulation;
+    transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.1s ease;
+  }
+
+  #tool-oreille-clavier .oc-level-btn:hover,
+  #tool-oreille-clavier .oc-level-btn:focus-visible {
+    border-color: var(--accent-strong);
+    background: var(--accent-soft);
+    outline: none;
+  }
+
+  #tool-oreille-clavier .oc-level-btn:active { transform: scale(0.98); }
+
+  #tool-oreille-clavier .oc-level-title {
+    color: var(--accent);
+    font-size: 1.15rem;
+    font-weight: 800;
+  }
+
+  #tool-oreille-clavier .oc-level-desc {
+    color: #64748b;
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+
+  #tool-oreille-clavier .oc-hint {
+    margin: 1.25rem 0 0;
+    text-align: center;
+    color: #64748b;
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+
+  #tool-oreille-clavier .oc-game {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  #tool-oreille-clavier .oc-hud {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem 1rem;
+    padding: 0.7rem 0.9rem;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-border);
+    border-radius: 14px;
+    color: #475569;
+    font-size: 0.98rem;
+    font-weight: 600;
+  }
+
+  #tool-oreille-clavier .oc-hud strong { color: var(--accent); font-weight: 800; }
+  #tool-oreille-clavier .oc-hud-time strong {
+    display: inline-block;
+    min-width: 3.1rem;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
+  /* --- Écoute --- */
+  #tool-oreille-clavier .oc-audio-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    min-height: 60px;
+    padding: 0.75rem 1rem;
+    border: 2px solid #d8b4fe;
+    border-radius: 18px;
+    background: linear-gradient(160deg, #f3e8ff, #ede9fe);
+    color: #6b21a8;
+    font: inherit;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: transform 0.1s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  #tool-oreille-clavier .oc-audio-btn:hover { border-color: var(--accent-strong); }
+  #tool-oreille-clavier .oc-audio-btn:active { transform: scale(0.98); }
+
+  #tool-oreille-clavier .oc-audio-btn.is-playing {
+    border-color: var(--accent-strong);
+    box-shadow: 0 0 0 4px rgba(192, 132, 252, 0.25);
+  }
+
+  #tool-oreille-clavier .oc-audio-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+
+  #tool-oreille-clavier .oc-audio-text {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  /* --- Clavier --- */
+  #tool-oreille-clavier .oc-piano {
+    position: relative;
+    display: flex;
+    width: 100%;
+    height: clamp(150px, 30vh, 210px);
+    background: #1e293b;
+    border-radius: 14px 14px 10px 10px;
+    box-shadow: 0 8px 18px -8px rgba(15, 23, 42, 0.5);
+    overflow: hidden;
+    user-select: none;
+  }
+
+  #tool-oreille-clavier .oc-key {
+    position: absolute;
+    padding: 0;
+    border: 0;
+    font: inherit;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: background-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
+  }
+
+  #tool-oreille-clavier .oc-key--white {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    height: 100%;
+    border: 1px solid #cbd5e1;
+    border-top: 0;
+    border-radius: 0 0 8px 8px;
+    background: linear-gradient(#ffffff, #f1f5f9);
+    z-index: 1;
+  }
+
+  #tool-oreille-clavier .oc-key--black {
+    top: 0;
+    height: 62%;
+    z-index: 2;
+    border-radius: 0 0 6px 6px;
+    background: linear-gradient(#475569, #0f172a);
+    box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.6);
+  }
+
+  #tool-oreille-clavier .oc-key--white:hover { background: linear-gradient(#f8fafc, #e2e8f0); }
+  #tool-oreille-clavier .oc-key--white:active { background: #e2e8f0; }
+  #tool-oreille-clavier .oc-key--black:hover { background: linear-gradient(#64748b, #1e293b); }
+  #tool-oreille-clavier .oc-key--black:active { background: #334155; }
+  #tool-oreille-clavier .oc-key:focus-visible {
+    outline: 3px solid var(--accent-strong);
+    outline-offset: -3px;
+  }
+
+  #tool-oreille-clavier .oc-key--white.is-correct {
+    background: linear-gradient(#d1fae5, #a7f3d0);
+    box-shadow: inset 0 0 0 3px #059669;
+  }
+
+  #tool-oreille-clavier .oc-key--white.is-wrong {
+    background: linear-gradient(#ffe4e6, #fecdd3);
+    box-shadow: inset 0 0 0 3px #e11d48;
+  }
+
+  #tool-oreille-clavier .oc-key--black.is-correct {
+    background: linear-gradient(#34d399, #059669);
+    box-shadow: inset 0 0 0 3px #a7f3d0;
+  }
+
+  #tool-oreille-clavier .oc-key--black.is-wrong {
+    background: linear-gradient(#fb7185, #be123c);
+    box-shadow: inset 0 0 0 3px #fecdd3;
+  }
+
+  #tool-oreille-clavier .oc-piano.is-locked { pointer-events: none; }
+
+  #tool-oreille-clavier .oc-caption {
+    margin: -0.2rem 0 0;
+    text-align: center;
+    color: #64748b;
+    font-size: 0.9rem;
+  }
+
+  #tool-oreille-clavier .oc-feedback {
+    min-height: 2rem;
+    margin: 0;
+    text-align: center;
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+
+  #tool-oreille-clavier .oc-feedback.correct { color: #059669; }
+  #tool-oreille-clavier .oc-feedback.incorrect { color: #e11d48; }
+
+
+  /* --- Bilan --- */
+  #tool-oreille-clavier .oc-result {
+    padding: 1.25rem 0 1.5rem;
+    text-align: center;
+  }
+
+  #tool-oreille-clavier .oc-result:focus { outline: none; }
+
+  #tool-oreille-clavier .oc-result h2 {
+    margin: 0 0 0.4rem;
+    font-size: clamp(1.9rem, 6vw, 2.6rem);
+    font-weight: 900;
+    color: var(--accent);
+  }
+
+  #tool-oreille-clavier .oc-result-reason {
+    margin: 0;
+    color: #64748b;
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+
+  #tool-oreille-clavier .oc-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.6rem;
+    margin: 1.35rem 0;
+  }
+
+  #tool-oreille-clavier .oc-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.9rem 0.35rem;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-border);
+    border-radius: 16px;
+  }
+
+  #tool-oreille-clavier .oc-stat-value {
+    color: var(--accent);
+    font-size: clamp(1.35rem, 6vw, 2.1rem);
+    font-weight: 900;
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+  }
+
+  #tool-oreille-clavier .oc-stat-label {
+    color: #64748b;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  #tool-oreille-clavier .oc-result-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  #tool-oreille-clavier .oc-primary-btn {
+    width: 100%;
+    max-width: 420px;
+    min-height: 54px;
+    padding: 0.9rem 1.25rem;
+    border: 0;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, var(--accent-strong), #7e22ce);
+    color: #ffffff;
+    font: inherit;
+    font-size: 1.1rem;
+    font-weight: 800;
+    cursor: pointer;
+    touch-action: manipulation;
+    box-shadow: 0 10px 22px -10px rgba(168, 85, 247, 0.8);
+    transition: transform 0.1s ease, box-shadow 0.2s ease;
+  }
+
+  #tool-oreille-clavier .oc-primary-btn:hover { box-shadow: 0 12px 26px -10px rgba(168, 85, 247, 0.95); }
+  #tool-oreille-clavier .oc-primary-btn:active { transform: scale(0.98); }
+
+  @media (max-width: 640px) {
+    #tool-oreille-clavier .oc-header { margin-bottom: 1.25rem; }
+    #tool-oreille-clavier .oc-hud { font-size: 0.88rem; padding: 0.6rem 0.75rem; }
+    #tool-oreille-clavier .oc-piano { height: clamp(140px, 26dvh, 180px); }
+  }
+
+  /* Portrait smartphone : l'outil épouse exactement la hauteur visible. */
+  @media (max-width: 640px) and (orientation: portrait) {
+    html:has(#tool-oreille-clavier),
+    body:has(#tool-oreille-clavier) {
+      height: 100dvh;
+      max-height: 100dvh;
+      overflow: hidden;
+    }
+
+    body:has(#tool-oreille-clavier) {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding: 0.35rem 0.5rem 0.5rem;
+    }
+
+    main.container:has(#tool-oreille-clavier) {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      min-height: 0;
+    }
+
+    #tool-oreille-clavier {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+      padding: 6px;
+      border-radius: 16px;
+    }
+
+    #tool-oreille-clavier .oc-header { display: none; }
+
+    #tool-oreille-clavier #oc-menu,
+    #tool-oreille-clavier #oc-game,
+    #tool-oreille-clavier #oc-result {
+      flex: 1 1 auto;
+      min-height: 0;
+      gap: 0.45rem;
+    }
+
+    #tool-oreille-clavier #oc-menu {
+      display: flex;
+      flex-direction: column;
+    }
+
+    #tool-oreille-clavier .oc-menu-title {
+      flex: 0 0 auto;
+      margin-bottom: 0.35rem;
+      font-size: 1rem;
+    }
+
+    #tool-oreille-clavier .oc-levels {
+      flex: 1 1 auto;
+      min-height: 0;
+      grid-template-columns: 1fr;
+      grid-auto-rows: minmax(0, 1fr);
+      gap: 0.5rem;
+    }
+
+    #tool-oreille-clavier .oc-level-btn {
+      justify-content: center;
+      min-height: 0;
+      padding: 0.5rem 0.7rem;
+      overflow: hidden;
+    }
+
+    #tool-oreille-clavier .oc-level-title { font-size: 1rem; line-height: 1.2; }
+    #tool-oreille-clavier .oc-level-desc { font-size: 0.8rem; line-height: 1.25; }
+
+    #tool-oreille-clavier .oc-hint {
+      flex: 0 0 auto;
+      margin: 0;
+      font-size: 0.8rem;
+    }
+
+    #tool-oreille-clavier #oc-game { justify-content: space-between; }
+
+    #tool-oreille-clavier .oc-hud {
+      flex: 0 0 auto;
+      gap: 0.2rem 0.6rem;
+      padding: 0.4rem 0.55rem;
+      border-radius: 10px;
+      font-size: 0.8rem;
+    }
+
+    #tool-oreille-clavier .oc-audio-btn {
+      flex: 0 0 auto;
+      min-height: 48px;
+      padding: 0.45rem 0.75rem;
+    }
+
+    #tool-oreille-clavier .oc-audio-text { font-size: 0.95rem; }
+
+    #tool-oreille-clavier .oc-piano {
+      flex: 1 1 auto;
+      min-height: 120px;
+      max-height: 38dvh;
+      height: auto;
+    }
+
+    #tool-oreille-clavier .oc-caption { display: none; }
+
+    #tool-oreille-clavier .oc-feedback {
+      flex: 0 0 auto;
+      min-height: 1.4rem;
+      font-size: 1rem;
+    }
+
+    #tool-oreille-clavier #oc-result {
+      justify-content: center;
+      padding: 0;
+    }
+
+    #tool-oreille-clavier .oc-stats { margin: 0.6rem 0; }
+    #tool-oreille-clavier .oc-stat { padding: 0.5rem 0.25rem; border-radius: 12px; }
+    #tool-oreille-clavier .oc-primary-btn { min-height: 48px; }
+  }
+
+  /* Paysage compact : le clavier et le bouton de retour restent visibles. */
+  @media (max-height: 500px) and (orientation: landscape) {
+    #tool-oreille-clavier {
+      padding: 6px 8px;
+      border-radius: 14px;
+    }
+
+    #tool-oreille-clavier .oc-header { display: none; }
+
+    #tool-oreille-clavier .oc-game { gap: 0.4rem; }
+
+    #tool-oreille-clavier .oc-hud {
+      padding: 0.25rem 0.6rem;
+      font-size: 0.78rem;
+      border-radius: 10px;
+    }
+
+    #tool-oreille-clavier .oc-audio-btn {
+      min-height: 40px;
+      padding: 0.35rem 1rem;
+    }
+
+    #tool-oreille-clavier .oc-audio-text { font-size: 0.92rem; }
+
+    #tool-oreille-clavier .oc-piano { height: clamp(92px, 26dvh, 130px); }
+    #tool-oreille-clavier .oc-caption { display: none; }
+
+    #tool-oreille-clavier .oc-feedback {
+      min-height: 1.3rem;
+      font-size: 0.95rem;
+    }
+
+  }
+
+  /* Paysage mobile : aucun défilement vertical, le clavier reste visible. */
+  @media (pointer: coarse) and (orientation: landscape) and (max-height: 550px) {
+    html:has(#tool-oreille-clavier),
+    body:has(#tool-oreille-clavier) {
+      height: 100dvh;
+      max-height: 100dvh;
+      overflow: hidden;
+    }
+
+    body:has(#tool-oreille-clavier) {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      margin: 0;
+      padding: 0;
+    }
+
+    main.container:has(#tool-oreille-clavier) {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: none;
+      min-height: 0;
+    }
+
+    #tool-oreille-clavier {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      max-height: 100dvh;
+      width: 100%;
+      max-width: none;
+      min-height: 0;
+      margin: 0;
+      padding: 4px 6px;
+      border-radius: 0;
+      overflow: hidden;
+    }
+
+    #tool-oreille-clavier .oc-game { flex: 1 1 auto; min-height: 0; }
+    #tool-oreille-clavier .oc-piano { flex: 0 0 auto; }
+  }
+</style>
+
+<script>
+  import {
+    ChallengeSession,
+    CHALLENGE_QUESTION_COUNT,
+    formatCountdown,
+    type ChallengeResult,
+  } from '../../utils/challenge';
+  import { playPianoNote, stopAllNotes, unlockAudio } from '../../utils/pianoSynth';
+  import { noteName } from '../../utils/musicNotes';
+  import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
+
+  interface LevelConfig {
+    /** Notes pouvant être jouées par l'outil (ambitus du niveau). */
+    targets: number[];
+  }
+
+  const LEVELS: Record<number, LevelConfig> = {
+    1: { targets: [60, 62, 64] },
+    2: { targets: [60, 62, 64, 65, 67] },
+    3: { targets: [60, 62, 64, 65, 67, 69, 71, 72] },
+  };
+
+  (() => {
+    const root = document.getElementById('tool-oreille-clavier');
+    if (!root) return;
+
+    const menuEl = root.querySelector<HTMLElement>('#oc-menu');
+    const gameEl = root.querySelector<HTMLElement>('#oc-game');
+    const resultEl = root.querySelector<HTMLElement>('#oc-result');
+    const levelLabelEl = root.querySelector<HTMLElement>('#oc-level-label');
+    const progressEl = root.querySelector<HTMLElement>('#oc-progress');
+    const scoreEl = root.querySelector<HTMLElement>('#oc-score');
+    const timerEl = root.querySelector<HTMLElement>('#oc-timer');
+    const feedbackEl = root.querySelector<HTMLElement>('#oc-feedback');
+    const keyboardEl = root.querySelector<HTMLElement>('#oc-keyboard');
+    const replayBtn = root.querySelector<HTMLButtonElement>('#oc-replay');
+    const resultScoreEl = root.querySelector<HTMLElement>('#oc-result-score');
+    const resultPercentEl = root.querySelector<HTMLElement>('#oc-result-percent');
+    const resultTimeEl = root.querySelector<HTMLElement>('#oc-result-time');
+    const resultReasonEl = root.querySelector<HTMLElement>('#oc-result-reason');
+    const restartBtn = root.querySelector<HTMLButtonElement>('#oc-restart');
+    const backLink = root.querySelector<HTMLAnchorElement>('#oc-back');
+    const levelButtons = root.querySelectorAll<HTMLButtonElement>('[data-level]');
+
+    if (
+      !menuEl || !gameEl || !resultEl || !levelLabelEl || !progressEl || !scoreEl ||
+      !timerEl || !feedbackEl || !keyboardEl || !replayBtn || !resultScoreEl ||
+      !resultPercentEl || !resultTimeEl || !resultReasonEl || !restartBtn
+    ) {
+      return;
+    }
+
+    let session: ChallengeSession | null = null;
+    let currentLevel = 1;
+    let currentMidi: number | null = null;
+    let answered = false;
+    let nextQuestionTimer: number | null = null;
+    let audioTimer: number | null = null;
+    let targetBag: number[] = [];
+    let lastMidi: number | null = null;
+
+    const clearNextTimer = (): void => {
+      if (nextQuestionTimer !== null) {
+        window.clearTimeout(nextQuestionTimer);
+        nextQuestionTimer = null;
+      }
+    };
+
+    const clearAudioTimer = (): void => {
+      if (audioTimer !== null) {
+        window.clearTimeout(audioTimer);
+        audioTimer = null;
+      }
+    };
+
+    const clearKeyStates = (): void => {
+      keyboardEl.querySelectorAll('.oc-key').forEach((key) => {
+        key.classList.remove('is-correct', 'is-wrong');
+      });
+      keyboardEl.classList.remove('is-locked');
+    };
+
+    const playQuestion = (): void => {
+      if (!session?.isRunning || currentMidi === null) return;
+      unlockAudio();
+      stopAllNotes();
+      playPianoNote(currentMidi, { duration: 1.9, velocity: 0.9 });
+      replayBtn.classList.add('is-playing');
+      window.setTimeout(() => replayBtn.classList.remove('is-playing'), 450);
+    };
+
+    const scheduleQuestionAudio = (): void => {
+      clearAudioTimer();
+      const midi = currentMidi;
+      if (midi === null) return;
+      audioTimer = window.setTimeout(() => {
+        audioTimer = null;
+        if (session?.isRunning && !answered && currentMidi === midi) playQuestion();
+      }, 400);
+    };
+
+    /** Pioche sans répétition immédiate : le sac est mélangé à chaque tour. */
+    const pickTarget = (level: LevelConfig): number => {
+      if (targetBag.length === 0) {
+        targetBag = [...level.targets];
+        for (let i = targetBag.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          const first = targetBag[i];
+          const second = targetBag[j];
+          if (first === undefined || second === undefined) continue;
+          targetBag[i] = second;
+          targetBag[j] = first;
+        }
+        if (targetBag.length > 1 && targetBag[0] === lastMidi) {
+          const first = targetBag[0];
+          const second = targetBag[1];
+          if (first !== undefined && second !== undefined) {
+            targetBag[0] = second;
+            targetBag[1] = first;
+          }
+        }
+      }
+
+      const midi = targetBag.shift();
+      if (midi === undefined) return level.targets[0] ?? 60;
+      lastMidi = midi;
+      return midi;
+    };
+
+    const showQuestion = (): void => {
+      const level = LEVELS[currentLevel];
+      if (!level || !session?.isRunning) return;
+
+      answered = false;
+      feedbackEl.textContent = '';
+      feedbackEl.className = 'oc-feedback';
+      clearKeyStates();
+
+      const midi = pickTarget(level);
+      currentMidi = midi;
+
+      progressEl.textContent = `${session.answered + 1} / ${CHALLENGE_QUESTION_COUNT}`;
+      scoreEl.textContent = `${session.score} / ${CHALLENGE_QUESTION_COUNT}`;
+
+      scheduleQuestionAudio();
+    };
+
+    const handleKeyAnswer = (key: HTMLButtonElement): void => {
+      if (!session?.isRunning || answered || currentMidi === null) return;
+      answered = true;
+      clearNextTimer();
+      clearAudioTimer();
+
+      const playedMidi = Number(key.dataset.midi);
+      const isCorrect = playedMidi === currentMidi;
+
+      if (isCorrect) {
+        feedbackEl.textContent = '✅ Bravo !';
+        feedbackEl.className = 'oc-feedback correct';
+        key.classList.add('is-correct');
+      } else {
+        const expectedName = noteName(currentMidi, 'natural');
+        feedbackEl.textContent = `❌ C'était ${expectedName}.`;
+        feedbackEl.className = 'oc-feedback incorrect';
+        key.classList.add('is-wrong');
+        keyboardEl.querySelectorAll<HTMLButtonElement>('.oc-key').forEach((candidate) => {
+          if (Number(candidate.dataset.midi) === currentMidi) candidate.classList.add('is-correct');
+        });
+      }
+
+      keyboardEl.classList.add('is-locked');
+
+      // On rejoue la note attendue pour associer le son à la bonne touche.
+      unlockAudio();
+      stopAllNotes();
+      playPianoNote(currentMidi, { duration: 1.6, velocity: 0.85 });
+
+      const continues = session.recordAnswer(isCorrect);
+      if (!continues) return;
+
+      nextQuestionTimer = window.setTimeout(() => {
+        nextQuestionTimer = null;
+        stopAllNotes();
+        showQuestion();
+      }, 1200);
+    };
+
+    const startLevel = (levelNumber: number): void => {
+      const level = LEVELS[levelNumber];
+      if (!level) return;
+
+      clearNextTimer();
+      clearAudioTimer();
+      stopAllNotes();
+      session?.cancel();
+      session = null;
+
+      currentLevel = levelNumber;
+      currentMidi = null;
+      answered = false;
+      targetBag = [];
+      lastMidi = null;
+      setHubBackMode(backLink, 'level');
+
+      menuEl.classList.add('hidden');
+      resultEl.classList.add('hidden');
+      gameEl.classList.remove('hidden');
+
+      levelLabelEl.textContent = String(levelNumber);
+      progressEl.textContent = `1 / ${CHALLENGE_QUESTION_COUNT}`;
+      scoreEl.textContent = `0 / ${CHALLENGE_QUESTION_COUNT}`;
+      timerEl.textContent = '1:00';
+      feedbackEl.textContent = '';
+      feedbackEl.className = 'oc-feedback';
+
+      clearKeyStates();
+
+      session = new ChallengeSession({
+        onTick: ({ remainingMs, score }) => {
+          timerEl.textContent = formatCountdown(remainingMs);
+          scoreEl.textContent = `${score} / ${CHALLENGE_QUESTION_COUNT}`;
+        },
+        onEnd: showResult,
+      });
+      session.start();
+      showQuestion();
+    };
+
+    const showResult = (result: ChallengeResult): void => {
+      clearNextTimer();
+      clearAudioTimer();
+      stopAllNotes();
+      keyboardEl.classList.add('is-locked');
+
+      gameEl.classList.add('hidden');
+      resultEl.classList.remove('hidden');
+
+      resultScoreEl.textContent = `${result.score} / ${result.total}`;
+      resultPercentEl.textContent = `${result.percent} %`;
+      resultTimeEl.textContent = result.elapsedLabel;
+      resultReasonEl.textContent =
+        result.reason === 'timeout'
+          ? '⏱ Temps écoulé !'
+          : '🏁 Les 10 questions sont terminées.';
+
+      resultEl.focus({ preventScroll: true });
+    };
+
+    const backToMenu = (): void => {
+      clearNextTimer();
+      clearAudioTimer();
+      stopAllNotes();
+      session?.cancel();
+      session = null;
+      currentMidi = null;
+      answered = false;
+
+      gameEl.classList.add('hidden');
+      resultEl.classList.add('hidden');
+      menuEl.classList.remove('hidden');
+      setHubBackMode(backLink, 'hub');
+    };
+
+    backLink?.addEventListener('click', (event) => {
+      const link = event.currentTarget;
+      if (!(link instanceof HTMLAnchorElement) || !isHubBackInLevelMode(link)) return;
+      event.preventDefault();
+      backToMenu();
+    });
+
+    levelButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const levelNumber = Number(button.dataset.level);
+        if (Number.isFinite(levelNumber)) startLevel(levelNumber);
+      });
+    });
+
+    keyboardEl.addEventListener('click', (event) => {
+      const clicked = event.target;
+      if (!(clicked instanceof Element)) return;
+      const key = clicked.closest('.oc-key');
+      if (key instanceof HTMLButtonElement) handleKeyAnswer(key);
+    });
+
+    replayBtn.addEventListener('click', playQuestion);
+    restartBtn.addEventListener('click', () => startLevel(currentLevel));
+    window.addEventListener('pagehide', () => {
+      session?.cancel();
+      stopAllNotes();
+    });
+  })();
+</script>
+
+
+

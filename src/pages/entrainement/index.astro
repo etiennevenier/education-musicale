@@ -22,6 +22,21 @@ const tools = [
     icon: '✒️',
     title: 'Dessiner les Clefs',
   },
+  {
+    href: '/education-musicale/entrainement/clavier-notes',
+    icon: '🔴',
+    title: 'Identification Clavier',
+  },
+  {
+    href: '/education-musicale/entrainement/oreille-nom',
+    icon: '👂',
+    title: 'Oreille — Noms',
+  },
+  {
+    href: '/education-musicale/entrainement/oreille-clavier',
+    icon: '🔔',
+    title: 'Oreille — Clavier',
+  },
 ];
 ---
 
@@ -31,7 +46,7 @@ const tools = [
       <span class="training-badge">Espace autonome</span>
       <h2>Entraînement</h2>
       <p>
-        Quatre outils interactifs pour lire, taper, jouer et dessiner la musique à ton rythme.
+        Sept outils interactifs pour lire, taper, jouer, dessiner et écouter la musique à ton rythme.
       </p>
     </section>
 
@@ -165,7 +180,7 @@ const tools = [
     color: var(--text);
   }
 
-  /* Mobile et paysage bas : cap sur les 4 outils, visibles sans défilement */
+  /* Mobile et paysage bas : cartes compactes, visibles sans défilement */
   @media (max-width: 640px), (max-width: 900px) and (orientation: landscape), (max-height: 500px) {
     .training-header {
       display: none;

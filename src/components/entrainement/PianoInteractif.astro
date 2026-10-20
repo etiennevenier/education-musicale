@@ -10,10 +10,10 @@
                 <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
             </a>
             <div class="piano-head">
-                <h1 class="piano-title">Clavier &amp; Partition Interactive</h1>
-                <p class="piano-subtitle">Clique sur une touche pour entendre le son et voir la note sur la partition</p>
+                <h1 class="piano-title">Piano Interactif</h1>
             </div>
             <div id="piano-note-display" class="piano-info-note">Clique sur une touche 🎹</div>
+            <p class="piano-portrait-hint">📱 En mode paysage, le clavier 88 touches est bien plus confortable.</p>
             <div class="piano-staff-container">
                 <svg id="piano-staff-svg" viewBox="0 0 650 190"></svg>
             </div>
@@ -26,6 +26,10 @@
 
 <style is:global>
 #tool-piano {
+  --accent: #7e22ce;
+  --accent-strong: #a855f7;
+  --accent-soft: #faf5ff;
+  --accent-border: #e9d5ff;
   width: 100%;
   max-width: 1024px;
   margin: 0 auto;
@@ -41,22 +45,27 @@
 @media (min-width: 640px) {
   #tool-piano { padding: 32px; }
 }
-        #tool-piano .piano-title { color:#2563eb; margin:0 0 2px 0; font-size:22px; text-align:center; font-weight:700; }
-        #tool-piano .piano-subtitle { color:#64748b; margin:0; font-size:13px; text-align:center; }
-        #tool-piano .piano-body > .hub-back { min-height: 40px; margin: 0; padding: 0 14px; font-size: 14px; }
-        #tool-piano .hub-back-text-short { display: none; }
+        #tool-piano .piano-title {
+            margin: 0;
+            color: var(--accent);
+            font-size: clamp(1.7rem, 5vw, 2.7rem);
+            line-height: 1.1;
+            font-weight: 900;
+            text-align: center;
+        }
+        #tool-piano .piano-body > .hub-back { margin: 0; }
         #tool-piano .piano-body { width:100%; max-width:800px; margin:0 auto; display:flex; flex-direction:column; gap:15px; align-items:center; }
-        #tool-piano .piano-info-note { font-size:14px; font-weight:bold; color:#1e293b; background:#eff6ff; border:1px solid #bfdbfe; padding:6px 16px; border-radius:8px; min-width:150px; text-align:center; }
-        #tool-piano .piano-staff-container { background:#f8fafc; border:2px solid #e2e8f0; border-radius:14px; width:100%; height:260px; display:flex; justify-content:center; align-items:center; box-sizing:border-box; }
+        #tool-piano .piano-info-note { font-size:14px; font-weight:700; color:#4c1d95; background:var(--accent-soft); border:1px solid var(--accent-border); padding:6px 16px; border-radius:999px; min-width:150px; text-align:center; }
+        #tool-piano .piano-staff-container { background:var(--accent-soft); border:2px solid var(--accent-border); border-radius:14px; width:100%; height:260px; display:flex; justify-content:center; align-items:center; box-sizing:border-box; }
         #tool-piano #piano-staff-svg { width:100%; max-width:650px; height:250px; }
-        #tool-piano .piano-wrapper { background:#1e293b; padding:10px; border-radius:14px; box-shadow:0 6px 15px rgba(0,0,0,0.15); width:100%; overflow-x:auto; display:flex; justify-content:center; box-sizing:border-box; }
+        #tool-piano .piano-wrapper { background:#1e293b; padding:10px; border-radius:14px 14px 10px 10px; box-shadow:0 8px 18px -8px rgba(15,23,42,0.5); width:100%; overflow-x:auto; display:flex; justify-content:center; box-sizing:border-box; }
         #tool-piano .piano { display:flex; position:relative; height:110px; width:max-content; }
-        #tool-piano .white-key { width:28px; height:110px; background:#fff; border:1px solid #cbd5e1; border-radius:0 0 4px 4px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:6px; font-size:9px; font-weight:bold; color:#64748b; cursor:pointer; box-sizing:border-box; z-index:1; user-select:none; touch-action:manipulation; }
-        #tool-piano .white-key:hover { background:#f1f5f9; }
-        #tool-piano .white-key.active { background:#3b82f6 !important; color:#fff; }
-        #tool-piano .black-key { position:absolute; width:18px; height:65px; background:#0f172a; border-radius:0 0 3px 3px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:4px; font-size:8px; color:#94a3b8; cursor:pointer; box-sizing:border-box; z-index:3; user-select:none; touch-action:manipulation; }
-        #tool-piano .black-key:hover { background:#334155; }
-        #tool-piano .black-key.active { background:#2563eb !important; color:#fff; }
+        #tool-piano .white-key { width:28px; height:110px; background:linear-gradient(#ffffff, #f1f5f9); border:1px solid #cbd5e1; border-top:0; border-radius:0 0 8px 8px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:6px; font-size:9px; font-weight:700; color:#64748b; cursor:pointer; box-sizing:border-box; z-index:1; user-select:none; touch-action:manipulation; transition:background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease; }
+        #tool-piano .white-key:hover { background:linear-gradient(#f8fafc, #e2e8f0); }
+        #tool-piano .white-key.active { background:linear-gradient(135deg, var(--accent-strong), var(--accent)) !important; color:#fff; box-shadow:inset 0 0 0 2px rgba(255,255,255,0.35); }
+        #tool-piano .black-key { position:absolute; width:18px; height:65px; background:linear-gradient(#334155, #0f172a); border-radius:0 0 6px 6px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:4px; font-size:8px; color:#94a3b8; cursor:pointer; box-sizing:border-box; z-index:3; user-select:none; touch-action:manipulation; box-shadow:0 4px 8px rgba(15,23,42,0.45); transition:background 0.12s ease, color 0.12s ease; }
+        #tool-piano .black-key:hover { background:linear-gradient(#475569, #1e293b); }
+        #tool-piano .black-key.active { background:linear-gradient(135deg, var(--accent-strong), var(--accent)) !important; color:#fff; }
         #tool-piano { --wk: 48px; --bk: 30px; --kh: 150px; --bkh: 92px; }
         @media (hover: hover) and (pointer: fine) and (min-width: 820px) {
             #tool-piano { --wk: 28px; --bk: 18px; --kh: 110px; --bkh: 65px; }   /* clavier d'origine pour souris */
@@ -73,17 +82,210 @@
         #tool-piano .piano-wrapper::-webkit-scrollbar { height: 14px; }
         #tool-piano .piano-wrapper::-webkit-scrollbar-track { background: #334155; border-radius: 7px; }
         #tool-piano .piano-wrapper::-webkit-scrollbar-thumb { background: #64748b; border-radius: 7px; }
-        #tool-piano .white-key.c-key { color: #2563eb; }   /* repère visuel : les Do portent leur numéro d'octave */
+        #tool-piano .white-key.c-key { color: var(--accent); }   /* repère visuel : les Do portent leur numéro d'octave */
+        #tool-piano .white-key.active.c-key { color: #fff; }
         #tool-piano .piano-scroll-hint { display: block; margin: -6px 0 0; text-align: center; font-size: 13px; color: #64748b; font-weight: 600; }
+        #tool-piano .piano-portrait-hint { display: none; margin: -4px 0 0; text-align: center; font-size: 12px; line-height: 1.35; color: #64748b; font-weight: 600; }
         /* Mobile/paysage bas : retour compact en tête d'outil, titre et sous-titre masqués */
         @media (max-width: 640px), (max-width: 900px) and (orientation: landscape), (max-height: 500px) {
             #tool-piano { padding: 10px; border-radius: 16px; }
             #tool-piano .piano-body { gap: 8px; }
             #tool-piano .piano-head { display: none; }
-            #tool-piano .piano-body > .hub-back { align-self: flex-start; margin: 0; padding: 0 12px; font-size: 14px; }
-            #tool-piano .hub-back-text { display: none; }
-            #tool-piano .hub-back-text-short { display: inline; }
+            #tool-piano .piano-body > .hub-back { align-self: flex-start; margin: 0; }
             #tool-piano .piano-scroll-hint { margin-top: -2px; font-size: 11px; line-height: 1.35; }
+        }
+
+        /* Portrait smartphone : le clavier occupe la hauteur restante, sans zone vide. */
+        @media (max-width: 640px) and (orientation: portrait) {
+            html:has(#tool-piano),
+            body:has(#tool-piano) {
+                height: 100dvh;
+                max-height: 100dvh;
+                overflow: hidden;
+            }
+
+            body:has(#tool-piano) {
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+                padding: 0.35rem 0.5rem 0.5rem;
+            }
+
+            main.container:has(#tool-piano) {
+                flex: 1 1 auto;
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                min-height: 0;
+            }
+
+            #tool-piano {
+                flex: 1 1 auto;
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+                min-height: 0;
+                padding: 8px;
+                border-radius: 16px;
+                --kh: clamp(108px, 18dvh, 150px);
+                --bkh: clamp(66px, 11dvh, 92px);
+            }
+
+            #tool-piano .piano-body {
+                flex: 1 1 auto;
+                min-height: 0;
+                width: 100%;
+                gap: 6px;
+                justify-content: space-between;
+            }
+
+            #tool-piano .piano-body > .hub-back {
+                align-self: flex-start;
+                flex: 0 0 auto;
+                margin: 0;
+            }
+
+            #tool-piano .piano-head { display: none; }
+
+            #tool-piano .piano-info-note {
+                flex: 0 0 auto;
+                padding: 5px 14px;
+                font-size: 12px;
+            }
+
+            #tool-piano .piano-portrait-hint { display: block; }
+
+            #tool-piano .piano-staff-container {
+                flex: 1 1 auto;
+                /* Légèrement réduit pour compenser la marge de sécurité du clavier
+                   et garder l'ensemble visuellement centré. */
+                min-height: 90px;
+                height: auto;
+                padding: 2px;
+            }
+
+            #tool-piano #piano-staff-svg {
+                width: 100%;
+                height: 100%;
+                max-height: 100%;
+            }
+
+            #tool-piano .piano-wrapper {
+                flex: 0 0 auto;
+                width: 100%;
+                padding: 8px 8px 10px;
+                /* Marge de sécurité sous le clavier : évite le collage au bord
+                   de l'écran et les gestes système accidentels. */
+                margin-bottom: 40px;
+                margin-bottom: max(40px, env(safe-area-inset-bottom, 40px));
+            }
+
+            #tool-piano .piano-scroll-hint { display: none; }
+        }
+
+        /* Paysage mobile bas : zéro défilement vertical, le clavier est prioritaire. */
+        @media (pointer: coarse) and (orientation: landscape) and (max-height: 550px) {
+            html:has(#tool-piano),
+            body:has(#tool-piano) {
+                height: 100dvh;
+                max-height: 100dvh;
+                overflow: hidden;
+            }
+
+            body:has(#tool-piano) {
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                justify-content: stretch;
+                min-height: 0;
+                margin: 0;
+                padding: 0;
+            }
+
+            main.container:has(#tool-piano) {
+                flex: 1 1 auto;
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                max-width: none;
+                min-height: 0;
+            }
+
+            #tool-piano {
+                flex: 1 1 auto;
+                display: flex;
+                flex-direction: column;
+                height: 100dvh;
+                max-height: 100dvh;
+                width: 100%;
+                max-width: none;
+                min-height: 0;
+                margin: 0;
+                padding: 0;
+                border-radius: 0;
+                overflow: hidden;
+                --kh: clamp(72px, 32dvh, 140px);
+                --bkh: clamp(46px, 20dvh, 92px);
+            }
+
+            #tool-piano .piano-body {
+                flex: 1 1 auto;
+                min-height: 0;
+                max-width: none;
+                width: 100%;
+                gap: 2px;
+                justify-content: space-between;
+                align-items: stretch;
+            }
+
+            #tool-piano .piano-body > .hub-back {
+                align-self: flex-start;
+                flex: 0 0 auto;
+                margin: 2px 6px;
+            }
+
+            #tool-piano .piano-head,
+            #tool-piano .piano-scroll-hint,
+            #tool-piano .piano-portrait-hint { display: none; }
+
+            #tool-piano .piano-info-note {
+                flex: 0 0 auto;
+                min-height: 22px;
+                margin: 0 auto;
+                padding: 1px 10px;
+                font-size: 11px;
+            }
+
+            #tool-piano .piano-staff-container {
+                flex: 1 1 auto;
+                min-height: 0;
+                height: auto;
+                padding: 0;
+                border: 0;
+                border-radius: 0;
+                background: transparent;
+                overflow: hidden;
+            }
+
+            #tool-piano #piano-staff-svg {
+                width: 100%;
+                height: 100%;
+                max-width: none;
+                max-height: none;
+            }
+
+            #tool-piano .piano-wrapper {
+                flex: 0 0 auto;
+                width: 100%;
+                padding: 3px 6px 5px;
+                border-radius: 8px 8px 0 0;
+                /* Marge de sécurité sous le clavier en paysage compact : le clavier
+                   remonte et la portée (flex: 1) se réduit d'autant. */
+                margin-bottom: 30px;
+                margin-bottom: max(30px, env(safe-area-inset-bottom, 30px));
+            }
+
+            #tool-piano .piano-wrapper::-webkit-scrollbar { height: 8px; }
         }
 </style>
 
@@ -177,26 +379,53 @@
             return el;
         }
 
+        let lastStaffKey: PianoKey | null = null;
+
+        /** En paysage téléphone, une seule portée suffit et tout doit tenir sans scroll. */
+        function isCompactLandscape(): boolean {
+            return window.matchMedia('(pointer: coarse) and (orientation: landscape) and (max-height: 550px)').matches;
+        }
+
         function updateStaff(keyObj: PianoKey | null): void {
+            lastStaffKey = keyObj;
             const svg = mustSvg('#piano-staff-svg');
             svg.innerHTML = '';
 
             const trebleLines = [35, 46, 57, 68, 79];
             const bassLines   = [115, 126, 137, 148, 159];
 
-            [trebleLines, bassLines].forEach(lines => {
+            const drawStaff = (lines: number[], clef: 'treble' | 'bass'): void => {
                 lines.forEach(y => svg.appendChild(svgEl('line', {
                     x1: 50, y1: y, x2: 600, y2: y, stroke: '#334155', 'stroke-width': 2
                 })));
-            });
+                const clefEl = svgEl('text', {
+                    x: 65,
+                    y: clef === 'treble' ? 80 : 154,
+                    'font-family': 'serif',
+                    'font-size': clef === 'treble' ? 80 : 56,
+                    fill: '#1e293b'
+                });
+                clefEl.textContent = clef === 'treble' ? '𝄞' : '𝄢';
+                svg.appendChild(clefEl);
+            };
 
-            const trebleClef = svgEl('text', { x: 65, y: 80, 'font-family': 'serif', 'font-size': 80, fill: '#1e293b' });
-            trebleClef.textContent = '𝄞';
-            svg.appendChild(trebleClef);
+            const compact = isCompactLandscape();
+            const isBass = keyObj ? keyObj.midi < 60 : false;
 
-            const bassClef = svgEl('text', { x: 65, y: 154, 'font-family': 'serif', 'font-size': 56, fill: '#1e293b' });
-            bassClef.textContent = '𝄢';
-            svg.appendChild(bassClef);
+            if (compact) {
+                // Une seule portée, celle de la note jouée (clé de sol par défaut).
+                if (isBass) {
+                    svg.setAttribute('viewBox', '0 85 650 110');
+                    drawStaff(bassLines, 'bass');
+                } else {
+                    svg.setAttribute('viewBox', '0 0 650 125');
+                    drawStaff(trebleLines, 'treble');
+                }
+            } else {
+                svg.setAttribute('viewBox', '0 0 650 190');
+                drawStaff(trebleLines, 'treble');
+                drawStaff(bassLines, 'bass');
+            }
 
             if (!keyObj) return; // portée vide au départ
 
@@ -204,7 +433,6 @@
 
             const stepSize = 5.5;
             const noteX = 325;
-            const isBass = keyObj.midi < 60;
             const activeLines = isBass ? bassLines : trebleLines;
             // Au-delà de ce que la portée peut afficher, on note à l'octave (8va / 15ma / 8vb / 15mb)
             let shiftOct = 0, ottava = '';
@@ -239,7 +467,7 @@
             svg.appendChild(svgEl('ellipse', { cx: noteX, cy: noteY, rx: 7, ry: 5.5, fill: '#0f172a' }));
 
             if (ottava) {
-                const label = svgEl('text', { x: noteX + 20, y: noteY + 5, 'font-size': 15, 'font-style': 'italic', 'font-weight': 'bold', fill: '#2563eb' });
+                const label = svgEl('text', { x: noteX + 20, y: noteY + 5, 'font-size': 15, 'font-style': 'italic', 'font-weight': 'bold', fill: '#7e22ce' });
                 label.textContent = ottava;
                 svg.appendChild(label);
             }
@@ -323,6 +551,13 @@
         document.addEventListener('pointerup', unlockPianoAudio, true);
         document.addEventListener('touchend', unlockPianoAudio, true);
 
-        updateStaff(null); // dessine les deux portées dès l'ouverture
+        // Une rotation d'écran change le nombre de portées visibles : on redessine.
+        const compactStaffQuery = window.matchMedia('(pointer: coarse) and (orientation: landscape) and (max-height: 550px)');
+        compactStaffQuery.addEventListener('change', () => updateStaff(lastStaffKey));
+        window.addEventListener('orientationchange', () => {
+            window.setTimeout(() => updateStaff(lastStaffKey), 120);
+        });
+
+        updateStaff(null); // dessine la portée adaptée dès l'ouverture
     })();
 </script>

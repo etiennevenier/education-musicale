@@ -58,6 +58,13 @@ const isHome =
     --text-muted: #94a3b8;   /* Texte secondaire lisible (slate-400) */
     --primary: #38bdf8;      /* Accentuation bleu néon/cyan (sky-400) */
     --primary-bg: #0369a1;   /* Fond d'accentuation discret */
+
+    /* Charte commune des outils d'entraînement (thème violet) */
+    --tool-accent: #7e22ce;
+    --tool-accent-strong: #a855f7;
+    --tool-accent-soft: #faf5ff;
+    --tool-accent-border: #e9d5ff;
+    --tool-accent-shadow: rgba(168, 85, 247, 0.28);
   }
 
   /* Aucun débordement latéral, quelle que soit la largeur d'écran */
@@ -79,7 +86,10 @@ const isHome =
     background-color: var(--bg);
     margin: 0;
     padding: 2rem 1rem;
+    /* 100dvh épouse la zone réellement visible sous les barres du navigateur
+       mobile (iOS Safari / Android Chrome) sans masquer le haut de la page. */
     min-height: 100vh;
+    min-height: 100dvh;
     max-width: 100%;
     overflow-x: hidden;
   }
@@ -97,6 +107,10 @@ const isHome =
 
   .container.wide {
     max-width: 1120px;
+  }
+
+  main.container {
+    min-height: 0;
   }
 
   .site-header {
@@ -144,21 +158,27 @@ const isHome =
     display: none !important;
   }
 
-  /* Bouton de retour en tête de chaque outil d'entraînement */
+  /* Bouton de retour en tête de chaque outil d'entraînement.
+     Taille, padding et hauteur minimale sont volontairement identiques dans
+     tous les outils : ne pas les surcharger au cas par cas dans les composants. */
   .hub-back {
     display: inline-flex;
     align-items: center;
+    align-self: center;
+    flex: 0 0 auto;
     gap: 0.35rem;
-    min-height: 44px;
+    min-height: 40px;
     margin: 0 0 1rem;
-    padding: 0.55rem 1rem;
+    padding: 0 14px;
     background: rgba(255, 255, 255, 0.92);
     border: 1px solid #cbd5e1;
     border-radius: 9999px;
     color: #475569;
     font: inherit;
-    font-size: 1rem;
+    font-size: 14px;
     font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
     text-decoration: none;
     cursor: pointer;
     touch-action: manipulation;
@@ -166,14 +186,25 @@ const isHome =
     transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
   }
 
+  .hub-back-text-short { display: none; }
+
+  /* Mobile / paysage bas : seul le libellé change (version courte),
+     la taille et le padding du bouton restent identiques. */
+  @media (max-width: 640px), (max-width: 900px) and (orientation: landscape), (max-height: 500px) {
+    .hub-back { margin-bottom: 0.5rem; }
+    .hub-back-text { display: none; }
+    .hub-back-text-short { display: inline; }
+  }
+
   .hub-back:hover {
-    color: #1d4ed8;
-    border-color: #60a5fa;
-    background: #eff6ff;
+    color: var(--tool-accent);
+    border-color: var(--tool-accent-strong);
+    background: var(--tool-accent-soft);
+    box-shadow: 0 6px 16px -10px var(--tool-accent-shadow);
   }
 
   .hub-back:focus-visible {
-    outline: 2px solid #2563eb;
+    outline: 2px solid var(--tool-accent-strong);
     outline-offset: 2px;
   }
 
@@ -254,5 +285,34 @@ const isHome =
     body.mobile-header-hidden .site-header {
       display: none !important;
     }
+  }
+
+  /* ------------------------------------------------------------------
+     Paysage sur mobile (hauteur d'écran réduite) : on resserre les
+     espacements globaux pour que les outils restent utilisables sans
+     défilement vertical parasite. Le bouton de retour de chaque outil
+     reste toujours visible et cliquable (règle prioritaire).
+  ------------------------------------------------------------------ */
+  @media (max-height: 500px) and (orientation: landscape) {
+    html,
+    body {
+      min-height: 100dvh;
+    }
+
+    body,
+    body.mobile-header-hidden {
+      padding-top: 0.35rem;
+      padding-bottom: 0.4rem;
+    }
+
+    .site-header {
+      margin-bottom: 0.35rem;
+    }
+
+    .container,
+    .container.wide {
+      width: 100%;
+    }
+
   }
 </style>

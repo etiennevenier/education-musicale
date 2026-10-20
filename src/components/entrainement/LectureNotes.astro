@@ -6,13 +6,12 @@
   <div class="notes-card">
     <!-- HEADER -->
     <header class="notes-header">
-      <a class="hub-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
+      <a id="notes-hub-back" class="hub-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
         <span aria-hidden="true">←</span>
         <span class="hub-back-text">Retour à l'entraînement</span>
         <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
       </a>
       <h1>Lecture de Notes</h1>
-      <p>Entraînement progressif pour l'éducation musicale, codé par Monsieur Venier</p>
     </header>
 
     <!-- MENU DE SELECTION DES NIVEAUX -->
@@ -55,7 +54,7 @@
 
       <!-- Portée musicale SVG grand format -->
       <div class="notes-staff">
-        <svg id="staff-svg" viewBox="0 0 650 260" preserveAspectRatio="xMidYMid meet"></svg>
+        <svg id="staff-svg" viewBox="120 20 360 210" preserveAspectRatio="xMidYMid meet"></svg>
       </div>
 
       <!-- Feedback message -->
@@ -71,10 +70,6 @@
         <button class="note-btn" data-note="La">La</button>
         <button class="note-btn" data-note="Si">Si</button>
       </div>
-
-      <div class="notes-back">
-        <button type="button" id="back-to-menu-link">← Choisir un autre niveau</button>
-      </div>
     </div>
 
     <!-- SECTION SCORE FINAL -->
@@ -85,7 +80,6 @@
 
       <div class="notes-score-actions">
         <button type="button" id="restart-btn">Recommencer ce niveau</button>
-        <button type="button" id="back-to-menu-from-score">Retour au menu des niveaux</button>
       </div>
     </div>
   </div>
@@ -105,6 +99,10 @@
 
 <style is:global>
 #tool-notes {
+  --accent: #7e22ce;
+  --accent-strong: #a855f7;
+  --accent-soft: #faf5ff;
+  --accent-border: #e9d5ff;
   width: 100%;
   max-width: 1024px;
   margin: 0 auto;
@@ -126,27 +124,12 @@
   margin-bottom: 2rem;
 }
 
-#tool-notes .notes-header > .hub-back {
-  margin-bottom: 1.25rem;
-}
-
-#tool-notes .hub-back-text-short {
-  display: none;
-}
-
 #tool-notes .notes-header h1 {
-  margin: 0 0 0.5rem;
-  font-size: clamp(1.9rem, 5vw, 3rem);
+  margin: 0;
+  font-size: clamp(1.7rem, 5vw, 2.7rem);
   line-height: 1.1;
   font-weight: 900;
-  color: #2563eb;
-}
-
-#tool-notes .notes-header p {
-  margin: 0;
-  color: #64748b;
-  font-size: 1.125rem;
-  font-weight: 500;
+  color: var(--accent);
 }
 
 #tool-notes .notes-menu-title {
@@ -176,23 +159,27 @@
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.1s ease;
 }
 
-#tool-notes .level-btn:hover {
-  border-color: #3b82f6;
-  background: #eff6ff;
+#tool-notes .level-btn:hover,
+#tool-notes .level-btn:focus-visible {
+  border-color: var(--accent-strong);
+  background: var(--accent-soft);
+  outline: none;
 }
 
-#tool-notes .level-btn.is-eval { background: #f8fafc; }
+#tool-notes .level-btn:active { transform: scale(0.99); }
+
+#tool-notes .level-btn.is-eval { background: #fdf4ff; }
 
 #tool-notes .level-btn .level-title {
-  color: #2563eb;
+  color: var(--accent);
   font-size: 1.25rem;
-  font-weight: 700;
+  font-weight: 800;
 }
 
-#tool-notes .level-btn.is-eval .level-title { color: #7c3aed; }
+#tool-notes .level-btn.is-eval .level-title { color: var(--accent-strong); }
 
 #tool-notes .level-btn .level-desc {
   color: #64748b;
@@ -213,34 +200,34 @@
   justify-content: space-between;
   gap: 0.25rem 1rem;
   padding: 0.75rem 1rem;
-  background: #f1f5f9;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
   border-radius: 16px;
   color: #475569;
   font-size: 1.125rem;
   font-weight: 700;
 }
 
-#tool-notes #progress-indicator { color: #2563eb; }
+#tool-notes #progress-indicator { color: var(--accent); }
 
 #tool-notes .notes-staff {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem;
+  padding: 0.25rem;
   max-width: 100%;
-  background: #f8fafc;
-  border: 2px solid #e2e8f0;
+  background: var(--accent-soft);
+  border: 2px solid var(--accent-border);
   border-radius: 24px;
   overflow-x: auto;
-  box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.06);
+  box-shadow: inset 0 2px 4px rgba(126, 34, 206, 0.06);
 }
 
 #tool-notes #staff-svg {
   display: block;
   width: 100%;
   height: auto;
-  max-width: min(650px, 100%);
-  max-height: 48vh;
+  max-width: 100%;
 }
 
 #tool-notes .feedback-msg {
@@ -276,33 +263,16 @@
   user-select: none;
 }
 
-#tool-notes .note-btn:hover {
-  border-color: #3b82f6;
-  background: #eff6ff;
+#tool-notes .note-btn:hover,
+#tool-notes .note-btn:focus-visible {
+  border-color: var(--accent-strong);
+  background: var(--accent-soft);
+  outline: none;
 }
 
 #tool-notes .note-btn:active { transform: scale(0.95); }
 
 #tool-notes .note-btn[data-note="Si"] { grid-column: span 2; }
-
-#tool-notes .notes-back {
-  padding-top: 0.5rem;
-  text-align: center;
-}
-
-#tool-notes #back-to-menu-link {
-  padding: 0.25rem;
-  border: 0;
-  background: none;
-  color: #64748b;
-  font: inherit;
-  font-size: 1rem;
-  font-weight: 600;
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-#tool-notes #back-to-menu-link:hover { color: #1e293b; }
 
 #tool-notes .notes-score {
   padding: 2rem 0;
@@ -312,8 +282,8 @@
 #tool-notes .notes-score h2 {
   margin: 0 0 0.75rem;
   font-size: clamp(1.75rem, 4vw, 2.25rem);
-  font-weight: 700;
-  color: #1e293b;
+  font-weight: 900;
+  color: var(--accent);
 }
 
 #tool-notes .notes-score p {
@@ -324,7 +294,7 @@
 
 #tool-notes #final-score {
   margin: 1rem 0;
-  color: #2563eb;
+  color: var(--accent);
   font-size: clamp(3rem, 10vw, 4.5rem);
   font-weight: 900;
   line-height: 1;
@@ -339,38 +309,33 @@
 }
 
 #tool-notes .notes-score-actions button {
-  padding: 1.25rem 1.5rem;
-  border: 0;
-  border-radius: 16px;
+  padding: 1.1rem 1.5rem;
+  border-radius: 9999px;
   font: inherit;
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.15rem;
+  font-weight: 800;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  touch-action: manipulation;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
 }
 
 #tool-notes #restart-btn {
-  background: #2563eb;
+  border: 0;
+  background: linear-gradient(135deg, var(--accent-strong), var(--accent));
   color: #ffffff;
-  box-shadow: 0 10px 20px -8px rgba(37, 99, 235, 0.6);
+  box-shadow: 0 12px 24px -12px rgba(126, 34, 206, 0.75);
 }
 
-#tool-notes #restart-btn:hover { background: #1d4ed8; }
-
-#tool-notes #back-to-menu-from-score {
-  background: #f1f5f9;
-  color: #334155;
-}
-
-#tool-notes #back-to-menu-from-score:hover { background: #e2e8f0; }
+#tool-notes #restart-btn:hover { box-shadow: 0 16px 28px -12px rgba(126, 34, 206, 0.9); }
+#tool-notes #restart-btn:active { transform: scale(0.98); }
 
 @media (min-width: 640px) {
   #tool-notes { padding: 32px; }
-  #tool-notes .notes-card { padding: 48px; }
+  #tool-notes .notes-card { padding: 16px; }
   #tool-notes .notes-levels { grid-template-columns: 1fr 1fr; }
   #tool-notes .level-btn { padding: 1.5rem; }
   #tool-notes .level-btn.is-eval { grid-column: span 2; }
-  #tool-notes .notes-staff { padding: 2rem; }
+  #tool-notes .notes-staff { padding: 0.5rem; }
   #tool-notes #staff-svg { max-height: none; }
   #tool-notes .notes-answers { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.75rem; }
   #tool-notes .note-btn[data-note="Si"] { grid-column: span 1; }
@@ -383,9 +348,6 @@
   #tool-notes .notes-header { margin-bottom: 0.75rem; text-align: left; }
   #tool-notes .notes-header h1,
   #tool-notes .notes-header p { display: none; }
-  #tool-notes .notes-header > .hub-back { min-height: 40px; margin: 0; padding: 0 12px; font-size: 14px; }
-  #tool-notes .hub-back-text { display: none; }
-  #tool-notes .hub-back-text-short { display: inline; }
   #tool-notes .notes-menu-title { margin-bottom: 0.5rem; font-size: 1rem; }
   #tool-notes .notes-levels { gap: 0.75rem; }
   #tool-notes .level-btn { padding: 10px 14px; }
@@ -494,8 +456,7 @@
 
   #tool-notes .notes-status,
   #tool-notes .feedback-msg,
-  #tool-notes .notes-answers,
-  #tool-notes .notes-back { flex: 0 0 auto; }
+  #tool-notes .notes-answers { flex: 0 0 auto; }
 
   #tool-notes .notes-back { padding-top: 0; }
 
@@ -548,20 +509,25 @@
     padding: 0 20px;
     border: 0;
     border-radius: 9999px;
-    background: #2563eb;
+    background: linear-gradient(135deg, var(--accent-strong), var(--accent));
     color: #ffffff;
     font: inherit;
     font-size: 0.95rem;
-    font-weight: 700;
+    font-weight: 800;
     cursor: pointer;
     touch-action: manipulation;
+    box-shadow: 0 10px 20px -10px rgba(126, 34, 206, 0.7);
+    transition: box-shadow 0.2s ease, transform 0.1s ease;
   }
 
-  #tool-notes .notes-rotate-continue:hover { background: #1d4ed8; }
+  #tool-notes .notes-rotate-continue:hover { box-shadow: 0 14px 24px -10px rgba(126, 34, 206, 0.9); }
+  #tool-notes .notes-rotate-continue:active { transform: scale(0.98); }
 }
 </style>
 
 <script>
+import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
+
 (function () {
     'use strict';
 
@@ -602,6 +568,16 @@
     let score = 0;
     let currentNoteObj: NoteObj | null = null;
     let isWaiting = false;
+    let feedbackTimer: number | null = null;
+
+    const hubBackLink = document.querySelector<HTMLAnchorElement>('#notes-hub-back');
+
+    function clearFeedbackTimer(): void {
+        if (feedbackTimer !== null) {
+            window.clearTimeout(feedbackTimer);
+            feedbackTimer = null;
+        }
+    }
 
     function getLevelPool(level: number): NoteObj[] {
         let pool: NoteObj[] = [];
@@ -681,9 +657,13 @@
     }
 
     function startLevel(lvl: number): void {
+        clearFeedbackTimer();
         currentLevel = lvl;
         currentQuestion = 0;
         score = 0;
+        isWaiting = false;
+        currentNoteObj = null;
+        setHubBackMode(hubBackLink, 'level');
         
         mustElement('#menu-section').classList.add('hidden');
         mustElement('#score-section').classList.add('hidden');
@@ -770,10 +750,10 @@
             const topY = trebleLines[0];
             const botY = bassLines[4];
             const VB_H = botY + 68;                                            // marge pour les notes/lignes supp. sous la portée de fa
-            svg.setAttribute('viewBox', `10 0 610 ${VB_H}`);
+            svg.setAttribute('viewBox', `30 0 450 ${VB_H}`);
             const X1 = 70;
-            drawLines(trebleLines, X1, 590);
-            drawLines(bassLines, X1, 590);
+            drawLines(trebleLines, X1, 460);
+            drawLines(bassLines, X1, 460);
 
             // Barre de liaison + accolade à gauche (hauteur adaptée à l'écart)
             const k = (botY - topY) / 242;                                      // facteur d'échelle vs. l'ancienne accolade (56 → 298)
@@ -788,10 +768,10 @@
             drawClef('bass', 86, bassLines);
             activeLines = isBass ? bassLines : trebleLines;
         } else {
-            svg.setAttribute('viewBox', '30 0 590 260');
+            svg.setAttribute('viewBox', '120 20 360 210');
             const lines = [80, 102, 124, 146, 168];
-            drawLines(lines, 60, 590);
-            drawClef(isBass ? 'bass' : 'treble', 78, lines);
+            drawLines(lines, 130, 460);
+            drawClef(isBass ? 'bass' : 'treble', 146, lines);
             activeLines = lines;
         }
 
@@ -836,21 +816,26 @@
             feedbackEl.className = "feedback-msg incorrect";
         }
 
-        setTimeout(() => {
+        feedbackTimer = window.setTimeout(() => {
+            feedbackTimer = null;
             nextQuestion();
         }, 500);
     }
 
     function endGame(): void {
+        clearFeedbackTimer();
         mustElement('#exercise-section').classList.add('hidden');
         mustElement('#score-section').classList.remove('hidden');
         mustElement('#final-score').innerText = `${score} / 10`;
     }
 
     function returnToNotesMenu(): void {
+        clearFeedbackTimer();
+        isWaiting = false;
         mustElement('#exercise-section').classList.add('hidden');
         mustElement('#score-section').classList.add('hidden');
         mustElement('#menu-section').classList.remove('hidden');
+        setHubBackMode(hubBackLink, 'hub');
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -867,11 +852,14 @@
             });
         });
 
-        const backLink = document.querySelector('#back-to-menu-link');
-        if (backLink) backLink.addEventListener('click', returnToNotesMenu);
-
-        const backScoreLink = document.querySelector('#back-to-menu-from-score');
-        if (backScoreLink) backScoreLink.addEventListener('click', returnToNotesMenu);
+        if (hubBackLink) {
+            hubBackLink.addEventListener('click', (event: MouseEvent) => {
+                const link = event.currentTarget;
+                if (!(link instanceof HTMLAnchorElement) || !isHubBackInLevelMode(link)) return;
+                event.preventDefault();
+                returnToNotesMenu();
+            });
+        }
 
         const restartBtn = document.querySelector('#restart-btn');
         if (restartBtn) restartBtn.addEventListener('click', () => startLevel(currentLevel));

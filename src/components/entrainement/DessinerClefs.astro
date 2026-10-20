@@ -10,21 +10,23 @@
             <span class="hub-back-text">Retour à l'entraînement</span>
             <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
         </a>
-        <h1>Dessiner une clef, trait par trait</h1>
+        <h1>Dessiner les Clefs</h1>
         <div class="tabs" role="tablist" aria-label="Choisir la clef">
             <button class="tab" role="tab" id="cl-tab-sol" data-clef="sol" aria-selected="true">Clef de Sol</button>
             <button class="tab" role="tab" id="cl-tab-fa" data-clef="fa" aria-selected="false">Clef de Fa</button>
         </div>
+        <p class="ghost-hint">💡 Tapote la portée pour afficher le modèle • Maintiens l'appui pour lire le tracé.</p>
     </div>
 
     <div class="sheet">
-        <svg id="cl-board" viewBox="0 48 500 252" role="img" aria-label="Portée sur laquelle la clef se dessine">
+        <svg id="cl-board" viewBox="0 48 360 252" role="button" tabindex="0"
+             aria-pressed="false" aria-label="Afficher le modèle en pointillés">
             <defs>
                 <pattern id="cl-grid" width="24" height="24" patternUnits="userSpaceOnUse">
-                    <path d="M0 0H24M0 0V24" fill="none" stroke="#dde7f6" stroke-width="1"/>
+                    <path d="M0 0H24M0 0V24" fill="none" stroke="#f3e8ff" stroke-width="1"/>
                 </pattern>
             </defs>
-            <rect x="0" y="48" width="500" height="252" fill="url(#cl-grid)"/>
+            <rect x="0" y="48" width="360" height="252" fill="url(#cl-grid)"/>
             <line x1="14" y1="48" x2="14" y2="300" stroke="#ec8c8c" stroke-width="1.5"/>
             <g id="cl-staffG"></g>
             <g id="cl-ghostG" style="display:none"></g>
@@ -36,18 +38,12 @@
         <input type="range" id="cl-slider" class="slider" min="0" max="100" step="1" value="0"
                aria-label="Progression du tracé de la clef" aria-describedby="cl-caption">
         <output id="cl-pct" class="pct" for="cl-slider">0 %</output>
-        <button type="button" class="btn btn-primary" id="cl-btnPlay">▶ Lecture</button>
-        <button type="button" class="btn" id="cl-btnReset">↺ Réinitialiser</button>
     </div>
 
     <section class="caption" id="cl-caption" aria-live="polite">
         <h2 id="cl-stepTitle"></h2>
         <p id="cl-stepText"></p>
     </section>
-
-    <div class="actions">
-        <label class="check"><input type="checkbox" id="cl-ghostToggle"> Afficher le modèle en pointillés</label>
-    </div>
   </div>
 </div>
 
@@ -57,7 +53,7 @@
   max-width: 1024px;
   margin: 0 auto;
   padding: 12px;
-  background: #eef2fb;
+  background: #ffffff;
   border-radius: 24px;
   box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
   position: relative;
@@ -69,18 +65,19 @@
   #tool-clefs { padding: 32px; }
 }
 #tool-clefs {
-        --paper: #fbfcff;
-        --grid: #dde7f6;
+        --paper: #ffffff;
+        --grid: #f3e8ff;
         --margin: #ec8c8c;
         --staff: #3b4a6b;
         --ink: #1b2a8a;      
         --pen: #d9382f;      
         --text: #1f2a44;
-        --muted: #5d6b8a;
-        --blue: #2c4fd6;
-        --blue-soft: #e4ebff;
+        --muted: #6b7280;
+        --blue: #7e22ce;
+        --blue-soft: #faf5ff;
+        --accent-border: #e9d5ff;
         --done: #1f9d62;
-        --desk: #eef2fb;
+        --desk: #ffffff;
     }
 #tool-clefs .app {
         width: 100%;
@@ -97,14 +94,22 @@
         gap: 12px 20px;
     }
 #tool-clefs .top > .hub-back {
-        flex: 0 0 auto;
-        min-height: 40px;
         margin: 0;
-        padding: 0 14px;
-        font-size: 14px;
     }
 #tool-clefs .top h1 { flex: 1 1 auto; }
-#tool-clefs .hub-back-text-short { display: none; }
+#tool-clefs .ghost-hint {
+        flex: 1 1 100%;
+        margin: -2px 0 0;
+        text-align: center;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 600;
+    }
+#tool-clefs #cl-board {
+        cursor: pointer;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+    }
 #tool-clefs h1 {
         margin: 0;
         font-size: clamp(22px, 4vw, 30px);
@@ -114,8 +119,8 @@
     }
 #tool-clefs .tabs {
         display: inline-flex;
-        background: #fff;
-        border: 2px solid #cfd9ef;
+        background: var(--blue-soft);
+        border: 2px solid var(--accent-border);
         border-radius: 999px;
         padding: 4px;
         gap: 4px;
@@ -132,16 +137,24 @@
         cursor: pointer;
     }
 #tool-clefs .tab:hover { color: var(--blue); }
-#tool-clefs .tab[aria-selected="true"] { background: var(--blue); color: #fff; }
+#tool-clefs .tab[aria-selected="true"] { background: var(--blue); color: #fff; box-shadow: 0 6px 14px -8px rgba(126, 34, 206, 0.55); }
 #tool-clefs .sheet {
         background: var(--paper);
-        border: 2px solid #cfd9ef;
+        border: 2px solid var(--accent-border);
         border-radius: 16px;
         overflow: hidden;
         max-width: 100%;
-        box-shadow: 0 8px 22px rgba(44, 79, 214, 0.08);
+        box-shadow: 0 8px 22px rgba(126, 34, 206, 0.08);
     }
-#tool-clefs #cl-board { display: block; width: 100%; height: auto; }
+#tool-clefs #cl-board {
+        display: block;
+        width: 100%;
+        height: auto;
+        touch-action: manipulation;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+    }
 #tool-clefs .slider-row {
         display: flex;
         flex-wrap: wrap;
@@ -163,8 +176,8 @@
 #tool-clefs .slider::-webkit-slider-runnable-track {
         height: 12px;
         border-radius: 999px;
-        background: #dbe4f7;
-        border: 2px solid #cfd9ef;
+        background: var(--grid);
+        border: 2px solid var(--accent-border);
     }
 #tool-clefs .slider::-webkit-slider-thumb {
         -webkit-appearance: none;
@@ -175,13 +188,13 @@
         border-radius: 50%;
         background: var(--blue);
         border: 3px solid #fff;
-        box-shadow: 0 2px 8px rgba(44, 79, 214, 0.45);
+        box-shadow: 0 2px 8px rgba(126, 34, 206, 0.45);
     }
 #tool-clefs .slider::-moz-range-track {
         height: 12px;
         border-radius: 999px;
-        background: #dbe4f7;
-        border: 2px solid #cfd9ef;
+        background: var(--grid);
+        border: 2px solid var(--accent-border);
     }
 #tool-clefs .slider::-moz-range-thumb {
         width: 24px;
@@ -224,19 +237,19 @@
     }
 #tool-clefs .ghost-stroke {
         fill: none;
-        stroke: #9fb0d4;
+        stroke: #c4b5fd;
         stroke-width: 6.5;
         stroke-linecap: round;
         stroke-linejoin: round;
         stroke-dasharray: 0.1 11;
     }
-#tool-clefs .ghost-dot { fill: #c3d0ea; }
+#tool-clefs .ghost-dot { fill: #ddd6fe; }
 #tool-clefs .line-no { font-size: 13px; fill: #8b98b5; text-anchor: middle; }
 #tool-clefs .line-no.target { fill: var(--pen); font-weight: 800; }
 #tool-clefs .note-name { font-size: 18px; font-weight: 800; fill: var(--ink); }
 #tool-clefs .caption {
-        background: #fff;
-        border: 2px solid #cfd9ef;
+        background: var(--blue-soft);
+        border: 2px solid var(--accent-border);
         border-left: 8px solid var(--blue);
         border-radius: 14px;
         padding: 16px 20px 18px;
@@ -254,34 +267,9 @@
         line-height: 1.5;
         max-width: 62ch;
     }
-#tool-clefs .actions {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: center;
-        gap: 12px 22px;
-    }
-#tool-clefs .btn {
-        font: inherit;
-        font-weight: 700;
-        font-size: 15px;
-        color: var(--blue);
-        background: #fff;
-        border: 2px solid #b9c7e6;
-        border-radius: 999px;
-        padding: 9px 18px;
-        cursor: pointer;
-    }
-#tool-clefs .btn:hover { background: var(--blue-soft); }
-#tool-clefs .btn-primary { background: var(--blue); border-color: var(--blue); color: #fff; }
-#tool-clefs .btn-primary:hover { background: #2140b4; border-color: #2140b4; }
-#tool-clefs .check { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; color: var(--muted); cursor: pointer; user-select: none; }
-#tool-clefs .check input { width: 18px; height: 18px; accent-color: var(--blue); cursor: pointer; }
 #tool-clefs :focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 @media (max-width: 560px) {
 #tool-clefs .caption p { font-size: 17px; }
-#tool-clefs .slider { flex: 1 1 100%; }
-#tool-clefs .slider-row .btn { flex: 1 1 0; }
 }
 @media (prefers-reduced-motion: reduce) {
 #tool-clefs .dot.pop { animation: none; }
@@ -292,14 +280,10 @@
 #tool-clefs {font-family: ui-rounded, "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--text);}
         #tool-clefs .app { min-width: 0; }
         #tool-clefs .tab { min-height: 48px; }
-        #tool-clefs .btn { min-height: 48px; padding: 10px 18px; }
-        #tool-clefs .check { min-height: 48px; }
-        #tool-clefs .check input { width: 24px; height: 24px; }
         #tool-clefs .slider { touch-action: pan-y; }
         @media (max-width: 560px) {
             #tool-clefs .top { gap: 10px; }
             #tool-clefs .caption { padding: 12px 14px 14px; min-height: 112px; }
-            #tool-clefs .actions .btn { flex: 1 1 140px; }
             #tool-clefs .line-no { font-size: 16px; }
             #tool-clefs .note-name { font-size: 21px; }
         }
@@ -308,15 +292,11 @@
             #tool-clefs { padding: 10px; border-radius: 16px; }
             #tool-clefs .top { gap: 8px; }
             #tool-clefs .top h1 { display: none; }
-            #tool-clefs .top > .hub-back { padding: 0 12px; font-size: 13px; }
-            #tool-clefs .hub-back-text { display: none; }
-            #tool-clefs .hub-back-text-short { display: inline; }
             #tool-clefs .tabs { flex: 1 1 auto; min-width: 0; }
             #tool-clefs .tab { flex: 1 1 0; min-width: 0; padding: 7px 10px; font-size: 14px; }
             #tool-clefs .slider { min-width: 0; }
         }
         @media (max-width: 400px) {
-            #tool-clefs .top > .hub-back { padding: 0 9px; font-size: 12px; }
             #tool-clefs .tab { padding: 6px 8px; font-size: 13px; }
         }
         /* ------------------------------------------------------------------
@@ -330,30 +310,80 @@
         }
 
         /* ------------------------------------------------------------------
-           Paysage sur téléphone (hauteur d'écran réduite) : contrôles
-           compactés et portée bornée par la hauteur disponible, afin que
-           l'ensemble tienne à l'écran sans scroll inutile.
+           Portrait sur téléphone : l'outil occupe toute la hauteur visible et
+           son contenu (sélecteur, portée, curseur) est centré verticalement.
+        ------------------------------------------------------------------ */
+        @media (max-width: 640px) and (orientation: portrait) {
+            html body {
+                display: flex;
+                flex-direction: column;
+                min-height: 100dvh;
+            }
+            body:has(#tool-clefs) {
+                padding: 0;
+                min-height: 100dvh;
+            }
+            main.container:has(#tool-clefs) {
+                flex: 1 1 auto;
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                min-height: 0;
+            }
+            #tool-clefs {
+                flex: 1 1 auto;
+                min-height: 100dvh;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                border-radius: 0;
+            }
+            #tool-clefs .app { margin-block: auto; }
+        }
+
+        /* ------------------------------------------------------------------
+           Paysage sur téléphone (hauteur d'écran réduite) : le conteneur
+           occupe exactement la hauteur visible, sans marge flottante ni
+           défilement. Seule la portée absorbe la place restante.
         ------------------------------------------------------------------ */
         @media (orientation: landscape) and (max-height: 500px) {
-            #tool-clefs { padding: 8px; border-radius: 14px; }
-            #tool-clefs .app { gap: 6px; }
+            #tool-clefs {
+                height: calc(100dvh - 0.75rem);
+                min-height: 0;
+                padding: 8px;
+                border-radius: 14px;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+            #tool-clefs .app {
+                flex: 1 1 auto;
+                min-height: 0;
+                gap: 6px;
+            }
+            #tool-clefs .top,
+            #tool-clefs .slider-row {
+                flex: 0 0 auto;
+            }
             #tool-clefs .top { gap: 6px; }
             #tool-clefs .tab { min-height: 36px; padding: 5px 12px; font-size: 14px; }
             #tool-clefs .slider-row { gap: 6px 10px; }
             #tool-clefs .slider { flex: 1 1 220px; height: 28px; }
-            #tool-clefs .slider-row .btn { flex: 0 0 auto; }
             #tool-clefs .pct { font-size: 15px; }
-            #tool-clefs .btn { min-height: 38px; padding: 6px 14px; }
-            #tool-clefs .actions { gap: 6px 16px; }
-            #tool-clefs .check { min-height: 30px; font-size: 13px; }
-            #tool-clefs .check input { width: 18px; height: 18px; }
+            #tool-clefs .ghost-hint { font-size: 11px; margin-top: -3px; }
             #tool-clefs .sheet {
+                flex: 1 1 auto;
+                min-height: 0;
                 width: fit-content;
                 max-width: 100%;
                 margin-inline: auto;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             #tool-clefs #cl-board {
-                width: min(calc(100vw - 60px), max(240px, calc((100dvh - 176px) * 500 / 252)));
+                width: min(calc(100vw - 60px), max(240px, calc((100dvh - 138px) * 360 / 252)));
                 height: auto;
             }
         }
@@ -402,12 +432,6 @@
         return el;
     }
 
-    function mustButton(selector: string): HTMLButtonElement {
-        const el = document.querySelector(selector);
-        if (!(el instanceof HTMLButtonElement)) throw new Error(`Bouton introuvable : ${selector}`);
-        return el;
-    }
-
     function mustInput(selector: string): HTMLInputElement {
         const el = document.querySelector(selector);
         if (!(el instanceof HTMLInputElement)) throw new Error(`Champ introuvable : ${selector}`);
@@ -417,6 +441,12 @@
     function mustGroup(selector: string): SVGGElement {
         const el = document.querySelector(selector);
         if (!(el instanceof SVGGElement)) throw new Error(`Groupe SVG introuvable : ${selector}`);
+        return el;
+    }
+
+    function mustSvg(selector: string): SVGSVGElement {
+        const el = document.querySelector(selector);
+        if (!(el instanceof SVGSVGElement)) throw new Error(`SVG introuvable : ${selector}`);
         return el;
     }
 
@@ -513,14 +543,17 @@
     const staffG = mustGroup('#cl-staffG');
     const ghostG = mustGroup('#cl-ghostG');
     const drawG = mustGroup('#cl-drawG');
+    const board = mustSvg('#cl-board');
     const captionEl = mustElement('#cl-caption');
     const stepTitleEl = mustElement('#cl-stepTitle');
     const stepTextEl = mustElement('#cl-stepText');
     const slider = mustInput('#cl-slider');
     const pctEl = mustElement('#cl-pct');
-    const btnPlay = mustButton('#cl-btnPlay');
-    const btnReset = mustButton('#cl-btnReset');
-    const ghostToggle = mustInput('#cl-ghostToggle');
+    let ghostVisible = false;
+    let holdTimer: number | null = null;
+    let holding = false;
+    let suppressNextClick = false;
+    const HOLD_DELAY = 280;   // appui long = lecture automatique ; appui court = modèle
 
     function svgEl(name: 'path', attrs: SvgAttrs): SVGPathElement;
     function svgEl(name: 'circle', attrs: SvgAttrs): SVGCircleElement;
@@ -539,7 +572,7 @@
         const clef = CLEFS[clefKey];
         staffG.innerHTML = '';
         LINES.forEach((y, i) => {
-            staffG.appendChild(svgEl('line', { class: 'staff-line', x1: 60, y1: y, x2: 440, y2: y }));
+            staffG.appendChild(svgEl('line', { class: 'staff-line', x1: 60, y1: y, x2: 296, y2: y }));
             const n = 5 - i;                         // numéro de la ligne en comptant depuis le bas
             if (n === clef.ligne) {
                 staffG.appendChild(svgEl('circle', { cx: 38, cy: y, r: 12, fill: '#fde9e7' }));
@@ -548,12 +581,26 @@
             t.textContent = String(n);
             staffG.appendChild(t);
         });
-        const name = svgEl('text', { class: 'note-name', x: 452, y: clef.ligneY + 6 });
+        const name = svgEl('text', { class: 'note-name', x: 306, y: clef.ligneY + 6 });
         name.textContent = clef.note;
         staffG.appendChild(name);
     }
 
     /* ---------- Modèle en pointillés (tout le dessin final) ---------- */
+    /** Affiche ou masque le modèle et met à jour l'état accessible de la portée. */
+    function syncGhostVisibility(): void {
+        ghostG.style.display = ghostVisible ? '' : 'none';
+        board.setAttribute('aria-pressed', String(ghostVisible));
+        board.setAttribute('aria-label', ghostVisible
+            ? 'Masquer le modèle en pointillés'
+            : 'Afficher le modèle en pointillés');
+    }
+
+    function toggleGhost(): void {
+        ghostVisible = !ghostVisible;
+        syncGhostVisibility();
+    }
+
     function buildGhost() {
         ghostG.innerHTML = '';
         CLEFS[clefKey].steps.forEach(s => s.items.forEach(it => {
@@ -688,6 +735,8 @@
     /** Change de clef et remet la progression à zéro. */
     function selectClef(key: ClefKey): void {
         clefKey = key;
+        stopHold();
+        cancelAnimation();
         queryButtons(root, '.tab').forEach(t => {
             t.setAttribute('aria-selected', String(t.dataset.clef === key));
         });
@@ -705,6 +754,33 @@
             cancelAnimationFrame(rafId);
             rafId = null;
         }
+    }
+
+    /** Arrête l'appui long en cours et la lecture qu'il a déclenchée. */
+    function stopHold(): void {
+        if (holdTimer !== null) {
+            window.clearTimeout(holdTimer);
+            holdTimer = null;
+        }
+        if (holding) {
+            holding = false;
+            cancelAnimation();
+        }
+    }
+
+    /**
+     * Appui continu sur la portée : après un court délai, lance la lecture
+     * automatique. Un appui bref reste réservé à l'affichage du modèle.
+     */
+    function startHold(): void {
+        stopHold();
+        suppressNextClick = false;
+        holdTimer = window.setTimeout(() => {
+            holdTimer = null;
+            holding = true;
+            suppressNextClick = true;   // le clic émis au relâchement ne doit pas masquer le modèle
+            play();
+        }, HOLD_DELAY);
     }
 
     /** Applique un pourcentage 0 → 100 au dessin, au curseur et au texte. */
@@ -738,26 +814,46 @@
         t.addEventListener('click', () => selectClef(toClefKey(t.dataset.clef)));
     });
     slider.addEventListener('input', () => {
+        stopHold();
         cancelAnimation();                    // l'élève reprend la main sur la lecture automatique
         setProgress(Number(slider.value));
     });
     slider.addEventListener('change', () => {
+        stopHold();
         cancelAnimation();
         setProgress(Number(slider.value));
     });
-    btnPlay.addEventListener('click', () => { play(); });
-    btnReset.addEventListener('click', () => { cancelAnimation(); setProgress(0); });
-    ghostToggle.addEventListener('change', () => {
-        ghostG.style.display = ghostToggle.checked ? '' : 'none';
+    board.addEventListener('pointerdown', (event: PointerEvent) => {
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+        startHold();
+    });
+    board.addEventListener('pointerup', stopHold);
+    board.addEventListener('pointercancel', stopHold);
+    board.addEventListener('pointerleave', stopHold);
+    board.addEventListener('contextmenu', (event: Event) => event.preventDefault());
+    board.addEventListener('click', () => {
+        if (suppressNextClick) {
+            suppressNextClick = false;
+            return;
+        }
+        toggleGhost();
+    });
+    board.addEventListener('keydown', (event: KeyboardEvent) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        stopHold();
+        suppressNextClick = false;
+        toggleGhost();
     });
 
     // Préparation : mesure des tracés (cache) puis affichage de la clef de Sol à 0 %
     measurePaths();
     selectClef('sol');
+    syncGhostVisibility();
 
     // Interface utilisée par la plateforme
     window.ClefsTool = {
-        stop() { cancelAnimation(); },                      // coupe la lecture automatique en cours
+        stop() { stopHold(); cancelAnimation(); },          // coupe l'appui long et la lecture en cours
         onShow() { setProgress(Number(slider.value)); }     // à l'ouverture : resynchronise l'affichage
     };
 })();

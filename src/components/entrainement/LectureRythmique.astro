@@ -4,19 +4,25 @@
 
 <div id="tool-rhythm">
   <div class="app">
-    <header>
-        <h1>Lecture rythmique : tape le rythme</h1>
-        <p class="lead">Écoute la mesure d'introduction, puis tape le rythme écrit avec la barre d'espace.</p>
-        <p class="lead">Education Musicale - Monsieur Venier</p>
-    </header>
-
-    <section class="controls" aria-label="Réglages">
+    <div class="rhythm-top">
         <a class="hub-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
             <span aria-hidden="true">←</span>
             <span class="hub-back-text">Retour à l'entraînement</span>
             <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
         </a>
-        <button class="btn" id="rt-btnGenerate">Générer un nouveau rythme</button>
+        <header>
+            <h1>Lecture Rythmique</h1>
+        </header>
+    </div>
+
+    <section class="controls" aria-label="Réglages">
+        <a class="hub-back rhythm-landscape-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
+            <span aria-hidden="true">←</span>
+            <span class="hub-back-text">Retour à l'entraînement</span>
+            <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
+        </a>
+
+        <button class="btn" id="rt-btnGenerate">Générer</button>
 
         <label class="field">Chiffrage
             <select id="rt-ts">
@@ -87,6 +93,11 @@
         <span><i style="background:var(--red)"></i>Raté : trop tôt, trop tard ou manqué</span>
     </div>
   </div>
+
+  <a class="hub-back rhythm-portrait-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
+    <span aria-hidden="true">←</span>
+    <span>Entraînement</span>
+  </a>
 </div>
 
 <style is:global>
@@ -95,7 +106,7 @@
   max-width: 1024px;
   margin: 0 auto;
   padding: 12px;
-  background: #eef2fb;
+  background: #ffffff;
   border-radius: 24px;
   box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
   position: relative;
@@ -106,21 +117,27 @@
   #tool-rhythm { padding: 32px; }
 }
 #tool-rhythm {
-        --desk: #eef2fb;
-        --paper: #fbfcff;
+        --desk: #faf5ff;
+        --paper: #ffffff;
         --ink: #1b2a8a;
         --text: #1f2a44;
-        --muted: #5d6b8a;
-        --line: #cfd9ef;
-        --blue: #2c4fd6;
-        --blue-soft: #e4ebff;
+        --muted: #6b7280;
+        --line: #e9d5ff;
+        --blue: #7e22ce;
+        --blue-soft: #faf5ff;
+        --accent: #7e22ce;
+        --accent-strong: #a855f7;
         --green: #1f9d62;
         --orange: #e8890c;
         --red: #d9382f;
     }
 #tool-rhythm .app { width: 100%; max-width: min(1040px, 100%); min-width: 0; display: flex; flex-direction: column; gap: 16px; }
-#tool-rhythm h1 { margin: 0; font-size: clamp(22px, 4vw, 30px); font-weight: 800; letter-spacing: -0.01em; }
-#tool-rhythm .lead { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
+#tool-rhythm .rhythm-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+#tool-rhythm .rhythm-top > .hub-back { margin: 0; }
+#tool-rhythm .rhythm-top > header { flex: 1 1 auto; min-width: 0; text-align: center; }
+#tool-rhythm .rhythm-landscape-back { display: none; }
+#tool-rhythm .rhythm-portrait-back { display: none; }
+#tool-rhythm h1 { margin: 0; color: var(--accent); font-size: clamp(22px, 4vw, 30px); font-weight: 900; letter-spacing: -0.01em; }
 #tool-rhythm .controls {
         background: #fff;
         border: 2px solid var(--line);
@@ -132,22 +149,13 @@
         gap: 14px 22px;
         max-width: 100%;
     }
-/* Lien de retour intégré à la barre de commandes (pas de bandeau séparé) */
-#tool-rhythm .controls > .hub-back {
-        margin: 0;
-        min-height: 40px;
-        padding: 0 14px;
-        font-size: 14px;
-        flex: 0 0 auto;
-    }
-#tool-rhythm .hub-back-text-short { display: none; }
 #tool-rhythm .field { display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: var(--muted); font-weight: 600; }
 #tool-rhythm .field.tempo { min-width: 200px; flex: 1 1 200px; }
 #tool-rhythm .field input[type="range"] { width: 100%; accent-color: var(--blue); }
 #tool-rhythm .tempo-value { color: var(--text); font-weight: 800; font-size: 16px; }
 #tool-rhythm select {
         font: inherit; font-size: 15px; font-weight: 600; color: var(--text);
-        background: #fff; border: 2px solid #b9c7e6; border-radius: 10px; padding: 7px 10px;
+        background: #fff; border: 2px solid var(--line); border-radius: 12px; padding: 7px 10px;
     }
 #tool-rhythm select:disabled,
 #tool-rhythm input:disabled { opacity: 0.5; }
@@ -156,16 +164,25 @@
 #tool-rhythm .btn {
         font: inherit; font-weight: 700; font-size: 15px; cursor: pointer;
         border-radius: 999px; padding: 10px 20px;
-        color: var(--blue); background: #fff; border: 2px solid #b9c7e6;
+        color: var(--blue); background: #fff; border: 2px solid var(--line);
+        transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
     }
-#tool-rhythm .btn:hover:not(:disabled) { background: var(--blue-soft); }
+#tool-rhythm .btn:hover:not(:disabled) { background: var(--blue-soft); border-color: var(--accent-strong); }
+#tool-rhythm .btn:active:not(:disabled) { transform: scale(0.98); }
 #tool-rhythm .btn:disabled { opacity: 0.4; cursor: default; }
-#tool-rhythm .btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; font-size: 16px; padding: 11px 26px; }
-#tool-rhythm .btn.primary:hover:not(:disabled) { background: #2442b8; }
-#tool-rhythm .btn.primary.running { background: var(--red); border-color: var(--red); }
+#tool-rhythm .btn.primary {
+        background: linear-gradient(135deg, var(--accent-strong), var(--blue));
+        border-color: transparent;
+        color: #fff;
+        font-size: 16px;
+        padding: 11px 26px;
+        box-shadow: 0 12px 24px -12px rgba(126, 34, 206, 0.75);
+    }
+#tool-rhythm .btn.primary:hover:not(:disabled) { box-shadow: 0 16px 28px -12px rgba(126, 34, 206, 0.9); }
+#tool-rhythm .btn.primary.running { background: var(--red); border-color: var(--red); box-shadow: none; }
 #tool-rhythm .status {
         display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
-        background: #fff; border: 2px solid var(--line); border-left: 8px solid var(--blue);
+        background: var(--blue-soft); border: 2px solid var(--line); border-left: 8px solid var(--blue);
         border-radius: 14px; padding: 12px 18px; min-height: 76px;
     }
 #tool-rhythm .status.intro { border-left-color: var(--orange); }
@@ -175,7 +192,7 @@
 #tool-rhythm .beats { display: flex; align-items: center; gap: 12px; }
 #tool-rhythm .beat-dot {
         width: 34px; height: 34px; border-radius: 50%;
-        border: 3px solid #b9c7e6; background: #fff;
+        border: 3px solid var(--line); background: #fff;
         display: grid; place-items: center; font-weight: 800; font-size: 15px; color: var(--muted);
         transition: transform .08s;
     }
@@ -185,20 +202,20 @@
 #tool-rhythm .sheet {
         background: var(--paper); border: 2px solid var(--line); border-radius: 16px;
         max-width: 100%;
-        overflow-x: auto; box-shadow: 0 8px 22px rgba(44, 79, 214, 0.08);
+        overflow-x: auto; box-shadow: 0 8px 22px rgba(126, 34, 206, 0.08);
     }
 #tool-rhythm #rt-board { display: block; width: 100%; min-width: 780px; height: auto; }
 #tool-rhythm .tap-btn {
         width: 100%; border: 0; border-radius: 20px;
-        background: linear-gradient(180deg, #3a5ce8, #2c4fd6);
+        background: linear-gradient(135deg, var(--accent-strong), var(--blue));
         color: #fff; font: inherit; font-size: 26px; font-weight: 800;
         padding: 26px 16px 22px; cursor: pointer;
-        box-shadow: 0 6px 0 #1f3aa6, 0 12px 24px rgba(44, 79, 214, 0.25);
+        box-shadow: 0 6px 0 #581c87, 0 12px 24px rgba(126, 34, 206, 0.25);
         touch-action: manipulation; user-select: none; -webkit-user-select: none;
         transition: transform .05s, box-shadow .05s;
     }
 #tool-rhythm .tap-btn small { display: block; font-size: 14px; font-weight: 600; opacity: 0.85; margin-top: 4px; }
-#tool-rhythm .tap-btn.hit { transform: translateY(5px); box-shadow: 0 1px 0 #1f3aa6, 0 4px 10px rgba(44, 79, 214, 0.25); }
+#tool-rhythm .tap-btn.hit { transform: translateY(5px); box-shadow: 0 1px 0 #581c87, 0 4px 10px rgba(126, 34, 206, 0.25); }
 #tool-rhythm .result {
         background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 16px 20px;
         display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px;
@@ -245,20 +262,13 @@
         @media (max-width: 820px) { #tool-rhythm .rt-scroll-hint { display: block; } }
         @media (hover: none) and (pointer: coarse) { #tool-rhythm .tap-btn small { display: none; } }   /* « barre d'espace » n'a pas de sens au doigt */
         @media (max-width: 640px) {
-            /* Barre de commandes compacte : le retour reste sur la même ligne */
+            /* Barre de commandes compacte */
             #tool-rhythm .app { gap: 10px; }
+            #tool-rhythm .rhythm-top { gap: 8px; }
+            #tool-rhythm .rhythm-top > header { text-align: left; }
             #tool-rhythm header h1 { font-size: 18px; }
-            #tool-rhythm .lead { font-size: 13px; }
-            #tool-rhythm .lead + .lead { display: none; }   /* signature redondante sur petit écran */
 
             #tool-rhythm .controls { gap: 6px 8px; padding: 8px; border-radius: 12px; }
-            #tool-rhythm .controls > .hub-back {
-                min-height: 40px;
-                padding: 0 10px;
-                font-size: 14px;
-            }
-            #tool-rhythm .hub-back-text { display: none; }
-            #tool-rhythm .hub-back-text-short { display: inline; }
 
             #tool-rhythm .controls > .btn {
                 width: auto;
@@ -283,14 +293,6 @@
             #tool-rhythm .score { font-size: 32px; }
             #tool-rhythm .legend { display: none; }
         }
-        /* Très petits écrans : on conserve le libellé « Entraînement », resserré */
-        @media (max-width: 400px) {
-            #tool-rhythm .controls > .hub-back {
-                min-width: 0;
-                padding: 0 9px;
-                font-size: 13px;
-            }
-        }
         /* ----- Lecture rythmique : portrait tactile → demander le paysage ----- */
         @media (pointer: coarse) and (orientation: portrait) {
             #tool-rhythm:not(.hidden) {
@@ -303,6 +305,19 @@
                 visibility: hidden;
                 pointer-events: none;
             }
+            #tool-rhythm:not(.hidden) .rhythm-portrait-back {
+                position: absolute;
+                top: max(0.9rem, env(safe-area-inset-top));
+                left: 1rem;
+                z-index: 42;
+                display: inline-flex;
+                align-items: center;
+                min-height: 42px;
+                margin: 0;
+                padding: 0 14px;
+                font-size: 14px;
+                pointer-events: auto;
+            }
             #tool-rhythm:not(.hidden)::before {
                 content: "📱🔄";
                 position: absolute;
@@ -314,7 +329,7 @@
                 padding-bottom: 4.5rem;
                 font-size: 3.25rem;
                 line-height: 1;
-                background: rgba(238, 242, 251, 0.97);
+                background: rgba(250, 245, 255, 0.97);
                 pointer-events: none;
             }
             #tool-rhythm:not(.hidden)::after {
@@ -367,14 +382,14 @@
                 gap: 0;
             }
 
-            /* Le retour fait partie de la barre : compact et libellé court */
-            #tool-rhythm .controls > .hub-back {
-                min-height: 32px;
-                padding: 0 8px;
-                font-size: 12px;
+            /* Le retour rejoint la barre de commandes : une seule ligne en haut. */
+            #tool-rhythm .rhythm-top { display: none; }
+            #tool-rhythm .controls > .rhythm-landscape-back {
+                display: inline-flex;
+                align-items: center;
+                flex: 0 0 auto;
+                margin: 0;
             }
-            #tool-rhythm .hub-back-text { display: none; }
-            #tool-rhythm .hub-back-text-short { display: inline; }
 
             #tool-rhythm .app {
                 flex: 1 1 auto;
@@ -507,7 +522,7 @@
                 -webkit-tap-highlight-color: transparent;
             }
             #tool-rhythm .sheet:active {
-                background: #eef3ff;
+                background: #faf5ff;
             }
             #tool-rhythm #rt-board {
                 display: block;
@@ -851,7 +866,7 @@
             for (let s = 0; s < geo.slotsPerRow; s++) {
                 const onBeat = s % 2 === 0;
                 const t = el('text', {
-                    x: XS + s * geo.slotW, y: 152, 'text-anchor': 'middle',
+                    x: XS + s * geo.slotW, y: 168, 'text-anchor': 'middle',
                     'font-size': onBeat ? 20 : 17, 'font-weight': onBeat ? 800 : 600,
                     fill: onBeat ? '#6b7a99' : '#a3afc6', 'font-family': 'system-ui, sans-serif'
                 }, g);
@@ -902,7 +917,7 @@
         if (key === hlKey) return;
         hlKey = key;
         const b = measureBox(m);
-        const color = mode === 'replay' ? '#2c4fd6' : '#1f9d62';
+        const color = mode === 'replay' ? '#7e22ce' : '#1f9d62';
         hl.setAttribute('x', String(b.x)); hl.setAttribute('y', String(b.y));
         hl.setAttribute('width', String(b.w)); hl.setAttribute('height', String(b.h));
         hl.setAttribute('fill', color); hl.setAttribute('stroke', color);
@@ -1271,7 +1286,7 @@
             // petite pastille grise pendant l'enregistrement, pour voir où l'on a frappé
             if (rel >= 0) {
                 const p = tapXY(rel);
-                el('circle', { cx: p.x, cy: 200, r: 5, fill: '#b9c7e6' }, resultRows[p.r]);
+                el('circle', { cx: p.x, cy: 200, r: 5, fill: '#c4b5fd' }, resultRows[p.r]);
             }
         }
     }
