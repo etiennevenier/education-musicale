@@ -177,14 +177,6 @@
     font-weight: 500;
   }
 
-  #tool-oreille-nom .on-hint {
-    margin: 1.25rem 0 0;
-    text-align: center;
-    color: #64748b;
-    font-size: 0.95rem;
-    font-weight: 500;
-  }
-
   #tool-oreille-nom .on-game {
     display: flex;
     flex-direction: column;
@@ -483,12 +475,6 @@
     #tool-oreille-nom .on-level-title { font-size: 1rem; line-height: 1.2; }
     #tool-oreille-nom .on-level-desc { font-size: 0.8rem; line-height: 1.25; }
 
-    #tool-oreille-nom .on-hint {
-      flex: 0 0 auto;
-      margin: 0;
-      font-size: 0.8rem;
-    }
-
     #tool-oreille-nom #on-game { justify-content: space-between; }
 
     #tool-oreille-nom .on-hud {
@@ -535,8 +521,21 @@
       padding: 0;
     }
 
-    #tool-oreille-nom .on-stats { margin: 0.6rem 0; }
-    #tool-oreille-nom .on-stat { padding: 0.5rem 0.25rem; border-radius: 12px; }
+    #tool-oreille-nom .on-stats {
+      grid-template-columns: 1fr;
+      gap: 0.7rem;
+      margin: 0.6rem 0;
+    }
+
+    /* Cartes empilées : libellé à gauche, valeur à droite, sans compression. */
+    #tool-oreille-nom .on-stat {
+      flex-direction: row-reverse;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+    }
     #tool-oreille-nom .on-primary-btn { min-height: 48px; }
   }
 
@@ -589,7 +588,6 @@
     #tool-oreille-nom .on-level-btn { min-height: 36px; padding: 0.2rem 0.5rem; }
     #tool-oreille-nom .on-level-title { font-size: 0.85rem; }
     #tool-oreille-nom .on-level-desc { font-size: 0.72rem; }
-    #tool-oreille-nom .on-hint { display: none; }
 
     #tool-oreille-nom #on-game { justify-content: space-between; }
 

@@ -4,8 +4,16 @@
 
 <div id="tool-clefs">
   <div class="app">
+    <!-- Retour standard : centré au-dessus de l'en-tête (desktop / portrait). -->
+    <a class="hub-back clefs-return-top" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
+        <span aria-hidden="true">←</span>
+        <span class="hub-back-text">Retour à l'entraînement</span>
+        <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
+    </a>
+
     <div class="top">
-        <a class="hub-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
+        <!-- Retour compact : aligné avec les onglets en paysage mobile. -->
+        <a class="hub-back clefs-return-inline" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
             <span aria-hidden="true">←</span>
             <span class="hub-back-text">Retour à l'entraînement</span>
             <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
@@ -23,7 +31,7 @@
              aria-pressed="false" aria-label="Afficher le modèle en pointillés">
             <defs>
                 <pattern id="cl-grid" width="24" height="24" patternUnits="userSpaceOnUse">
-                    <path d="M0 0H24M0 0V24" fill="none" stroke="#f3e8ff" stroke-width="1"/>
+                    <path d="M0 0H24M0 0V24" fill="none" stroke="#eef2f7" stroke-width="1"/>
                 </pattern>
             </defs>
             <rect x="0" y="48" width="360" height="252" fill="url(#cl-grid)"/>
@@ -66,7 +74,7 @@
 }
 #tool-clefs {
         --paper: #ffffff;
-        --grid: #f3e8ff;
+        --grid: #eef2f7;
         --margin: #ec8c8c;
         --staff: #3b4a6b;
         --ink: #1b2a8a;      
@@ -82,21 +90,28 @@
 #tool-clefs .app {
         width: 100%;
         max-width: 880px;
+        margin-inline: auto;
         display: flex;
         flex-direction: column;
         gap: 18px;
     }
+#tool-clefs .app > .clefs-return-top {
+        margin-bottom: 0;
+    }
+#tool-clefs .clefs-return-inline {
+        display: none;
+    }
 #tool-clefs .top {
         display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px 20px;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        gap: 12px;
     }
-#tool-clefs .top > .hub-back {
+#tool-clefs .top > .clefs-return-inline {
         margin: 0;
     }
-#tool-clefs .top h1 { flex: 1 1 auto; }
+#tool-clefs .top h1 { text-align: center; }
 #tool-clefs .ghost-hint {
         flex: 1 1 100%;
         margin: -2px 0 0;
@@ -118,7 +133,8 @@
         letter-spacing: -0.01em;
     }
 #tool-clefs .tabs {
-        display: inline-flex;
+        display: flex;
+        width: 100%;
         background: var(--blue-soft);
         border: 2px solid var(--accent-border);
         border-radius: 999px;
@@ -126,6 +142,7 @@
         gap: 4px;
     }
 #tool-clefs .tab {
+        flex: 1 1 0;
         font: inherit;
         font-weight: 700;
         font-size: 16px;
@@ -139,12 +156,12 @@
 #tool-clefs .tab:hover { color: var(--blue); }
 #tool-clefs .tab[aria-selected="true"] { background: var(--blue); color: #fff; box-shadow: 0 6px 14px -8px rgba(126, 34, 206, 0.55); }
 #tool-clefs .sheet {
-        background: var(--paper);
-        border: 2px solid var(--accent-border);
+        background: #ffffff;
+        border: 2px solid #e2e8f0;
         border-radius: 16px;
         overflow: hidden;
         max-width: 100%;
-        box-shadow: 0 8px 22px rgba(126, 34, 206, 0.08);
+        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
     }
 #tool-clefs #cl-board {
         display: block;
@@ -298,6 +315,17 @@
         }
         @media (max-width: 400px) {
             #tool-clefs .tab { padding: 6px 8px; font-size: 13px; }
+        }
+        /* Paysage mobile : on conserve le retour compact sur la ligne des onglets. */
+        @media (max-width: 900px) and (orientation: landscape), (orientation: landscape) and (max-height: 500px) {
+            #tool-clefs .app > .clefs-return-top { display: none; }
+            #tool-clefs .top {
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-items: center;
+            }
+            #tool-clefs .top > .clefs-return-inline { display: inline-flex; }
+            #tool-clefs .tabs { width: auto; flex: 1 1 auto; min-width: 0; }
         }
         /* ------------------------------------------------------------------
            Smartphone (portrait et paysage) : les blocs de texte explicatifs

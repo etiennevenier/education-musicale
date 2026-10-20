@@ -15,7 +15,7 @@
             <div id="piano-note-display" class="piano-info-note">Clique sur une touche 🎹</div>
             <p class="piano-portrait-hint">📱 En mode paysage, le clavier 88 touches est bien plus confortable.</p>
             <div class="piano-staff-container">
-                <svg id="piano-staff-svg" viewBox="0 0 650 190"></svg>
+                <svg id="piano-staff-svg" viewBox="0 0 480 400"></svg>
             </div>
             <div class="piano-wrapper">
                 <div id="piano" class="piano"></div>
@@ -56,8 +56,8 @@
         #tool-piano .piano-body > .hub-back { margin: 0; }
         #tool-piano .piano-body { width:100%; max-width:800px; margin:0 auto; display:flex; flex-direction:column; gap:15px; align-items:center; }
         #tool-piano .piano-info-note { font-size:14px; font-weight:700; color:#4c1d95; background:var(--accent-soft); border:1px solid var(--accent-border); padding:6px 16px; border-radius:999px; min-width:150px; text-align:center; }
-        #tool-piano .piano-staff-container { background:var(--accent-soft); border:2px solid var(--accent-border); border-radius:14px; width:100%; height:260px; display:flex; justify-content:center; align-items:center; box-sizing:border-box; }
-        #tool-piano #piano-staff-svg { width:100%; max-width:650px; height:250px; }
+        #tool-piano .piano-staff-container { background:#ffffff; border:2px solid #e2e8f0; border-radius:14px; width:100%; height:260px; display:flex; justify-content:center; align-items:center; box-sizing:border-box; }
+        #tool-piano #piano-staff-svg { width:100%; max-width:560px; height:250px; }
         #tool-piano .piano-wrapper { background:#1e293b; padding:10px; border-radius:14px 14px 10px 10px; box-shadow:0 8px 18px -8px rgba(15,23,42,0.5); width:100%; overflow-x:auto; display:flex; justify-content:center; box-sizing:border-box; }
         #tool-piano .piano { display:flex; position:relative; height:110px; width:max-content; }
         #tool-piano .white-key { width:28px; height:110px; background:linear-gradient(#ffffff, #f1f5f9); border:1px solid #cbd5e1; border-top:0; border-radius:0 0 8px 8px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:6px; font-size:9px; font-weight:700; color:#64748b; cursor:pointer; box-sizing:border-box; z-index:1; user-select:none; touch-action:manipulation; transition:background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease; }
@@ -72,7 +72,7 @@
         }
         #tool-piano .piano-body { min-width: 0; }
         #tool-piano .piano-staff-container { height: auto; padding: 6px; overflow-x: auto; }
-        #tool-piano #piano-staff-svg { width: 100%; height: auto; max-width: 650px; display: block; }
+        #tool-piano #piano-staff-svg { width: 100%; height: auto; max-width: 560px; display: block; }
         /* flex-start + marges auto sur .piano : le début du clavier reste accessible quand il déborde */
         #tool-piano .piano-wrapper { max-width: 100%; justify-content: flex-start; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
         #tool-piano .piano { height: var(--kh); margin: 0 auto; flex: 0 0 auto; }
@@ -263,7 +263,7 @@
                 padding: 0;
                 border: 0;
                 border-radius: 0;
-                background: transparent;
+                background: #ffffff;
                 overflow: hidden;
             }
 
@@ -391,48 +391,85 @@
             const svg = mustSvg('#piano-staff-svg');
             svg.innerHTML = '';
 
-            const trebleLines = [35, 46, 57, 68, 79];
-            const bassLines   = [115, 126, 137, 148, 159];
+            const compact = isCompactLandscape();
+            // En portrait, la double portée occupe toute la hauteur libre entre les indications et le clavier.
+            const tall = !compact && window.matchMedia('(max-width: 640px) and (orientation: portrait)').matches;
+
+            // Paysage compact : une portée panoramique, largement respirée et parfaitement centrée.
+            // Les cinq lignes partagent la même hauteur de référence pour que la clé de sol
+            // et la clé de fa aient exactement la même assise visuelle.
+            const COMPACT_LINES = [60, 75, 90, 105, 120];
+
+            // Géométrie : compact = une seule portée ; tall = double portée portrait ; sinon double portée large.
+            const LS = compact ? 15 : tall ? 26 : 22;
+            const trebleLines = compact ? COMPACT_LINES : tall ? [64, 90, 116, 142, 168] : [56, 78, 100, 122, 144];
+            const bassLines = compact ? COMPACT_LINES : tall ? [308, 334, 360, 386, 412] : [254, 276, 298, 320, 342];
+            const staffX1 = compact ? 52 : tall ? 44 : 48;
+            const staffX2 = compact ? 740 : tall ? 390 : 470;
+            const clefX = compact ? 70 : tall ? 56 : 60;
+            const lineWidth = compact ? 3 : tall ? 2.8 : 2.4;
+            const clefFont = compact ? { treble: 140, bass: 80 } : tall ? { treble: 242, bass: 137 } : { treble: 205, bass: 116 };
+            const clefY = (clef: 'treble' | 'bass'): number => {
+                if (compact) return clef === 'treble' ? 132 : 110;
+                const lines = clef === 'treble' ? trebleLines : bassLines;
+                return clef === 'treble'
+                    ? lines[3] + (tall ? 47 : 40)
+                    : lines[1] + (tall ? 60 : 51);
+            };
 
             const drawStaff = (lines: number[], clef: 'treble' | 'bass'): void => {
                 lines.forEach(y => svg.appendChild(svgEl('line', {
-                    x1: 50, y1: y, x2: 600, y2: y, stroke: '#334155', 'stroke-width': 2
+                    x1: staffX1, y1: y, x2: staffX2, y2: y, stroke: '#334155', 'stroke-width': lineWidth
                 })));
                 const clefEl = svgEl('text', {
-                    x: 65,
-                    y: clef === 'treble' ? 80 : 154,
+                    x: clefX,
+                    y: clefY(clef),
                     'font-family': 'serif',
-                    'font-size': clef === 'treble' ? 80 : 56,
+                    'font-size': clefFont[clef],
                     fill: '#1e293b'
                 });
                 clefEl.textContent = clef === 'treble' ? '𝄞' : '𝄢';
                 svg.appendChild(clefEl);
             };
 
-            const compact = isCompactLandscape();
             const isBass = keyObj ? keyObj.midi < 60 : false;
 
             if (compact) {
-                // Une seule portée, celle de la note jouée (clé de sol par défaut).
-                if (isBass) {
-                    svg.setAttribute('viewBox', '0 85 650 110');
-                    drawStaff(bassLines, 'bass');
-                } else {
-                    svg.setAttribute('viewBox', '0 0 650 125');
-                    drawStaff(trebleLines, 'treble');
-                }
+                // Une seule portée, celle de la note jouée, dans un cadre panoramique commun.
+                svg.setAttribute('viewBox', '0 0 760 180');
+                drawStaff(isBass ? bassLines : trebleLines, isBass ? 'bass' : 'treble');
             } else {
-                svg.setAttribute('viewBox', '0 0 650 190');
+                svg.setAttribute('viewBox', tall ? '0 0 400 482' : '0 0 480 400');
                 drawStaff(trebleLines, 'treble');
                 drawStaff(bassLines, 'bass');
+
+                // Barre de système et grande accolade verticale entre les deux portées.
+                const topY = trebleLines[0];
+                const botY = bassLines[4];
+                const braceH = botY - topY;
+                const midY = topY + braceH / 2;
+                const braceTipX = tall ? 16 : 24;
+                const braceBodyX = tall ? 30 : 40;
+                svg.appendChild(svgEl('line', {
+                    x1: staffX1, y1: topY, x2: staffX1, y2: botY,
+                    stroke: '#334155', 'stroke-width': tall ? 3 : 2.8
+                }));
+                svg.appendChild(svgEl('path', {
+                    d: `M ${staffX1} ${topY}
+                        C ${braceBodyX} ${topY + braceH * 0.03} ${braceBodyX} ${topY + braceH * 0.14} ${braceBodyX} ${topY + braceH * 0.26}
+                        C ${braceBodyX} ${topY + braceH * 0.37} ${braceBodyX * 0.82} ${topY + braceH * 0.43} ${braceTipX} ${midY}
+                        C ${braceBodyX * 0.82} ${topY + braceH * 0.57} ${braceBodyX} ${topY + braceH * 0.63} ${braceBodyX} ${topY + braceH * 0.74}
+                        C ${braceBodyX} ${topY + braceH * 0.86} ${braceBodyX} ${topY + braceH * 0.97} ${staffX1} ${botY}`,
+                    fill: 'none', stroke: '#334155', 'stroke-width': tall ? 3.2 : 3, 'stroke-linecap': 'round'
+                }));
             }
 
             if (!keyObj) return; // portée vide au départ
 
             mustElement('#piano-note-display').textContent = `Note : ${keyObj.note}`;
 
-            const stepSize = 5.5;
-            const noteX = 325;
+            const stepSize = compact ? 7.5 : tall ? 13 : 11;
+            const noteX = compact ? 470 : tall ? 280 : 350;
             const activeLines = isBass ? bassLines : trebleLines;
             // Au-delà de ce que la portée peut afficher, on note à l'octave (8va / 15ma / 8vb / 15mb)
             let shiftOct = 0, ottava = '';
@@ -447,42 +484,62 @@
             let noteY: number;
 
             if (!isBass) {
-                // Clé de Sol : Sol4 sur la 2e ligne (y = 68)
-                noteY = 68 - ((steps - getDiatonicStep('Sol4')) * stepSize);
+                // Clé de Sol : Sol4 sur la 2e ligne depuis le bas.
+                noteY = trebleLines[3] - ((steps - getDiatonicStep('Sol4')) * stepSize);
             } else {
-                // Clé de Fa : Ré3 sur la ligne du milieu (y = 137)
-                noteY = 137 - ((steps - getDiatonicStep('Ré3')) * stepSize);
+                // Clé de Fa : Ré3 sur la ligne du milieu.
+                noteY = bassLines[2] - ((steps - getDiatonicStep('Ré3')) * stepSize);
             }
 
             // Lignes supplémentaires
+            const ledgerHalf = compact ? 22 : tall ? 26 : 24;
+            const ledgerWidth = compact ? 3 : lineWidth;
             const addLedger = (yPos: number): void => { svg.appendChild(svgEl('line', {
-                x1: noteX - 14, y1: yPos, x2: noteX + 14, y2: yPos, stroke: '#334155', 'stroke-width': 2
+                x1: noteX - ledgerHalf, y1: yPos, x2: noteX + ledgerHalf, y2: yPos, stroke: '#334155', 'stroke-width': ledgerWidth
             })); };
             if (noteY < activeLines[0] - 2) {
-                for (let y = activeLines[0] - 11; y >= noteY - 3; y -= 11) addLedger(y);
+                for (let y = activeLines[0] - LS; y >= noteY - 3; y -= LS) addLedger(y);
             } else if (noteY > activeLines[4] + 2) {
-                for (let y = activeLines[4] + 11; y <= noteY + 3; y += 11) addLedger(y);
+                for (let y = activeLines[4] + LS; y <= noteY + 3; y += LS) addLedger(y);
             }
 
-            svg.appendChild(svgEl('ellipse', { cx: noteX, cy: noteY, rx: 7, ry: 5.5, fill: '#0f172a' }));
+            const headRx = compact ? 10 : tall ? 14 : 12.5;
+            const headRy = compact ? 7.5 : tall ? 10.5 : 9.5;
+            svg.appendChild(svgEl('ellipse', { cx: noteX, cy: noteY, rx: headRx, ry: headRy, fill: '#0f172a' }));
 
             if (ottava) {
-                const label = svgEl('text', { x: noteX + 20, y: noteY + 5, 'font-size': 15, 'font-style': 'italic', 'font-weight': 'bold', fill: '#7e22ce' });
+                const label = svgEl('text', {
+                    x: noteX + (compact ? 26 : tall ? 28 : 26),
+                    y: noteY + (compact ? 5 : 6),
+                    'font-size': compact ? 18 : tall ? 20 : 18,
+                    'font-style': 'italic',
+                    'font-weight': 'bold',
+                    fill: '#7e22ce'
+                });
                 label.textContent = ottava;
                 svg.appendChild(label);
             }
 
             if (keyObj.note.includes('#')) {
-                const sharp = svgEl('text', { x: noteX - 18, y: noteY + 4, 'font-size': 16, 'font-weight': 'bold', fill: '#0f172a' });
+                const sharp = svgEl('text', {
+                    x: noteX - (compact ? 24 : tall ? 26 : 24),
+                    y: noteY + (compact ? 5 : 6),
+                    'font-size': compact ? 20 : tall ? 22 : 20,
+                    'font-weight': 'bold',
+                    fill: '#0f172a'
+                });
                 sharp.textContent = '♯';
                 svg.appendChild(sharp);
             }
 
-            // Hampe : vers le haut si la note est sur/au-dessus du milieu de la portée... (corrigé : lineY n'existait pas)
+            // Hampe : vers le haut si la note est sur/au-dessus du milieu de la portée.
             const middleLine = activeLines[2];
+            const stemGap = compact ? 9 : tall ? 13 : 12;
+            const stemLength = compact ? 42 : tall ? 64 : 58;
+            const stemWidth = compact ? 3 : lineWidth;
             const stem = noteY >= middleLine
-                ? svgEl('line', { x1: noteX + 6, y1: noteY, x2: noteX + 6, y2: noteY - 26, stroke: '#0f172a', 'stroke-width': 2 })
-                : svgEl('line', { x1: noteX - 6, y1: noteY, x2: noteX - 6, y2: noteY + 26, stroke: '#0f172a', 'stroke-width': 2 });
+                ? svgEl('line', { x1: noteX + stemGap, y1: noteY, x2: noteX + stemGap, y2: noteY - stemLength, stroke: '#0f172a', 'stroke-width': stemWidth })
+                : svgEl('line', { x1: noteX - stemGap, y1: noteY, x2: noteX - stemGap, y2: noteY + stemLength, stroke: '#0f172a', 'stroke-width': stemWidth });
             svg.appendChild(stem);
         }
 
@@ -556,6 +613,16 @@
         compactStaffQuery.addEventListener('change', () => updateStaff(lastStaffKey));
         window.addEventListener('orientationchange', () => {
             window.setTimeout(() => updateStaff(lastStaffKey), 120);
+        });
+
+        // Le redimensionnement (rotation, barre d'URL) change la géométrie : on redessine après stabilisation.
+        let staffResizeTimer: number | null = null;
+        window.addEventListener('resize', () => {
+            if (staffResizeTimer !== null) window.clearTimeout(staffResizeTimer);
+            staffResizeTimer = window.setTimeout(() => {
+                staffResizeTimer = null;
+                updateStaff(lastStaffKey);
+            }, 180);
         });
 
         updateStaff(null); // dessine la portée adaptée dès l'ouverture

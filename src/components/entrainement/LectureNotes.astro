@@ -3,14 +3,59 @@
 ---
 
 <section id="tool-notes">
+  <!-- Sprite SVG local : clés de sol et de fa pour les cartes de niveaux -->
+  <svg class="clef-sprite" width="0" height="0" aria-hidden="true" focusable="false">
+    <defs>
+      <!-- Clé de sol — tracé officiel GKey.svg (viewBox 0 0 640 1280) -->
+      <g id="notes-clef-sol" transform="translate(0.000000,1280.000000) scale(0.100000,-0.100000)" fill="currentColor" stroke="none">
+        <path d="M3599 12778 c-303 -107 -613 -565 -797 -1178 -82 -275 -124 -513
+-142 -806 -21 -349 17 -667 219 -1842 l18 -103 -235 -242 c-551 -568 -766
+-807 -1003 -1117 -386 -505 -604 -958 -689 -1433 -79 -441 -23 -1008 145
+-1471 292 -802 859 -1344 1600 -1531 192 -49 326 -66 560 -72 234 -6 433 10
+634 50 75 15 114 20 116 13 9 -28 110 -634 150 -891 111 -721 120 -984 40
+-1222 -106 -316 -353 -540 -693 -630 -124 -33 -345 -38 -456 -10 -159 40 -280
+127 -337 243 -18 35 -29 67 -26 70 3 3 35 12 72 19 192 41 369 180 455 360 48
+102 63 165 63 279 0 269 -161 504 -416 606 -377 151 -792 -59 -916 -462 -59
+-193 -66 -458 -17 -603 148 -431 716 -775 1326 -801 592 -26 1041 262 1214
+780 67 202 96 460 77 702 -21 270 -106 812 -224 1424 l-44 225 31 14 c281 130
+430 227 594 385 63 61 145 152 182 202 433 575 485 1413 130 2072 -72 133
+-171 264 -290 383 -205 205 -425 327 -705 390 -127 29 -402 37 -544 15 -57 -9
+-105 -15 -107 -13 -2 2 -159 766 -219 1065 l-36 182 123 133 c426 455 682 872
+850 1381 156 472 216 921 205 1526 -7 398 -37 654 -112 959 -170 693 -478
+1060 -796 949z m378 -1136 c127 -65 199 -241 210 -517 13 -301 -51 -573 -206
+-890 -155 -314 -383 -629 -744 -1024 l-132 -145 -12 65 c-20 110 -62 438 -73
+564 -11 133 0 379 26 575 68 524 246 966 489 1216 157 160 320 218 442 156z
+m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
+-118 -55 -374 -186 -660 -494 -810 -871 -104 -264 -117 -579 -34 -842 31 -97
+107 -248 171 -338 102 -144 286 -315 460 -427 87 -56 298 -167 318 -167 8 0
+24 14 36 30 l21 30 -108 108 c-234 231 -366 467 -408 725 -18 109 -19 173 -4
+270 41 278 193 516 426 668 64 41 206 109 230 109 5 0 21 -62 35 -137 15 -76
+74 -376 132 -668 140 -708 308 -1587 303 -1591 -2 -3 -46 -15 -98 -28 -314
+-80 -666 -80 -975 0 -559 144 -979 464 -1208 922 -140 281 -204 611 -193 997
+10 356 68 597 212 890 126 258 260 439 525 709 91 93 257 250 369 350 469 416
+525 465 527 463 1 -1 16 -74 33 -162z m863 -1734 c266 -69 495 -249 648 -511
+122 -209 182 -440 182 -700 -1 -345 -108 -627 -330 -862 -84 -88 -272 -231
+-287 -216 -5 5 -22 87 -159 758 -115 564 -314 1518 -322 1544 -6 18 -2 19 92
+13 55 -3 134 -15 176 -26z"/>
+      </g>
+
+      <!-- Clé de fa — tracé officiel FKey.svg (canvas 18 × 20) -->
+      <g id="notes-clef-fa" transform="translate(-230.9546,-533.6597)" fill="currentColor" stroke="none">
+        <path d="M 248.25999,536.80200 C 248.26766,537.17138 248.11044,537.54065 247.82878,537.78185 C 247.46853,538.11076 246.91933,538.17813 246.47048,538.01071 C 246.02563,537.83894 245.69678,537.39883 245.67145,536.92060 C 245.63767,536.54689 245.75685,536.15479 246.02747,535.88867 C 246.28257,535.61680 246.66244,535.48397 247.03147,535.50645 C 247.41131,535.51452 247.77805,535.70601 248.00489,536.01019 C 248.17962,536.23452 248.26238,536.51954 248.25999,536.80200 z"/>
+        <path d="M 248.25999,542.64502 C 248.26772,543.01469 248.11076,543.38446 247.82878,543.62585 C 247.46853,543.95476 246.91933,544.02213 246.47048,543.85472 C 246.02537,543.68288 245.69655,543.24237 245.67145,542.76389 C 245.63651,542.38990 245.76354,542.00308 246.02700,541.73300 C 246.27663,541.45454 246.66060,541.32790 247.02845,541.34950 C 247.51230,541.36282 247.95159,541.69251 248.15162,542.12465 C 248.22565,542.28740 248.26043,542.46657 248.25999,542.64502 z"/>
+        <path d="M 243.97900,540.86798 C 244.02398,543.69258 242.76360,546.43815 240.76469,548.40449 C 238.27527,550.89277 235.01791,552.47534 231.69762,553.53261 C 231.25590,553.77182 230.58970,553.45643 231.28550,553.13144 C 232.62346,552.52289 234.01319,552.00050 235.24564,551.18080 C 237.96799,549.49750 240.26523,546.84674 240.82279,543.61854 C 241.14771,541.65352 241.05724,539.60795 240.56484,537.67852 C 240.20352,536.25993 239.22033,534.79550 237.66352,534.58587 C 236.25068,534.36961 234.74885,534.85905 233.74057,535.88093 C 233.47541,536.14967 232.95916,536.89403 233.04435,537.74747 C 233.64637,537.27468 233.60528,537.32732 234.09900,537.10717 C 235.23573,536.60031 236.74349,537.32105 237.02700,538.57272 C 237.32909,539.72295 237.09551,541.18638 235.96036,541.79960 C 234.77512,542.44413 233.02612,542.17738 232.36450,540.90866 C 231.26916,538.95418 231.87147,536.28193 233.64202,534.92571 C 235.44514,533.42924 238.07609,533.37089 240.19963,534.13862 C 242.38419,534.95111 243.68629,537.21483 243.89691,539.45694 C 243.95419,539.92492 243.97896,540.39668 243.97900,540.86798 z"/>
+      </g>
+    </defs>
+  </svg>
+
   <div class="notes-card">
     <!-- HEADER -->
+    <a id="notes-hub-back" class="hub-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
+      <span aria-hidden="true">←</span>
+      <span class="hub-back-text">Retour à l'entraînement</span>
+      <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
+    </a>
     <header class="notes-header">
-      <a id="notes-hub-back" class="hub-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
-        <span aria-hidden="true">←</span>
-        <span class="hub-back-text">Retour à l'entraînement</span>
-        <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
-      </a>
       <h1>Lecture de Notes</h1>
     </header>
 
@@ -18,38 +63,78 @@
     <div id="menu-section" class="notes-menu">
       <p class="notes-menu-title">Choisis ton niveau (série de 10 notes) :</p>
       <div class="notes-levels">
-        <button class="level-btn" data-level="1">
-          <span class="level-title">Niveau 1 (Clé de Sol)</span>
-          <span class="level-desc">Do3 au Do4 (portée simple)</span>
+        <button class="level-btn" data-level="1" aria-label="Niveau 1, clé de sol">
+          <span class="level-heading">
+            <svg class="level-clef level-clef--sol" viewBox="0 0 640.000000 1280.000000" aria-hidden="true" focusable="false">
+              <use href="#notes-clef-sol"></use>
+            </svg>
+            <span class="level-title">Niveau 1</span>
+          </span>
         </button>
-        <button class="level-btn" data-level="2">
-          <span class="level-title">Niveau 1 (Clé de Fa)</span>
-          <span class="level-desc">Do2 au Do3 (portée simple)</span>
+        <button class="level-btn" data-level="2" aria-label="Niveau 1, clé de fa">
+          <span class="level-heading">
+            <svg class="level-clef level-clef--fa" viewBox="0 0 18 20" aria-hidden="true" focusable="false">
+              <use href="#notes-clef-fa"></use>
+            </svg>
+            <span class="level-title">Niveau 1</span>
+          </span>
         </button>
-        <button class="level-btn" data-level="3">
-          <span class="level-title">Niveau 2 (Clé de Sol)</span>
+        <button class="level-btn" data-level="3" aria-label="Niveau 2, clé de sol, avec lignes supplémentaires">
+          <span class="level-heading">
+            <svg class="level-clef level-clef--sol" viewBox="0 0 640.000000 1280.000000" aria-hidden="true" focusable="false">
+              <use href="#notes-clef-sol"></use>
+            </svg>
+            <span class="level-title">Niveau 2</span>
+          </span>
           <span class="level-desc">Avec lignes supplémentaires</span>
         </button>
-        <button class="level-btn" data-level="4">
-          <span class="level-title">Niveau 2 (Clé de Fa)</span>
+        <button class="level-btn" data-level="4" aria-label="Niveau 2, clé de fa, avec lignes supplémentaires">
+          <span class="level-heading">
+            <svg class="level-clef level-clef--fa" viewBox="0 0 18 20" aria-hidden="true" focusable="false">
+              <use href="#notes-clef-fa"></use>
+            </svg>
+            <span class="level-title">Niveau 2</span>
+          </span>
           <span class="level-desc">Avec lignes supplémentaires</span>
         </button>
-        <button class="level-btn is-eval" data-level="5">
-          <span class="level-title">Niveau 3 (Évaluation Double Clé)</span>
-          <span class="level-desc">Mélange Clé de Sol &amp; Fa (limites Niveau 1)</span>
+        <button class="level-btn is-eval" data-level="5" aria-label="Niveau 3, double clé, mélange basé sur le niveau 1">
+          <span class="level-heading">
+            <span class="level-clefs">
+              <svg class="level-clef level-clef--sol" viewBox="0 0 640.000000 1280.000000" aria-hidden="true" focusable="false">
+                <use href="#notes-clef-sol"></use>
+              </svg>
+              <svg class="level-clef level-clef--fa" viewBox="0 0 18 20" aria-hidden="true" focusable="false">
+                <use href="#notes-clef-fa"></use>
+              </svg>
+            </span>
+            <span class="level-title">Niveau 3</span>
+          </span>
+          <span class="level-desc">Mélange basé sur niveau 1</span>
         </button>
-        <button class="level-btn is-eval" data-level="6">
-          <span class="level-title">Niveau 4 (Évaluation Double Clé Élargie)</span>
-          <span class="level-desc">Mélange Clé de Sol &amp; Fa (avec lignes suppl.)</span>
+        <button class="level-btn is-eval" data-level="6" aria-label="Niveau 4, double clé étendue, mélange basé sur le niveau 2">
+          <span class="level-heading">
+            <span class="level-clefs">
+              <svg class="level-clef level-clef--sol" viewBox="0 0 640.000000 1280.000000" aria-hidden="true" focusable="false">
+                <use href="#notes-clef-sol"></use>
+              </svg>
+              <svg class="level-clef level-clef--fa" viewBox="0 0 18 20" aria-hidden="true" focusable="false">
+                <use href="#notes-clef-fa"></use>
+              </svg>
+            </span>
+            <span class="level-title">Niveau 4</span>
+          </span>
+          <span class="level-desc">Mélange basé sur niveau 2</span>
         </button>
       </div>
     </div>
 
     <!-- SECTION EXERCICE -->
     <div id="exercise-section" class="hidden notes-exercise">
-      <div class="notes-status">
-        <span id="level-indicator">Niveau X</span>
-        <span id="progress-indicator">Question 1 / 10</span>
+      <div class="notes-hud">
+        <span class="notes-hud-item">Niveau <strong id="level-indicator">1</strong></span>
+        <span class="notes-hud-item">Question <strong id="progress-indicator">1 / 10</strong></span>
+        <span class="notes-hud-item">Score <strong id="score-indicator">0 / 10</strong></span>
+        <span class="notes-hud-item notes-hud-time">⏱ <strong id="timer-indicator">1:00</strong></span>
       </div>
 
       <!-- Portée musicale SVG grand format -->
@@ -73,13 +158,27 @@
     </div>
 
     <!-- SECTION SCORE FINAL -->
-    <div id="score-section" class="hidden notes-score">
-      <h2>Session Terminée !</h2>
-      <p>Voici ton score pour cette série de 10 notes :</p>
-      <div id="final-score">10 / 10</div>
+    <div id="score-section" class="hidden notes-score" role="status" aria-live="polite" tabindex="-1">
+      <h2>Challenge Over !</h2>
+      <p id="score-reason" class="notes-result-reason"></p>
+
+      <div class="notes-stats">
+        <div class="notes-stat">
+          <span id="final-score" class="notes-stat-value">0 / 10</span>
+          <span class="notes-stat-label">Score</span>
+        </div>
+        <div class="notes-stat">
+          <span id="final-percent" class="notes-stat-value">0 %</span>
+          <span class="notes-stat-label">Réussite</span>
+        </div>
+        <div class="notes-stat">
+          <span id="final-time" class="notes-stat-value">0:00</span>
+          <span class="notes-stat-label">Temps</span>
+        </div>
+      </div>
 
       <div class="notes-score-actions">
-        <button type="button" id="restart-btn">Recommencer ce niveau</button>
+        <button type="button" id="restart-btn">Recommencer le challenge</button>
       </div>
     </div>
   </div>
@@ -117,11 +216,11 @@
   font-family: system-ui, -apple-system, sans-serif;
 }
 
-#tool-notes .notes-card { width: 100%; min-width: 0; padding: 8px; }
+#tool-notes .notes-card { width: 100%; min-width: 0; padding: 8px; background: #ffffff; }
 
 #tool-notes .notes-header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.75rem;
 }
 
 #tool-notes .notes-header h1 {
@@ -146,9 +245,18 @@
   gap: 1.25rem;
 }
 
+#tool-notes .clef-sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
 #tool-notes .level-btn {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 0.25rem;
   text-align: left;
   padding: 1rem;
@@ -162,6 +270,39 @@
   transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.1s ease;
 }
 
+#tool-notes .level-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  line-height: 1;
+  min-width: 0;
+}
+
+#tool-notes .level-clefs {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex: 0 0 auto;
+}
+
+#tool-notes .level-clef {
+  display: block;
+  align-self: center;
+  flex: 0 0 auto;
+  color: var(--accent);
+  overflow: visible;
+}
+
+#tool-notes .level-clef--sol {
+  width: 1.35rem !important;
+  height: 2.7rem !important;
+}
+
+#tool-notes .level-clef--fa {
+  width: 1.35rem !important;
+  height: 1.5rem !important;
+}
+
 #tool-notes .level-btn:hover,
 #tool-notes .level-btn:focus-visible {
   border-color: var(--accent-strong);
@@ -171,15 +312,13 @@
 
 #tool-notes .level-btn:active { transform: scale(0.99); }
 
-#tool-notes .level-btn.is-eval { background: #fdf4ff; }
+#tool-notes .level-btn.is-eval { background: #ffffff; }
 
 #tool-notes .level-btn .level-title {
   color: var(--accent);
   font-size: 1.25rem;
   font-weight: 800;
 }
-
-#tool-notes .level-btn.is-eval .level-title { color: var(--accent-strong); }
 
 #tool-notes .level-btn .level-desc {
   color: #64748b;
@@ -193,22 +332,29 @@
   gap: 1rem;
 }
 
-#tool-notes .notes-status {
+#tool-notes .notes-hud {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.25rem 1rem;
-  padding: 0.75rem 1rem;
+  gap: 0.35rem 1rem;
+  padding: 0.7rem 0.9rem;
   background: var(--accent-soft);
   border: 1px solid var(--accent-border);
-  border-radius: 16px;
+  border-radius: 14px;
   color: #475569;
-  font-size: 1.125rem;
-  font-weight: 700;
+  font-size: 0.98rem;
+  font-weight: 600;
 }
 
-#tool-notes #progress-indicator { color: var(--accent); }
+#tool-notes .notes-hud strong { color: var(--accent); font-weight: 800; }
+
+#tool-notes .notes-hud-time strong {
+  display: inline-block;
+  min-width: 3.1rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
 
 #tool-notes .notes-staff {
   display: flex;
@@ -216,11 +362,11 @@
   justify-content: center;
   padding: 0.25rem;
   max-width: 100%;
-  background: var(--accent-soft);
-  border: 2px solid var(--accent-border);
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
   border-radius: 24px;
   overflow-x: auto;
-  box-shadow: inset 0 2px 4px rgba(126, 34, 206, 0.06);
+  box-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 #tool-notes #staff-svg {
@@ -275,58 +421,83 @@
 #tool-notes .note-btn[data-note="Si"] { grid-column: span 2; }
 
 #tool-notes .notes-score {
-  padding: 2rem 0;
+  padding: 1.25rem 0 1.5rem;
   text-align: center;
 }
 
 #tool-notes .notes-score h2 {
-  margin: 0 0 0.75rem;
-  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.9rem, 6vw, 2.6rem);
   font-weight: 900;
   color: var(--accent);
 }
 
-#tool-notes .notes-score p {
+#tool-notes .notes-result-reason {
   margin: 0;
-  color: #475569;
-  font-size: 1.25rem;
+  color: #64748b;
+  font-size: 1.05rem;
+  font-weight: 600;
 }
 
-#tool-notes #final-score {
-  margin: 1rem 0;
+#tool-notes .notes-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 1.35rem 0;
+}
+
+#tool-notes .notes-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.9rem 0.35rem;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: 16px;
+}
+
+#tool-notes .notes-stat-value {
   color: var(--accent);
-  font-size: clamp(3rem, 10vw, 4.5rem);
+  font-size: clamp(1.35rem, 6vw, 2.1rem);
   font-weight: 900;
-  line-height: 1;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+#tool-notes .notes-stat-label {
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 #tool-notes .notes-score-actions {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  max-width: 28rem;
-  margin: 1.5rem auto 0;
-}
-
-#tool-notes .notes-score-actions button {
-  padding: 1.1rem 1.5rem;
-  border-radius: 9999px;
-  font: inherit;
-  font-size: 1.15rem;
-  font-weight: 800;
-  cursor: pointer;
-  touch-action: manipulation;
-  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 #tool-notes #restart-btn {
+  width: 100%;
+  max-width: 420px;
+  min-height: 54px;
+  padding: 0.9rem 1.25rem;
   border: 0;
-  background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+  border-radius: 9999px;
+  background: linear-gradient(135deg, var(--accent-strong), #7e22ce);
   color: #ffffff;
-  box-shadow: 0 12px 24px -12px rgba(126, 34, 206, 0.75);
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 10px 22px -10px rgba(168, 85, 247, 0.8);
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
 }
 
-#tool-notes #restart-btn:hover { box-shadow: 0 16px 28px -12px rgba(126, 34, 206, 0.9); }
+#tool-notes #restart-btn:hover { box-shadow: 0 12px 26px -10px rgba(168, 85, 247, 0.95); }
 #tool-notes #restart-btn:active { transform: scale(0.98); }
 
 @media (min-width: 640px) {
@@ -345,21 +516,65 @@
 @media (max-width: 640px), (max-width: 900px) and (orientation: landscape), (max-height: 500px) {
   #tool-notes { padding: 8px; border-radius: 16px; }
   #tool-notes .notes-card { padding: 4px; }
-  #tool-notes .notes-header { margin-bottom: 0.75rem; text-align: left; }
-  #tool-notes .notes-header h1,
-  #tool-notes .notes-header p { display: none; }
+  #tool-notes .notes-header { display: none; }
   #tool-notes .notes-menu-title { margin-bottom: 0.5rem; font-size: 1rem; }
   #tool-notes .notes-levels { gap: 0.75rem; }
   #tool-notes .level-btn { padding: 10px 14px; }
   #tool-notes .level-title { font-size: 1.05rem; }
   #tool-notes .level-desc { font-size: 0.9rem; }
-  #tool-notes .notes-status { padding: 6px 12px; font-size: 0.95rem; border-radius: 12px; }
+  #tool-notes .notes-hud { padding: 6px 12px; font-size: 0.95rem; border-radius: 12px; }
   #tool-notes .notes-staff { padding: 4px; border-radius: 16px; }
   #tool-notes .feedback-msg { height: 1.75rem; line-height: 1.75rem; font-size: 1.1rem; }
   #tool-notes .notes-answers { gap: 6px; }
   #tool-notes .note-btn { min-height: 48px; padding: 8px 4px; font-size: 1.05rem; border-radius: 14px; }
   #tool-notes .notes-score { padding: 1rem 0; }
   #tool-notes .notes-score-actions button { padding: 1rem; font-size: 1.1rem; }
+}
+
+/* ----- Paysage bas : portée simple panoramique et interface sans débordement ----- */
+@media (orientation: landscape) and (max-height: 550px) {
+  #tool-notes { padding: 6px; }
+  #tool-notes .notes-card { padding: 3px; }
+
+  #tool-notes .notes-exercise { gap: 6px; }
+
+  #tool-notes .notes-hud {
+    gap: 0.15rem 0.7rem;
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+  }
+
+  #tool-notes .notes-staff {
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    height: clamp(148px, 46dvh, 210px);
+    padding: 3px;
+    border-radius: 14px;
+  }
+
+  #tool-notes #staff-svg { width: 100%; height: 100%; max-height: 100%; }
+
+  #tool-notes .feedback-msg {
+    height: 1.6rem;
+    line-height: 1.6rem;
+    font-size: 1.15rem;
+  }
+
+  /* Les 7 réponses tiennent sur une seule rangée, même sur les petits écrans paysage. */
+  #tool-notes .notes-answers {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  #tool-notes .note-btn {
+    min-height: 44px;
+    padding: 6px 3px;
+    border-radius: 12px;
+    font-size: 1rem;
+  }
+
+  #tool-notes .note-btn[data-note="Si"] { grid-column: span 1; }
 }
 
 /* ----- Portrait smartphone : l'outil épouse exactement la hauteur de l'écran ----- */
@@ -403,8 +618,7 @@
   }
 
   #tool-notes .notes-header {
-    flex: 0 0 auto;
-    margin-bottom: 0.4rem;
+    display: none;
   }
 
   #tool-notes #menu-section,
@@ -448,13 +662,20 @@
   #tool-notes .notes-staff {
     flex: 1 1 auto;
     min-height: 0;
-    max-height: 52dvh;
+    max-height: 58dvh;
     padding: 2px;
   }
 
   #tool-notes #staff-svg { max-height: 100%; }
 
-  #tool-notes .notes-status,
+  #tool-notes .notes-hud {
+    flex: 0 0 auto;
+    gap: 0.2rem 0.6rem;
+    padding: 0.4rem 0.55rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+  }
+
   #tool-notes .feedback-msg,
   #tool-notes .notes-answers { flex: 0 0 auto; }
 
@@ -462,6 +683,24 @@
 
   #tool-notes #score-section { justify-content: center; gap: 0.75rem; }
   #tool-notes #score-section.notes-score { padding: 0; }
+
+  /* Cartes empilées : libellé à gauche, valeur à droite, sans compression. */
+  #tool-notes .notes-stats {
+    grid-template-columns: 1fr;
+    gap: 0.7rem;
+    margin: 0.6rem 0;
+  }
+
+  #tool-notes .notes-stat {
+    flex-direction: row-reverse;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+  }
+
+  #tool-notes #restart-btn { min-height: 48px; }
 }
 
 /* ----- Conseil « repassez en portrait » : smartphone en paysage uniquement ----- */
@@ -526,6 +765,12 @@
 </style>
 
 <script>
+import {
+    ChallengeSession,
+    CHALLENGE_QUESTION_COUNT,
+    formatCountdown,
+    type ChallengeResult,
+} from '../../utils/challenge';
 import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
 
 (function () {
@@ -564,13 +809,18 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
     }
 
     let currentLevel = 1;
-    let currentQuestion = 0;
-    let score = 0;
     let currentNoteObj: NoteObj | null = null;
     let isWaiting = false;
     let feedbackTimer: number | null = null;
+    let session: ChallengeSession | null = null;
 
     const hubBackLink = document.querySelector<HTMLAnchorElement>('#notes-hub-back');
+    const levelIndicator = mustElement('#level-indicator');
+    const progressIndicator = mustElement('#progress-indicator');
+    const scoreIndicator = mustElement('#score-indicator');
+    const timerIndicator = mustElement('#timer-indicator');
+    const feedbackEl = mustElement('#feedback-msg');
+    const resultSection = mustElement('#score-section');
 
     function clearFeedbackTimer(): void {
         if (feedbackTimer !== null) {
@@ -658,15 +908,16 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
 
     function startLevel(lvl: number): void {
         clearFeedbackTimer();
+        session?.cancel();
+        session = null;
+
         currentLevel = lvl;
-        currentQuestion = 0;
-        score = 0;
-        isWaiting = false;
         currentNoteObj = null;
+        isWaiting = false;
         setHubBackMode(hubBackLink, 'level');
-        
+
         mustElement('#menu-section').classList.add('hidden');
-        mustElement('#score-section').classList.add('hidden');
+        resultSection.classList.add('hidden');
         mustElement('#exercise-section').classList.remove('hidden');
 
         const titles: Record<number, string> = {
@@ -677,20 +928,32 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
             5: "Niveau 3 — Évaluation (Double Clé)",
             6: "Niveau 4 — Évaluation (Double Clé élargie)"
         };
-        mustElement('#level-indicator').innerText = titles[lvl];
+        levelIndicator.textContent = String(lvl);
+        levelIndicator.title = titles[lvl] ?? `Niveau ${lvl}`;
+        progressIndicator.textContent = `1 / ${CHALLENGE_QUESTION_COUNT}`;
+        scoreIndicator.textContent = `0 / ${CHALLENGE_QUESTION_COUNT}`;
+        timerIndicator.textContent = '1:00';
+        feedbackEl.textContent = '';
+        feedbackEl.className = 'feedback-msg';
 
+        session = new ChallengeSession({
+            onTick: ({ remainingMs, score }) => {
+                timerIndicator.textContent = formatCountdown(remainingMs);
+                scoreIndicator.textContent = `${score} / ${CHALLENGE_QUESTION_COUNT}`;
+            },
+            onEnd: showResult,
+        });
+        session.start();
         nextQuestion();
     }
 
     function nextQuestion(): void {
-        if (currentQuestion >= 10) {
-            endGame();
-            return;
-        }
-        currentQuestion++;
-        mustElement('#progress-indicator').innerText = `Question ${currentQuestion} / 10`;
-        mustElement('#feedback-msg').innerText = '';
+        if (!session?.isRunning) return;
+
+        feedbackEl.textContent = '';
+        feedbackEl.className = 'feedback-msg';
         isWaiting = false;
+        progressIndicator.textContent = `${session.answered + 1} / ${CHALLENGE_QUESTION_COUNT}`;
 
         const pool = getLevelPool(currentLevel);
         let nextNoteObj: NoteObj;
@@ -713,6 +976,11 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
         const isDouble = (currentLevel === 5 || currentLevel === 6);
         const isBass = noteObj.clef === 'bass';
         const INK = '#334155';
+        // En portrait, la double portée dispose d'une géométrie plus haute et plus aérée.
+        const tallDouble = isDouble && window.matchMedia('(max-width: 640px) and (orientation: portrait)').matches;
+        // En paysage bas, même la portée simple mérite un cadre panoramique : viewBox large,
+        // marges franches et clé redimensionnée pour ne plus paraître écrasée.
+        const landscapeSingle = !isDouble && window.matchMedia('(orientation: landscape) and (max-height: 550px)').matches;
 
         // === Réglage des clés ===
         // size = font-size ; dy = distance entre la ligne de repère et la ligne de base du texte
@@ -720,6 +988,7 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
             treble: { char: '𝄞', size: 205, dy: 40 },
             bass:   { char: '𝄢', size: 116, dy: 51 }
         };
+        const clefScale = tallDouble ? 26 / 22 : landscapeSingle ? 15 / 22 : 1;
 
         const el = (name: string, attrs: SvgAttrs): SVGElement => {
             const e = document.createElementNS(NS, name);
@@ -728,45 +997,99 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
             return e;
         };
 
-        const drawLines = (lines: number[], x1: number, x2: number): void => lines.forEach(y =>
-            svg.appendChild(el('line', { x1, y1: y, x2, y2: y, stroke: INK, 'stroke-width': 2.5 })));
+        const drawLines = (lines: number[], x1: number, x2: number, strokeWidth = 2.5): void => lines.forEach(y =>
+            svg.appendChild(el('line', { x1, y1: y, x2, y2: y, stroke: INK, 'stroke-width': strokeWidth })));
 
         const drawClef = (type: Clef, x: number, lines: number[]): void => {
             const c = CLEF[type];
             const refLine = (type === 'treble') ? lines[3] : lines[1];   // lignes classées de haut en bas
-            const t = el('text', { x, y: refLine + c.dy, 'font-family': 'serif', 'font-size': c.size, fill: '#1e293b' });
+            const t = el('text', {
+                x,
+                y: refLine + c.dy * clefScale,
+                'font-family': 'serif',
+                'font-size': c.size * clefScale,
+                fill: '#1e293b'
+            });
             t.textContent = c.char;
             svg.appendChild(t);
         };
 
-        // === Mise en page : portée simple ou double portée fixe ===
+        // === Mise en page : portée simple ou double portée adaptative ===
         let activeLines: number[];
-        if (isDouble) {
-            // Écart (en px) entre la 1re ligne du bas de la clé de sol et la 5e ligne (haut) de la clé de fa
-            const STAFF_GAP = 110;
-            const trebleLines = [56, 78, 100, 122, 144];
-            const bassTop = trebleLines[4] + STAFF_GAP;                       // 254
-            const bassLines = [0, 1, 2, 3, 4].map(i => bassTop + i * 22);      // 254 → 342
-            const topY = trebleLines[0];
-            const botY = bassLines[4];
-            const VB_H = botY + 68;                                            // marge pour les notes/lignes supp. sous la portée de fa
-            svg.setAttribute('viewBox', `30 0 450 ${VB_H}`);
-            const X1 = 70;
-            drawLines(trebleLines, X1, 460);
-            drawLines(bassLines, X1, 460);
+        let noteStep = STEP;
+        let noteX = 350;
+        let inkWidth = 2.5;
+        let ledgerHalf = 22;
+        let headRx = 12;
+        let headRy = 9;
+        let stemOffset = 11;
+        let stemLength = 55;
 
-            // Barre de liaison + accolade à gauche (hauteur adaptée à l'écart)
-            const k = (botY - topY) / 242;                                      // facteur d'échelle vs. l'ancienne accolade (56 → 298)
-            const by = (v: number): number => +(topY + (v - 56) * k).toFixed(1);                // convertit l'ancienne coordonnée y
-            svg.appendChild(el('line', { x1: X1, y1: topY, x2: X1, y2: botY, stroke: INK, 'stroke-width': 3 }));
+        if (isDouble) {
+            const LS = tallDouble ? 26 : 22;              // écart entre deux lignes
+            noteStep = LS / 2;
+            const gap = tallDouble ? 140 : 110;           // respiration entre les deux portées
+            const topY = tallDouble ? 64 : 56;
+            const trebleLines = [0, 1, 2, 3, 4].map(i => topY + i * LS);
+            const bassTop = trebleLines[4] + gap;
+            const bassLines = [0, 1, 2, 3, 4].map(i => bassTop + i * LS);
+            const botY = bassLines[4];
+
+            const staffX1 = tallDouble ? 44 : 56;
+            const staffX2 = tallDouble ? 390 : 470;
+            const clefX = tallDouble ? 56 : 68;
+            const braceTipX = tallDouble ? 16 : 24;
+            const braceBodyX = tallDouble ? 30 : 40;
+
+            // Le viewBox portrait est plus étroit et plus haut : la portée occupe toute la largeur.
+            svg.setAttribute('viewBox', tallDouble ? '0 0 400 482' : '0 0 480 400');
+            drawLines(trebleLines, staffX1, staffX2, tallDouble ? 2.8 : 2.5);
+            drawLines(bassLines, staffX1, staffX2, tallDouble ? 2.8 : 2.5);
+
+            // Barre de système + grande accolade reliant les deux portées.
+            const braceH = botY - topY;
+            const midY = topY + braceH / 2;
+            svg.appendChild(el('line', {
+                x1: staffX1, y1: topY, x2: staffX1, y2: botY,
+                stroke: INK, 'stroke-width': tallDouble ? 3 : 2.8
+            }));
             svg.appendChild(el('path', {
-                d: `M 68 ${by(56)} C 54 ${by(62)} 54 ${by(92)} 54 ${by(120)} C 54 ${by(144)} 46 ${by(168)} 34 ${by(177)} C 46 ${by(186)} 54 ${by(210)} 54 ${by(234)} C 54 ${by(262)} 54 ${by(292)} 68 ${by(298)}`,
-                fill: 'none', stroke: INK, 'stroke-width': 3, 'stroke-linecap': 'round'
+                d: `M ${staffX1} ${topY}
+                    C ${braceBodyX} ${topY + braceH * 0.03} ${braceBodyX} ${topY + braceH * 0.14} ${braceBodyX} ${topY + braceH * 0.26}
+                    C ${braceBodyX} ${topY + braceH * 0.37} ${braceBodyX * 0.82} ${topY + braceH * 0.43} ${braceTipX} ${midY}
+                    C ${braceBodyX * 0.82} ${topY + braceH * 0.57} ${braceBodyX} ${topY + braceH * 0.63} ${braceBodyX} ${topY + braceH * 0.74}
+                    C ${braceBodyX} ${topY + braceH * 0.86} ${braceBodyX} ${topY + braceH * 0.97} ${staffX1} ${botY}`,
+                fill: 'none', stroke: INK, 'stroke-width': tallDouble ? 3.2 : 3, 'stroke-linecap': 'round'
             }));
 
-            drawClef('treble', 86, trebleLines);
-            drawClef('bass', 86, bassLines);
+            drawClef('treble', clefX, trebleLines);
+            drawClef('bass', clefX, bassLines);
             activeLines = isBass ? bassLines : trebleLines;
+
+            noteX = tallDouble ? 280 : 350;
+            inkWidth = tallDouble ? 2.8 : 2.5;
+            ledgerHalf = tallDouble ? 26 : 24;
+            headRx = tallDouble ? 14 : 12.5;
+            headRy = tallDouble ? 10.5 : 9.5;
+            stemOffset = tallDouble ? 13 : 12;
+            stemLength = tallDouble ? 64 : 58;
+        } else if (landscapeSingle) {
+            // Portée simple panoramique : les cinq lignes restent centrées verticalement,
+            // avec assez d'air pour les lignes supplémentaires des niveaux 2.
+            svg.setAttribute('viewBox', '0 0 760 180');
+            const lines = [60, 75, 90, 105, 120];
+            drawLines(lines, 52, 740, 3);
+            drawClef(isBass ? 'bass' : 'treble', 70, lines);
+            activeLines = lines;
+
+            noteStep = 7.5;
+            noteX = 470;
+            inkWidth = 3;
+            ledgerHalf = 22;
+            headRx = 10;
+            headRy = 7.5;
+            stemOffset = 9;
+            stemLength = 42;
         } else {
             svg.setAttribute('viewBox', '120 20 360 210');
             const lines = [80, 102, 124, 146, 168];
@@ -777,44 +1100,45 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
 
         // === Note ===
         const baseLineY = activeLines[4];                  // ligne du bas de la portée concernée
-        const noteX = 350;
-        const noteY = baseLineY - (noteObj.step * STEP);
+        const noteY = baseLineY - (noteObj.step * noteStep);
 
         // Lignes supplémentaires
         const ledger = (y: number): void => { svg.appendChild(el('line', {
-            x1: noteX - 22, y1: y, x2: noteX + 22, y2: y, stroke: INK, 'stroke-width': 2.5
+            x1: noteX - ledgerHalf, y1: y, x2: noteX + ledgerHalf, y2: y, stroke: INK, 'stroke-width': inkWidth
         })); };
 
         if (noteObj.step <= -2) {
-            for (let s = -2; s >= noteObj.step; s -= 2) ledger(baseLineY - s * STEP);
+            for (let s = -2; s >= noteObj.step; s -= 2) ledger(baseLineY - s * noteStep);
         } else if (noteObj.step >= 10) {
-            for (let s = 10; s <= noteObj.step; s += 2) ledger(baseLineY - s * STEP);
+            for (let s = 10; s <= noteObj.step; s += 2) ledger(baseLineY - s * noteStep);
         }
 
         // Tête de note
-        svg.appendChild(el('ellipse', { cx: noteX, cy: noteY, rx: 12, ry: 9, fill: '#0f172a' }));
+        svg.appendChild(el('ellipse', { cx: noteX, cy: noteY, rx: headRx, ry: headRy, fill: '#0f172a' }));
 
         // Queue de note
         const stem = (noteObj.step <= 4)
-            ? { x1: noteX + 11, y1: noteY, x2: noteX + 11, y2: noteY - 55 }
-            : { x1: noteX - 11, y1: noteY, x2: noteX - 11, y2: noteY + 55 };
-        svg.appendChild(el('line', { ...stem, stroke: '#0f172a', 'stroke-width': 2.5 }));
+            ? { x1: noteX + stemOffset, y1: noteY, x2: noteX + stemOffset, y2: noteY - stemLength }
+            : { x1: noteX - stemOffset, y1: noteY, x2: noteX - stemOffset, y2: noteY + stemLength };
+        svg.appendChild(el('line', { ...stem, stroke: '#0f172a', 'stroke-width': inkWidth }));
     }
 
     function checkAnswer(selectedNote: string | null): void {
-        if (isWaiting || !currentNoteObj) return;
+        if (!session?.isRunning || isWaiting || !currentNoteObj) return;
         isWaiting = true;
 
-        const feedbackEl = mustElement('#feedback-msg');
+        const isCorrect = selectedNote === currentNoteObj.name;
 
-        if (selectedNote === currentNoteObj.name) {
-            score++;
-            feedbackEl.textContent = "Correct ! 🎉";
-            feedbackEl.className = "feedback-msg correct";
+        if (isCorrect) {
+            feedbackEl.textContent = '✅ Bravo !';
+            feedbackEl.className = 'feedback-msg correct';
         } else {
-            feedbackEl.textContent = `Incorrect. C'était ${currentNoteObj.name}.`;
-            feedbackEl.className = "feedback-msg incorrect";
+            feedbackEl.textContent = `❌ C'était ${currentNoteObj.name}.`;
+            feedbackEl.className = 'feedback-msg incorrect';
         }
+
+        const continues = session.recordAnswer(isCorrect);
+        if (!continues) return;
 
         feedbackTimer = window.setTimeout(() => {
             feedbackTimer = null;
@@ -822,18 +1146,35 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
         }, 500);
     }
 
-    function endGame(): void {
+    function showResult(result: ChallengeResult): void {
         clearFeedbackTimer();
+        isWaiting = true;
+        currentNoteObj = null;
+
         mustElement('#exercise-section').classList.add('hidden');
-        mustElement('#score-section').classList.remove('hidden');
-        mustElement('#final-score').innerText = `${score} / 10`;
+        resultSection.classList.remove('hidden');
+
+        mustElement('#final-score').textContent = `${result.score} / ${result.total}`;
+        mustElement('#final-percent').textContent = `${result.percent} %`;
+        mustElement('#final-time').textContent = result.elapsedLabel;
+        mustElement('#score-reason').textContent =
+            result.reason === 'timeout'
+                ? '⏱ Temps écoulé !'
+                : '🏁 Les 10 questions sont terminées.';
+
+        setHubBackMode(hubBackLink, 'level');
+        resultSection.focus({ preventScroll: true });
     }
 
     function returnToNotesMenu(): void {
         clearFeedbackTimer();
+        session?.cancel();
+        session = null;
         isWaiting = false;
+        currentNoteObj = null;
+
         mustElement('#exercise-section').classList.add('hidden');
-        mustElement('#score-section').classList.add('hidden');
+        resultSection.classList.add('hidden');
         mustElement('#menu-section').classList.remove('hidden');
         setHubBackMode(hubBackLink, 'hub');
     }
@@ -863,6 +1204,20 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
 
         const restartBtn = document.querySelector('#restart-btn');
         if (restartBtn) restartBtn.addEventListener('click', () => startLevel(currentLevel));
+
+        window.addEventListener('pagehide', () => session?.cancel());
+
+        // Le passage portrait/paysage change la géométrie de la portée (simple ou double) :
+        // on redessine la note en cours pour éviter tout viewBox périmé.
+        let staffResizeTimer: number | null = null;
+        window.addEventListener('resize', () => {
+            if (!currentNoteObj) return;
+            if (staffResizeTimer !== null) window.clearTimeout(staffResizeTimer);
+            staffResizeTimer = window.setTimeout(() => {
+                staffResizeTimer = null;
+                if (currentNoteObj) drawStaff(currentNoteObj);
+            }, 180);
+        });
 
         const rotateHint = document.querySelector('#notes-rotate-hint');
         if (rotateHint instanceof HTMLElement) {

@@ -39,7 +39,6 @@ const whiteKeyCount = keyboard.filter((key) => key.type === 'white').length;
         <span class="cn-level-desc">Mélange complet (naturelles, dièses et bémols)</span>
       </button>
     </div>
-    <p class="cn-hint">⏱️ 10 questions ou 1 minute — réponds le plus vite possible !</p>
   </div>
 
   <!-- CHALLENGE -->
@@ -183,14 +182,6 @@ const whiteKeyCount = keyboard.filter((key) => key.type === 'white').length;
   }
 
   #tool-clavier-notes .cn-level-desc {
-    color: #64748b;
-    font-size: 0.95rem;
-    font-weight: 500;
-  }
-
-  #tool-clavier-notes .cn-hint {
-    margin: 1.25rem 0 0;
-    text-align: center;
     color: #64748b;
     font-size: 0.95rem;
     font-weight: 500;
@@ -516,12 +507,6 @@ const whiteKeyCount = keyboard.filter((key) => key.type === 'white').length;
     #tool-clavier-notes .cn-level-title { font-size: 1rem; line-height: 1.2; }
     #tool-clavier-notes .cn-level-desc { font-size: 0.8rem; line-height: 1.25; }
 
-    #tool-clavier-notes .cn-hint {
-      flex: 0 0 auto;
-      margin: 0;
-      font-size: 0.8rem;
-    }
-
     #tool-clavier-notes #cn-game { justify-content: space-between; }
 
     #tool-clavier-notes .cn-hud {
@@ -567,8 +552,21 @@ const whiteKeyCount = keyboard.filter((key) => key.type === 'white').length;
       padding: 0;
     }
 
-    #tool-clavier-notes .cn-stats { margin: 0.6rem 0; }
-    #tool-clavier-notes .cn-stat { padding: 0.5rem 0.25rem; border-radius: 12px; }
+    #tool-clavier-notes .cn-stats {
+      grid-template-columns: 1fr;
+      gap: 0.7rem;
+      margin: 0.6rem 0;
+    }
+
+    /* Cartes empilées : libellé à gauche, valeur à droite, sans compression. */
+    #tool-clavier-notes .cn-stat {
+      flex-direction: row-reverse;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+    }
     #tool-clavier-notes .cn-primary-btn { min-height: 48px; }
   }
 

@@ -189,14 +189,6 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
     font-weight: 500;
   }
 
-  #tool-oreille-clavier .oc-hint {
-    margin: 1.25rem 0 0;
-    text-align: center;
-    color: #64748b;
-    font-size: 0.95rem;
-    font-weight: 500;
-  }
-
   #tool-oreille-clavier .oc-game {
     display: flex;
     flex-direction: column;
@@ -522,12 +514,6 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
     #tool-oreille-clavier .oc-level-title { font-size: 1rem; line-height: 1.2; }
     #tool-oreille-clavier .oc-level-desc { font-size: 0.8rem; line-height: 1.25; }
 
-    #tool-oreille-clavier .oc-hint {
-      flex: 0 0 auto;
-      margin: 0;
-      font-size: 0.8rem;
-    }
-
     #tool-oreille-clavier #oc-game { justify-content: space-between; }
 
     #tool-oreille-clavier .oc-hud {
@@ -566,8 +552,21 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
       padding: 0;
     }
 
-    #tool-oreille-clavier .oc-stats { margin: 0.6rem 0; }
-    #tool-oreille-clavier .oc-stat { padding: 0.5rem 0.25rem; border-radius: 12px; }
+    #tool-oreille-clavier .oc-stats {
+      grid-template-columns: 1fr;
+      gap: 0.7rem;
+      margin: 0.6rem 0;
+    }
+
+    /* Cartes empilées : libellé à gauche, valeur à droite, sans compression. */
+    #tool-oreille-clavier .oc-stat {
+      flex-direction: row-reverse;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+    }
     #tool-oreille-clavier .oc-primary-btn { min-height: 48px; }
   }
 
