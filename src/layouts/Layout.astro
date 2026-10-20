@@ -1,4 +1,6 @@
 ---
+import '../styles/tools-landscape.css';
+
 interface Props {
   title: string;
   wide?: boolean;
@@ -314,5 +316,46 @@ const isHome =
       width: 100%;
     }
 
+  }
+
+  /* ------------------------------------------------------------------
+     Pages d'outils sur mobile et tablette : plein écran, sans en-tête
+     global ni carte blanche flottante. Le hub (mobile-header-minimal)
+     n'est pas concerné.
+  ------------------------------------------------------------------ */
+  @media (max-width: 1024px) {
+    body.mobile-header-hidden {
+      padding: 0 !important;
+      background-color: #ffffff;
+      color: #1f2a44;
+    }
+
+    body.mobile-header-hidden .site-header {
+      display: none !important;
+    }
+
+    body.mobile-header-hidden main.container {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-height: 100vh !important;
+      min-height: 100dvh !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      background-color: #ffffff;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+
+    body.mobile-header-hidden main.container > * {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-height: 100vh !important;
+      min-height: 100dvh !important;
+      margin: 0 !important;
+      padding: 8px !important;
+      background-color: #ffffff;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
   }
 </style>

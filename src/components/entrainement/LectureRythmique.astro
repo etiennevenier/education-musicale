@@ -5,7 +5,7 @@
 <div id="tool-rhythm">
   <div class="app">
     <div class="rhythm-top">
-        <a class="hub-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
+        <a class="hub-back tool-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
             <span aria-hidden="true">←</span>
             <span class="hub-back-text">Retour à l'entraînement</span>
             <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
@@ -16,12 +16,6 @@
     </div>
 
     <section class="controls" aria-label="Réglages">
-        <a class="hub-back rhythm-landscape-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
-            <span aria-hidden="true">←</span>
-            <span class="hub-back-text">Retour à l'entraînement</span>
-            <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
-        </a>
-
         <button class="btn" id="rt-btnGenerate">Générer</button>
 
         <label class="field">Chiffrage
@@ -94,10 +88,11 @@
     </div>
   </div>
 
-  <a class="hub-back rhythm-portrait-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
-    <span aria-hidden="true">←</span>
-    <span>Entraînement</span>
-  </a>
+  <div id="rt-rotate-hint" class="rt-rotate-hint" role="dialog" aria-modal="true" aria-labelledby="rt-rotate-text" hidden>
+    <span class="rt-rotate-icon" aria-hidden="true">📱🔄</span>
+    <p id="rt-rotate-text" class="rt-rotate-text">Veuillez tourner votre appareil en mode paysage pour un confort optimal.</p>
+    <button type="button" id="dismiss-rotate-hint" class="rt-rotate-continue">Continuer quand même</button>
+  </div>
 </div>
 
 <style is:global>
@@ -135,8 +130,6 @@
 #tool-rhythm .rhythm-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
 #tool-rhythm .rhythm-top > .hub-back { margin: 0; }
 #tool-rhythm .rhythm-top > header { flex: 1 1 auto; min-width: 0; text-align: center; }
-#tool-rhythm .rhythm-landscape-back { display: none; }
-#tool-rhythm .rhythm-portrait-back { display: none; }
 #tool-rhythm h1 { margin: 0; color: var(--accent); font-size: clamp(22px, 4vw, 30px); font-weight: 900; letter-spacing: -0.01em; }
 #tool-rhythm .controls {
         background: #fff;
@@ -293,61 +286,69 @@
             #tool-rhythm .score { font-size: 32px; }
             #tool-rhythm .legend { display: none; }
         }
-        /* ----- Lecture rythmique : portrait tactile → demander le paysage ----- */
-        @media (pointer: coarse) and (orientation: portrait) {
-            #tool-rhythm:not(.hidden) {
-                position: relative;
-                min-height: 100dvh;
-                height: 100dvh;
-                overflow: hidden;
+        /* ----- Avertissement de rotation : petits téléphones en portrait uniquement ----- */
+        #tool-rhythm .rt-rotate-hint { display: none; }
+
+        /* Une fois fermé (ou hors portrait), l'overlay disparaît totalement :
+           aucun résidu visuel ni zone cliquable ne doit rester au-dessus de l'outil. */
+        #tool-rhythm .rt-rotate-hint[hidden] { display: none !important; }
+
+        @media (max-width: 640px) and (orientation: portrait) {
+            #tool-rhythm .rt-rotate-hint:not([hidden]) {
+                position: fixed;
+                inset: 0;
+                z-index: 100;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 1rem;
+                padding: max(1.5rem, env(safe-area-inset-top)) 1.5rem max(1.5rem, env(safe-area-inset-bottom));
+                background: rgba(250, 245, 255, 0.98);
+                text-align: center;
             }
-            #tool-rhythm:not(.hidden) > .app {
+
+            /* L'outil reste en place derrière le calque, mais non interactif. */
+            #tool-rhythm:has(.rt-rotate-hint:not([hidden])) > .app {
                 visibility: hidden;
                 pointer-events: none;
             }
-            #tool-rhythm:not(.hidden) .rhythm-portrait-back {
-                position: absolute;
-                top: max(0.9rem, env(safe-area-inset-top));
-                left: 1rem;
-                z-index: 42;
-                display: inline-flex;
-                align-items: center;
-                min-height: 42px;
-                margin: 0;
-                padding: 0 14px;
-                font-size: 14px;
-                pointer-events: auto;
-            }
-            #tool-rhythm:not(.hidden)::before {
-                content: "📱🔄";
-                position: absolute;
-                inset: 0;
-                z-index: 40;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding-bottom: 4.5rem;
+
+            #tool-rhythm .rt-rotate-icon {
                 font-size: 3.25rem;
                 line-height: 1;
-                background: rgba(250, 245, 255, 0.97);
-                pointer-events: none;
             }
-            #tool-rhythm:not(.hidden)::after {
-                content: "Veuillez tourner votre appareil en mode paysage pour un confort optimal";
-                position: absolute;
-                left: 50%;
-                top: 50%;
-                z-index: 41;
-                width: min(22rem, 86%);
-                margin-top: 2.4rem;
-                transform: translate(-50%, 0);
-                text-align: center;
-                font-weight: 800;
-                font-size: 1.05rem;
-                line-height: 1.45;
+
+            #tool-rhythm .rt-rotate-text {
+                max-width: 22rem;
+                margin: 0;
                 color: #1f2a44;
-                pointer-events: none;
+                font-size: 1.05rem;
+                font-weight: 800;
+                line-height: 1.45;
             }
+
+            #tool-rhythm .rt-rotate-continue {
+                min-height: 48px;
+                padding: 0 22px;
+                border: 0;
+                border-radius: 9999px;
+                background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+                color: #ffffff;
+                font: inherit;
+                font-size: 0.95rem;
+                font-weight: 800;
+                cursor: pointer;
+                touch-action: manipulation;
+                box-shadow: 0 10px 20px -10px rgba(126, 34, 206, 0.7);
+                transition: box-shadow 0.2s ease, transform 0.1s ease;
+            }
+
+            #tool-rhythm .rt-rotate-continue:hover {
+                box-shadow: 0 14px 24px -10px rgba(126, 34, 206, 0.9);
+            }
+
+            #tool-rhythm .rt-rotate-continue:active { transform: scale(0.98); }
         }
 
         /* ----- Lecture rythmique : paysage bas → tout tient sans scroll vertical ----- */
@@ -382,13 +383,18 @@
                 gap: 0;
             }
 
-            /* Le retour rejoint la barre de commandes : une seule ligne en haut. */
-            #tool-rhythm .rhythm-top { display: none; }
-            #tool-rhythm .controls > .rhythm-landscape-back {
-                display: inline-flex;
-                align-items: center;
+            /* Le retour reste seul en tête, juste au-dessus de la barre de commandes. */
+            #tool-rhythm .rhythm-top {
+                display: flex;
                 flex: 0 0 auto;
+                align-items: center;
+                gap: 0;
+                margin: 0 0 4px;
+            }
+            #tool-rhythm .rhythm-top > header { display: none; }
+            #tool-rhythm .rhythm-top > .tool-back {
                 margin: 0;
+                flex: 0 0 auto;
             }
 
             #tool-rhythm .app {
@@ -1457,6 +1463,38 @@
     });
     ui.btnPlayQ.addEventListener('click', () => { startReplay('q'); ui.btnPlayQ.blur(); });
     ui.btnPlayA.addEventListener('click', () => { startReplay('a'); ui.btnPlayA.blur(); });
+
+    // Avertissement de rotation : uniquement sur petit mobile en portrait.
+    const rotateHint = document.getElementById('rt-rotate-hint');
+    const dismissRotateHint = document.getElementById('dismiss-rotate-hint');
+    const rotatePortraitMq = window.matchMedia('(max-width: 640px) and (orientation: portrait)');
+    let ignoreRotateHint = false;
+    try {
+        ignoreRotateHint = localStorage.getItem('ignore-rotate-hint') === 'true';
+    } catch {
+        // Stockage indisponible (navigation privée restrictive) : l'avertissement reste fermable.
+    }
+
+    const syncRotateHint = (): void => {
+        if (!(rotateHint instanceof HTMLElement)) return;
+        rotateHint.hidden = ignoreRotateHint || !rotatePortraitMq.matches;
+    };
+    syncRotateHint();
+    if (rotatePortraitMq.addEventListener) {
+        rotatePortraitMq.addEventListener('change', syncRotateHint);
+    }
+
+    if (dismissRotateHint instanceof HTMLElement) {
+        dismissRotateHint.addEventListener('click', () => {
+            ignoreRotateHint = true;
+            if (rotateHint instanceof HTMLElement) rotateHint.hidden = true;
+            try {
+                localStorage.setItem('ignore-rotate-hint', 'true');
+            } catch {
+                // La préférence ne pourra pas être mémorisée, mais le calque est bien fermé.
+            }
+        });
+    }
 
     newRhythm();
 

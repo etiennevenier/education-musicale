@@ -4,7 +4,7 @@
 
 <div id="tool-piano">
   <div class="piano-body">
-            <a class="hub-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
+            <a class="hub-back tool-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
                 <span aria-hidden="true">←</span>
                 <span class="hub-back-text">Retour à l'entraînement</span>
                 <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
@@ -286,6 +286,96 @@
             }
 
             #tool-piano .piano-wrapper::-webkit-scrollbar { height: 8px; }
+        }
+
+        /* ----- Tablette en paysage : 100dvh, portée plafonnée et clavier visible -----
+           Le titre est masqué (le retour est présent), la portée est centrée et
+           plafonnée à 60dvh, le clavier reste entièrement affiché avec sa marge
+           basse complète. */
+        @media (min-width: 768px) and (max-height: 768px) and (orientation: landscape) {
+            html:has(#tool-piano),
+            body:has(#tool-piano) {
+                height: 100dvh;
+                max-height: 100dvh;
+                overflow: hidden;
+            }
+
+            #tool-piano {
+                display: flex;
+                flex-direction: column;
+                height: 100dvh;
+                min-height: 0 !important;
+                max-height: 100dvh;
+                padding: 8px;
+                overflow: hidden;
+                --kh: clamp(96px, 22dvh, 150px);
+                --bkh: clamp(62px, 14dvh, 96px);
+            }
+
+            #tool-piano .piano-body {
+                flex: 1 1 auto;
+                min-height: 0;
+                width: 100%;
+                max-width: none;
+                gap: 1.25rem;
+                justify-content: center;
+                align-items: stretch;
+            }
+
+            #tool-piano .piano-body > .tool-back {
+                align-self: flex-start;
+                flex: 0 0 auto;
+                margin: 0 0 4px;
+            }
+
+            #tool-piano .piano-head,
+            #tool-piano .piano-portrait-hint { display: none; }
+
+            #tool-piano .piano-info-note {
+                flex: 0 0 auto;
+                min-height: 22px;
+                margin: 0 auto;
+                padding: 2px 12px;
+                font-size: 12px;
+                line-height: 1.3;
+            }
+
+            #tool-piano .piano-staff-container {
+                flex: 1 1 0;
+                height: 0;
+                min-height: 120px;
+                max-height: 60dvh;
+                padding: 0;
+                border: 0;
+                border-radius: 0;
+                background: #ffffff;
+                overflow: hidden;
+            }
+
+            #tool-piano #piano-staff-svg {
+                width: 100%;
+                height: 100%;
+                max-width: none;
+                max-height: 100%;
+            }
+
+            #tool-piano .piano-wrapper {
+                flex: 0 0 auto;
+                width: 100%;
+                margin-top: 0;
+                margin-bottom: max(10px, env(safe-area-inset-bottom, 10px));
+                padding: 6px 8px 14px;
+                border-radius: 8px 8px 10px 10px;
+                overflow-x: auto;
+                overflow-y: visible;
+            }
+
+            #tool-piano .piano-scroll-hint {
+                flex: 0 0 auto;
+                margin: 0;
+                font-size: 11px;
+                line-height: 1.3;
+            }
         }
 </style>
 

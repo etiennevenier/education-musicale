@@ -4,20 +4,14 @@
 
 <div id="tool-clefs">
   <div class="app">
-    <!-- Retour standard : centré au-dessus de l'en-tête (desktop / portrait). -->
-    <a class="hub-back clefs-return-top" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
+    <!-- Retour standard : une seule position, en haut à gauche de l'outil. -->
+    <a class="hub-back tool-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
         <span aria-hidden="true">←</span>
         <span class="hub-back-text">Retour à l'entraînement</span>
         <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
     </a>
 
     <div class="top">
-        <!-- Retour compact : aligné avec les onglets en paysage mobile. -->
-        <a class="hub-back clefs-return-inline" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
-            <span aria-hidden="true">←</span>
-            <span class="hub-back-text">Retour à l'entraînement</span>
-            <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
-        </a>
         <h1>Dessiner les Clefs</h1>
         <div class="tabs" role="tablist" aria-label="Choisir la clef">
             <button class="tab" role="tab" id="cl-tab-sol" data-clef="sol" aria-selected="true">Clef de Sol</button>
@@ -95,11 +89,8 @@
         flex-direction: column;
         gap: 18px;
     }
-#tool-clefs .app > .clefs-return-top {
+#tool-clefs .app > .tool-back {
         margin-bottom: 0;
-    }
-#tool-clefs .clefs-return-inline {
-        display: none;
     }
 #tool-clefs .top {
         display: flex;
@@ -107,9 +98,6 @@
         align-items: stretch;
         justify-content: flex-start;
         gap: 12px;
-    }
-#tool-clefs .top > .clefs-return-inline {
-        margin: 0;
     }
 #tool-clefs .top h1 { text-align: center; }
 #tool-clefs .ghost-hint {
@@ -122,7 +110,7 @@
     }
 #tool-clefs #cl-board {
         cursor: pointer;
-        touch-action: manipulation;
+        touch-action: none !important;
         -webkit-tap-highlight-color: transparent;
     }
 #tool-clefs h1 {
@@ -167,10 +155,10 @@
         display: block;
         width: 100%;
         height: auto;
-        touch-action: manipulation;
-        -webkit-user-select: none;
-        user-select: none;
-        -webkit-touch-callout: none;
+        touch-action: none !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
+        -webkit-touch-callout: none !important;
     }
 #tool-clefs .slider-row {
         display: flex;
@@ -316,15 +304,13 @@
         @media (max-width: 400px) {
             #tool-clefs .tab { padding: 6px 8px; font-size: 13px; }
         }
-        /* Paysage mobile : on conserve le retour compact sur la ligne des onglets. */
+        /* Paysage mobile : le retour reste seul en tête, au-dessus des onglets. */
         @media (max-width: 900px) and (orientation: landscape), (orientation: landscape) and (max-height: 500px) {
-            #tool-clefs .app > .clefs-return-top { display: none; }
             #tool-clefs .top {
                 flex-direction: row;
                 flex-wrap: wrap;
                 align-items: center;
             }
-            #tool-clefs .top > .clefs-return-inline { display: inline-flex; }
             #tool-clefs .tabs { width: auto; flex: 1 1 auto; min-width: 0; }
         }
         /* ------------------------------------------------------------------
@@ -413,6 +399,114 @@
             #tool-clefs #cl-board {
                 width: min(calc(100vw - 60px), max(240px, calc((100dvh - 138px) * 360 / 252)));
                 height: auto;
+            }
+        }
+
+        /* ----- Tablette en paysage : tout tient sur 100dvh, sans scroll vertical -----
+           Titre masqué, retour en tête, portée plafonnée à 60dvh. Le slider et
+           le bloc explicatif restent visibles et compacts. */
+        @media (min-width: 768px) and (max-height: 768px) and (orientation: landscape) {
+            html:has(#tool-clefs),
+            body:has(#tool-clefs) {
+                height: 100dvh;
+                max-height: 100dvh;
+                overflow: hidden;
+            }
+
+            #tool-clefs {
+                display: flex;
+                flex-direction: column;
+                height: 100dvh;
+                min-height: 0 !important;
+                max-height: 100dvh;
+                padding: 8px;
+                overflow: hidden;
+            }
+
+            #tool-clefs .app {
+                flex: 1 1 auto;
+                min-height: 0;
+                gap: 1.25rem;
+                justify-content: center;
+            }
+
+            #tool-clefs .top {
+                flex: 0 0 auto;
+                flex-direction: row;
+                flex-wrap: nowrap;
+                align-items: center;
+                gap: 8px;
+            }
+
+            #tool-clefs .top h1 { display: none; }
+            #tool-clefs .top .ghost-hint { display: none; }
+
+            #tool-clefs .tabs {
+                width: auto;
+                flex: 1 1 auto;
+                min-width: 0;
+            }
+
+            #tool-clefs .tab {
+                min-height: 36px;
+                padding: 6px 14px;
+                font-size: 15px;
+            }
+
+            #tool-clefs .sheet {
+                flex: 1 1 0;
+                height: 0;
+                min-height: 120px;
+                max-height: 60dvh;
+                width: 100%;
+                max-width: 100%;
+                margin-inline: auto;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+            }
+
+            #tool-clefs #cl-board {
+                display: block;
+                width: auto;
+                height: 100%;
+                max-width: 100%;
+                max-height: 100%;
+            }
+
+            #tool-clefs .slider-row {
+                flex: 0 0 auto;
+                gap: 6px 12px;
+            }
+
+            #tool-clefs .slider {
+                flex: 1 1 220px;
+                height: 28px;
+            }
+
+            #tool-clefs .pct { font-size: 15px; }
+
+            /* Prioritaire sur la règle mobile qui masque le bloc explicatif. */
+            #tool-clefs .caption {
+                display: block !important;
+                flex: 0 0 auto;
+                min-height: 0;
+                padding: 10px 14px;
+                border-left-width: 6px;
+                border-radius: 12px;
+            }
+
+            #tool-clefs .caption h2 {
+                margin-bottom: 3px;
+                font-size: 17px;
+                line-height: 1.2;
+            }
+
+            #tool-clefs .caption p {
+                font-size: 15px;
+                line-height: 1.35;
+                max-width: none;
             }
         }
 </style>
