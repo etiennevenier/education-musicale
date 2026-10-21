@@ -50,9 +50,96 @@ const tabs: RapTab[] = [
     ],
   },
 ];
+
+const timelineSteps = [
+  {
+    num: "1",
+    period: "1970–1980",
+    title: "1. Origines dans le Bronx",
+    badge: "Fondations",
+    points: [
+      "<strong>Lieu :</strong> Naissance dans le South Bronx (New York) lors de fêtes de rue (<em>Block Parties</em>).",
+      "<strong>DJ Kool Herc :</strong> Père fondateur (d'origine jamaïcaine). Il isole les solos de batterie (les <em>breaks</em>) sur deux platines pour faire danser les B-Boys.",
+      "<strong>Sound System :</strong> Concept d'enceintes mobiles géantes importé de Jamaïque."
+    ]
+  },
+  {
+    num: "2",
+    period: "Fin 70s",
+    title: "2. Naissance des MCs & Scratch",
+    badge: "Technique",
+    points: [
+      "<strong>Les MCs (Rappeurs) :</strong> Ambianceurs au micro (comme <em>Coke La Rock</em>) qui développent le rythme, les rimes et le flow.",
+      "<strong>Inventions :</strong> <em>Grandmaster Flash</em> perfectionne le mix, <em>Grand Wizard Theodore</em> invente le <strong>scratch</strong> à 14 ans.",
+      "<strong>Le Sampler :</strong> Machine permettant de réutiliser des échantillons de chansons."
+    ]
+  },
+  {
+    num: "3",
+    period: "1979–1985",
+    title: "3. Premiers Hits & Disques",
+    badge: "Industrie",
+    points: [
+      "<strong>1er Hit Mondial :</strong> En 1979, le Sugarhill Gang sort <em>Rapper's Delight</em>.",
+      "<strong>Nouveaux Labels :</strong> Naissance de maisons de disques mythiques comme <em>Def Jam</em> (Run-DMC, Beastie Boys)."
+    ]
+  },
+  {
+    num: "4",
+    period: "1982–1988",
+    title: "4. Rap Conscient & Engagement",
+    badge: "Message",
+    points: [
+      "<strong>Zulu Nation :</strong> <em>Afrika Bambaataa</em> canalise la violence des gangs vers l'art : \"Peace, Love, Unity and Having Fun\".",
+      "<strong>Rap Engagé :</strong> Le morceau <em>The Message</em> traite des problèmes sociaux dans les quartiers.",
+      "<strong>Censure :</strong> Apparition du macaron <em>Parental Advisory</em> face aux textes explicites."
+    ]
+  },
+  {
+    num: "5",
+    period: "Fin 80s–90s",
+    title: "5. New School & Rap Jazz",
+    badge: "Style",
+    points: [
+      "<strong>Look Street :</strong> <em>Run-DMC</em> impose le style de la rue (survêtements, grosses chaînes, basket Adidas).",
+      "<strong>Rap Poétique / Jazz :</strong> Des groupes comme <em>A Tribe Called Quest</em> ou <em>De La Soul</em> proposent un rap alternatif, coloré et positif."
+    ]
+  },
+  {
+    num: "6",
+    period: "Début 90s",
+    title: "6. West Coast & Gangsta Rap",
+    badge: "West Coast",
+    points: [
+      "<strong>Gangsta Rap :</strong> Le groupe <em>N.W.A</em> (avec Dr. Dre et Eazy-E) raconte la dure réalité de la rue à Los Angeles.",
+      "<strong>G-Funk :</strong> <em>Dr. Dre</em> et <em>Snoop Dogg</em> popularisent un son californien plus lourd et mélodique."
+    ]
+  },
+  {
+    num: "7",
+    period: "Mid 90s",
+    title: "7. Rivalité East / West Coast",
+    badge: "Légendes",
+    points: [
+      "<strong>Retour de New York :</strong> Succès massif de <em>Notorious B.I.G.</em>, <em>Nas</em> et du <em>Wu-Tang Clan</em>.",
+      "<strong>Tragédie :</strong> La rivalité entre les deux côtes mène aux assassinats de <strong>Tupac Shakur</strong> (1996) et <strong>Notorious B.I.G.</strong> (1997)."
+    ]
+  },
+  {
+    num: "8",
+    period: "2000 à nos jours",
+    title: "8. Succès Mondial & Culture Pop",
+    badge: "Global",
+    points: [
+      "<strong>L'Empire Aftermath :</strong> <em>Dr. Dre</em> révèle <strong>Eminem</strong> (plus grand vendeur du genre), puis <em>50 Cent</em> et <em>Kendrick Lamar</em>.",
+      "<strong>Musique n°1 :</strong> Le hip-hop s'impose comme la musique la plus écoutée au monde (Drake, Jay-Z, Trap) et façonne la culture moderne."
+    ]
+  }
+];
 ---
 
 <div class="rap-course">
+  <!-- Navigation Onglets principaux -->
   <div class="rap-tabs" role="tablist" aria-label="Musique et Rap">
     {tabs.map((tab, index) => (
       <button
@@ -70,6 +157,7 @@ const tabs: RapTab[] = [
     ))}
   </div>
 
+  <!-- Panneaux de contenu -->
   {tabs.map((tab, index) => (
     <div
       role="tabpanel"
@@ -79,6 +167,7 @@ const tabs: RapTab[] = [
       hidden={index !== 0}
       data-panel={tab.id}
     >
+      <!-- Section Vidéos -->
       <div class="rap-videos">
         {tab.videos.map((video) => (
           <VideoCard
@@ -88,24 +177,217 @@ const tabs: RapTab[] = [
           />
         ))}
       </div>
+
+      <!-- Section Histoire interactive sous l'onglet 'cours' -->
+      {tab.id === 'cours' && (
+        <div class="course-history-section">
+          <header class="history-header">
+            <span class="section-badge">Histoire & Culture</span>
+            <h2>🎤 L'Histoire du Hip-Hop en 8 Étapes</h2>
+            <p>Déplacez le curseur pour explorer la frise chronologique.</p>
+          </header>
+
+          <div class="pillars-card">
+            <h3>🎨 Les 4 Piliers du Hip-Hop</h3>
+            <div class="pillars-grid">
+              <div class="pillar-item">
+                <span class="pillar-icon">🎨</span>
+                <strong>Graffiti</strong>
+                <small>Art Visuel</small>
+              </div>
+              <div class="pillar-item">
+                <span class="pillar-icon">🕺</span>
+                <strong>Breakdance</strong>
+                <small>Danse</small>
+              </div>
+              <div class="pillar-item">
+                <span class="pillar-icon">🎧</span>
+                <strong>DJing</strong>
+                <small>Musique & Scratch</small>
+              </div>
+              <div class="pillar-item">
+                <span class="pillar-icon">🎙️</span>
+                <strong>Beatbox / MCing</strong>
+                <small>Rap & Rimes</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="timeline-slider-wrapper">
+            <div class="slider-range-box">
+              <div class="range-header">
+                <span id="range-period-label" class="range-period">1970–1980</span>
+                <span id="range-counter-label" class="range-counter">Étape 1 sur 8</span>
+              </div>
+              <input 
+                type="range" 
+                id="timeline-range" 
+                min="0" 
+                max="7" 
+                value="0" 
+                step="1"
+                aria-label="Frise chronologique du Hip-Hop"
+              />
+              <div class="range-ticks">
+                {timelineSteps.map((step, idx) => (
+                  <span class={`tick-mark ${idx === 0 ? 'active' : ''}`} data-step={idx}>
+                    {step.num}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div class="fixed-slider-card">
+              <header class="card-top">
+                <span class="step-tag" id="slide-tag">{timelineSteps[0].badge}</span>
+                <h3 id="slide-title">{timelineSteps[0].title}</h3>
+              </header>
+
+              <div class="card-body-scroll">
+                <ul class="points-list" id="slide-points">
+                  {timelineSteps[0].points.map((pt) => (
+                    <li class="point-item" set:html={pt}></li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <!-- ACTIVITÉ MINI SÉQUENCEUR 808 SOUS L'ONGLET 'FUN' -->
+      {tab.id === 'fun' && (
+        <div class="fun-sequencer-section">
+          <header class="history-header">
+            <span class="section-badge">Atelier Beatmaking</span>
+            <h2>🥁 Mini-Séquenceur 808 Boom Bap</h2>
+            <p>Composez votre rythme, testez des styles ou utilisez les mémoires pour enregistrer/rappeler vos grilles !</p>
+          </header>
+
+          <div class="sequencer-card">
+            <!-- Barre de Contrôles Principaux (Mise en page fixe et stable) -->
+            <div class="seq-top-controls">
+              <button type="button" id="seq-play-btn" class="seq-btn-primary">
+                <span class="icon">▶</span> <span class="label">Jouer le Beat</span>
+              </button>
+
+              <div class="bpm-control">
+                <label for="bpm-slider">Tempo : <strong id="bpm-val">90</strong> BPM</label>
+                <input type="range" id="bpm-slider" min="70" max="130" value="90" step="1" />
+              </div>
+
+              <div class="seq-actions-group">
+                <button type="button" id="seq-rand-btn" class="seq-btn-random" title="Générer un rythme aléatoire">
+                  🎲 Aléatoire
+                </button>
+                <button type="button" id="seq-clear-btn" class="seq-btn-secondary">
+                  🗑️ Effacer
+                </button>
+              </div>
+            </div>
+
+            <!-- Barre des Séquences Pré-faites -->
+            <div class="seq-presets-bar">
+              <span class="bar-label">Styles :</span>
+              <button type="button" class="preset-btn" data-preset="boombap">🎧 Boom Bap</button>
+              <button type="button" class="preset-btn" data-preset="trap">🔥 Trap</button>
+              <button type="button" class="preset-btn" data-preset="house">🪩 Dance / House</button>
+              <button type="button" class="preset-btn" data-preset="bounce">🛹 Bounce</button>
+            </div>
+
+            <!-- Barre des Mémoires Perso (M1 - M4) -->
+            <div class="seq-memory-bar">
+              <span class="bar-label">Mémoires :</span>
+              <div class="mem-slots-group">
+                {['M1', 'M2', 'M3', 'M4'].map((label, idx) => (
+                  <div class="mem-slot" data-mem-index={idx}>
+                    <button type="button" class="mem-load-btn" title="Cliquer pour charger cette mémoire">
+                      {label} <small class="mem-status">Vide</small>
+                    </button>
+                    <button type="button" class="mem-save-btn" title="Enregistrer la grille actuelle ici">💾</button>
+                    <button type="button" class="mem-del-btn" title="Effacer cette mémoire">❌</button>
+                  </div>
+                ))}
+              </div>
+              <span class="mem-hint">💡 Astuce : Modifiez votre grille, cliquez sur 💾 pour sauvegarder dans une mémoire, puis cliquez sur M1/M2 pour la recharger quand vous voulez !</span>
+            </div>
+
+            <!-- Grille du Séquenceur -->
+            <div class="sequencer-grid">
+              <div class="grid-header">
+                <div class="track-label-empty"></div>
+                {Array.from({ length: 16 }).map((_, i) => (
+                  <div class={`step-num ${i % 4 === 0 ? 'beat-start' : ''}`}>{i + 1}</div>
+                ))}
+              </div>
+
+              <!-- Piste 1 : Kick -->
+              <div class="seq-row" data-track="kick">
+                <div class="track-label">🥁 Kick (Grosse Caisse)</div>
+                <div class="steps-container">
+                  {Array.from({ length: 16 }).map((_, i) => (
+                    <button type="button" class={`step-btn ${i === 0 || i === 10 ? 'active' : ''}`} data-step={i}></button>
+                  ))}
+                </div>
+              </div>
+
+              <!-- Piste 2 : Snare -->
+              <div class="seq-row" data-track="snare">
+                <div class="track-label">💥 Snare (Caisse Claire)</div>
+                <div class="steps-container">
+                  {Array.from({ length: 16 }).map((_, i) => (
+                    <button type="button" class={`step-btn ${i === 4 || i === 12 ? 'active' : ''}`} data-step={i}></button>
+                  ))}
+                </div>
+              </div>
+
+              <!-- Piste 3 : Hi-Hat Closed -->
+              <div class="seq-row" data-track="hihat">
+                <div class="track-label">🎩 Hi-Hat (Charleston)</div>
+                <div class="steps-container">
+                  {Array.from({ length: 16 }).map((_, i) => (
+                    <button type="button" class={`step-btn ${i % 2 === 0 ? 'active' : ''}`} data-step={i}></button>
+                  ))}
+                </div>
+              </div>
+
+              <!-- Piste 4 : Open Hat -->
+              <div class="seq-row" data-track="openhat">
+                <div class="track-label">✨ Open Hat (Ouvert)</div>
+                <div class="steps-container">
+                  {Array.from({ length: 16 }).map((_, i) => (
+                    <button type="button" class={`step-btn ${i === 14 ? 'active' : ''}`} data-step={i}></button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <blockquote class="pedago-note">
+              <strong>💡 Atelier mémoires :</strong> Enregistrez différentes variations de rythmes dans M1, M2, M3 et M4 pour passer de l'un à l'autre en un clic lors de vos improvisations !
+            </blockquote>
+          </div>
+        </div>
+      )}
+
     </div>
   ))}
 </div>
 
-<script>
-  const rapRoot = document.querySelector<HTMLElement>('.rap-course');
+<script is:inline define:vars={{ timelineSteps }}>
+  // Script Onglets
+  const rapRoot = document.querySelector('.rap-course');
 
   if (rapRoot) {
-    const tabs = rapRoot.querySelectorAll<HTMLButtonElement>('.rap-tab');
+    const tabs = rapRoot.querySelectorAll('.rap-tab');
 
-    const selectTab = (tab: HTMLButtonElement) => {
-      rapRoot.querySelectorAll<HTMLButtonElement>('.rap-tab').forEach((item) => {
+    const selectTab = (tab) => {
+      rapRoot.querySelectorAll('.rap-tab').forEach((item) => {
         const isActive = item === tab;
         item.setAttribute('aria-selected', isActive ? 'true' : 'false');
         item.tabIndex = isActive ? 0 : -1;
       });
 
-      rapRoot.querySelectorAll<HTMLElement>('.rap-panel').forEach((panel) => {
+      rapRoot.querySelectorAll('.rap-panel').forEach((panel) => {
         panel.hidden = panel.dataset.panel !== tab.dataset.tab;
       });
     };
@@ -123,6 +405,334 @@ const tabs: RapTab[] = [
         selectTab(tabs[nextIndex]);
       });
     });
+
+    // --- Moteur du Curseur Range Chronologique ---
+    const rangeInput = document.querySelector('#timeline-range');
+    const rangePeriodLabel = document.querySelector('#range-period-label');
+    const rangeCounterLabel = document.querySelector('#range-counter-label');
+    const slideTag = document.querySelector('#slide-tag');
+    const slideTitle = document.querySelector('#slide-title');
+    const slidePoints = document.querySelector('#slide-points');
+    const tickMarks = document.querySelectorAll('.tick-mark');
+
+    const updateStep = (index) => {
+      const data = timelineSteps[index];
+
+      if (rangePeriodLabel) rangePeriodLabel.textContent = data.period;
+      if (rangeCounterLabel) rangeCounterLabel.textContent = `Étape ${index + 1} sur ${timelineSteps.length}`;
+      if (slideTag) slideTag.textContent = data.badge;
+      if (slideTitle) slideTitle.textContent = data.title;
+
+      if (slidePoints) {
+        slidePoints.innerHTML = data.points
+          .map((pt) => `<li class="point-item">${pt}</li>`)
+          .join('');
+      }
+
+      tickMarks.forEach((tick, idx) => {
+        if (idx === index) tick.classList.add('active');
+        else tick.classList.remove('active');
+      });
+    };
+
+    if (rangeInput) {
+      rangeInput.addEventListener('input', (e) => {
+        const idx = parseInt(e.target.value, 10);
+        updateStep(idx);
+      });
+
+      tickMarks.forEach((tick) => {
+        tick.addEventListener('click', () => {
+          const idx = parseInt(tick.dataset.step || '0', 10);
+          rangeInput.value = idx.toString();
+          updateStep(idx);
+        });
+      });
+    }
+
+    // --- MOTEUR WEB AUDIO SÉQUENCEUR 808 & MÉMOIRES ---
+    let audioCtx = null;
+    let isPlayingSeq = false;
+    let currentSeqStep = 0;
+    let bpm = 90;
+    let seqIntervalId = null;
+
+    const userMemories = [null, null, null, null];
+
+    const playBtn = document.querySelector('#seq-play-btn');
+    const bpmSlider = document.querySelector('#bpm-slider');
+    const bpmVal = document.querySelector('#bpm-val');
+    const clearBtn = document.querySelector('#seq-clear-btn');
+    const randBtn = document.querySelector('#seq-rand-btn');
+    const stepBtns = document.querySelectorAll('.step-btn');
+    const presetBtns = document.querySelectorAll('.preset-btn');
+    const memSlots = document.querySelectorAll('.mem-slot');
+
+    const initAudio = () => {
+      if (!audioCtx) {
+        const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioCtxClass();
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    };
+
+    const playSound = (type) => {
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+
+      if (type === 'kick') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.setValueAtTime(130, now);
+        osc.frequency.exponentialRampToValueAtTime(0.01, now + 0.4);
+        gain.gain.setValueAtTime(1, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.4);
+      } else if (type === 'snare') {
+        const noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.2, audioCtx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < noiseBuffer.length; i++) output[i] = Math.random() * 2 - 1;
+
+        const whiteNoise = audioCtx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        const noiseFilter = audioCtx.createBiquadFilter();
+        noiseFilter.type = 'highpass';
+        noiseFilter.frequency.value = 1000;
+
+        const noiseGain = audioCtx.createGain();
+        noiseGain.gain.setValueAtTime(0.8, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+
+        whiteNoise.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(audioCtx.destination);
+        whiteNoise.start(now);
+      } else if (type === 'hihat') {
+        const noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.05, audioCtx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < noiseBuffer.length; i++) output[i] = Math.random() * 2 - 1;
+
+        const whiteNoise = audioCtx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 7000;
+
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+
+        whiteNoise.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+        whiteNoise.start(now);
+      } else if (type === 'openhat') {
+        const noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.3, audioCtx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < noiseBuffer.length; i++) output[i] = Math.random() * 2 - 1;
+
+        const whiteNoise = audioCtx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 5000;
+
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+
+        whiteNoise.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+        whiteNoise.start(now);
+      }
+    };
+
+    const applyGridConfig = (config) => {
+      const rows = document.querySelectorAll('.seq-row');
+      rows.forEach((row, rIdx) => {
+        const buttons = row.querySelectorAll('.step-btn');
+        buttons.forEach((btn, sIdx) => {
+          if (config[rIdx] && config[rIdx][sIdx]) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+      });
+    };
+
+    const getCurrentGridConfig = () => {
+      const rows = document.querySelectorAll('.seq-row');
+      const config = [];
+      rows.forEach((row) => {
+        const rowStates = [];
+        const buttons = row.querySelectorAll('.step-btn');
+        buttons.forEach((btn) => {
+          rowStates.push(btn.classList.contains('active'));
+        });
+        config.push(rowStates);
+      });
+      return config;
+    };
+
+    const presets = {
+      boombap: [
+        [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+        [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+        [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+        [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,1,0]
+      ],
+      trap: [
+        [1,0,0,0, 0,0,0,1, 1,0,0,0, 0,0,0,0],
+        [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,1],
+        [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1],
+        [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,1]
+      ],
+      house: [
+        [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+        [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+        [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+        [0,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,1,0]
+      ],
+      bounce: [
+        [1,0,0,1, 0,0,1,0, 0,1,0,0, 1,0,0,0],
+        [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,1],
+        [1,1,0,1, 1,1,0,1, 1,1,0,1, 1,1,0,1],
+        [0,0,0,0, 0,0,0,1, 0,0,0,0, 0,0,0,0]
+      ]
+    };
+
+    presetBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const style = btn.dataset.preset;
+        if (presets[style]) applyGridConfig(presets[style]);
+      });
+    });
+
+    memSlots.forEach((slot) => {
+      const idx = parseInt(slot.dataset.memIndex, 10);
+      const loadBtn = slot.querySelector('.mem-load-btn');
+      const saveBtn = slot.querySelector('.mem-save-btn');
+      const delBtn = slot.querySelector('.mem-del-btn');
+      const statusEl = slot.querySelector('.mem-status');
+
+      saveBtn.addEventListener('click', () => {
+        userMemories[idx] = getCurrentGridConfig();
+        loadBtn.classList.add('saved');
+        statusEl.textContent = 'Enregistré';
+      });
+
+      loadBtn.addEventListener('click', () => {
+        if (userMemories[idx]) {
+          applyGridConfig(userMemories[idx]);
+          loadBtn.classList.add('loaded-flash');
+          setTimeout(() => loadBtn.classList.remove('loaded-flash'), 300);
+        } else {
+          userMemories[idx] = getCurrentGridConfig();
+          loadBtn.classList.add('saved');
+          statusEl.textContent = 'Enregistré';
+        }
+      });
+
+      delBtn.addEventListener('click', () => {
+        userMemories[idx] = null;
+        loadBtn.classList.remove('saved');
+        statusEl.textContent = 'Vide';
+      });
+    });
+
+    if (randBtn) {
+      randBtn.addEventListener('click', () => {
+        const rows = document.querySelectorAll('.seq-row');
+        rows.forEach((row) => {
+          const buttons = row.querySelectorAll('.step-btn');
+          buttons.forEach((btn) => {
+            if (Math.random() < 0.25) {
+              btn.classList.add('active');
+            } else {
+              btn.classList.remove('active');
+            }
+          });
+        });
+      });
+    }
+
+    const stepTick = () => {
+      document.querySelectorAll('.step-btn').forEach((btn) => btn.classList.remove('playing'));
+      document.querySelectorAll(`.step-btn[data-step="${currentSeqStep}"]`).forEach((btn) => {
+        btn.classList.add('playing');
+        if (btn.classList.contains('active')) {
+          const trackType = btn.closest('.seq-row').dataset.track;
+          playSound(trackType);
+        }
+      });
+
+      currentSeqStep = (currentSeqStep + 1) % 16;
+    };
+
+    const startSequencer = () => {
+      initAudio();
+      isPlayingSeq = true;
+      if (playBtn) {
+        playBtn.querySelector('.icon').textContent = '⏹';
+        playBtn.querySelector('.label').textContent = 'Stopper';
+        playBtn.classList.add('playing');
+      }
+      const intervalMs = (60 / bpm / 4) * 1000;
+      seqIntervalId = setInterval(stepTick, intervalMs);
+    };
+
+    const stopSequencer = () => {
+      isPlayingSeq = false;
+      if (seqIntervalId) clearInterval(seqIntervalId);
+      if (playBtn) {
+        playBtn.querySelector('.icon').textContent = '▶';
+        playBtn.querySelector('.label').textContent = 'Jouer le Beat';
+        playBtn.classList.remove('playing');
+      }
+      document.querySelectorAll('.step-btn').forEach((btn) => btn.classList.remove('playing'));
+      currentSeqStep = 0;
+    };
+
+    stepBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        initAudio();
+        btn.classList.toggle('active');
+        if (btn.classList.contains('active')) {
+          const trackType = btn.closest('.seq-row').dataset.track;
+          playSound(trackType);
+        }
+      });
+    });
+
+    if (playBtn) {
+      playBtn.addEventListener('click', () => {
+        if (isPlayingSeq) stopSequencer();
+        else startSequencer();
+      });
+    }
+
+    if (bpmSlider && bpmVal) {
+      bpmSlider.addEventListener('input', (e) => {
+        bpm = parseInt(e.target.value, 10);
+        bpmVal.textContent = bpm.toString();
+        if (isPlayingSeq) {
+          clearInterval(seqIntervalId);
+          const intervalMs = (60 / bpm / 4) * 1000;
+          seqIntervalId = setInterval(stepTick, intervalMs);
+        }
+      });
+    }
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        stepBtns.forEach((btn) => btn.classList.remove('active'));
+      });
+    }
   }
 </script>
 
@@ -156,22 +766,10 @@ const tabs: RapTab[] = [
     transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
   }
 
-  .rap-tab::before {
-    font-size: 1.1rem;
-    line-height: 1;
-  }
-
-  .rap-tab[data-tab='cours']::before {
-    content: '🎓';
-  }
-
-  .rap-tab[data-tab='rap']::before {
-    content: '🎤';
-  }
-
-  .rap-tab[data-tab='fun']::before {
-    content: '😄';
-  }
+  .rap-tab::before { font-size: 1.1rem; line-height: 1; }
+  .rap-tab[data-tab='cours']::before { content: '🎓'; }
+  .rap-tab[data-tab='rap']::before { content: '🎤'; }
+  .rap-tab[data-tab='fun']::before { content: '😄'; }
 
   .rap-tab:hover {
     border-color: var(--primary, #38bdf8);
@@ -184,19 +782,385 @@ const tabs: RapTab[] = [
     box-shadow: 0 0 0 1px var(--primary, #38bdf8), 0 0 16px rgba(56, 189, 248, 0.25);
   }
 
-  .rap-tab:focus-visible {
-    outline: 2px solid var(--primary, #38bdf8);
-    outline-offset: 2px;
-  }
-
-  .rap-panel[hidden] {
-    display: none;
-  }
+  .rap-panel[hidden] { display: none; }
 
   .rap-videos {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 1rem;
   }
-</style>
 
+  .course-history-section, .fun-sequencer-section {
+    margin-top: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .history-header {
+    text-align: left;
+    border-bottom: 1px solid #334155;
+    padding-bottom: 0.75rem;
+  }
+
+  .section-badge {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    border: 1px solid #38bdf8;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+
+  .history-header h2 { margin: 0.5rem 0 0.2rem; font-size: 1.5rem; color: #f8fafc; }
+  .history-header p { margin: 0; color: #94a3b8; font-size: 0.9rem; }
+
+  .pillars-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    padding: 1.25rem;
+  }
+
+  .pillars-card h3 { margin: 0 0 0.8rem; font-size: 1.05rem; color: #f1f5f9; }
+
+  .pillars-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .pillar-item {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.2rem;
+  }
+
+  .pillar-icon { font-size: 1.5rem; }
+  .pillar-item strong { color: #f8fafc; font-size: 0.85rem; }
+  .pillar-item small { color: #94a3b8; font-size: 0.75rem; }
+
+  .timeline-slider-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    padding: 1.25rem;
+  }
+
+  .slider-range-box { display: flex; flex-direction: column; gap: 0.5rem; }
+  .range-header { display: flex; justify-content: space-between; align-items: center; }
+  .range-period { font-size: 1.1rem; font-weight: 800; color: #38bdf8; }
+  .range-counter { font-size: 0.8rem; color: #94a3b8; font-weight: 600; }
+
+  input[type="range"]#timeline-range {
+    width: 100%;
+    height: 10px;
+    border-radius: 5px;
+    background: #1e293b;
+    outline: none;
+    accent-color: #38bdf8;
+    cursor: pointer;
+    border: 1px solid #334155;
+  }
+
+  .range-ticks { display: flex; justify-content: space-between; padding: 0 0.2rem; }
+
+  .tick-mark {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #64748b;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+  }
+
+  .tick-mark:hover { color: #f1f5f9; }
+  .tick-mark.active { color: #0f172a; background: #38bdf8; }
+
+  .fixed-slider-card {
+    background: #1e293b;
+    border: 1px solid #38bdf8;
+    border-radius: 12px;
+    padding: 1.25rem;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .card-top { display: flex; align-items: center; gap: 0.75rem; }
+
+  .step-tag {
+    font-size: 0.7rem;
+    color: #38bdf8;
+    font-weight: 700;
+    text-transform: uppercase;
+    background: rgba(56, 189, 248, 0.15);
+    padding: 0.2rem 0.5rem;
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+
+  .card-top h3 { margin: 0; font-size: 1.15rem; color: #f8fafc; }
+  .card-body-scroll { overflow-y: auto; max-height: 160px; }
+  .points-list { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.6rem; }
+  .point-item { color: #cbd5e1; font-size: 0.9rem; line-height: 1.45; }
+  .point-item :global(strong) { color: #38bdf8; }
+  .point-item :global(em) { color: #f8fafc; font-style: normal; text-decoration: underline; text-decoration-color: rgba(56, 189, 248, 0.4); }
+
+  /* SÉQUENCEUR 808 STYLES */
+  .sequencer-card {
+    background: #1e293b;
+    border: 1px solid #38bdf8;
+    border-radius: 16px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .seq-top-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: nowrap; /* Empêche le retour à la ligne non souhaité */
+    background: #0f172a;
+    padding: 0.85rem 1.25rem;
+    border-radius: 12px;
+    border: 1px solid #334155;
+  }
+
+  .seq-btn-primary {
+    background: #38bdf8;
+    color: #0f172a;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+  }
+
+  .seq-btn-primary:hover { background: #0ea5e9; }
+  .seq-btn-primary.playing { background: #ef4444; color: #fff; }
+
+  .bpm-control {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #f1f5f9;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+
+  .bpm-control input[type="range"] {
+    accent-color: #38bdf8;
+    cursor: pointer;
+    width: 120px;
+  }
+
+  .seq-actions-group {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .seq-btn-secondary, .seq-btn-random {
+    background: #334155;
+    color: #f1f5f9;
+    border: none;
+    padding: 0.5rem 0.9rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s ease;
+  }
+  .seq-btn-secondary:hover, .seq-btn-random:hover { background: #475569; }
+  .seq-btn-random { background: #0284c7; }
+  .seq-btn-random:hover { background: #0369a1; }
+
+  .seq-presets-bar, .seq-memory-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    background: #0f172a;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    border: 1px solid #334155;
+  }
+
+  .bar-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #94a3b8;
+  }
+
+  .preset-btn {
+    background: #1e293b;
+    color: #38bdf8;
+    border: 1px solid #334155;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .preset-btn:hover {
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.1);
+  }
+
+  .mem-slots-group {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .mem-slot {
+    display: flex;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .mem-load-btn {
+    background: transparent;
+    color: #f1f5f9;
+    border: none;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: background 0.2s;
+  }
+  .mem-load-btn:hover { background: rgba(56, 189, 248, 0.15); }
+  .mem-load-btn.saved { color: #22c55e; }
+  .mem-load-btn.loaded-flash { background: #38bdf8; color: #0f172a; }
+
+  .mem-status {
+    font-size: 0.6rem;
+    color: #94a3b8;
+    font-weight: normal;
+  }
+
+  .mem-save-btn, .mem-del-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    border-left: 1px solid #334155;
+    color: #f1f5f9;
+    padding: 0 0.45rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: background 0.2s;
+  }
+  .mem-save-btn:hover { background: rgba(34, 197, 94, 0.2); }
+  .mem-del-btn:hover { background: rgba(239, 68, 68, 0.2); }
+
+  .mem-hint {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    font-style: italic;
+    width: 100%;
+  }
+
+  .sequencer-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    overflow-x: auto;
+  }
+
+  .grid-header, .seq-row {
+    display: grid;
+    grid-template-columns: 180px repeat(16, minmax(22px, 1fr));
+    gap: 0.35rem;
+    align-items: center;
+  }
+
+  .track-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    white-space: nowrap;
+  }
+
+  .step-num {
+    text-align: center;
+    font-size: 0.7rem;
+    color: #64748b;
+    font-weight: 700;
+  }
+
+  .step-num.beat-start { color: #38bdf8; }
+
+  .steps-container {
+    display: contents;
+  }
+
+  .step-btn {
+    height: 36px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .step-btn:hover { border-color: #38bdf8; }
+
+  .step-btn.active {
+    background: #38bdf8;
+    border-color: #38bdf8;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+  }
+
+  .step-btn.playing {
+    border-color: #f59e0b;
+    transform: scale(1.08);
+  }
+
+  .step-btn.active.playing {
+    background: #f59e0b;
+    border-color: #f59e0b;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
+  }
+
+  .pedago-note {
+    margin: 0;
+    padding: 0.85rem;
+    background: rgba(56, 189, 248, 0.08);
+    border-left: 4px solid #38bdf8;
+    border-radius: 0 8px 8px 0;
+    color: #cbd5e1;
+    font-size: 0.88rem;
+  }
+</style>
