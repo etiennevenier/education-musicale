@@ -1,0 +1,1730 @@
+---
+import { CAUSE_LABELS, SONGS, type Cause } from '../data/engagementSongs';
+
+const causes = (
+  Object.entries(CAUSE_LABELS) as [Cause, { label: string; icon: string }][]
+).map(([id, meta]) => ({ id, ...meta }));
+
+const firstSong = SONGS[0];
+const firstListenUrl = firstSong
+  ? `https://www.youtube.com/results?search_query=${encodeURIComponent(`${firstSong.artiste}${firstSong.titre} audio`)}`
+  : 'https://www.youtube.com/results?search_query=musique+engagee';
+---
+
+<div class="engagement-decrypteur" data-decrypteur>
+  <header class="decrypteur-header">
+    <div class="decrypteur-heading">
+      <p class="decrypteur-kicker">🎤 Atelier d'analyse</p>
+      <h3>Le Décrypteur d'Engagement Musical</h3>
+      <p class="decrypteur-intro">
+        Écoute le morceau, identifie la cause défendue puis retrouve les citations exactes du texte.
+      </p>
+    </div>
+    <button type="button" class="decrypteur-reset" data-reset>🔄 Recommencer</button>
+  </header>
+
+  <div class="decrypteur-status">
+    <span class="status-progress" data-progress>Morceau 1 / {SONGS.length}</span>
+    <div class="decrypteur-dots" data-dots role="navigation" aria-label="Sélection directe du morceau">
+      {SONGS.map((song, index) => (
+        <button
+          type="button"
+          class="decrypteur-dot"
+          data-dot={index}
+          data-state="pending"
+          data-current={index === 0 ? 'true' : 'false'}
+          aria-label={`Aller au morceau ${index + 1} : ${song.titre}`}
+        >
+          {index + 1}
+        </button>
+      ))}
+    </div>
+    <span class="status-score" data-score>Analyses réussies : 0 / {SONGS.length}</span>
+  </div>
+
+  <article class="decrypteur-card" data-card aria-labelledby="decrypteur-song-title">
+    <header class="song-header">
+      <p class="song-step" data-song-step>Morceau 1 / {SONGS.length}</p>
+      <h4 class="song-title" id="decrypteur-song-title" data-song-title tabindex="-1">
+        {firstSong?.titre}
+      </h4>
+      <p class="song-meta">
+        <span data-song-artist>{firstSong?.artiste}</span>
+        <span class="song-separator" aria-hidden="true">•</span>
+        <span data-song-year>{firstSong?.annee}</span>
+      </p>
+      <p class="song-context" data-song-context>{firstSong?.contexte}</p>
+    </header>
+
+    <div class="song-visual">
+      <a
+        class="song-visual-link"
+        data-song-link
+        href={firstListenUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={firstSong
+          ? `Écouter ${firstSong.titre} - ${firstSong.artiste} sur YouTube`
+          : 'Écouter le morceau sur YouTube'}
+        title={firstSong
+          ? `Écouter ${firstSong.titre} - ${firstSong.artiste} sur YouTube`
+          : 'Écouter le morceau sur YouTube'}
+      >
+        <img
+          class="song-illustration"
+          data-song-illustration
+          src={firstSong?.illustrationUrl}
+          alt={firstSong
+            ? `Pochette du morceau ${firstSong.titre} de ${firstSong.artiste}`
+            : 'Pochette du morceau'}
+          width="480"
+          height="360"
+          loading="lazy"
+          decoding="async"
+        />
+        <span class="song-visual-overlay" aria-hidden="true">
+          <span class="song-visual-cta">🎧 Cliquez pour écouter le morceau</span>
+        </span>
+      </a>
+      <p class="song-visual-hint">
+        🎧 Clique sur l'image pour ouvrir l'écoute (ou écoute la diffusion du professeur).
+      </p>
+    </div>
+
+    <fieldset class="step-block">
+      <legend>Étape A — Quelle cause le morceau défend-il ?</legend>
+      <div class="choice-grid">
+        {causes.map((cause) => (
+          <button
+            type="button"
+            class="choice-button"
+            data-cause={cause.id}
+            aria-pressed="false"
+          >
+            <span class="choice-icon" aria-hidden="true">{cause.icon}</span>
+            <span>{cause.label}</span>
+          </button>
+        ))}
+      </div>
+    </fieldset>
+
+    <fieldset class="step-block">
+      <legend>Étape B — Sélectionne les citations exactes du morceau</legend>
+      <p class="step-help">
+        Coche uniquement les vers et citations qui figurent réellement dans ce morceau.
+      </p>
+      <div class="evidence-group">
+        <ul class="evidence-list" data-text-evidence></ul>
+      </div>
+    </fieldset>
+
+    <div class="card-actions">
+      <button type="button" class="validate-button" data-validate disabled>
+        Valider l'analyse
+      </button>
+    </div>
+
+    <section class="decrypteur-feedback" data-feedback tabindex="-1" hidden>
+      <p class="feedback-kicker">Bilan du morceau</p>
+      <h5 class="feedback-title" data-feedback-title></h5>
+
+      <div class="feedback-checks">
+        <div class="check-row" data-check-cause data-state="pending">
+          <span class="check-icon" data-check-cause-icon aria-hidden="true">•</span>
+          <div class="check-body">
+            <p class="check-label">Cause défendue</p>
+            <p class="check-value" data-check-cause-value></p>
+            <p class="check-detail" data-check-cause-detail></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="evidence-feedback">
+        <section
+          class="evidence-report"
+          data-text-report
+          aria-label="Bilan des citations"
+        ></section>
+      </div>
+
+      <div class="feedback-explain">
+        <h6>Ce qu'il faut retenir</h6>
+        <p data-explanation></p>
+        <p class="feedback-ambiguity" data-ambiguity hidden></p>
+      </div>
+
+      <button type="button" class="feedback-next" data-next hidden>
+        Morceau suivant →
+      </button>
+    </section>
+  </article>
+
+  <section class="decrypteur-summary" data-summary tabindex="-1" hidden>
+    <p class="summary-kicker">Session terminée</p>
+    <h4>Bilan de tes écoutes</h4>
+    <p class="summary-score" data-summary-score></p>
+    <ol class="summary-list" data-summary-list></ol>
+    <button type="button" class="summary-restart" data-restart>
+      Rejouer une session
+    </button>
+  </section>
+
+  <p class="sr-only" aria-live="polite" data-live></p>
+  <noscript>
+    <p class="decrypteur-noscript">Ce module interactif nécessite JavaScript.</p>
+  </noscript>
+</div>
+
+<script>
+  import { CAUSE_LABELS, SONGS } from '../data/engagementSongs';
+  import type { Cause, EngagementSong } from '../data/engagementSongs';
+
+  type EvidenceItem = {
+    id: string;
+    text: string;
+    correct: boolean;
+  };
+
+  type EvidenceReport = {
+    found: string[];
+    missed: string[];
+    trapsSelected: string[];
+    trapsAvoided: string[];
+    perfect: boolean;
+  };
+
+  type Result = {
+    causeOk: boolean;
+    text: EvidenceReport;
+    perfect: boolean;
+  };
+
+  type Answer = {
+    cause: Cause | null;
+    text: Set<string>;
+    validated: boolean;
+    result: Result | null;
+  };
+
+  type SongState = {
+    song: EngagementSong;
+    text: EvidenceItem[];
+    answer: Answer;
+  };
+
+  const shuffle = <T,>(items: readonly T[]): T[] => {
+    const result = [...items];
+    for (let i = result.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const current = result[i];
+      const random = result[j];
+      if (current === undefined || random === undefined) continue;
+      result[i] = random;
+      result[j] = current;
+    }
+    return result;
+  };
+
+  const createEvidence = (song: EngagementSong): EvidenceItem[] =>
+    shuffle([
+      ...song.indicesTextuels.map((text, index) => ({
+        id: `${song.id}-text-true-${index}`,
+        text,
+        correct: true,
+      })),
+      ...song.leurresTextuels.map((text, index) => ({
+        id: `${song.id}-text-false-${index}`,
+        text,
+        correct: false,
+      })),
+    ]);
+
+  const acceptedCauses = (song: EngagementSong): Cause[] => [
+    song.causePrincipale,
+    ...(song.causesAcceptees ?? []),
+  ];
+
+  const assessEvidence = (items: EvidenceItem[], selected: Set<string>): EvidenceReport => {
+    const found = items
+      .filter((item) => item.correct && selected.has(item.id))
+      .map((item) => item.text);
+    const missed = items
+      .filter((item) => item.correct && !selected.has(item.id))
+      .map((item) => item.text);
+    const trapsSelected = items
+      .filter((item) => !item.correct && selected.has(item.id))
+      .map((item) => item.text);
+    const trapsAvoided = items
+      .filter((item) => !item.correct && !selected.has(item.id))
+      .map((item) => item.text);
+
+    return {
+      found,
+      missed,
+      trapsSelected,
+      trapsAvoided,
+      perfect: missed.length === 0 && trapsSelected.length === 0,
+    };
+  };
+
+  const evaluate = (state: SongState): Result => {
+    const causeOk =
+      state.answer.cause !== null && acceptedCauses(state.song).includes(state.answer.cause);
+    const text = assessEvidence(state.text, state.answer.text);
+
+    return {
+      causeOk,
+      text,
+      perfect: causeOk && text.perfect,
+    };
+  };
+  const root = document.querySelector<HTMLElement>('[data-decrypteur]');
+
+  if (root) {
+    const progressLabel = root.querySelector<HTMLElement>('[data-progress]')!;
+    const scoreLabel = root.querySelector<HTMLElement>('[data-score]')!;
+    const card = root.querySelector<HTMLElement>('[data-card]')!;
+    const songStep = root.querySelector<HTMLElement>('[data-song-step]')!;
+    const songTitle = root.querySelector<HTMLElement>('[data-song-title]')!;
+    const songArtist = root.querySelector<HTMLElement>('[data-song-artist]')!;
+    const songYear = root.querySelector<HTMLElement>('[data-song-year]')!;
+    const songContext = root.querySelector<HTMLElement>('[data-song-context]')!;
+    const listenLink = root.querySelector<HTMLAnchorElement>('[data-song-link]')!;
+    const illustration = root.querySelector<HTMLImageElement>('[data-song-illustration]')!;
+    const textList = root.querySelector<HTMLUListElement>('[data-text-evidence]')!;
+    const validateButton = root.querySelector<HTMLButtonElement>('[data-validate]')!;
+    const feedback = root.querySelector<HTMLElement>('[data-feedback]')!;
+    const feedbackTitle = root.querySelector<HTMLElement>('[data-feedback-title]')!;
+    const checkCause = root.querySelector<HTMLElement>('[data-check-cause]')!;
+    const checkCauseIcon = root.querySelector<HTMLElement>('[data-check-cause-icon]')!;
+    const checkCauseValue = root.querySelector<HTMLElement>('[data-check-cause-value]')!;
+    const checkCauseDetail = root.querySelector<HTMLElement>('[data-check-cause-detail]')!;
+    const textReport = root.querySelector<HTMLElement>('[data-text-report]')!;
+    const explanation = root.querySelector<HTMLElement>('[data-explanation]')!;
+    const ambiguity = root.querySelector<HTMLElement>('[data-ambiguity]')!;
+    const nextButton = root.querySelector<HTMLButtonElement>('[data-next]')!;
+    const summary = root.querySelector<HTMLElement>('[data-summary]')!;
+    const summaryScore = root.querySelector<HTMLElement>('[data-summary-score]')!;
+    const summaryList = root.querySelector<HTMLOListElement>('[data-summary-list]')!;
+    const resetButton = root.querySelector<HTMLButtonElement>('[data-reset]')!;
+    const restartButton = root.querySelector<HTMLButtonElement>('[data-restart]')!;
+    const live = root.querySelector<HTMLElement>('[data-live]')!;
+    const causeButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-cause]'));
+    const dots = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-dot]'));
+
+    let session: SongState[] = [];
+    let currentIndex = 0;
+
+    const isCause = (value: string | undefined): value is Cause =>
+      value !== undefined && Object.prototype.hasOwnProperty.call(CAUSE_LABELS, value);
+
+    const causeLabel = (cause: Cause): string =>
+      `${CAUSE_LABELS[cause].icon} ${CAUSE_LABELS[cause].label}`;
+
+    const formatChoices = (labels: string[]): string => {
+      if (labels.length === 0) return '';
+      if (labels.length === 1) return labels[0] ?? '';
+      const last = labels[labels.length - 1] ?? '';
+      return `${labels.slice(0, -1).join(', ')} ou ${last}`;
+    };
+    const updateProgress = () => {
+      const successes = session.filter((state) => state.answer.result?.perfect).length;
+      progressLabel.textContent =
+        currentIndex < session.length
+          ? `Morceau ${currentIndex + 1} / ${session.length}`
+          : 'Session terminée';
+      scoreLabel.textContent = `Analyses réussies : ${successes} / ${session.length}`;
+      dots.forEach((dot, index) => {
+        dot.dataset.current = index === currentIndex ? 'true' : 'false';
+        const st = session[index]?.answer.result;
+        if (st) {
+          if (st.perfect) {
+            dot.dataset.state = 'success';
+          } else if (st.causeOk || st.text.perfect) {
+            dot.dataset.state = 'partial';
+          } else {
+            dot.dataset.state = 'danger';
+          }
+        } else {
+          dot.dataset.state = 'pending';
+        }
+      });
+    };
+
+    const syncChoices = () => {
+      const answer = session[currentIndex]?.answer;
+
+      causeButtons.forEach((button) => {
+        const isSelected = answer?.cause === button.dataset.cause;
+        button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+        button.classList.toggle('is-selected', isSelected);
+        button.disabled = answer?.validated ?? true;
+      });
+    };
+
+    const renderEvidence = (
+      list: HTMLUListElement,
+      items: EvidenceItem[],
+      selected: Set<string>,
+      disabled: boolean,
+    ) => {
+      list.replaceChildren(
+        ...items.map((item) => {
+          const listItem = document.createElement('li');
+          listItem.className = 'evidence-item';
+
+          const label = document.createElement('label');
+          label.className = 'evidence-label';
+
+          const input = document.createElement('input');
+          input.type = 'checkbox';
+          input.value = item.id;
+          input.checked = selected.has(item.id);
+          input.disabled = disabled;
+
+          const text = document.createElement('span');
+          text.textContent = item.text;
+
+          label.append(input, text);
+          listItem.append(label);
+          return listItem;
+        }),
+      );
+    };
+
+    const updateValidate = () => {
+      const state = session[currentIndex];
+      validateButton.disabled = !state || state.answer.validated || !state.answer.cause;
+    };
+
+    const setCheck = (
+      row: HTMLElement,
+      icon: HTMLElement,
+      value: HTMLElement,
+      detail: HTMLElement,
+      ok: boolean,
+      expected: string,
+      chosen: string,
+    ) => {
+      row.dataset.state = ok ? 'success' : 'danger';
+      icon.textContent = ok ? '✓' : '✕';
+      value.textContent = `Attendu : ${expected}`;
+      detail.textContent =
+        ok && chosen !== expected
+          ? `Ton choix : ${chosen} (accepté).`
+          : `Ton choix : ${chosen}.`;
+    };
+
+    const renderReport = (container: HTMLElement, title: string, report: EvidenceReport) => {
+      const header = document.createElement('div');
+      header.className = 'report-head';
+
+      const heading = document.createElement('h6');
+      heading.textContent = title;
+
+      const status = document.createElement('span');
+      status.className = 'report-status';
+      status.dataset.state = report.perfect ? 'success' : 'danger';
+      status.textContent = report.perfect ? '✓ Parfait' : '✗ À revoir';
+
+      header.append(heading, status);
+      container.replaceChildren(header);
+
+      const lines = [
+        { className: 'report-good', label: '✅ Citations exactes trouvées', values: report.found },
+        { className: 'report-warn', label: '🔍 Citations manquées', values: report.missed },
+        { className: 'report-bad', label: '⚠️ Pièges cochés', values: report.trapsSelected },
+        { className: 'report-good', label: '🛡️ Pièges évités', values: report.trapsAvoided },
+      ];
+
+      lines.forEach((line) => {
+        if (line.values.length === 0) return;
+
+        const paragraph = document.createElement('p');
+        paragraph.className = `report-line ${line.className}`;
+        const strong = document.createElement('strong');
+        strong.textContent = `${line.label} : `;
+        paragraph.append(strong, document.createTextNode(line.values.join(' · ')));
+        container.append(paragraph);
+      });
+
+      if (report.perfect) {
+        const paragraph = document.createElement('p');
+        paragraph.className = 'report-perfect';
+        paragraph.textContent = 'Toutes les citations exactes sont identifiées sans piège !';
+        container.append(paragraph);
+      }
+    };
+    const renderFeedback = (state: SongState, result: Result) => {
+      const { song } = state;
+      feedback.hidden = false;
+      const isPartial = result.causeOk || result.text.perfect;
+      feedback.dataset.state = result.perfect
+        ? 'success'
+        : isPartial
+          ? 'partial'
+          : 'danger';
+
+      feedbackTitle.textContent = result.perfect
+        ? 'Analyse parfaite !'
+        : result.causeOk
+          ? 'Cause exacte ! Les citations doivent encore être affinées.'
+          : 'Analyse à corriger.';
+
+      const chosenCause = state.answer.cause ? causeLabel(state.answer.cause) : 'Aucun choix';
+      const expectedCause = formatChoices(acceptedCauses(song).map((c) => causeLabel(c)));
+
+      setCheck(checkCause, checkCauseIcon, checkCauseValue, checkCauseDetail, result.causeOk, expectedCause, chosenCause);
+      renderReport(textReport, '📝 Citations exactes', result.text);
+
+      explanation.textContent = song.explication;
+      if (song.ambiguite) {
+        ambiguity.hidden = false;
+        ambiguity.textContent = `Nuance : ${song.ambiguite}`;
+      } else {
+        ambiguity.hidden = true;
+      }
+
+      nextButton.textContent = currentIndex === session.length - 1 ? 'Voir le bilan →' : 'Morceau suivant →';
+      nextButton.hidden = false;
+    };
+    const renderSong = (focus: boolean) => {
+      const state = session[currentIndex];
+      if (!state) return;
+
+      const { song, answer } = state;
+      card.hidden = false;
+      summary.hidden = true;
+      songStep.textContent = `Morceau ${currentIndex + 1} / ${session.length}`;
+      songTitle.textContent = song.titre;
+      songArtist.textContent = song.artiste;
+      songYear.textContent = String(song.annee);
+      songContext.textContent = song.contexte;
+
+      const listenUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(`${song.artiste}${song.titre} audio`)}`;
+      listenLink.href = listenUrl;
+      listenLink.title = `Écouter ${song.titre} - ${song.artiste} sur YouTube`;
+      listenLink.setAttribute(
+        'aria-label',
+        `Écouter ${song.titre} - ${song.artiste} sur YouTube`,
+      );
+      if (song.illustrationUrl) {
+        illustration.src = song.illustrationUrl;
+        illustration.alt = `Pochette du morceau ${song.titre} de ${song.artiste}`;
+      }
+
+      if (answer.validated && answer.result) {
+        renderFeedback(state, answer.result);
+      } else {
+        feedback.hidden = true;
+      }
+
+      renderEvidence(textList, state.text, answer.text, answer.validated);
+      syncChoices();
+      updateValidate();
+      updateProgress();
+
+      if (focus) {
+        card.scrollIntoView({ block: 'start' });
+        songTitle.focus({ preventScroll: true });
+      }
+    };
+
+    const showSummary = () => {
+      card.hidden = true;
+      feedback.hidden = true;
+      summary.hidden = false;
+      currentIndex = session.length;
+      updateProgress();
+
+      const successes = session.filter((state) => state.answer.result?.perfect).length;
+      summaryScore.textContent = `${successes} analyse${successes > 1 ? 's' : ''} réussie${successes > 1 ? 's' : ''} sur ${session.length}.`;
+
+      const items = session.map((state) => {
+        const result = state.answer.result;
+        const listItem = document.createElement('li');
+        listItem.className = 'summary-item';
+        listItem.dataset.state = result?.perfect ? 'success' : 'danger';
+
+        const title = document.createElement('p');
+        title.className = 'summary-item-title';
+        title.textContent = state.song.titre;
+
+        const meta = document.createElement('p');
+        meta.className = 'summary-item-meta';
+        meta.textContent = `${state.song.artiste} · ${state.song.annee}`;
+
+        const labels = document.createElement('p');
+        labels.className = 'summary-item-labels';
+        labels.textContent = causeLabel(state.song.causePrincipale);
+
+        const status = document.createElement('p');
+        status.className = 'summary-item-status';
+        status.textContent = result?.perfect ? '✓ Analyse réussie' : '✗ À revoir';
+
+        listItem.append(title, meta, labels, status);
+        return listItem;
+      });
+
+      summaryList.replaceChildren(...items);
+      summary.focus({ preventScroll: true });
+    };
+    const startSession = () => {
+      session = SONGS.map((song) => ({
+        song,
+        text: createEvidence(song),
+        answer: {
+          cause: null,
+          text: new Set<string>(),
+          validated: false,
+          result: null,
+        },
+      }));
+
+      currentIndex = 0;
+      summary.hidden = true;
+      feedback.hidden = true;
+      renderSong(false);
+    };
+
+    const collectChecked = (list: HTMLUListElement): Set<string> =>
+      new Set(
+        Array.from(
+          list.querySelectorAll<HTMLInputElement>('input[type="checkbox"]:checked'),
+        ).map((input) => input.value),
+      );
+
+    dots.forEach((dot, index) => {
+      dot.addEventListener('click', () => {
+        currentIndex = index;
+        renderSong(true);
+      });
+    });
+
+    causeButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const state = session[currentIndex];
+        if (!state || state.answer.validated) return;
+        const cause = button.dataset.cause;
+        if (!isCause(cause)) return;
+        state.answer.cause = cause;
+        syncChoices();
+        updateValidate();
+      });
+    });
+
+    textList.addEventListener('change', () => {
+      const state = session[currentIndex];
+      if (!state || state.answer.validated) return;
+      state.answer.text = collectChecked(textList);
+    });
+
+    validateButton.addEventListener('click', () => {
+      const state = session[currentIndex];
+      if (!state || state.answer.validated || !state.answer.cause) return;
+
+      const result = evaluate(state);
+      state.answer.validated = true;
+      state.answer.result = result;
+
+      renderFeedback(state, result);
+      syncChoices();
+      textList.querySelectorAll<HTMLInputElement>('input').forEach((i) => (i.disabled = true));
+      validateButton.disabled = true;
+      updateProgress();
+    });
+
+    nextButton.addEventListener('click', () => {
+      if (currentIndex < session.length - 1) {
+        currentIndex += 1;
+        renderSong(true);
+        return;
+      }
+      showSummary();
+    });
+
+    resetButton.addEventListener('click', () => {
+      startSession();
+      card.scrollIntoView({ block: 'start' });
+    });
+
+    restartButton.addEventListener('click', () => {
+      startSession();
+      card.scrollIntoView({ block: 'start' });
+    });
+
+    startSession();
+  }
+</script>
+
+<style>
+  .engagement-decrypteur {
+    --dec-accent: #f59e0b;
+    --dec-accent-soft: rgba(245, 158, 11, 0.14);
+    --dec-accent-strong: #fbbf24;
+    --dec-green: #4ade80;
+    --dec-red: #f87171;
+    --dec-surface: #1e293b;
+    --dec-bg: #0f172a;
+    --dec-card: #111c2e;
+    --dec-border: #334155;
+    --dec-muted: #94a3b8;
+    --dec-text: #e2e8f0;
+
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+    padding: 1.25rem;
+    background:
+      radial-gradient(circle at top left, rgba(245, 158, 11, 0.09), transparent 32rem),
+      linear-gradient(180deg, rgba(30, 41, 59, 0.75), rgba(15, 23, 42, 0.96));
+    border: 1px solid var(--dec-border);
+    border-radius: 18px;
+    color: var(--dec-text);
+  }
+
+  .engagement-decrypteur [hidden] {
+    display: none !important;
+  }
+
+  .decrypteur-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .decrypteur-heading {
+    min-width: 0;
+  }
+
+  .decrypteur-kicker {
+    margin: 0;
+    color: var(--dec-accent-strong);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .decrypteur-heading h3 {
+    margin: 0.25rem 0 0.35rem;
+    color: #f8fafc;
+    font-size: clamp(1.25rem, 2.6vw, 1.55rem);
+    line-height: 1.2;
+  }
+
+  .decrypteur-intro {
+    margin: 0;
+    max-width: 62ch;
+    color: var(--dec-muted);
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+
+  .decrypteur-reset {
+    flex-shrink: 0;
+    padding: 0.55rem 0.8rem;
+    border: 1px solid var(--dec-border);
+    border-radius: 9px;
+    background: #0b1220;
+    color: #cbd5e1;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+  }
+
+  .decrypteur-reset:hover {
+    border-color: var(--dec-accent);
+    background: var(--dec-accent-soft);
+    color: #fef3c7;
+  }
+
+  .decrypteur-reset:focus-visible {
+    outline: 2px solid var(--dec-accent-strong);
+    outline-offset: 2px;
+  }
+
+  .decrypteur-status {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.65rem 1rem;
+    padding: 0.6rem 0.85rem;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--dec-border);
+    border-radius: 10px;
+  }
+
+  .status-progress,
+  .status-score {
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  .status-progress {
+    color: var(--dec-accent-strong);
+  }
+
+  .status-score {
+    margin-left: auto;
+    color: var(--dec-muted);
+  }
+
+  .decrypteur-dots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin: 0;
+    padding: 0;
+  }
+
+  .decrypteur-dot {
+    display: grid;
+    place-items: center;
+    width: 1.65rem;
+    height: 1.65rem;
+    border: 1px solid var(--dec-border);
+    border-radius: 999px;
+    background: #0b1220;
+    color: var(--dec-muted);
+    font: inherit;
+    font-size: 0.7rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+
+  .decrypteur-dot:hover {
+    border-color: var(--dec-accent-strong);
+    color: #f8fafc;
+    transform: scale(1.1);
+  }
+
+  .decrypteur-dot[data-current='true'] {
+    outline: 2px solid var(--dec-accent);
+    outline-offset: 2px;
+    color: #f8fafc;
+  }
+
+  .decrypteur-dot[data-state='success'] {
+    border-color: var(--dec-green);
+    background: rgba(74, 222, 128, 0.18);
+    color: #86efac;
+  }
+
+  .decrypteur-dot[data-state='partial'] {
+    border-color: #fbbf24;
+    background: rgba(251, 191, 36, 0.18);
+    color: #fde68a;
+  }
+
+  .decrypteur-dot[data-state='danger'] {
+    border-color: var(--dec-red);
+    background: rgba(248, 113, 113, 0.18);
+    color: #fca5a5;
+  }
+
+  .decrypteur-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(17, 28, 46, 0.82);
+    border: 1px solid var(--dec-border);
+    border-radius: 14px;
+  }
+
+  .song-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .song-step {
+    margin: 0;
+    color: var(--dec-accent-strong);
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .song-title {
+    margin: 0;
+    color: #f8fafc;
+    font-size: clamp(1.2rem, 3vw, 1.5rem);
+    line-height: 1.2;
+    outline: none;
+  }
+
+  .song-title:focus-visible {
+    outline: 2px solid var(--dec-accent-strong);
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
+
+  .song-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0.1rem 0 0;
+    color: #cbd5e1;
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+
+  .song-separator {
+    color: var(--dec-muted);
+  }
+
+  .song-context {
+    margin: 0.4rem 0 0;
+    max-width: 70ch;
+    color: var(--dec-muted);
+    font-size: 0.86rem;
+    line-height: 1.5;
+  }
+
+  .song-visual {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .song-visual-link {
+    position: relative;
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #000;
+    border: 1px solid var(--dec-border);
+    border-radius: 12px;
+    text-decoration: none;
+    isolation: isolate;
+  }
+
+  .song-illustration {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.35s ease, filter 0.35s ease;
+  }
+
+  .song-visual-link:hover .song-illustration,
+  .song-visual-link:focus-visible .song-illustration {
+    filter: brightness(0.82);
+    transform: scale(1.025);
+  }
+
+  .song-visual-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0.8rem;
+    background: linear-gradient(to top, rgba(2, 6, 23, 0.72), transparent 58%);
+    pointer-events: none;
+  }
+
+  .song-visual-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    max-width: 100%;
+    padding: 0.45rem 0.8rem;
+    border: 1px solid rgba(248, 250, 252, 0.28);
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.82);
+    color: #f8fafc;
+    font-size: 0.8rem;
+    font-weight: 800;
+    line-height: 1.3;
+    text-align: center;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 6px 18px rgba(2, 6, 23, 0.35);
+    transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+  }
+
+  .song-visual-link:hover .song-visual-cta,
+  .song-visual-link:focus-visible .song-visual-cta {
+    border-color: rgba(245, 158, 11, 0.7);
+    background: rgba(120, 53, 15, 0.9);
+    transform: translateY(-1px);
+  }
+
+  .song-visual-link:focus-visible {
+    outline: 2px solid var(--dec-accent-strong);
+    outline-offset: 3px;
+  }
+
+  .song-visual-hint {
+    margin: 0;
+    color: var(--dec-muted);
+    font-size: 0.78rem;
+    line-height: 1.45;
+    text-align: center;
+  }
+
+  .step-block {
+    min-width: 0;
+    margin: 0;
+    padding: 0.85rem;
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid var(--dec-border);
+    border-radius: 12px;
+  }
+
+  .step-block legend {
+    padding: 0 0.35rem;
+    color: #f1f5f9;
+    font-size: 0.92rem;
+    font-weight: 800;
+  }
+
+  .step-help {
+    margin: 0 0 0.7rem;
+    color: var(--dec-muted);
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+
+  .choice-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 0.5rem;
+  }
+  .choice-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    padding: 0.65rem 0.7rem;
+    border: 1px solid var(--dec-border);
+    border-radius: 9px;
+    background: #0b1220;
+    color: #cbd5e1;
+    font: inherit;
+    font-size: 0.84rem;
+    font-weight: 600;
+    line-height: 1.35;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  .choice-button:hover:not(:disabled) {
+    border-color: #64748b;
+    color: #f8fafc;
+  }
+
+  .choice-button[aria-pressed='true'] {
+    border-color: var(--dec-accent);
+    background: var(--dec-accent-soft);
+    color: #fef3c7;
+    box-shadow: 0 0 0 1px var(--dec-accent) inset;
+  }
+
+  .choice-button:focus-visible {
+    outline: 2px solid var(--dec-accent-strong);
+    outline-offset: 2px;
+  }
+
+  .choice-button:disabled {
+    cursor: default;
+    opacity: 0.65;
+  }
+
+  .choice-button[aria-pressed='true']:disabled {
+    opacity: 1;
+  }
+
+  .choice-icon {
+    flex-shrink: 0;
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+
+  .evidence-group + .evidence-group {
+    margin-top: 0.9rem;
+  }
+
+  .evidence-group h5 {
+    margin: 0 0 0.45rem;
+    color: #e2e8f0;
+    font-size: 0.88rem;
+    font-weight: 800;
+  }
+
+  .evidence-list {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .evidence-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid var(--dec-border);
+    border-radius: 9px;
+    background: #0b1220;
+    color: #cbd5e1;
+    font-size: 0.84rem;
+    line-height: 1.45;
+    cursor: pointer;
+    transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+  }
+
+  .evidence-label:hover {
+    border-color: #64748b;
+  }
+
+  .evidence-label:has(input:checked) {
+    border-color: var(--dec-accent);
+    background: var(--dec-accent-soft);
+    color: #fef3c7;
+  }
+
+  .evidence-label:has(input:disabled) {
+    cursor: default;
+  }
+
+  .evidence-label:has(input:checked:disabled) {
+    opacity: 1;
+  }
+
+  .evidence-label input {
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
+    margin-top: 0.1rem;
+    accent-color: var(--dec-accent);
+  }
+
+  .card-actions {
+    display: flex;
+    justify-content: center;
+  }
+
+  .validate-button {
+    width: 100%;
+    max-width: 24rem;
+    padding: 0.8rem 1.2rem;
+    border: 0;
+    border-radius: 10px;
+    background: var(--dec-accent);
+    color: #1c1917;
+    font: inherit;
+    font-size: 0.92rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+  }
+
+  .validate-button:hover:not(:disabled) {
+    box-shadow: 0 8px 22px rgba(245, 158, 11, 0.22);
+    transform: translateY(-1px);
+  }
+
+  .validate-button:focus-visible {
+    outline: 2px solid var(--dec-accent-strong);
+    outline-offset: 2px;
+  }
+
+  .validate-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .decrypteur-feedback {
+    padding: 1rem;
+    border: 1px solid var(--dec-border);
+    border-left: 4px solid #64748b;
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.82);
+    outline: none;
+  }
+
+  .decrypteur-feedback[data-state='success'] {
+    border-left-color: var(--dec-green);
+  }
+
+  .decrypteur-feedback[data-state='partial'] {
+    border-left-color: var(--dec-accent-strong);
+  }
+
+  .decrypteur-feedback[data-state='danger'] {
+    border-left-color: var(--dec-red);
+  }
+  .feedback-kicker {
+    margin: 0;
+    color: var(--dec-muted);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .feedback-title {
+    margin: 0.2rem 0 0.85rem;
+    color: #f8fafc;
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+
+  .feedback-checks {
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .check-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding: 0.7rem;
+    border: 1px solid var(--dec-border);
+    border-radius: 10px;
+    background: #0b1220;
+  }
+
+  .check-row[data-state='success'] {
+    border-color: rgba(74, 222, 128, 0.45);
+  }
+
+  .check-row[data-state='danger'] {
+    border-color: rgba(248, 113, 113, 0.45);
+  }
+
+  .check-icon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 999px;
+    background: #1e293b;
+    color: #cbd5e1;
+    font-size: 0.85rem;
+    font-weight: 800;
+  }
+
+  .check-row[data-state='success'] .check-icon {
+    background: rgba(74, 222, 128, 0.16);
+    color: #86efac;
+  }
+
+  .check-row[data-state='danger'] .check-icon {
+    background: rgba(248, 113, 113, 0.16);
+    color: #fca5a5;
+  }
+
+  .check-body {
+    min-width: 0;
+  }
+
+  .check-label {
+    margin: 0;
+    color: var(--dec-muted);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .check-value {
+    margin: 0.2rem 0 0;
+    color: #e2e8f0;
+    font-size: 0.86rem;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  .check-detail {
+    margin: 0.15rem 0 0;
+    color: var(--dec-muted);
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+
+  .evidence-feedback {
+    display: grid;
+    gap: 0.65rem;
+    margin-top: 0.85rem;
+  }
+
+  .evidence-report {
+    padding: 0.8rem;
+    border: 1px solid var(--dec-border);
+    border-radius: 10px;
+    background: #0b1220;
+  }
+
+  .report-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.45rem;
+  }
+
+  .report-head h6 {
+    margin: 0;
+    color: #e2e8f0;
+    font-size: 0.86rem;
+    font-weight: 800;
+  }
+
+  .report-status {
+    flex-shrink: 0;
+    padding: 0.18rem 0.45rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 800;
+  }
+
+  .report-status[data-state='success'] {
+    background: rgba(74, 222, 128, 0.16);
+    color: #86efac;
+  }
+
+  .report-status[data-state='danger'] {
+    background: rgba(248, 113, 113, 0.16);
+    color: #fca5a5;
+  }
+
+  .report-line {
+    margin: 0.28rem 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+
+  .report-line strong {
+    font-weight: 800;
+  }
+
+  .report-good {
+    color: #86efac;
+  }
+
+  .report-warn {
+    color: #fde68a;
+  }
+
+  .report-bad {
+    color: #fca5a5;
+  }
+
+  .report-perfect {
+    margin: 0.35rem 0 0;
+    color: #86efac;
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+  .feedback-explain {
+    margin-top: 0.9rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--dec-border);
+  }
+
+  .feedback-explain h6 {
+    margin: 0 0 0.3rem;
+    color: var(--dec-accent-strong);
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .feedback-explain p {
+    margin: 0;
+    color: #cbd5e1;
+    font-size: 0.86rem;
+    line-height: 1.6;
+  }
+
+  .feedback-ambiguity {
+    margin-top: 0.55rem !important;
+    color: #fde68a !important;
+    font-style: italic;
+  }
+
+  .feedback-next {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.9rem;
+    padding: 0.65rem 1rem;
+    border: 1px solid var(--dec-accent);
+    border-radius: 9px;
+    background: #1e293b;
+    color: #f8fafc;
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.18s ease, transform 0.18s ease;
+  }
+
+  .feedback-next:hover {
+    background: var(--dec-accent-soft);
+    transform: translateY(-1px);
+  }
+
+  .feedback-next:focus-visible {
+    outline: 2px solid var(--dec-accent-strong);
+    outline-offset: 2px;
+  }
+
+  .decrypteur-summary {
+    padding: 1rem;
+    border: 1px solid var(--dec-border);
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.82);
+    outline: none;
+    scroll-margin-top: 1rem;
+  }
+
+  .summary-kicker {
+    margin: 0;
+    color: var(--dec-accent-strong);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .decrypteur-summary h4 {
+    margin: 0.2rem 0 0.35rem;
+    color: #f8fafc;
+    font-size: 1.15rem;
+  }
+
+  .summary-score {
+    margin: 0 0 0.8rem;
+    color: var(--dec-muted);
+    font-size: 0.86rem;
+  }
+
+  .summary-list {
+    display: grid;
+    gap: 0.55rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .summary-item {
+    padding: 0.7rem 0.8rem;
+    border: 1px solid var(--dec-border);
+    border-radius: 10px;
+    background: #0b1220;
+  }
+
+  .summary-item[data-state='success'] {
+    border-color: rgba(74, 222, 128, 0.4);
+  }
+
+  .summary-item[data-state='danger'] {
+    border-color: rgba(248, 113, 113, 0.4);
+  }
+
+  .summary-item-title {
+    margin: 0;
+    color: #f8fafc;
+    font-size: 0.9rem;
+    font-weight: 800;
+    line-height: 1.35;
+  }
+
+  .summary-item-meta {
+    margin: 0.1rem 0 0;
+    color: var(--dec-muted);
+    font-size: 0.78rem;
+  }
+
+  .summary-item-labels {
+    margin: 0.3rem 0 0;
+    color: #cbd5e1;
+    font-size: 0.78rem;
+    line-height: 1.45;
+  }
+
+  .summary-item-status {
+    margin: 0.3rem 0 0;
+    font-size: 0.78rem;
+    font-weight: 800;
+  }
+
+  .summary-item[data-state='success'] .summary-item-status {
+    color: #86efac;
+  }
+
+  .summary-item[data-state='danger'] .summary-item-status {
+    color: #fca5a5;
+  }
+
+  .summary-restart {
+    margin-top: 0.9rem;
+    padding: 0.65rem 1rem;
+    border: 0;
+    border-radius: 9px;
+    background: var(--dec-accent);
+    color: #1c1917;
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: box-shadow 0.18s ease, transform 0.18s ease;
+  }
+
+  .summary-restart:hover {
+    box-shadow: 0 8px 22px rgba(245, 158, 11, 0.22);
+    transform: translateY(-1px);
+  }
+
+  .summary-restart:focus-visible {
+    outline: 2px solid var(--dec-accent-strong);
+    outline-offset: 2px;
+  }
+
+  .decrypteur-noscript {
+    margin: 0;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    border-radius: 9px;
+    background: rgba(245, 158, 11, 0.1);
+    color: #fde68a;
+    font-size: 0.84rem;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .decrypteur-card,
+  .decrypteur-feedback,
+  .decrypteur-summary {
+    scroll-margin-top: 1rem;
+  }
+
+  @media (max-width: 640px) {
+    .engagement-decrypteur {
+      padding: 0.9rem;
+      border-radius: 14px;
+    }
+
+    .decrypteur-card {
+      padding: 0.8rem;
+    }
+
+    .status-score {
+      width: 100%;
+      margin-left: 0;
+    }
+
+    .choice-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .check-row {
+      padding: 0.6rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .song-illustration,
+    .song-visual-cta,
+    .decrypteur-reset,
+    .choice-button,
+    .evidence-label,
+    .validate-button,
+    .feedback-next,
+    .summary-restart {
+      transition: none;
+    }
+
+    .song-visual-link:hover .song-illustration,
+    .song-visual-link:focus-visible .song-illustration,
+    .song-visual-link:hover .song-visual-cta,
+    .song-visual-link:focus-visible .song-visual-cta,
+    .validate-button:hover:not(:disabled),
+    .feedback-next:hover,
+    .summary-restart:hover {
+      transform: none;
+    }
+  }
+</style>
+
+<style is:global>
+  .engagement-decrypteur .evidence-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid #334155;
+    border-radius: 9px;
+    background: #0b1220;
+    color: #cbd5e1;
+    font-size: 0.84rem;
+    line-height: 1.45;
+    cursor: pointer;
+    transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+  }
+
+  .engagement-decrypteur .evidence-label:hover {
+    border-color: #64748b;
+  }
+
+  .engagement-decrypteur .evidence-label:has(input:checked) {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.14);
+    color: #fef3c7;
+  }
+
+  .engagement-decrypteur .evidence-label:has(input:disabled) {
+    cursor: default;
+  }
+
+  .engagement-decrypteur .evidence-label:has(input:checked:disabled) {
+    opacity: 1;
+  }
+
+  .engagement-decrypteur .evidence-label input {
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
+    margin-top: 0.1rem;
+    accent-color: #f59e0b;
+  }
+
+  .engagement-decrypteur .report-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.45rem;
+  }
+
+  .engagement-decrypteur .report-head h6 {
+    margin: 0;
+    color: #e2e8f0;
+    font-size: 0.86rem;
+    font-weight: 800;
+  }
+
+  .engagement-decrypteur .report-status {
+    flex-shrink: 0;
+    padding: 0.18rem 0.45rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 800;
+  }
+
+  .engagement-decrypteur .report-status[data-state='success'] {
+    background: rgba(74, 222, 128, 0.16);
+    color: #86efac;
+  }
+
+  .engagement-decrypteur .report-status[data-state='danger'] {
+    background: rgba(248, 113, 113, 0.16);
+    color: #fca5a5;
+  }
+
+  .engagement-decrypteur .report-line {
+    margin: 0.28rem 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+
+  .engagement-decrypteur .report-line strong {
+    font-weight: 800;
+  }
+
+  .engagement-decrypteur .report-good {
+    color: #86efac;
+  }
+
+  .engagement-decrypteur .report-warn {
+    color: #fde68a;
+  }
+
+  .engagement-decrypteur .report-bad {
+    color: #fca5a5;
+  }
+
+  .engagement-decrypteur .report-perfect {
+    margin: 0.35rem 0 0;
+    color: #86efac;
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+
+  .engagement-decrypteur .summary-item {
+    padding: 0.7rem 0.8rem;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    background: #0b1220;
+  }
+
+  .engagement-decrypteur .summary-item[data-state='success'] {
+    border-color: rgba(74, 222, 128, 0.4);
+  }
+
+  .engagement-decrypteur .summary-item[data-state='danger'] {
+    border-color: rgba(248, 113, 113, 0.4);
+  }
+
+  .engagement-decrypteur .summary-item-title {
+    margin: 0;
+    color: #f8fafc;
+    font-size: 0.9rem;
+    font-weight: 800;
+    line-height: 1.35;
+  }
+
+  .engagement-decrypteur .summary-item-meta {
+    margin: 0.1rem 0 0;
+    color: #94a3b8;
+    font-size: 0.78rem;
+  }
+
+  .engagement-decrypteur .summary-item-labels {
+    margin: 0.3rem 0 0;
+    color: #cbd5e1;
+    font-size: 0.78rem;
+    line-height: 1.45;
+  }
+
+  .engagement-decrypteur .summary-item-status {
+    margin: 0.3rem 0 0;
+    font-size: 0.78rem;
+    font-weight: 800;
+  }
+
+  .engagement-decrypteur .summary-item[data-state='success'] .summary-item-status {
+    color: #86efac;
+  }
+
+  .engagement-decrypteur .summary-item[data-state='danger'] .summary-item-status {
+    color: #fca5a5;
+  }
+</style>

@@ -1,5 +1,6 @@
 ---
 import VideoCard from './VideoCard.astro';
+import EngagementDecrypteur from './EngagementDecrypteur.astro';
 import { relativeUrl } from '../utils/navigation';
 
 interface EngagementVideo {
@@ -11,19 +12,26 @@ interface EngagementVideo {
 interface EngagementTab {
   id: string;
   label: string;
-  videos: EngagementVideo[];
+  kind: 'videos' | 'decrypteur';
+  videos?: EngagementVideo[];
 }
 
 const tabs: EngagementTab[] = [
   {
     id: 'sunday-bloody-sunday',
     label: 'Sunday Bloody Sunday',
+    kind: 'videos',
     videos: [
       { badge: 'Paroles', title: 'Sunday Bloody Sunday — Paroles', youtubeId: 'zhMD7nt1LIg' },
       { badge: 'Instrumental', title: 'Sunday Bloody Sunday — Instrumental', youtubeId: 'wQSMtpaK2VE' },
       { badge: 'Reportage', title: 'Sunday Bloody Sunday — Reportage', youtubeId: 'VvrLpTwEwY8' },
       { badge: 'France Culture', title: 'Sunday Bloody Sunday — France Culture', youtubeId: 'UlpmtSADI7Y' },
     ],
+  },
+  {
+    id: 'decrypteur-engagement',
+    label: "Décrypteur d'Engagement",
+    kind: 'decrypteur',
   },
 ];
 
@@ -42,6 +50,7 @@ const memorialImage = relativeUrl('/musique-engagee/Bloody_Sunday_memorial.jpg')
         aria-selected={index === 0 ? 'true' : 'false'}
         tabindex={index === 0 ? 0 : -1}
         data-tab={tab.id}
+        data-kind={tab.kind}
       >
         {tab.label}
       </button>
@@ -57,33 +66,39 @@ const memorialImage = relativeUrl('/musique-engagee/Bloody_Sunday_memorial.jpg')
       hidden={index !== 0}
       data-panel={tab.id}
     >
-      <div class="engagement-videos">
-        {tab.videos.map((video) => (
-          <VideoCard
-            badge={video.badge}
-            title={video.title}
-            url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
-          />
-        ))}
-      </div>
+      {tab.videos && tab.videos.length > 0 && (
+        <div class="engagement-videos">
+          {tab.videos.map((video) => (
+            <VideoCard
+              badge={video.badge}
+              title={video.title}
+              url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+            />
+          ))}
+        </div>
+      )}
 
-      <div class="engagement-media">
-        <button
-          type="button"
-          class="engagement-thumb"
-          data-lightbox-open
-          aria-label="Agrandir l'image — Mémorial du Bloody Sunday"
-        >
-          <img
-            src={memorialImage}
-            width="1200"
-            height="1600"
-            alt="Mémorial du Bloody Sunday à Derry, avec les noms des victimes gravés dans la pierre"
-            loading="lazy"
-          />
-          <span class="engagement-thumb-badge">Mémorial du Bloody Sunday</span>
-        </button>
-      </div>
+      {tab.kind === 'videos' && (
+        <div class="engagement-media">
+          <button
+            type="button"
+            class="engagement-thumb"
+            data-lightbox-open
+            aria-label="Agrandir l'image — Mémorial du Bloody Sunday"
+          >
+            <img
+              src={memorialImage}
+              width="1200"
+              height="1600"
+              alt="Mémorial du Bloody Sunday à Derry, avec les noms des victimes gravés dans la pierre"
+              loading="lazy"
+            />
+            <span class="engagement-thumb-badge">Mémorial du Bloody Sunday</span>
+          </button>
+        </div>
+      )}
+
+      {tab.kind === 'decrypteur' && <EngagementDecrypteur />}
     </div>
   ))}
 
@@ -178,6 +193,10 @@ const memorialImage = relativeUrl('/musique-engagee/Bloody_Sunday_memorial.jpg')
     content: '🎸';
     font-size: 1.1rem;
     line-height: 1;
+  }
+
+  .engagement-tab[data-kind='decrypteur']::before {
+    content: '🔎';
   }
 
   .engagement-tab:hover {

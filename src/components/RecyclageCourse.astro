@@ -1,10 +1,12 @@
 ---
 import DualAudioPlayer from './DualAudioPlayer.astro';
+import RecyclingNuancier from './RecyclingNuancier.astro';
 
 const tabs = [
   { id: 'parametres', label: 'Paramètres du son' },
   { id: 'emprunts', label: 'Emprunts multiples' },
   { id: 'citation', label: 'Citation, Emprunt & Remix' },
+  { id: 'nuancier', label: 'Le Nuancier du Recyclage' },
 ];
 
 const comparaison1 = [
@@ -135,6 +137,17 @@ const comparaison8 = [
       <DualAudioPlayer label="Comparaison 8" tracks={comparaison8} tone={0} />
     </div>
   </div>
+
+  <div
+    role="tabpanel"
+    id="recyclage-panel-nuancier"
+    class="recyclage-panel"
+    aria-labelledby="recyclage-tab-nuancier"
+    data-panel="nuancier"
+    hidden
+  >
+    <RecyclingNuancier />
+  </div>
 </div>
 
 <script>
@@ -212,6 +225,10 @@ const comparaison8 = [
 
   .recyclage-tab[data-tab='citation']::before {
     content: '♻️';
+  }
+
+  .recyclage-tab[data-tab='nuancier']::before {
+    content: '⚖️';
   }
 
   .recyclage-tab:hover {

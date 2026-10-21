@@ -1,6 +1,0 @@
-# Règles d'optimisation et d'économie de tokens
-
-1. **Interdiction des scripts de vérification post-build :** Ne lance JAMAIS de scripts Python, Node.js ou de commandes `grep`/`find`/`ls` dans le dossier `dist/` pour vérifier le rendu HTML. Fais entièrement confiance à ton code source (composants Astro, TS, données).
-2. **Réduction drastique des commandes shell :** N'exécute aucune commande de diagnostic ou de recherche textuelle dans le terminal de ton propre chef. Concentre-toi uniquement sur la modification des fichiers sources.
-3. **Modifications chirurgicales :** Modifie précisément les lignes nécessaires dans les fichiers de `src/` sans relire ou réécrire des fichiers entiers en boucle.
-4. **Pas de tests automatisés :** N'utilise jamais d'outils de test de navigateur ou de scripts de vérification headless. Laisse toujours l'utilisateur effectuer les tests visuels dans son propre navigateur.

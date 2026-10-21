@@ -1,5 +1,6 @@
 ---
 import VideoCard from './VideoCard.astro';
+import QuizMusiquePub from './QuizMusiquePub.astro';
 
 interface PubVideo {
   badge: string;
@@ -45,6 +46,11 @@ const tabs: PubTab[] = [
       },
     ],
   },
+  {
+    id: 'quiz',
+    label: 'Blindtest',
+    videos: [],
+  },
 ];
 ---
 
@@ -72,18 +78,20 @@ const tabs: PubTab[] = [
       id={`pub-panel-${tab.id}`}
       class="pub-panel"
       aria-labelledby={`pub-tab-${tab.id}`}
-      hidden={index !== 0}
+      hidden={index !== 0 || tab.id === 'quiz'}
       data-panel={tab.id}
     >
-      <div class="pub-videos">
-        {tab.videos.map((video) => (
-          <VideoCard
-            badge={video.badge}
-            title={video.title}
-            url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
-          />
-        ))}
-      </div>
+      {tab.id === 'quiz' ? <QuizMusiquePub /> : (
+        <div class="pub-videos">
+          {tab.videos.map((video) => (
+            <VideoCard
+              badge={video.badge}
+              title={video.title}
+              url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   ))}
 </div>

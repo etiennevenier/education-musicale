@@ -1,5 +1,6 @@
 ---
 import VideoCard from './VideoCard.astro';
+import RockStageBuilder from './RockStageBuilder.astro';
 import rythmeImage from '../assets/Rythme Walk This Way.jpg';
 
 interface RockVideo {
@@ -11,9 +12,11 @@ interface RockVideo {
 interface RockTab {
   id: string;
   label: string;
-  videos: RockVideo[];
+  videos?: RockVideo[];
   /** Bloc de ressources complémentaires affiché sous la grille vidéo. */
   resources?: boolean;
+  /** Affiche l'atelier interactif du Studio Rock à la place de la grille vidéo. */
+  studio?: boolean;
 }
 
 const tabs: RockTab[] = [
@@ -48,6 +51,12 @@ const tabs: RockTab[] = [
       { badge: 'Carpenters Live', title: 'Help — Carpenters (live)', youtubeId: 'YMxq9N-t4wQ' },
     ],
   },
+  {
+    id: 'studio',
+    label: 'Le Studio Rock',
+    videos: [],
+    studio: true,
+  },
 ];
 
 const articleUrl = 'https://hardforce.com/actu/35694/lejourou-run-dmc-aerosmith-walk-this-way';
@@ -80,15 +89,19 @@ const articleUrl = 'https://hardforce.com/actu/35694/lejourou-run-dmc-aerosmith-
       hidden={index !== 0}
       data-panel={tab.id}
     >
-      <div class="rock-videos">
-        {tab.videos.map((video) => (
-          <VideoCard
-            badge={video.badge}
-            title={video.title}
-            url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
-          />
-        ))}
-      </div>
+      {tab.studio ? (
+        <RockStageBuilder />
+      ) : (
+        <div class="rock-videos">
+          {(tab.videos ?? []).map((video) => (
+            <VideoCard
+              badge={video.badge}
+              title={video.title}
+              url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+            />
+          ))}
+        </div>
+      )}
 
       {tab.resources && (
         <div class="rock-resources">
@@ -223,6 +236,10 @@ const articleUrl = 'https://hardforce.com/actu/35694/lejourou-run-dmc-aerosmith-
 
   .rock-tab[data-tab='help']::before {
     content: '🎶';
+  }
+
+  .rock-tab[data-tab='studio']::before {
+    content: '🎸';
   }
 
   .rock-tab:hover {

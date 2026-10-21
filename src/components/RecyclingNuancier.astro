@@ -1,0 +1,1663 @@
+---
+interface TechniqueOption {
+  id: 'reprise' | 'sample' | 'remix';
+  emoji: string;
+  label: string;
+  hint: string;
+}
+
+interface CriterionOption {
+  id: 'oeuvreLibre' | 'enregistrementLibre' | 'exception' | 'accord';
+  label: string;
+  shortLabel: string;
+}
+
+const techniques: TechniqueOption[] = [
+  { id: 'reprise', emoji: '🎤', label: 'Reprise (Cover)', hint: 'On réenregistre soi-même' },
+  {
+    id: 'sample',
+    emoji: '🎧',
+    label: 'Sample / Citation',
+    hint: "Court extrait de l'enregistrement d'origine",
+  },
+  {
+    id: 'remix',
+    emoji: '🎛️',
+    label: 'Remix / Adaptation',
+    hint: 'On retravaille un morceau entier',
+  },
+];
+
+const criteria: CriterionOption[] = [
+  {
+    id: 'oeuvreLibre',
+    label: "L'œuvre originale est dans le domaine public (auteur mort depuis plus de 70 ans)",
+    shortLabel: 'Œuvre dans le domaine public',
+  },
+  {
+    id: 'enregistrementLibre',
+    label: "L'enregistrement d'origine est libre ou réenregistré par nos soins",
+    shortLabel: 'Enregistrement libre ou réenregistré',
+  },
+  {
+    id: 'exception',
+    label: "C'est une exception légale (parodie, courte citation)",
+    shortLabel: 'Exception légale',
+  },
+  {
+    id: 'accord',
+    label: "L'accord des ayants droit a été obtenu",
+    shortLabel: 'Accord des ayants droit',
+  },
+];
+
+const CARDS_PER_GAME = 8;
+const slots = Array.from({ length: CARDS_PER_GAME }, (_, index) => index);
+---
+
+<div class="recycling-nuancier" data-nuancier>
+  <header class="nuancier-header">
+    <div class="nuancier-heading">
+      <p class="nuancier-kicker">♻️ Atelier interactif</p>
+      <h3>Le Nuancier du Recyclage Musical</h3>
+      <p class="nuancier-intro">
+        Huit situations de recyclage musical. Pour chacune, identifie la technique utilisée puis
+        coche les critères juridiques qui s'appliquent : ton verdict se déduit de tes cases cochées.
+      </p>
+    </div>
+    <button type="button" class="nuancier-reset" data-reset-session>
+      🔄 Nouvelle session
+    </button>
+  </header>
+
+  <div class="nuancier-status">
+    <span class="status-progress" data-progress-label>Carte 1 / {CARDS_PER_GAME}</span>
+    <ol class="nuancier-dots" data-dots aria-hidden="true">
+      {slots.map((index) => (
+        <li class="nuancier-dot" data-dot={index} data-state="pending">
+          {index + 1}
+        </li>
+      ))}
+    </ol>
+    <span class="status-score" data-score-label>Analyses réussies : 0 / {CARDS_PER_GAME}</span>
+  </div>
+
+  <ol class="nuancier-deck" data-deck>
+    {slots.map((index) => (
+      <li class="nuancier-card" data-card={index} data-card-state="pending" tabindex="-1" hidden>
+        <header class="card-head">
+          <p class="card-step" data-card-step>Carte {index + 1} / {CARDS_PER_GAME}</p>
+          <p class="card-kicker">Étudie la situation</p>
+        </header>
+
+        <p class="card-scenario" data-card-text></p>
+
+        <fieldset class="card-block">
+          <legend>Étape A — Technique artistique</legend>
+          <div class="technique-options">
+            {techniques.map((technique) => (
+              <button
+                type="button"
+                class="technique-option"
+                data-technique={technique.id}
+                aria-pressed="false"
+              >
+                <span class="technique-emoji" aria-hidden="true">{technique.emoji}</span>
+                <span class="technique-label">{technique.label}</span>
+                <span class="technique-hint">{technique.hint}</span>
+              </button>
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset class="card-block">
+          <legend>Étape B — Diagnostic juridique</legend>
+          <div class="criteria-list">
+            {criteria.map((criterion) => (
+              <label class="criterion">
+                <input type="checkbox" data-criterion={criterion.id} />
+                <span class="criterion-text">
+                  <span class="criterion-label">{criterion.label}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        <div class="card-actions">
+          <button type="button" class="validate-button" data-validate disabled>
+            Valider mon analyse
+          </button>
+        </div>
+
+        <div class="card-feedback" data-feedback data-state="pending" hidden>
+          <p class="feedback-badge" data-feedback-badge></p>
+          <p class="feedback-title" data-feedback-title></p>
+          <p class="feedback-verdict" data-feedback-verdict></p>
+
+          <ul class="feedback-diff">
+            {criteria.map((criterion) => (
+              <li class="diff-row" data-diff-row={criterion.id} data-state="pending">
+                <span class="diff-icon" data-diff-icon aria-hidden="true">•</span>
+                <span class="diff-label">{criterion.shortLabel}</span>
+                <span class="diff-values" data-diff-values></span>
+              </li>
+            ))}
+          </ul>
+
+          <p class="feedback-error" data-feedback-error hidden></p>
+          <p class="feedback-explain" data-feedback-explain></p>
+          <button type="button" class="feedback-next" data-next hidden>Carte suivante →</button>
+        </div>
+      </li>
+    ))}
+  </ol>
+
+
+  <section class="nuancier-summary" data-summary hidden>
+    <p class="summary-kicker">🏁 Fin de la session</p>
+    <h4>Bilan du Nuancier</h4>
+    <p class="summary-score" data-summary-score></p>
+
+    <ul class="summary-list">
+      {slots.map((index) => (
+        <li class="summary-row" data-summary-row={index} data-state="pending" hidden>
+          <span class="summary-index">{index + 1}</span>
+          <span class="summary-text" data-summary-text></span>
+          <span class="summary-result" data-summary-result></span>
+        </li>
+      ))}
+    </ul>
+
+    <button type="button" class="nuancier-reset" data-restart>
+      🔄 Rejouer avec un nouveau tirage
+    </button>
+  </section>
+
+  <p class="sr-only" role="status" aria-live="polite" data-live></p>
+
+  <div class="tribunal" data-tribunal hidden>
+    <div class="tribunal-backdrop" data-tribunal-close></div>
+    <div
+      class="tribunal-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="tribunal-title"
+      aria-describedby="tribunal-lead"
+      data-tribunal-dialog
+      tabindex="-1"
+    >
+      <p class="tribunal-kicker">⚖️ Alerte juridique</p>
+      <h4 id="tribunal-title">Tribunal / Sanction pour Contrefaçon</h4>
+      <p class="tribunal-lead" id="tribunal-lead">
+        Tu as classé cette situation comme autorisée, mais elle constitue une contrefaçon.
+      </p>
+
+      <ul class="tribunal-penalties">
+        <li><span aria-hidden="true">🔒</span> Jusqu'à <strong>3 ans d'emprisonnement</strong></li>
+        <li><span aria-hidden="true">💸</span> Jusqu'à <strong>300 000 € d'amende</strong></li>
+      </ul>
+      <p class="tribunal-source">
+        Peines encourues au titre de la contrefaçon (art. L335-2 du Code de la propriété
+        intellectuelle).
+      </p>
+
+      <p class="tribunal-label">La situation</p>
+      <p class="tribunal-case" data-tribunal-case></p>
+
+      <p class="tribunal-label">L'erreur d'analyse</p>
+      <p class="tribunal-error" data-tribunal-error></p>
+
+      <p class="tribunal-label">Ce que dit la loi</p>
+      <p class="tribunal-explain" data-tribunal-explain></p>
+
+      <button type="button" class="tribunal-close" data-tribunal-close>
+        J'ai compris, continuer
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  import {
+    estLegal,
+    getBalancedDeck,
+    SCENARIOS,
+    TECHNIQUE_LABELS,
+    type Scenario,
+  } from '../data/recyclingScenarios';
+
+  type CriterionId = 'oeuvreLibre' | 'enregistrementLibre' | 'exception' | 'accord';
+
+  interface Answer {
+    technique: Scenario['technique'] | null;
+    criteria: Record<CriterionId, boolean>;
+    validated: boolean;
+    success: boolean;
+  }
+
+  interface Validation {
+    techniqueOk: boolean;
+    verdictOk: boolean;
+    criteriaOk: boolean;
+    success: boolean;
+    actualLegal: boolean;
+    studentLegal: boolean;
+  }
+
+  const CRITERION_IDS: CriterionId[] = [
+    'oeuvreLibre',
+    'enregistrementLibre',
+    'exception',
+    'accord',
+  ];
+  const CARDS_PER_GAME = 8;
+
+  const isCriterionId = (value: string | undefined): value is CriterionId =>
+    value !== undefined && (CRITERION_IDS as string[]).includes(value);
+
+  const plural = (count: number, singular: string, pluralForm = `${singular}s`) =>
+    `${count} ${count > 1 ? pluralForm : singular}`;
+
+  const root = document.querySelector<HTMLElement>('[data-nuancier]');
+
+  if (root) {
+    const cardElements = Array.from(root.querySelectorAll<HTMLElement>('[data-card]'));
+    const dotElements = Array.from(root.querySelectorAll<HTMLElement>('[data-dot]'));
+    const summaryRows = Array.from(root.querySelectorAll<HTMLElement>('[data-summary-row]'));
+    const progressLabel = root.querySelector<HTMLElement>('[data-progress-label]');
+    const scoreLabel = root.querySelector<HTMLElement>('[data-score-label]');
+    const summary = root.querySelector<HTMLElement>('[data-summary]');
+    const summaryScore = root.querySelector<HTMLElement>('[data-summary-score]');
+    const liveRegion = root.querySelector<HTMLElement>('[data-live]');
+    const resetButton = root.querySelector<HTMLButtonElement>('[data-reset-session]');
+    const restartButton = root.querySelector<HTMLButtonElement>('[data-restart]');
+    const tribunal = root.querySelector<HTMLElement>('[data-tribunal]');
+    const tribunalDialog = root.querySelector<HTMLElement>('[data-tribunal-dialog]');
+    const tribunalCase = root.querySelector<HTMLElement>('[data-tribunal-case]');
+    const tribunalError = root.querySelector<HTMLElement>('[data-tribunal-error]');
+    const tribunalExplain = root.querySelector<HTMLElement>('[data-tribunal-explain]');
+    const tribunalCloseTargets = Array.from(
+      root.querySelectorAll<HTMLElement>('[data-tribunal-close]'),
+    );
+
+    let deck: Scenario[] = [];
+    let answers: Answer[] = [];
+    let currentIndex = 0;
+    let lastFocused: HTMLElement | null = null;
+
+    const createAnswer = (): Answer => ({
+      technique: null,
+      criteria: {
+        oeuvreLibre: false,
+        enregistrementLibre: false,
+        exception: false,
+        accord: false,
+      },
+      validated: false,
+      success: false,
+    });
+
+    const getStudentVerdict = (criteria: Record<CriterionId, boolean>): boolean =>
+      criteria.exception || (criteria.oeuvreLibre && criteria.enregistrementLibre) || criteria.accord;
+
+    const labelFor = (technique: Scenario['technique']): string => TECHNIQUE_LABELS[technique];
+
+    const buildNotes = (
+      scenario: Scenario,
+      answer: Answer,
+      validation: Validation,
+    ): string[] => {
+      const notes: string[] = [];
+
+      if (!validation.techniqueOk && answer.technique) {
+        notes.push(
+          `Technique : tu as choisi « ${labelFor(answer.technique)} », or la bonne réponse est « ${labelFor(scenario.technique)} ».`,
+        );
+      }
+
+      if (!validation.verdictOk) {
+        notes.push(
+          validation.actualLegal
+            ? 'Verdict : cette situation est légale, mais ton diagnostic la déclare interdite.'
+            : 'Verdict : cette situation est illégale, mais ton diagnostic la déclare autorisée.',
+        );
+
+        if (!validation.actualLegal) {
+          if (scenario.oeuvreLibre && !scenario.enregistrementLibre) {
+            notes.push(
+              "L'œuvre était dans le domaine public, MAIS l'enregistrement utilisé est récent : il reste protégé par les droits voisins.",
+            );
+          } else if (!scenario.oeuvreLibre && scenario.enregistrementLibre) {
+            notes.push(
+              "L'enregistrement est bien le tien, MAIS l'œuvre originale reste protégée : il faut l'accord des ayants droit (ou une déclaration à la SACEM).",
+            );
+          } else if (scenario.exception !== null) {
+            notes.push(
+              `Seule l'exception de ${scenario.exception} autorise cet usage, et elle ne s'applique pas à ta copie.`,
+            );
+          } else if (scenario.accord) {
+            notes.push(
+              'Les ayants droit avaient donné leur accord, mais pas pour cet usage commercial.',
+            );
+          }
+        } else if (scenario.exception !== null) {
+          notes.push(
+            `L'exception de ${scenario.exception} rend ici l'usage légal, même sans accord des ayants droit.`,
+          );
+        } else if (scenario.accord) {
+          notes.push('Les ayants droit avaient bien donné leur accord : ce recyclage est autorisé.');
+        } else if (scenario.oeuvreLibre && scenario.enregistrementLibre) {
+          notes.push(
+            "L'œuvre et l'enregistrement utilisés sont tous deux libres : il n'y a rien à demander.",
+          );
+        }
+      }
+
+      if (answer.criteria.oeuvreLibre !== scenario.oeuvreLibre) {
+        notes.push(
+          scenario.oeuvreLibre
+            ? "Critère « œuvre dans le domaine public » : c'est vrai, l'auteur est mort depuis plus de 70 ans."
+            : "Critère « œuvre dans le domaine public » : c'est faux, l'œuvre est encore protégée.",
+        );
+      }
+
+      if (answer.criteria.enregistrementLibre !== scenario.enregistrementLibre) {
+        notes.push(
+          scenario.enregistrementLibre
+            ? "Critère « enregistrement libre » : c'est vrai (réenregistré ou droits voisins éteints)."
+            : "Critère « enregistrement libre » : c'est faux, cet enregistrement est encore protégé.",
+        );
+      }
+
+      if (answer.criteria.exception !== (scenario.exception !== null)) {
+        notes.push(
+          scenario.exception !== null
+            ? `Critère « exception légale » : l'exception de ${scenario.exception} s'applique bien.`
+            : "Critère « exception légale » : aucune parodie ni citation ne s'applique ici.",
+        );
+      }
+
+      if (answer.criteria.accord !== scenario.accord) {
+        notes.push(
+          scenario.accord
+            ? "Critère « accord des ayants droit » : un accord a bien été obtenu."
+            : "Critère « accord des ayants droit » : aucun accord n'a été obtenu.",
+        );
+      }
+
+      return notes;
+    };
+
+    const renderFeedback = (
+      card: HTMLElement,
+      scenario: Scenario,
+      answer: Answer,
+      validation: Validation,
+      notes: string[],
+    ) => {
+      const feedback = card.querySelector<HTMLElement>('[data-feedback]');
+      if (!feedback) return;
+
+      feedback.hidden = false;
+      feedback.dataset.state = validation.success
+        ? validation.criteriaOk
+          ? 'success'
+          : 'partial'
+        : 'danger';
+
+      const badge = feedback.querySelector<HTMLElement>('[data-feedback-badge]');
+      if (badge) {
+        badge.textContent = validation.success ? '✅ Recyclage validé' : '❌ Analyse à corriger';
+      }
+
+      const title = feedback.querySelector<HTMLElement>('[data-feedback-title]');
+      if (title) {
+        if (validation.success && validation.criteriaOk) {
+          title.textContent = 'Analyse complète : technique et raisonnement justes.';
+        } else if (validation.success) {
+          title.textContent = 'Bon verdict, mais certains critères sont mal identifiés.';
+        } else if (!validation.verdictOk) {
+          title.textContent = validation.actualLegal
+            ? "Cette situation était légale : tu l'as jugée interdite."
+            : "Cette situation est illégale : tu l'as crue autorisée.";
+        } else {
+          title.textContent = "Le verdict est bon, mais la technique n'est pas la bonne.";
+        }
+      }
+
+      const verdict = feedback.querySelector<HTMLElement>('[data-feedback-verdict]');
+      if (verdict) {
+        const chosenTechnique = answer.technique ? labelFor(answer.technique) : 'aucune';
+        const actualLabel = validation.actualLegal ? 'autorisé' : 'interdit (contrefaçon)';
+        const studentLabel = validation.studentLegal ? 'autorisé' : 'interdit';
+        verdict.textContent =
+          `Ce cas est ${actualLabel}. Tu l'as classé comme ${studentLabel} avec la technique ` +
+          `« ${chosenTechnique} » (attendue : ${labelFor(scenario.technique)}).`;
+      }
+
+      const checks: Record<CriterionId, boolean> = {
+        oeuvreLibre: scenario.oeuvreLibre,
+        enregistrementLibre: scenario.enregistrementLibre,
+        exception: scenario.exception !== null,
+        accord: scenario.accord,
+      };
+
+      CRITERION_IDS.forEach((criterionId) => {
+        const row = feedback.querySelector<HTMLElement>(`[data-diff-row="${criterionId}"]`);
+        if (!row) return;
+
+        const chosen = answer.criteria[criterionId];
+        const expected = checks[criterionId];
+        row.dataset.state = chosen === expected ? 'ok' : chosen ? 'wrong' : 'missed';
+
+        const icon = row.querySelector<HTMLElement>('[data-diff-icon]');
+        if (icon) icon.textContent = chosen === expected ? '✓' : chosen ? '✕' : '!';
+
+        const values = row.querySelector<HTMLElement>('[data-diff-values]');
+        if (values) {
+          let expectedLabel = expected ? 'oui' : 'non';
+          if (criterionId === 'exception' && scenario.exception !== null) {
+            expectedLabel = `oui (${scenario.exception})`;
+          }
+          values.textContent = `coché : ${chosen ? 'oui' : 'non'} · attendu : ${expectedLabel}`;
+        }
+      });
+
+      const errorElement = feedback.querySelector<HTMLElement>('[data-feedback-error]');
+      if (errorElement) {
+        errorElement.textContent = notes.join('\n');
+        errorElement.hidden = notes.length === 0;
+      }
+
+      const explain = feedback.querySelector<HTMLElement>('[data-feedback-explain]');
+      if (explain) {
+        explain.textContent = `Ce que dit la loi : ${scenario.explication}`;
+      }
+    };
+
+    const openTribunal = (scenario: Scenario, notes: string[], explanation: string) => {
+      if (!tribunal || !tribunalDialog) return;
+
+      lastFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      if (tribunalCase) tribunalCase.textContent = scenario.texte;
+      if (tribunalError) {
+        tribunalError.textContent =
+          notes.length > 0
+            ? notes.join('\n')
+            : 'Ton diagnostic a conclu à la légalité alors que cette situation est interdite.';
+      }
+      if (tribunalExplain) tribunalExplain.textContent = explanation;
+
+      tribunal.hidden = false;
+      tribunalDialog.focus();
+    };
+
+    const closeTribunal = () => {
+      if (!tribunal) return;
+      tribunal.hidden = true;
+
+      const card = cardElements[currentIndex];
+      const next = card?.querySelector<HTMLButtonElement>('[data-next]');
+      if (next) next.focus();
+      else lastFocused?.focus();
+      lastFocused = null;
+    };
+
+    const resetCard = (card: HTMLElement, scenario: Scenario, index: number) => {
+      card.dataset.cardState = 'pending';
+
+      const step = card.querySelector<HTMLElement>('[data-card-step]');
+      if (step) step.textContent = `Carte ${index + 1} / ${deck.length}`;
+
+      const text = card.querySelector<HTMLElement>('[data-card-text]');
+      if (text) text.textContent = scenario.texte;
+
+      card.querySelectorAll<HTMLButtonElement>('[data-technique]').forEach((button) => {
+        button.disabled = false;
+        button.classList.remove('is-selected');
+        button.setAttribute('aria-pressed', 'false');
+      });
+
+      card.querySelectorAll<HTMLInputElement>('[data-criterion]').forEach((input) => {
+        input.checked = false;
+        input.disabled = false;
+      });
+
+      const validate = card.querySelector<HTMLButtonElement>('[data-validate]');
+      if (validate) {
+        validate.disabled = true;
+        validate.hidden = false;
+      }
+
+      const feedback = card.querySelector<HTMLElement>('[data-feedback]');
+      if (feedback) {
+        feedback.hidden = true;
+        feedback.dataset.state = 'pending';
+      }
+
+      const next = card.querySelector<HTMLButtonElement>('[data-next]');
+      if (next) next.hidden = true;
+    };
+
+    const updateStatus = () => {
+      const total = deck.length;
+      if (progressLabel) {
+        progressLabel.textContent =
+          total === 0 ? 'Aucune carte' : `Carte ${Math.min(currentIndex + 1, total)} / ${total}`;
+      }
+
+      const successes = answers.filter((answer) => answer.success).length;
+      if (scoreLabel) scoreLabel.textContent = `Analyses réussies : ${successes} / ${total}`;
+
+      dotElements.forEach((dot, index) => {
+        const answer = answers[index];
+        dot.dataset.state = answer?.success ? 'success' : answer?.validated ? 'danger' : 'pending';
+        dot.dataset.current = index === currentIndex ? 'true' : 'false';
+      });
+    };
+
+    const showCard = (index: number, options: { focus?: boolean; scroll?: boolean } = {}) => {
+      const { focus = true, scroll = true } = options;
+      currentIndex = index;
+
+      cardElements.forEach((card, cardIndex) => {
+        card.hidden = cardIndex !== index || cardIndex >= deck.length;
+      });
+
+      updateStatus();
+
+      const card = cardElements[index];
+      if (!card || !focus) return;
+      card.focus({ preventScroll: true });
+      if (scroll) card.scrollIntoView({ block: 'nearest' });
+    };
+
+    const validateCard = (index: number) => {
+      const scenario = deck[index];
+      const answer = answers[index];
+      const card = cardElements[index];
+      if (!scenario || !answer || !card || answer.validated || !answer.technique) return;
+
+      answer.validated = true;
+
+      const actualLegal = estLegal(scenario);
+      const studentLegal = getStudentVerdict(answer.criteria);
+      const techniqueOk = answer.technique === scenario.technique;
+      const verdictOk = studentLegal === actualLegal;
+      const criteriaOk =
+        answer.criteria.oeuvreLibre === scenario.oeuvreLibre &&
+        answer.criteria.enregistrementLibre === scenario.enregistrementLibre &&
+        answer.criteria.exception === (scenario.exception !== null) &&
+        answer.criteria.accord === scenario.accord;
+      const success = techniqueOk && verdictOk;
+
+      answer.success = success;
+      card.dataset.cardState = success ? 'success' : 'danger';
+
+      const validation: Validation = {
+        techniqueOk,
+        verdictOk,
+        criteriaOk,
+        success,
+        actualLegal,
+        studentLegal,
+      };
+      const notes = buildNotes(scenario, answer, validation);
+
+      card.querySelectorAll<HTMLButtonElement>('[data-technique]').forEach((button) => {
+        button.disabled = true;
+      });
+      card.querySelectorAll<HTMLInputElement>('[data-criterion]').forEach((input) => {
+        input.disabled = true;
+      });
+
+      const validateButton = card.querySelector<HTMLButtonElement>('[data-validate]');
+      if (validateButton) validateButton.hidden = true;
+
+      renderFeedback(card, scenario, answer, validation, notes);
+      updateStatus();
+
+      const next = card.querySelector<HTMLButtonElement>('[data-next]');
+      if (next) {
+        next.hidden = false;
+        next.textContent = index === deck.length - 1 ? 'Voir le bilan →' : 'Carte suivante →';
+      }
+
+      if (liveRegion) {
+        liveRegion.textContent = success
+          ? `Carte ${index + 1} validée.`
+          : `Carte ${index + 1} à revoir.`;
+      }
+
+      if (!actualLegal && studentLegal) {
+        openTribunal(scenario, notes, scenario.explication);
+      }
+    };
+
+    const showSummary = () => {
+      cardElements.forEach((card) => {
+        card.hidden = true;
+      });
+      dotElements.forEach((dot) => {
+        dot.dataset.current = 'false';
+      });
+      if (summary) summary.hidden = false;
+
+      const successCount = answers.filter((answer) => answer.success).length;
+      const illegalCount = deck.filter((scenario) => !estLegal(scenario)).length;
+      if (summaryScore) {
+        summaryScore.textContent =
+          `${successCount} / ${deck.length} analyses réussies · ` +
+          `${plural(illegalCount, 'situation')} de contrefaçon dans ce tirage.`;
+      }
+
+      summaryRows.forEach((row, index) => {
+        const scenario = deck[index];
+        const answer = answers[index];
+        if (!scenario || !answer) {
+          row.hidden = true;
+          return;
+        }
+
+        row.hidden = false;
+        row.dataset.state = answer.success ? 'success' : 'danger';
+
+        const text = row.querySelector<HTMLElement>('[data-summary-text]');
+        if (text) {
+          text.textContent = `${labelFor(scenario.technique)} — ${scenario.texte}`;
+        }
+
+        const result = row.querySelector<HTMLElement>('[data-summary-result]');
+        if (result) {
+          result.textContent = answer.success ? '✓ Réussi' : '✗ À revoir';
+        }
+      });
+
+      if (progressLabel) progressLabel.textContent = 'Session terminée';
+      if (liveRegion) {
+        liveRegion.textContent = `Bilan : ${successCount} analyses réussies sur ${deck.length}.`;
+      }
+      summary?.scrollIntoView({ block: 'nearest' });
+    };
+
+    const goNext = () => {
+      if (currentIndex < deck.length - 1) {
+        showCard(currentIndex + 1);
+        return;
+      }
+      showSummary();
+    };
+
+    const startSession = () => {
+      deck = getBalancedDeck(SCENARIOS, CARDS_PER_GAME);
+      answers = deck.map(() => createAnswer());
+      currentIndex = 0;
+
+      if (summary) summary.hidden = true;
+      if (tribunal) tribunal.hidden = true;
+
+      dotElements.forEach((dot, index) => {
+        dot.hidden = index >= deck.length;
+        dot.dataset.state = 'pending';
+        dot.dataset.current = 'false';
+      });
+
+      cardElements.forEach((card, index) => {
+        const scenario = deck[index];
+        if (!scenario) {
+          card.hidden = true;
+          return;
+        }
+        resetCard(card, scenario, index);
+        card.hidden = index !== 0;
+      });
+
+      summaryRows.forEach((row, index) => {
+        row.hidden = index >= deck.length;
+        row.dataset.state = 'pending';
+      });
+
+      showCard(0, { focus: false, scroll: false });
+
+      if (liveRegion) {
+        liveRegion.textContent = `Nouvelle session : ${deck.length} cartes à analyser.`;
+      }
+    };
+
+    const requestNewSession = () => {
+      const started = answers.some((answer) => answer.validated || answer.technique !== null);
+      if (started && !window.confirm('Réinitialiser la session et tirer 8 nouvelles cartes ?')) {
+        return;
+      }
+      startSession();
+    };
+
+    cardElements.forEach((card, index) => {
+      card.querySelectorAll<HTMLButtonElement>('[data-technique]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const answer = answers[index];
+          const technique = button.dataset.technique;
+          if (!answer || answer.validated) return;
+          if (technique !== 'reprise' && technique !== 'sample' && technique !== 'remix') return;
+
+          answer.technique = technique;
+
+          card.querySelectorAll<HTMLButtonElement>('[data-technique]').forEach((option) => {
+            const selected = option === button;
+            option.classList.toggle('is-selected', selected);
+            option.setAttribute('aria-pressed', selected ? 'true' : 'false');
+          });
+
+          const validate = card.querySelector<HTMLButtonElement>('[data-validate]');
+          if (validate) validate.disabled = false;
+        });
+      });
+
+      card.querySelectorAll<HTMLInputElement>('[data-criterion]').forEach((input) => {
+        input.addEventListener('change', () => {
+          const answer = answers[index];
+          const criterion = input.dataset.criterion;
+          if (!answer || answer.validated || !isCriterionId(criterion)) return;
+          answer.criteria[criterion] = input.checked;
+        });
+      });
+
+      card.querySelector<HTMLButtonElement>('[data-validate]')?.addEventListener('click', () => {
+        validateCard(index);
+      });
+      card.querySelector<HTMLButtonElement>('[data-next]')?.addEventListener('click', goNext);
+    });
+
+    resetButton?.addEventListener('click', requestNewSession);
+    restartButton?.addEventListener('click', startSession);
+
+    tribunalCloseTargets.forEach((target) => {
+      target.addEventListener('click', closeTribunal);
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && tribunal && !tribunal.hidden) {
+        event.preventDefault();
+        closeTribunal();
+      }
+    });
+
+    tribunal?.addEventListener('keydown', (event) => {
+      if (event.key !== 'Tab' || !tribunalDialog) return;
+
+      const focusable = Array.from(
+        tribunalDialog.querySelectorAll<HTMLElement>('button:not([disabled])'),
+      );
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (!first || !last) return;
+
+      if (document.activeElement === tribunalDialog) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
+
+    startSession();
+  }
+</script>
+
+<style>
+  .recycling-nuancier {
+    --nuancier-accent: var(--primary, #38bdf8);
+    --nuancier-legal: #34d399;
+    --nuancier-danger: #fb7185;
+    --nuancier-warn: #fbbf24;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.25rem;
+    border: 1px solid var(--border, #334155);
+    border-radius: 18px;
+    background:
+      radial-gradient(circle at top right, rgba(56, 189, 248, 0.14), transparent 45%),
+      linear-gradient(160deg, #101c30 0%, #0b1120 65%);
+    color: var(--text, #f8fafc);
+  }
+
+  .recycling-nuancier [hidden] {
+    display: none !important;
+  }
+
+  .nuancier-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .nuancier-heading {
+    flex: 1 1 320px;
+    min-width: 0;
+  }
+
+  .nuancier-kicker {
+    margin: 0 0 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #7dd3fc;
+  }
+
+  .nuancier-heading h3 {
+    margin: 0;
+    font-size: clamp(1.15rem, 2.4vw, 1.5rem);
+    letter-spacing: -0.01em;
+  }
+
+  .nuancier-intro {
+    max-width: 62ch;
+    margin: 0.5rem 0 0;
+    font-size: 0.86rem;
+    line-height: 1.55;
+    color: var(--text-muted, #94a3b8);
+  }
+
+  .nuancier-reset {
+    flex: 0 0 auto;
+    align-self: flex-start;
+    padding: 0.65rem 1rem;
+    border-radius: 999px;
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    background: rgba(56, 189, 248, 0.08);
+    color: #bae6fd;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+
+  .nuancier-reset:hover {
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.18);
+    color: #f8fafc;
+  }
+
+  .nuancier-reset:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 2px;
+  }
+
+  .nuancier-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.6rem 0.85rem;
+    border: 1px solid #263449;
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.65);
+    font-size: 0.76rem;
+    color: var(--text-muted, #94a3b8);
+  }
+
+  .status-progress,
+  .status-score {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #cbd5e1;
+  }
+
+  .nuancier-dots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .nuancier-dot {
+    display: grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    border: 1px solid #334155;
+    background: #0f172a;
+    color: #64748b;
+    font-size: 0.68rem;
+    font-weight: 800;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .nuancier-dot[data-current='true'] {
+    border-color: #38bdf8;
+    color: #e0f2fe;
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
+  }
+
+  .nuancier-dot[data-state='success'] {
+    border-color: var(--nuancier-legal);
+    background: rgba(16, 185, 129, 0.22);
+    color: #a7f3d0;
+  }
+
+  .nuancier-dot[data-state='danger'] {
+    border-color: var(--nuancier-danger);
+    background: rgba(244, 63, 94, 0.22);
+    color: #fecdd3;
+  }
+
+  .nuancier-deck {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .nuancier-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.15rem;
+    border: 1px solid var(--border, #334155);
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
+    box-shadow: 0 18px 40px rgba(2, 6, 23, 0.35);
+    outline: none;
+  }
+
+  .nuancier-card:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 3px;
+  }
+
+  .card-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.35rem 1rem;
+  }
+
+  .card-head p {
+    margin: 0;
+  }
+
+  .card-step {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #7dd3fc;
+  }
+
+  .card-kicker {
+    font-size: 0.72rem;
+    color: var(--text-muted, #94a3b8);
+  }
+
+  .card-scenario {
+    margin: 0;
+    padding: 0.85rem 1rem;
+    border-left: 3px solid #38bdf8;
+    border-radius: 0 10px 10px 0;
+    background: rgba(56, 189, 248, 0.08);
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: #e2e8f0;
+  }
+
+  .card-block {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .card-block legend {
+    margin-bottom: 0.55rem;
+    padding: 0;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #7dd3fc;
+  }
+
+  .technique-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.6rem;
+  }
+
+  .technique-option {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      'emoji label'
+      'emoji hint';
+    align-items: center;
+    gap: 0 0.65rem;
+    padding: 0.7rem 0.8rem;
+    border: 1px solid #2c3e55;
+    border-radius: 12px;
+    background: #0f1a2c;
+    color: #cbd5e1;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .technique-option:hover:not(:disabled) {
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.08);
+  }
+
+  .technique-option[aria-pressed='true'] {
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.16);
+    color: #f8fafc;
+    box-shadow: 0 0 0 1px #38bdf8, 0 10px 24px rgba(56, 189, 248, 0.16);
+  }
+
+  .technique-option:disabled {
+    cursor: default;
+    opacity: 0.78;
+  }
+
+  .technique-option:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 2px;
+  }
+
+  .technique-emoji {
+    grid-area: emoji;
+    font-size: 1.35rem;
+    line-height: 1;
+  }
+
+  .technique-label {
+    grid-area: label;
+    font-size: 0.84rem;
+    font-weight: 700;
+  }
+
+  .technique-hint {
+    grid-area: hint;
+    font-size: 0.7rem;
+    line-height: 1.3;
+    color: var(--text-muted, #94a3b8);
+  }
+
+  .criteria-list {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .criterion {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid #2c3e55;
+    border-radius: 10px;
+    background: #0f1a2c;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .criterion:hover {
+    border-color: #38bdf8;
+  }
+
+  .criterion:has(input:checked) {
+    border-color: rgba(56, 189, 248, 0.65);
+    background: rgba(56, 189, 248, 0.1);
+  }
+
+  .criterion input {
+    flex: 0 0 auto;
+    width: 1.1rem;
+    height: 1.1rem;
+    margin: 0.15rem 0 0;
+    accent-color: #38bdf8;
+    cursor: pointer;
+  }
+
+  .criterion:has(input:disabled) {
+    cursor: default;
+    opacity: 0.85;
+  }
+
+  .criterion-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+
+  .criterion-label {
+    font-size: 0.84rem;
+    line-height: 1.4;
+    color: #e2e8f0;
+  }
+
+  .card-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .validate-button {
+    padding: 0.7rem 1.15rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: linear-gradient(120deg, #0ea5e9, #38bdf8);
+    color: #04121f;
+    font: inherit;
+    font-size: 0.84rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    box-shadow: 0 12px 28px rgba(56, 189, 248, 0.22);
+    transition: filter 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .validate-button:hover:not(:disabled) {
+    filter: brightness(1.08);
+    box-shadow: 0 14px 32px rgba(56, 189, 248, 0.32);
+  }
+
+  .validate-button:disabled {
+    border-color: #334155;
+    background: #1e293b;
+    color: #64748b;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  .validate-button:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 2px;
+  }
+
+  .card-feedback {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    padding: 1rem;
+    border: 1px solid var(--border, #334155);
+    border-radius: 14px;
+    background: rgba(15, 23, 42, 0.7);
+  }
+
+  .card-feedback[data-state='success'] {
+    border-color: rgba(52, 211, 153, 0.5);
+    background: rgba(6, 78, 59, 0.28);
+  }
+
+  .card-feedback[data-state='partial'] {
+    border-color: rgba(251, 191, 36, 0.55);
+    background: rgba(120, 53, 15, 0.25);
+  }
+
+  .card-feedback[data-state='danger'] {
+    border-color: rgba(244, 63, 94, 0.55);
+    background: rgba(76, 5, 25, 0.3);
+  }
+
+  .feedback-badge {
+    margin: 0;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #a7f3d0;
+  }
+
+  .card-feedback[data-state='partial'] .feedback-badge {
+    color: #fde68a;
+  }
+
+  .card-feedback[data-state='danger'] .feedback-badge {
+    color: #fecdd3;
+  }
+
+  .feedback-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 800;
+    line-height: 1.4;
+  }
+
+  .feedback-verdict,
+  .feedback-explain {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: #cbd5e1;
+  }
+
+  .feedback-disclaimer {
+    margin: 0;
+  }
+
+  .feedback-diff {
+    display: grid;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .diff-row {
+    display: grid;
+    grid-template-columns: 1.2rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: rgba(15, 23, 42, 0.55);
+    font-size: 0.75rem;
+  }
+
+  .diff-row[data-state='ok'] {
+    border-color: rgba(52, 211, 153, 0.35);
+  }
+
+  .diff-row[data-state='wrong'] {
+    border-color: rgba(244, 63, 94, 0.4);
+  }
+
+  .diff-row[data-state='missed'] {
+    border-color: rgba(251, 191, 36, 0.4);
+  }
+
+  .diff-icon {
+    display: grid;
+    place-items: center;
+    font-weight: 900;
+    color: #94a3b8;
+  }
+
+  .diff-row[data-state='ok'] .diff-icon {
+    color: var(--nuancier-legal);
+  }
+
+  .diff-row[data-state='wrong'] .diff-icon {
+    color: var(--nuancier-danger);
+  }
+
+  .diff-row[data-state='missed'] .diff-icon {
+    color: var(--nuancier-warn);
+  }
+
+  .diff-label {
+    min-width: 0;
+    color: #e2e8f0;
+  }
+
+  .diff-values {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    color: var(--text-muted, #94a3b8);
+  }
+
+  .feedback-error {
+    margin: 0;
+    padding: 0.65rem 0.75rem;
+    border: 1px dashed rgba(251, 191, 36, 0.45);
+    border-radius: 10px;
+    background: rgba(251, 191, 36, 0.08);
+    color: #fde68a;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    white-space: pre-line;
+  }
+
+  .feedback-next {
+    align-self: flex-start;
+    padding: 0.6rem 1rem;
+    border: 1px solid rgba(56, 189, 248, 0.5);
+    border-radius: 999px;
+    background: rgba(56, 189, 248, 0.12);
+    color: #e0f2fe;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .feedback-next:hover {
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.22);
+  }
+
+  .feedback-next:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 2px;
+  }
+
+  .nuancier-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.25rem;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 16px;
+    background: linear-gradient(140deg, rgba(56, 189, 248, 0.14), rgba(15, 23, 42, 0.85));
+  }
+
+  .summary-kicker {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #7dd3fc;
+  }
+
+  .nuancier-summary h4 {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+
+  .summary-score {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #cbd5e1;
+  }
+
+  .summary-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .summary-row {
+    display: grid;
+    grid-template-columns: 1.6rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.25rem;
+    border-bottom: 1px solid rgba(51, 65, 85, 0.6);
+    font-size: 0.78rem;
+  }
+
+  .summary-row:last-child {
+    border-bottom: 0;
+  }
+
+  .summary-index {
+    display: grid;
+    place-items: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    border: 1px solid #334155;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.9);
+    color: #94a3b8;
+    font-size: 0.7rem;
+    font-weight: 800;
+  }
+
+  .summary-text {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    color: #cbd5e1;
+  }
+
+  .summary-result {
+    font-size: 0.72rem;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .summary-row[data-state='success'] .summary-result {
+    color: #6ee7b7;
+  }
+
+  .summary-row[data-state='danger'] .summary-result {
+    color: #fda4af;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .tribunal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+  }
+
+  .tribunal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.82);
+    backdrop-filter: blur(4px);
+  }
+
+  .tribunal-dialog {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: min(560px, 100%);
+    max-height: min(86vh, 760px);
+    overflow-y: auto;
+    padding: 1.4rem;
+    border: 1px solid rgba(244, 63, 94, 0.55);
+    border-radius: 18px;
+    background: linear-gradient(160deg, #2a1020 0%, #111827 62%);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(244, 63, 94, 0.2);
+    animation: tribunal-enter 0.25s ease-out;
+  }
+
+  .tribunal-dialog:focus {
+    outline: none;
+  }
+
+  .tribunal-dialog:focus-visible {
+    outline: 2px solid #fb7185;
+    outline-offset: 4px;
+  }
+
+  .tribunal-kicker {
+    margin: 0;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #fda4af;
+  }
+
+  .tribunal-dialog h4 {
+    margin: 0;
+    font-size: clamp(1.1rem, 2.5vw, 1.3rem);
+    color: #fff1f2;
+  }
+
+  .tribunal-lead {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #fecdd3;
+  }
+
+  .tribunal-penalties {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0.75rem 0.9rem;
+    list-style: none;
+    border: 1px solid rgba(244, 63, 94, 0.35);
+    border-radius: 12px;
+    background: rgba(244, 63, 94, 0.12);
+    font-size: 0.84rem;
+    color: #fecdd3;
+  }
+
+  .tribunal-penalties li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  .tribunal-penalties strong {
+    color: #fff;
+  }
+
+  .tribunal-source {
+    margin: 0;
+    font-size: 0.7rem;
+    line-height: 1.4;
+    color: var(--text-muted, #94a3b8);
+  }
+
+  .tribunal-label {
+    margin: 0;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #fda4af;
+  }
+
+  .tribunal-case {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: #e2e8f0;
+  }
+
+  .tribunal-error {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    white-space: pre-line;
+    color: #fecdd3;
+  }
+
+  .tribunal-explain {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: #cbd5e1;
+  }
+
+  .tribunal-close {
+    align-self: flex-start;
+    margin-top: 0.25rem;
+    padding: 0.7rem 1.1rem;
+    border: 0;
+    border-radius: 999px;
+    background: linear-gradient(120deg, #e11d48, #f43f5e);
+    color: #fff;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 12px 28px rgba(244, 63, 94, 0.3);
+  }
+
+  .tribunal-close:hover {
+    filter: brightness(1.08);
+  }
+
+  .tribunal-close:focus-visible {
+    outline: 2px solid #fda4af;
+    outline-offset: 2px;
+  }
+
+  @keyframes tribunal-enter {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @media (max-width: 720px) {
+    .recycling-nuancier {
+      padding: 1rem;
+    }
+
+    .nuancier-header {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .nuancier-reset {
+      width: 100%;
+    }
+
+    .nuancier-status {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .technique-options {
+      grid-template-columns: 1fr;
+    }
+
+    .diff-row {
+      grid-template-columns: 1.2rem minmax(0, 1fr);
+    }
+
+    .diff-values {
+      grid-column: 2;
+      text-align: left;
+    }
+
+    .summary-row {
+      grid-template-columns: 1.6rem minmax(0, 1fr);
+    }
+
+    .summary-result {
+      grid-column: 2;
+    }
+
+    .card-actions .validate-button {
+      width: 100%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tribunal-dialog {
+      animation: none;
+    }
+  }
+</style>
