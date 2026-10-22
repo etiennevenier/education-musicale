@@ -1,12 +1,13 @@
 ---
+import CourseTabs from './CourseTabs.astro';
 import DualAudioPlayer from './DualAudioPlayer.astro';
 import RecyclingNuancier from './RecyclingNuancier.astro';
 
 const tabs = [
-  { id: 'parametres', label: 'Paramètres du son' },
-  { id: 'emprunts', label: 'Emprunts multiples' },
-  { id: 'citation', label: 'Citation, Emprunt & Remix' },
-  { id: 'nuancier', label: 'Le Nuancier du Recyclage' },
+  { id: 'parametres', icon: '🎵', label: 'Paramètres du son' },
+  { id: 'emprunts', icon: '🔀', label: 'Emprunts multiples' },
+  { id: 'citation', icon: '♻️', label: 'Citation, Emprunt & Remix' },
+  { id: 'nuancier', icon: '⚖️', label: 'Le Nuancier du Recyclage' },
 ];
 
 const comparaison1 = [
@@ -73,28 +74,13 @@ const comparaison8 = [
 ---
 
 <div class="recyclage-course">
-  <div class="recyclage-tabs" role="tablist" aria-label="Musique et Recyclage">
-    {tabs.map((tab, index) => (
-      <button
-        type="button"
-        role="tab"
-        id={`recyclage-tab-${tab.id}`}
-        class="recyclage-tab"
-        aria-controls={`recyclage-panel-${tab.id}`}
-        aria-selected={index === 0 ? 'true' : 'false'}
-        tabindex={index === 0 ? 0 : -1}
-        data-tab={tab.id}
-      >
-        {tab.label}
-      </button>
-    ))}
-  </div>
+  <CourseTabs tabs={tabs} ariaLabel="Musique et Recyclage" />
 
   <div
     role="tabpanel"
-    id="recyclage-panel-parametres"
+    id="main-panel-parametres"
     class="recyclage-panel"
-    aria-labelledby="recyclage-tab-parametres"
+    aria-labelledby="main-tab-parametres"
     data-panel="parametres"
   >
     <div class="recyclage-comparisons">
@@ -111,9 +97,9 @@ const comparaison8 = [
 
   <div
     role="tabpanel"
-    id="recyclage-panel-emprunts"
+    id="main-panel-emprunts"
     class="recyclage-panel"
-    aria-labelledby="recyclage-tab-emprunts"
+    aria-labelledby="main-tab-emprunts"
     data-panel="emprunts"
     hidden
   >
@@ -124,9 +110,9 @@ const comparaison8 = [
 
   <div
     role="tabpanel"
-    id="recyclage-panel-citation"
+    id="main-panel-citation"
     class="recyclage-panel"
-    aria-labelledby="recyclage-tab-citation"
+    aria-labelledby="main-tab-citation"
     data-panel="citation"
     hidden
   >
@@ -140,9 +126,9 @@ const comparaison8 = [
 
   <div
     role="tabpanel"
-    id="recyclage-panel-nuancier"
+    id="main-panel-nuancier"
     class="recyclage-panel"
-    aria-labelledby="recyclage-tab-nuancier"
+    aria-labelledby="main-tab-nuancier"
     data-panel="nuancier"
     hidden
   >
@@ -151,32 +137,34 @@ const comparaison8 = [
 </div>
 
 <script>
-  const tabs = document.querySelectorAll<HTMLButtonElement>('.recyclage-tab');
+  const tabs = document.querySelectorAll<HTMLButtonElement>('.recyclage-course .main-tab');
 
   const selectTab = (tab: HTMLButtonElement) => {
     const root = tab.closest('.recyclage-course');
     if (!root) return;
 
-    root.querySelectorAll<HTMLButtonElement>('.recyclage-tab').forEach((item) => {
+    root.querySelectorAll<HTMLButtonElement>('.main-tab').forEach((item) => {
       const isActive = item === tab;
       item.setAttribute('aria-selected', isActive ? 'true' : 'false');
       item.tabIndex = isActive ? 0 : -1;
+      item.classList.toggle('is-active', isActive);
     });
 
     root.querySelectorAll<HTMLElement>('.recyclage-panel').forEach((panel) => {
-      panel.hidden = panel.dataset.panel !== tab.dataset.tab;
+      panel.hidden = panel.dataset.panel !== tab.dataset.mainTab;
     });
   };
 
   tabs.forEach((tab, index) => {
     tab.addEventListener('click', () => selectTab(tab));
     tab.addEventListener('keydown', (event) => {
-      if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+      if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
       event.preventDefault();
       const nextIndex =
-        event.key === 'ArrowRight'
-          ? (index + 1) % tabs.length
-          : (index - 1 + tabs.length) % tabs.length;
+        event.key === 'Home' ? 0
+        : event.key === 'End' ? tabs.length - 1
+        : event.key === 'ArrowRight' ? (index + 1) % tabs.length
+        : (index - 1 + tabs.length) % tabs.length;
       tabs[nextIndex].focus();
       selectTab(tabs[nextIndex]);
     });
@@ -188,63 +176,6 @@ const comparaison8 = [
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-  }
-
-  .recyclage-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-
-  .recyclage-tab {
-    flex: 1 1 180px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.9rem 1.25rem;
-    border-radius: 12px;
-    border: 1px solid var(--border, #334155);
-    background: #1e293b;
-    color: var(--text-muted, #94a3b8);
-    font: inherit;
-    font-weight: 700;
-    cursor: pointer;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
-  }
-
-  .recyclage-tab::before {
-    content: '🎵';
-    margin-right: 0.5rem;
-    font-size: 1.1rem;
-    line-height: 1;
-  }
-
-  .recyclage-tab[data-tab='emprunts']::before {
-    content: '🔀';
-  }
-
-  .recyclage-tab[data-tab='citation']::before {
-    content: '♻️';
-  }
-
-  .recyclage-tab[data-tab='nuancier']::before {
-    content: '⚖️';
-  }
-
-  .recyclage-tab:hover {
-    border-color: var(--primary, #38bdf8);
-    color: var(--text, #f1f5f9);
-  }
-
-  .recyclage-tab[aria-selected='true'] {
-    border-color: var(--primary, #38bdf8);
-    color: var(--text, #f1f5f9);
-    box-shadow: 0 0 0 1px var(--primary, #38bdf8), 0 0 16px rgba(56, 189, 248, 0.25);
-  }
-
-  .recyclage-tab:focus-visible {
-    outline: 2px solid var(--primary, #38bdf8);
-    outline-offset: 2px;
   }
 
   .recyclage-panel[hidden] {

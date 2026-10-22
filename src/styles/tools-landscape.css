@@ -1,7 +1,83 @@
+/* ============================================================
+   Barres d'onglets des séquences pédagogiques (style unifié)
+   ============================================================ */
+.main-tabs {
+  display: grid !important;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0.35rem;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 0 1.25rem;
+  padding: 0.35rem;
+  border: 1px solid #334155;
+  border-radius: 14px;
+  background: #1e293b;
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+
+/* Onglet individuel */
+.main-tabs .main-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: #94a3b8;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  cursor: pointer;
+  opacity: 1;
+  visibility: visible;
+  transition: background 0.2s ease, color 0.2s ease,
+              border-color 0.2s ease, transform 0.2s ease;
+}
+
+.main-tabs .main-tab:hover {
+  color: #f8fafc;
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.main-tabs .main-tab:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
+}
+
+/* Onglet actif */
+.main-tabs .main-tab.is-active,
+.main-tabs .main-tab[aria-selected="true"] {
+  color: #f8fafc;
+  background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+  border-color: #38bdf8;
+  box-shadow: 0 8px 22px rgba(2, 6, 23, 0.35);
+}
+
+.main-tabs .main-tab-icon {
+  flex: none;
+}
+
+/* Disposition mobile */
+@media (max-width: 640px) {
+  .main-tabs {
+    grid-auto-flow: row;
+    grid-auto-columns: unset;
+    grid-template-columns: 1fr;
+  }
+}
 /* --------------------------------------------------------------------------
    Outils d'entraînement en paysage sur tablette ou fenêtre basse
    --------------------------------------------------------------------------
-   Objectif : bloquer strictement l'outil dans 100dvh, sans défilement
+   Objectif : bloquer strictly l'outil dans 100dvh, sans défilement
    vertical, tout en gardant la zone de réponse (boutons, clavier, curseur)
    visible et cliquable. Le grand en-tête du site et le titre interne de
    l'outil sont masqués pour rendre la hauteur à la zone d'exercice.
@@ -15,6 +91,76 @@
    dont la hauteur dépasse 768 px conservent la disposition desktop/tablette
    normale, avec des marges équilibrées et un défilement autorisé.
 -------------------------------------------------------------------------- */
+
+/* --------------------------------------------------------------------------
+    Onglets de navigation unifiés pour toutes les séquences
+    --------------------------------------------------------------------------
+    Design des onglets unifié sur le modèle de Musique et Moyen-Âge
+    -------------------------------------------------------------------------- */
+.tabs-navigation {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr)) !important;
+  gap: 0.35rem !important;
+  padding: 0.35rem !important;
+  border: 1px solid #334155 !important;
+  border-radius: 14px !important;
+  background: #1e293b !important;
+  box-shadow: 0 4px 12px rgba(2, 6, 23, 0.25) !important;
+}
+
+.tabs-navigation .tab-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.55rem !important;
+  padding: 0.8rem 0.9rem !important;
+  border: 1px solid transparent !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  color: #94a3b8 !important;
+  font: inherit !important;
+  font-size: 0.92rem !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  cursor: pointer !important;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease !important;
+}
+
+.tabs-navigation .tab-btn:hover {
+  color: #f8fafc !important;
+  background: rgba(56, 189, 248, 0.1) !important;
+}
+
+.tabs-navigation .tab-btn.active,
+.tabs-navigation .tab-btn.is-active,
+.tabs-navigation .tab-btn[aria-selected="true"] {
+  color: #f8fafc !important;
+  background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%) !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 8px 22px rgba(2, 6, 23, 0.35) !important;
+}
+
+.tabs-navigation .tab-btn:focus-visible {
+  outline: 2px solid #38bdf8 !important;
+  outline-offset: 2px !important;
+}
+
+.tabs-navigation .tab-icon {
+  flex-shrink: 0 !important;
+  font-size: 1.15rem !important;
+  line-height: 1 !important;
+}
+
+.tabs-navigation .tab-label {
+  text-align: center !important;
+}
+
+@media (max-width: 760px) {
+  .tabs-navigation {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 /* --------------------------------------------------------------------------
    Position uniforme du bouton de retour dans tous les outils d'entraînement
    --------------------------------------------------------------------------
@@ -800,4 +946,3 @@
     flex-wrap: nowrap !important;
   }
 }
-

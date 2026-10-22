@@ -1,4 +1,5 @@
 ---
+import CourseTabs from './CourseTabs.astro';
 import MoyenAgeMusicTypes from './MoyenAgeMusicTypes.astro';
 import MoyenAgeInstruments from './MoyenAgeInstruments.astro';
 import {
@@ -55,23 +56,7 @@ function splitGlossaryTerms(text: string): GlossarySegment[] {
 ---
 
 <div class="moyen-age-course" id="moyen-age-course">
-  <div class="main-tabs" role="tablist" aria-label="Thèmes de la séquence Musique et Moyen Âge">
-    {mainTabs.map((tab, index) => (
-      <button
-        type="button"
-        role="tab"
-        id={`main-tab-${tab.id}`}
-        aria-controls={`main-panel-${tab.id}`}
-        aria-selected={index === 0 ? 'true' : 'false'}
-        tabindex={index === 0 ? 0 : -1}
-        class:list={['main-tab', { 'is-active': index === 0 }]}
-        data-main-tab={tab.id}
-      >
-        <span class="main-tab-icon" aria-hidden="true">{tab.icon}</span>
-        <span class="main-tab-label">{tab.label}</span>
-      </button>
-    ))}
-  </div>
+  <CourseTabs tabs={mainTabs} ariaLabel="Thèmes de la séquence Musique et Moyen Âge" />
 
   <div
     class="main-panel is-active"
@@ -671,66 +656,6 @@ function splitGlossaryTerms(text: string): GlossarySegment[] {
     gap: 1.25rem;
   }
 
-  /* Navigation principale par onglets */
-  .main-tabs {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.35rem;
-    padding: 0.35rem;
-    border: 1px solid #334155;
-    border-radius: 14px;
-    background: #1e293b;
-  }
-
-  .main-tab {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.55rem;
-    padding: 0.8rem 0.9rem;
-    border: 1px solid transparent;
-    border-radius: 10px;
-    background: transparent;
-    color: #94a3b8;
-    font: inherit;
-    font-size: 0.92rem;
-    font-weight: 700;
-    line-height: 1.25;
-    cursor: pointer;
-    transition:
-      background 0.2s ease,
-      color 0.2s ease,
-      border-color 0.2s ease,
-      transform 0.2s ease;
-  }
-
-  .main-tab:hover {
-    color: #f8fafc;
-    background: rgba(56, 189, 248, 0.1);
-  }
-
-  .main-tab.is-active {
-    color: #f8fafc;
-    background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
-    border-color: #38bdf8;
-    box-shadow: 0 8px 22px rgba(2, 6, 23, 0.35);
-  }
-
-  .main-tab:focus-visible {
-    outline: 2px solid #38bdf8;
-    outline-offset: 2px;
-  }
-
-  .main-tab-icon {
-    flex-shrink: 0;
-    font-size: 1.25rem;
-    line-height: 1;
-  }
-
-  .main-tab-label {
-    text-align: left;
-  }
-
   .main-panel {
     animation: main-panel-in 0.25s ease;
   }
@@ -1317,15 +1242,6 @@ function splitGlossaryTerms(text: string): GlossarySegment[] {
   }
 
   @media (max-width: 760px) {
-    .main-tabs {
-      grid-template-columns: 1fr;
-    }
-
-    .main-tab {
-      justify-content: flex-start;
-      padding: 0.7rem 0.8rem;
-    }
-
     .hymn-card {
       grid-template-columns: 1fr;
     }
@@ -1376,7 +1292,6 @@ function splitGlossaryTerms(text: string): GlossarySegment[] {
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .main-tab,
     .main-panel,
     .summary-chevron,
     .hymn-audio-toggle,

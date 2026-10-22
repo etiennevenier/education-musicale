@@ -1,4 +1,5 @@
 ---
+import CourseTabs from './CourseTabs.astro';
 import VideoCard from './VideoCard.astro';
 
 const mainTabs = [
@@ -119,29 +120,13 @@ const radioFranceLink = {
 ---
 
 <div class="heros-course" id="heros-course">
-  <div class="main-tabs" role="tablist" aria-label="Thèmes de la séquence Musique et Héros">
-    {mainTabs.map((tab, index) => (
-      <button
-        type="button"
-        role="tab"
-        id={`heros-tab-${tab.id}`}
-        aria-controls={`heros-panel-${tab.id}`}
-        aria-selected={index === 0 ? 'true' : 'false'}
-        tabindex={index === 0 ? 0 : -1}
-        class:list={['main-tab', { 'is-active': index === 0 }]}
-        data-main-tab={tab.id}
-      >
-        <span class="main-tab-icon" aria-hidden="true">{tab.icon}</span>
-        <span class="main-tab-label">{tab.label}</span>
-      </button>
-    ))}
-  </div>
+  <CourseTabs tabs={mainTabs} ariaLabel="Thèmes de la séquence Musique et Héros" />
 
   <div
     class="main-panel is-active"
     role="tabpanel"
-    id="heros-panel-cours"
-    aria-labelledby="heros-tab-cours"
+    id="main-panel-cours"
+    aria-labelledby="main-tab-cours"
     tabindex="0"
     data-main-panel="cours"
   >
@@ -168,8 +153,8 @@ const radioFranceLink = {
   <div
     class="main-panel"
     role="tabpanel"
-    id="heros-panel-themes"
-    aria-labelledby="heros-tab-themes"
+    id="main-panel-themes"
+    aria-labelledby="main-tab-themes"
     tabindex="0"
     data-main-panel="themes"
     hidden
@@ -195,8 +180,8 @@ const radioFranceLink = {
   <div
     class="main-panel"
     role="tabpanel"
-    id="heros-panel-pirates"
-    aria-labelledby="heros-tab-pirates"
+    id="main-panel-pirates"
+    aria-labelledby="main-tab-pirates"
     tabindex="0"
     data-main-panel="pirates"
     hidden
@@ -227,8 +212,8 @@ const radioFranceLink = {
   <div
     class="main-panel"
     role="tabpanel"
-    id="heros-panel-wonder-woman"
-    aria-labelledby="heros-tab-wonder-woman"
+    id="main-panel-wonder-woman"
+    aria-labelledby="main-tab-wonder-woman"
     tabindex="0"
     data-main-panel="wonder-woman"
     hidden
@@ -329,54 +314,6 @@ const radioFranceLink = {
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
-  }
-
-  .main-tabs {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.6rem;
-  }
-
-  .main-tab {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    background: #1e293b;
-    border: 1px solid #334155;
-    border-radius: 10px;
-    padding: 0.8rem 0.9rem;
-    color: #94a3b8;
-    font: inherit;
-    font-size: 0.9rem;
-    font-weight: 700;
-    text-align: left;
-    cursor: pointer;
-    transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
-  }
-
-  .main-tab:hover {
-    color: #f8fafc;
-    border-color: #475569;
-  }
-
-  .main-tab.is-active {
-    background: linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(30, 41, 59, 0.9));
-    border-color: #38bdf8;
-    color: #f8fafc;
-  }
-
-  .main-tab:focus-visible {
-    outline: 2px solid #38bdf8;
-    outline-offset: 2px;
-  }
-
-  .main-tab-icon {
-    font-size: 1.15rem;
-    line-height: 1;
-  }
-
-  .main-tab-label {
-    line-height: 1.25;
   }
 
   .tab-content {
@@ -531,14 +468,6 @@ const radioFranceLink = {
   }
 
   @media (max-width: 720px) {
-    .main-tabs {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .main-tab {
-      padding: 0.65rem 0.8rem;
-    }
-
     .tab-content {
       padding: 1rem;
     }
@@ -555,14 +484,7 @@ const radioFranceLink = {
     }
   }
 
-  @media (max-width: 440px) {
-    .main-tabs {
-      grid-template-columns: 1fr;
-    }
-  }
-
   @media (prefers-reduced-motion: reduce) {
-    .main-tab,
     .resource-card {
       transition: none;
     }

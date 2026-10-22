@@ -1,4 +1,5 @@
 ---
+import CourseTabs from './CourseTabs.astro';
 import VideoCard from './VideoCard.astro';
 import RockStageBuilder from './RockStageBuilder.astro';
 import rythmeImage from '../assets/Rythme Walk This Way.jpg';
@@ -11,6 +12,7 @@ interface RockVideo {
 
 interface RockTab {
   id: string;
+  icon: string;
   label: string;
   videos?: RockVideo[];
   /** Bloc de ressources complémentaires affiché sous la grille vidéo. */
@@ -22,6 +24,7 @@ interface RockTab {
 const tabs: RockTab[] = [
   {
     id: 'cours',
+    icon: '🎸',
     label: 'Cours',
     videos: [
       { badge: 'Capsule', title: 'Capsule', youtubeId: 'A-2lfV36Lxk' },
@@ -33,6 +36,7 @@ const tabs: RockTab[] = [
   },
   {
     id: 'aerosmith',
+    icon: '🎤',
     label: 'Walk This Way',
     videos: [
       { badge: 'Original', title: 'Walk This Way — Aerosmith', youtubeId: '4c8O2n1Gfto' },
@@ -43,6 +47,7 @@ const tabs: RockTab[] = [
   },
   {
     id: 'help',
+    icon: '🎶',
     label: 'Help',
     videos: [
       { badge: 'Beatles', title: 'Help — The Beatles', youtubeId: '2Q_ZzBGPdqE' },
@@ -53,6 +58,7 @@ const tabs: RockTab[] = [
   },
   {
     id: 'studio',
+    icon: '🎸',
     label: 'Le Studio Rock',
     videos: [],
     studio: true,
@@ -63,29 +69,14 @@ const articleUrl = 'https://hardforce.com/actu/35694/lejourou-run-dmc-aerosmith-
 ---
 
 <div class="rock-course">
-  <div class="rock-tabs" role="tablist" aria-label="Musique et Rock">
-    {tabs.map((tab, index) => (
-      <button
-        type="button"
-        role="tab"
-        id={`rock-tab-${tab.id}`}
-        class="rock-tab"
-        aria-controls={`rock-panel-${tab.id}`}
-        aria-selected={index === 0 ? 'true' : 'false'}
-        tabindex={index === 0 ? 0 : -1}
-        data-tab={tab.id}
-      >
-        {tab.label}
-      </button>
-    ))}
-  </div>
+  <CourseTabs tabs={tabs} ariaLabel="Musique et Rock" />
 
   {tabs.map((tab, index) => (
     <div
       role="tabpanel"
-      id={`rock-panel-${tab.id}`}
+      id={`main-panel-${tab.id}`}
       class="rock-panel"
-      aria-labelledby={`rock-tab-${tab.id}`}
+      aria-labelledby={`main-tab-${tab.id}`}
       hidden={index !== 0}
       data-panel={tab.id}
     >
@@ -146,32 +137,34 @@ const articleUrl = 'https://hardforce.com/actu/35694/lejourou-run-dmc-aerosmith-
 </div>
 
 <script>
-  const tabs = document.querySelectorAll<HTMLButtonElement>('.rock-tab');
+  const tabs = document.querySelectorAll<HTMLButtonElement>('.rock-course .main-tab');
 
   const selectTab = (tab: HTMLButtonElement) => {
     const root = tab.closest('.rock-course');
     if (!root) return;
 
-    root.querySelectorAll<HTMLButtonElement>('.rock-tab').forEach((item) => {
+    root.querySelectorAll<HTMLButtonElement>('.main-tab').forEach((item) => {
       const isActive = item === tab;
       item.setAttribute('aria-selected', isActive ? 'true' : 'false');
       item.tabIndex = isActive ? 0 : -1;
+      item.classList.toggle('is-active', isActive);
     });
 
     root.querySelectorAll<HTMLElement>('.rock-panel').forEach((panel) => {
-      panel.hidden = panel.dataset.panel !== tab.dataset.tab;
+      panel.hidden = panel.dataset.panel !== tab.dataset.mainTab;
     });
   };
 
   tabs.forEach((tab, index) => {
     tab.addEventListener('click', () => selectTab(tab));
     tab.addEventListener('keydown', (event) => {
-      if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+      if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
       event.preventDefault();
       const nextIndex =
-        event.key === 'ArrowRight'
-          ? (index + 1) % tabs.length
-          : (index - 1 + tabs.length) % tabs.length;
+        event.key === 'Home' ? 0
+        : event.key === 'End' ? tabs.length - 1
+        : event.key === 'ArrowRight' ? (index + 1) % tabs.length
+        : (index - 1 + tabs.length) % tabs.length;
       tabs[nextIndex].focus();
       selectTab(tabs[nextIndex]);
     });
@@ -196,66 +189,6 @@ const articleUrl = 'https://hardforce.com/actu/35694/lejourou-run-dmc-aerosmith-
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-  }
-
-  .rock-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-
-  .rock-tab {
-    flex: 1 1 180px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.9rem 1.25rem;
-    border-radius: 12px;
-    border: 1px solid var(--border, #334155);
-    background: #1e293b;
-    color: var(--text-muted, #94a3b8);
-    font: inherit;
-    font-weight: 700;
-    cursor: pointer;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
-  }
-
-  .rock-tab::before {
-    font-size: 1.1rem;
-    line-height: 1;
-  }
-
-  .rock-tab[data-tab='cours']::before {
-    content: '🎸';
-  }
-
-  .rock-tab[data-tab='aerosmith']::before {
-    content: '🎤';
-  }
-
-  .rock-tab[data-tab='help']::before {
-    content: '🎶';
-  }
-
-  .rock-tab[data-tab='studio']::before {
-    content: '🎸';
-  }
-
-  .rock-tab:hover {
-    border-color: var(--primary, #38bdf8);
-    color: var(--text, #f1f5f9);
-  }
-
-  .rock-tab[aria-selected='true'] {
-    border-color: var(--primary, #38bdf8);
-    color: var(--text, #f1f5f9);
-    box-shadow: 0 0 0 1px var(--primary, #38bdf8), 0 0 16px rgba(56, 189, 248, 0.25);
-  }
-
-  .rock-tab:focus-visible {
-    outline: 2px solid var(--primary, #38bdf8);
-    outline-offset: 2px;
   }
 
   .rock-panel[hidden] {

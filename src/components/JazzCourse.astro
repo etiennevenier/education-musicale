@@ -1,4 +1,5 @@
 ---
+import CourseTabs from './CourseTabs.astro';
 import VideoCard from './VideoCard.astro';
 import JazzQuiz from './JazzQuiz.astro';
 import JazzChorusQuiz from './JazzChorusQuiz.astro';
@@ -80,29 +81,13 @@ const projectIllustrationVideos = [
 ---
 
 <div class="jazz-course" id="jazz-course">
-  <div class="main-tabs" role="tablist" aria-label="Thèmes de la séquence Musique et Jazz">
-    {mainTabs.map((tab, index) => (
-      <button
-        type="button"
-        role="tab"
-        id={`jazz-tab-${tab.id}`}
-        aria-controls={`jazz-panel-${tab.id}`}
-        aria-selected={index === 0 ? 'true' : 'false'}
-        tabindex={index === 0 ? 0 : -1}
-        class:list={['main-tab', { 'is-active': index === 0 }]}
-        data-main-tab={tab.id}
-      >
-        <span class="main-tab-icon" aria-hidden="true">{tab.icon}</span>
-        <span class="main-tab-label">{tab.label}</span>
-      </button>
-    ))}
-  </div>
+  <CourseTabs tabs={mainTabs} ariaLabel="Thèmes de la séquence Musique et Jazz" />
 
   <div
     class="main-panel is-active"
     role="tabpanel"
-    id="jazz-panel-histoire"
-    aria-labelledby="jazz-tab-histoire"
+    id="main-panel-histoire"
+    aria-labelledby="main-tab-histoire"
     tabindex="0"
     data-main-panel="histoire"
   >
@@ -173,8 +158,8 @@ const projectIllustrationVideos = [
   <div
     class="main-panel"
     role="tabpanel"
-    id="jazz-panel-scat"
-    aria-labelledby="jazz-tab-scat"
+    id="main-panel-scat"
+    aria-labelledby="main-tab-scat"
     tabindex="0"
     data-main-panel="scat"
     hidden
@@ -206,8 +191,8 @@ const projectIllustrationVideos = [
   <div
     class="main-panel"
     role="tabpanel"
-    id="jazz-panel-projet"
-    aria-labelledby="jazz-tab-projet"
+    id="main-panel-projet"
+    aria-labelledby="main-tab-projet"
     tabindex="0"
     data-main-panel="projet"
     hidden
@@ -249,8 +234,8 @@ const projectIllustrationVideos = [
   <div
     class="main-panel"
     role="tabpanel"
-    id="jazz-panel-quiz"
-    aria-labelledby="jazz-tab-quiz"
+    id="main-panel-quiz"
+    aria-labelledby="main-tab-quiz"
     tabindex="0"
     data-main-panel="quiz"
     hidden
@@ -335,54 +320,6 @@ const projectIllustrationVideos = [
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
-  }
-
-  .main-tabs {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.6rem;
-  }
-
-  .main-tab {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    background: #1e293b;
-    border: 1px solid #334155;
-    border-radius: 10px;
-    padding: 0.8rem 0.9rem;
-    color: #94a3b8;
-    font: inherit;
-    font-size: 0.9rem;
-    font-weight: 700;
-    text-align: left;
-    cursor: pointer;
-    transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
-  }
-
-  .main-tab:hover {
-    color: #f8fafc;
-    border-color: #475569;
-  }
-
-  .main-tab.is-active {
-    background: linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(30, 41, 59, 0.9));
-    border-color: #38bdf8;
-    color: #f8fafc;
-  }
-
-  .main-tab:focus-visible {
-    outline: 2px solid #38bdf8;
-    outline-offset: 2px;
-  }
-
-  .main-tab-icon {
-    font-size: 1.15rem;
-    line-height: 1;
-  }
-
-  .main-tab-label {
-    line-height: 1.25;
   }
 
   .tab-content {
@@ -502,30 +439,11 @@ const projectIllustrationVideos = [
   }
 
   @media (max-width: 720px) {
-    .main-tabs {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .main-tab {
-      padding: 0.65rem 0.8rem;
-    }
-
     .tab-content {
       padding: 1rem;
     }
   }
 
-  @media (max-width: 440px) {
-    .main-tabs {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .main-tab {
-      transition: none;
-    }
-  }
 </style>
 
 

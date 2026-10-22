@@ -1,4 +1,5 @@
 ---
+import CourseTabs from './CourseTabs.astro';
 import VideoCard from './VideoCard.astro';
 import LaboCinematique from './LaboCinematique.astro';
 
@@ -12,6 +13,7 @@ interface CinemaVideo {
 
 interface CinemaTab {
   id: string;
+  icon: string;
   label: string;
   videos: CinemaVideo[];
   /** Onglet atelier interactif : affiche le Labo Musique & Image au lieu des vidéos. */
@@ -21,6 +23,7 @@ interface CinemaTab {
 const tabs: CinemaTab[] = [
   {
     id: 'air-de-la-folie',
+    icon: '🎭',
     label: "L'air de la folie",
     videos: [
       {
@@ -53,6 +56,7 @@ const tabs: CinemaTab[] = [
   },
   {
     id: 'role-de-la-musique',
+    icon: '🎬',
     label: 'Le rôle de la musique',
     videos: [
       { badge: 'Capsule 1', title: 'Le rôle de la musique — Capsule 1', youtubeId: '-ueSPopk7Nk' },
@@ -69,6 +73,7 @@ const tabs: CinemaTab[] = [
   },
   {
     id: 'leitmotiv',
+    icon: '🎼',
     label: 'Le leitmotiv',
     videos: [
       { badge: 'Leitmotiv', title: 'Le leitmotiv au cinéma', youtubeId: '3ZgcyHaCdhE' },
@@ -76,6 +81,7 @@ const tabs: CinemaTab[] = [
   },
   {
     id: 'projet-musical',
+    icon: '🎤',
     label: 'Projet musical',
     videos: [
       { badge: 'Projet musical', title: 'Projet musical', youtubeId: 'VZEtQo87n2I' },
@@ -83,6 +89,7 @@ const tabs: CinemaTab[] = [
   },
   {
     id: 'labo',
+    icon: '🎬',
     label: 'Labo Musique & Image',
     kind: 'labo',
     videos: [],
@@ -91,29 +98,14 @@ const tabs: CinemaTab[] = [
 ---
 
 <div class="cinema-course">
-  <div class="cinema-tabs" role="tablist" aria-label="Musique et Cinéma">
-    {tabs.map((tab, index) => (
-      <button
-        type="button"
-        role="tab"
-        id={`cinema-tab-${tab.id}`}
-        class="cinema-tab"
-        aria-controls={`cinema-panel-${tab.id}`}
-        aria-selected={index === 0 ? 'true' : 'false'}
-        tabindex={index === 0 ? 0 : -1}
-        data-tab={tab.id}
-      >
-        {tab.label}
-      </button>
-    ))}
-  </div>
+  <CourseTabs tabs={tabs} ariaLabel="Musique et Cinéma" />
 
   {tabs.map((tab, index) => (
     <div
       role="tabpanel"
-      id={`cinema-panel-${tab.id}`}
+      id={`main-panel-${tab.id}`}
       class="cinema-panel"
-      aria-labelledby={`cinema-tab-${tab.id}`}
+      aria-labelledby={`main-tab-${tab.id}`}
       hidden={index !== 0}
       data-panel={tab.id}
     >
@@ -140,42 +132,44 @@ const tabs: CinemaTab[] = [
 <script>
   import { stopAudio } from '../utils/audioManager';
 
-  const tabs = document.querySelectorAll<HTMLButtonElement>('.cinema-tab');
+  const tabs = document.querySelectorAll<HTMLButtonElement>('.cinema-course .main-tab');
 
   const selectTab = (tab: HTMLButtonElement) => {
     const root = tab.closest('.cinema-course');
     if (!root) return;
 
     // Coupe le son du Labo (et de tout autre extrait) quand on quitte son onglet.
-    if (tab.dataset.tab !== 'labo') stopAudio();
+    if (tab.dataset.mainTab !== 'labo') stopAudio();
 
     root.dispatchEvent(
       new CustomEvent('cinema:tab-change', {
-        detail: { tab: tab.dataset.tab },
+        detail: { tab: tab.dataset.mainTab },
         bubbles: true,
       }),
     );
 
-    root.querySelectorAll<HTMLButtonElement>('.cinema-tab').forEach((item) => {
+    root.querySelectorAll<HTMLButtonElement>('.main-tab').forEach((item) => {
       const isActive = item === tab;
       item.setAttribute('aria-selected', isActive ? 'true' : 'false');
       item.tabIndex = isActive ? 0 : -1;
+      item.classList.toggle('is-active', isActive);
     });
 
     root.querySelectorAll<HTMLElement>('.cinema-panel').forEach((panel) => {
-      panel.hidden = panel.dataset.panel !== tab.dataset.tab;
+      panel.hidden = panel.dataset.panel !== tab.dataset.mainTab;
     });
   };
 
   tabs.forEach((tab, index) => {
     tab.addEventListener('click', () => selectTab(tab));
     tab.addEventListener('keydown', (event) => {
-      if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+      if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
       event.preventDefault();
       const nextIndex =
-        event.key === 'ArrowRight'
-          ? (index + 1) % tabs.length
-          : (index - 1 + tabs.length) % tabs.length;
+        event.key === 'Home' ? 0
+        : event.key === 'End' ? tabs.length - 1
+        : event.key === 'ArrowRight' ? (index + 1) % tabs.length
+        : (index - 1 + tabs.length) % tabs.length;
       tabs[nextIndex].focus();
       selectTab(tabs[nextIndex]);
     });
@@ -187,70 +181,6 @@ const tabs: CinemaTab[] = [
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-  }
-
-  .cinema-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-
-  .cinema-tab {
-    flex: 1 1 180px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.9rem 1.25rem;
-    border-radius: 12px;
-    border: 1px solid var(--border, #334155);
-    background: #1e293b;
-    color: var(--text-muted, #94a3b8);
-    font: inherit;
-    font-weight: 700;
-    cursor: pointer;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
-  }
-
-  .cinema-tab::before {
-    font-size: 1.1rem;
-    line-height: 1;
-  }
-
-  .cinema-tab[data-tab='air-de-la-folie']::before {
-    content: '🎭';
-  }
-
-  .cinema-tab[data-tab='role-de-la-musique']::before {
-    content: '🎬';
-  }
-
-  .cinema-tab[data-tab='leitmotiv']::before {
-    content: '🎼';
-  }
-
-  .cinema-tab[data-tab='projet-musical']::before {
-    content: '🎤';
-  }
-
-  .cinema-tab[data-tab='labo']::before {
-    content: '🎬';
-  }
-
-  .cinema-tab:hover {
-    border-color: var(--primary, #38bdf8);
-    color: var(--text, #f1f5f9);
-  }
-
-  .cinema-tab[aria-selected='true'] {
-    border-color: var(--primary, #38bdf8);
-    color: var(--text, #f1f5f9);
-    box-shadow: 0 0 0 1px var(--primary, #38bdf8), 0 0 16px rgba(56, 189, 248, 0.25);
-  }
-
-  .cinema-tab:focus-visible {
-    outline: 2px solid var(--primary, #38bdf8);
-    outline-offset: 2px;
   }
 
   .cinema-panel[hidden] {

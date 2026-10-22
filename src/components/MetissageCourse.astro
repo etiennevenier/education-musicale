@@ -1,4 +1,5 @@
 ---
+import CourseTabs from './CourseTabs.astro';
 import VideoCard from './VideoCard.astro';
 import { relativeUrl } from '../utils/navigation';
 import { geoNaturalEarth1, geoPath } from 'd3-geo';
@@ -19,6 +20,7 @@ interface MetissageVideo {
 
 interface MetissageTab {
   id: string;
+  icon: string;
   label: string;
   videos: MetissageVideo[];
 }
@@ -26,6 +28,7 @@ interface MetissageTab {
 const tabs: MetissageTab[] = [
   {
     id: 'lennon',
+    icon: '🎸',
     label: 'Lennon',
     videos: [
       { badge: 'Original', title: 'Original — John Lennon', youtubeId: 'VOgFZfRVaww' },
@@ -34,6 +37,7 @@ const tabs: MetissageTab[] = [
   },
   {
     id: 'vivaldi',
+    icon: '🎻',
     label: 'Vivaldi',
     videos: [
       { badge: 'Original', title: 'Original — Antonio Vivaldi', youtubeId: 'VBezMA7PL7c' },
@@ -42,6 +46,7 @@ const tabs: MetissageTab[] = [
   },
   {
     id: 'brel',
+    icon: '🎤',
     label: 'Brel',
     videos: [
       { badge: 'Original', title: 'Original — Jacques Brel', youtubeId: 'i2wmKcBm4Ik' },
@@ -56,6 +61,7 @@ const tabs: MetissageTab[] = [
   },
   {
     id: 'voyage',
+    icon: '🗺️',
     label: 'Voyage',
     videos: [],
   },
@@ -187,29 +193,14 @@ const pairTwo = {
 ---
 
 <div class="metissage-course">
-  <div class="metissage-tabs" role="tablist" aria-label="Musique et Métissage">
-    {tabs.map((tab, index) => (
-      <button
-        type="button"
-        role="tab"
-        id={`metissage-tab-${tab.id}`}
-        class="metissage-tab"
-        aria-controls={`metissage-panel-${tab.id}`}
-        aria-selected={index === 0 ? 'true' : 'false'}
-        tabindex={index === 0 ? 0 : -1}
-        data-tab={tab.id}
-      >
-        {tab.label}
-      </button>
-    ))}
-  </div>
+  <CourseTabs tabs={tabs} ariaLabel="Musique et Métissage" />
 
   {tabs.map((tab, index) => (
     <div
       role="tabpanel"
-      id={`metissage-panel-${tab.id}`}
+      id={`main-panel-${tab.id}`}
       class="metissage-panel"
-      aria-labelledby={`metissage-tab-${tab.id}`}
+      aria-labelledby={`main-tab-${tab.id}`}
       hidden={index !== 0}
       data-panel={tab.id}
     >
@@ -351,7 +342,7 @@ const pairTwo = {
   const metissageRoot = document.querySelector('.metissage-course');
 
   if (metissageRoot) {
-    const tabs = Array.from(metissageRoot.querySelectorAll('.metissage-tab'));
+    const tabs = Array.from(metissageRoot.querySelectorAll('.main-tab'));
     const panels = Array.from(metissageRoot.querySelectorAll('.metissage-panel'));
 
     const activateTab = (activeIndex, moveFocus = false) => {
@@ -359,6 +350,7 @@ const pairTwo = {
         const isActive = index === activeIndex;
         tab.setAttribute('aria-selected', String(isActive));
         tab.tabIndex = isActive ? 0 : -1;
+        tab.classList.toggle('is-active', isActive);
         if (isActive && moveFocus) {
           tab.focus();
         }
@@ -680,46 +672,6 @@ const pairTwo = {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-  }
-
-  .metissage-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-
-  .metissage-tab {
-    flex: 1 1 180px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.9rem 1.25rem;
-    border-radius: 12px;
-    border: 1px solid var(--border, #334155);
-    background: #1e293b;
-    color: var(--text-muted, #94a3b8);
-    font: inherit;
-    font-weight: 700;
-    cursor: pointer;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
-  }
-
-  .metissage-tab::before { font-size: 1.1rem; line-height: 1; }
-  .metissage-tab[data-tab='lennon']::before { content: '🎸'; }
-  .metissage-tab[data-tab='vivaldi']::before { content: '🎻'; }
-  .metissage-tab[data-tab='brel']::before { content: '🎤'; }
-  .metissage-tab[data-tab='voyage']::before { content: '🗺️'; }
-
-  .metissage-tab:hover {
-    border-color: var(--primary, #38bdf8);
-    color: var(--text, #f1f5f9);
-  }
-
-  .metissage-tab[aria-selected='true'] {
-    border-color: var(--primary, #38bdf8);
-    color: var(--text, #f1f5f9);
-    box-shadow: 0 0 0 1px var(--primary, #38bdf8), 0 0 16px rgba(56, 189, 248, 0.25);
   }
 
   .metissage-panel[hidden] { display: none; }

@@ -1,4 +1,5 @@
 ---
+import CourseTabs from './CourseTabs.astro';
 import VideoCard from './VideoCard.astro';
 
 interface RapVideo {
@@ -9,6 +10,7 @@ interface RapVideo {
 
 interface RapTab {
   id: string;
+  icon: string;
   label: string;
   videos: RapVideo[];
 }
@@ -16,6 +18,7 @@ interface RapTab {
 const tabs: RapTab[] = [
   {
     id: 'cours',
+    icon: '🎓',
     label: 'Cours',
     videos: [
       {
@@ -32,6 +35,7 @@ const tabs: RapTab[] = [
   },
   {
     id: 'rap',
+    icon: '🎤',
     label: 'RAP',
     videos: [
       { badge: 'Rap', title: 'Rap — extrait 1', youtubeId: '5Tmr8gIIyO0' },
@@ -42,6 +46,7 @@ const tabs: RapTab[] = [
   },
   {
     id: 'fun',
+    icon: '😄',
     label: 'FUN',
     videos: [
       { badge: 'Rap', title: 'Rap — fun 1', youtubeId: '3MZNxNd0vrY' },
@@ -139,31 +144,15 @@ const timelineSteps = [
 ---
 
 <div class="rap-course">
-  <!-- Navigation Onglets principaux -->
-  <div class="rap-tabs" role="tablist" aria-label="Musique et Rap">
-    {tabs.map((tab, index) => (
-      <button
-        type="button"
-        role="tab"
-        id={`rap-tab-${tab.id}`}
-        class="rap-tab"
-        aria-controls={`rap-panel-${tab.id}`}
-        aria-selected={index === 0 ? 'true' : 'false'}
-        tabindex={index === 0 ? 0 : -1}
-        data-tab={tab.id}
-      >
-        {tab.label}
-      </button>
-    ))}
-  </div>
+  <CourseTabs tabs={tabs} ariaLabel="Musique et Rap" />
 
   <!-- Panneaux de contenu -->
   {tabs.map((tab, index) => (
     <div
       role="tabpanel"
-      id={`rap-panel-${tab.id}`}
+      id={`main-panel-${tab.id}`}
       class="rap-panel"
-      aria-labelledby={`rap-tab-${tab.id}`}
+      aria-labelledby={`main-tab-${tab.id}`}
       hidden={index !== 0}
       data-panel={tab.id}
     >
@@ -374,365 +363,380 @@ const timelineSteps = [
 </div>
 
 <script is:inline define:vars={{ timelineSteps }}>
-  // Script Onglets
-  const rapRoot = document.querySelector('.rap-course');
+  document.addEventListener('DOMContentLoaded', () => {
+    const rapRoot = document.querySelector('.rap-course');
+    if (!rapRoot) return;
 
-  if (rapRoot) {
-    const tabs = rapRoot.querySelectorAll('.rap-tab');
+    const tabs = Array.from(rapRoot.querySelectorAll('.main-tabs [role="tab"]'));
+    const panels = Array.from(rapRoot.querySelectorAll('.rap-panel[data-panel]'));
 
-    const selectTab = (tab) => {
-      rapRoot.querySelectorAll('.rap-tab').forEach((item) => {
-        const isActive = item === tab;
-        item.setAttribute('aria-selected', isActive ? 'true' : 'false');
-        item.tabIndex = isActive ? 0 : -1;
+    const selectTab = (targetId) => {
+      if (!targetId) return;
+
+      tabs.forEach((tab) => {
+        const isActive = tab.dataset.mainTab === targetId;
+        tab.setAttribute('aria-selected', String(isActive));
+        tab.tabIndex = isActive ? 0 : -1;
+        tab.classList.toggle('is-active', isActive);
       });
 
-      rapRoot.querySelectorAll('.rap-panel').forEach((panel) => {
-        panel.hidden = panel.dataset.panel !== tab.dataset.tab;
+      panels.forEach((panel) => {
+        const isActive = panel.dataset.panel === targetId;
+        panel.hidden = !isActive;
       });
     };
 
-    tabs.forEach((tab, index) => {
-      tab.addEventListener('click', () => selectTab(tab));
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        selectTab(tab.dataset.mainTab);
+      });
+
       tab.addEventListener('keydown', (event) => {
-        if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
-        event.preventDefault();
-        const nextIndex =
-          event.key === 'ArrowRight'
-            ? (index + 1) % tabs.length
-            : (index - 1 + tabs.length) % tabs.length;
-        tabs[nextIndex].focus();
-        selectTab(tabs[nextIndex]);
+        const currentIndex = tabs.indexOf(tab);
+        let nextIndex = null;
+
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+          nextIndex = (currentIndex + 1) % tabs.length;
+        } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+          nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+        } else if (event.key === 'Home') {
+          nextIndex = 0;
+        } else if (event.key === 'End') {
+          nextIndex = tabs.length - 1;
+        }
+
+        if (nextIndex !== null) {
+          event.preventDefault();
+          const nextTab = tabs[nextIndex];
+          selectTab(nextTab.dataset.mainTab);
+          nextTab.focus();
+        }
       });
     });
 
-    // --- Moteur du Curseur Range Chronologique ---
+    // --- Frise chronologique ---
     const rangeInput = document.querySelector('#timeline-range');
-    const rangePeriodLabel = document.querySelector('#range-period-label');
-    const rangeCounterLabel = document.querySelector('#range-counter-label');
-    const slideTag = document.querySelector('#slide-tag');
-    const slideTitle = document.querySelector('#slide-title');
-    const slidePoints = document.querySelector('#slide-points');
-    const tickMarks = document.querySelectorAll('.tick-mark');
-
-    const updateStep = (index) => {
-      const data = timelineSteps[index];
-
-      if (rangePeriodLabel) rangePeriodLabel.textContent = data.period;
-      if (rangeCounterLabel) rangeCounterLabel.textContent = `Étape ${index + 1} sur ${timelineSteps.length}`;
-      if (slideTag) slideTag.textContent = data.badge;
-      if (slideTitle) slideTitle.textContent = data.title;
-
-      if (slidePoints) {
-        slidePoints.innerHTML = data.points
-          .map((pt) => `<li class="point-item">${pt}</li>`)
-          .join('');
-      }
-
-      tickMarks.forEach((tick, idx) => {
-        if (idx === index) tick.classList.add('active');
-        else tick.classList.remove('active');
-      });
-    };
-
     if (rangeInput) {
-      rangeInput.addEventListener('input', (e) => {
-        const idx = parseInt(e.target.value, 10);
-        updateStep(idx);
-      });
+      const periodEl = document.querySelector('#range-period-label');
+      const counterEl = document.querySelector('#range-counter-label');
+      const tagEl = document.querySelector('#slide-tag');
+      const titleEl = document.querySelector('#slide-title');
+      const pointsEl = document.querySelector('#slide-points');
+      const tickEls = Array.from(document.querySelectorAll('.tick-mark'));
+      const liTemplate = pointsEl ? pointsEl.firstElementChild : null;
 
-      tickMarks.forEach((tick) => {
+      const showStep = (i) => {
+        const step = timelineSteps[i];
+        if (!step) return;
+        if (periodEl) periodEl.textContent = step.period;
+        if (counterEl) counterEl.textContent = `Étape ${i + 1} sur ${timelineSteps.length}`;
+        if (tagEl) tagEl.textContent = step.badge;
+        if (titleEl) titleEl.textContent = step.title;
+        if (pointsEl && liTemplate) {
+          pointsEl.replaceChildren(
+            ...step.points.map((pt) => {
+              const li = liTemplate.cloneNode(false);
+              li.innerHTML = pt;
+              return li;
+            })
+          );
+        }
+        tickEls.forEach((tick, idx) => tick.classList.toggle('active', idx === i));
+      };
+
+      rangeInput.addEventListener('input', () => showStep(Number(rangeInput.value)));
+      tickEls.forEach((tick, idx) => {
         tick.addEventListener('click', () => {
-          const idx = parseInt(tick.dataset.step || '0', 10);
-          rangeInput.value = idx.toString();
-          updateStep(idx);
+          rangeInput.value = String(idx);
+          showStep(idx);
         });
       });
+      showStep(Number(rangeInput.value));
     }
+  });
 
-    // --- MOTEUR WEB AUDIO SÉQUENCEUR 808 & MÉMOIRES ---
-    let audioCtx = null;
-    let isPlayingSeq = false;
-    let currentSeqStep = 0;
-    let bpm = 90;
-    let seqIntervalId = null;
+  // --- MOTEUR WEB AUDIO SÉQUENCEUR 808 & MÉMOIRES ---
+  let audioCtx = null;
+  let isPlayingSeq = false;
+  let currentSeqStep = 0;
+  let bpm = 90;
+  let seqIntervalId = null;
 
-    const userMemories = [null, null, null, null];
+  const userMemories = [null, null, null, null];
 
-    const playBtn = document.querySelector('#seq-play-btn');
-    const bpmSlider = document.querySelector('#bpm-slider');
-    const bpmVal = document.querySelector('#bpm-val');
-    const clearBtn = document.querySelector('#seq-clear-btn');
-    const randBtn = document.querySelector('#seq-rand-btn');
-    const stepBtns = document.querySelectorAll('.step-btn');
-    const presetBtns = document.querySelectorAll('.preset-btn');
-    const memSlots = document.querySelectorAll('.mem-slot');
+  const playBtn = document.querySelector('#seq-play-btn');
+  const bpmSlider = document.querySelector('#bpm-slider');
+  const bpmVal = document.querySelector('#bpm-val');
+  const clearBtn = document.querySelector('#seq-clear-btn');
+  const randBtn = document.querySelector('#seq-rand-btn');
+  const stepBtns = document.querySelectorAll('.step-btn');
+  const presetBtns = document.querySelectorAll('.preset-btn');
+  const memSlots = document.querySelectorAll('.mem-slot');
 
-    const initAudio = () => {
-      if (!audioCtx) {
-        const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
-        audioCtx = new AudioCtxClass();
+  const initAudio = () => {
+    if (!audioCtx) {
+      const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioCtxClass();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  };
+
+  const playSound = (type) => {
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+
+    if (type === 'kick') {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.frequency.setValueAtTime(130, now);
+      osc.frequency.exponentialRampToValueAtTime(0.01, now + 0.4);
+      gain.gain.setValueAtTime(1, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.4);
+    } else if (type === 'snare') {
+      const noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.2, audioCtx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < noiseBuffer.length; i++) output[i] = Math.random() * 2 - 1;
+
+      const whiteNoise = audioCtx.createBufferSource();
+      whiteNoise.buffer = noiseBuffer;
+      const noiseFilter = audioCtx.createBiquadFilter();
+      noiseFilter.type = 'highpass';
+      noiseFilter.frequency.value = 1000;
+
+      const noiseGain = audioCtx.createGain();
+      noiseGain.gain.setValueAtTime(0.8, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+
+      whiteNoise.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(audioCtx.destination);
+      whiteNoise.start(now);
+    } else if (type === 'hihat') {
+      const noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.05, audioCtx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < noiseBuffer.length; i++) output[i] = Math.random() * 2 - 1;
+
+      const whiteNoise = audioCtx.createBufferSource();
+      whiteNoise.buffer = noiseBuffer;
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.value = 7000;
+
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+
+      whiteNoise.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtx.destination);
+      whiteNoise.start(now);
+    } else if (type === 'openhat') {
+      const noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.3, audioCtx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < noiseBuffer.length; i++) output[i] = Math.random() * 2 - 1;
+
+      const whiteNoise = audioCtx.createBufferSource();
+      whiteNoise.buffer = noiseBuffer;
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.value = 5000;
+
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.4, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+
+      whiteNoise.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtx.destination);
+      whiteNoise.start(now);
+    }
+  };
+
+  const applyGridConfig = (config) => {
+    const rows = document.querySelectorAll('.seq-row');
+    rows.forEach((row, rIdx) => {
+      const buttons = row.querySelectorAll('.step-btn');
+      buttons.forEach((btn, sIdx) => {
+        if (config[rIdx] && config[rIdx][sIdx]) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    });
+  };
+
+  const getCurrentGridConfig = () => {
+    const rows = document.querySelectorAll('.seq-row');
+    const config = [];
+    rows.forEach((row) => {
+      const rowStates = [];
+      const buttons = row.querySelectorAll('.step-btn');
+      buttons.forEach((btn) => {
+        rowStates.push(btn.classList.contains('active'));
+      });
+      config.push(rowStates);
+    });
+    return config;
+  };
+
+  const presets = {
+    boombap: [
+      [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+      [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+      [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+      [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,1,0]
+    ],
+    trap: [
+      [1,0,0,0, 0,0,0,1, 1,0,0,0, 0,0,0,0],
+      [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,1],
+      [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1],
+      [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,1]
+    ],
+    house: [
+      [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+      [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+      [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+      [0,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,1,0]
+    ],
+    bounce: [
+      [1,0,0,1, 0,0,1,0, 0,1,0,0, 1,0,0,0],
+      [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,1],
+      [1,1,0,1, 1,1,0,1, 1,1,0,1, 1,1,0,1],
+      [0,0,0,0, 0,0,0,1, 0,0,0,0, 0,0,0,0]
+    ]
+  };
+
+  presetBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const style = btn.dataset.preset;
+      if (presets[style]) applyGridConfig(presets[style]);
+    });
+  });
+
+  memSlots.forEach((slot) => {
+    const idx = parseInt(slot.dataset.memIndex, 10);
+    const loadBtn = slot.querySelector('.mem-load-btn');
+    const saveBtn = slot.querySelector('.mem-save-btn');
+    const delBtn = slot.querySelector('.mem-del-btn');
+    const statusEl = slot.querySelector('.mem-status');
+
+    saveBtn.addEventListener('click', () => {
+      userMemories[idx] = getCurrentGridConfig();
+      loadBtn.classList.add('saved');
+      statusEl.textContent = 'Enregistré';
+    });
+
+    loadBtn.addEventListener('click', () => {
+      if (userMemories[idx]) {
+        applyGridConfig(userMemories[idx]);
+        loadBtn.classList.add('loaded-flash');
+        setTimeout(() => loadBtn.classList.remove('loaded-flash'), 300);
+      } else {
+        userMemories[idx] = getCurrentGridConfig();
+        loadBtn.classList.add('saved');
+        statusEl.textContent = 'Enregistré';
       }
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-    };
+    });
 
-    const playSound = (type) => {
-      if (!audioCtx) return;
-      const now = audioCtx.currentTime;
+    delBtn.addEventListener('click', () => {
+      userMemories[idx] = null;
+      loadBtn.classList.remove('saved');
+      statusEl.textContent = 'Vide';
+    });
+  });
 
-      if (type === 'kick') {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.frequency.setValueAtTime(130, now);
-        osc.frequency.exponentialRampToValueAtTime(0.01, now + 0.4);
-        gain.gain.setValueAtTime(1, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start(now);
-        osc.stop(now + 0.4);
-      } else if (type === 'snare') {
-        const noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.2, audioCtx.sampleRate);
-        const output = noiseBuffer.getChannelData(0);
-        for (let i = 0; i < noiseBuffer.length; i++) output[i] = Math.random() * 2 - 1;
-
-        const whiteNoise = audioCtx.createBufferSource();
-        whiteNoise.buffer = noiseBuffer;
-        const noiseFilter = audioCtx.createBiquadFilter();
-        noiseFilter.type = 'highpass';
-        noiseFilter.frequency.value = 1000;
-
-        const noiseGain = audioCtx.createGain();
-        noiseGain.gain.setValueAtTime(0.8, now);
-        noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-
-        whiteNoise.connect(noiseFilter);
-        noiseFilter.connect(noiseGain);
-        noiseGain.connect(audioCtx.destination);
-        whiteNoise.start(now);
-      } else if (type === 'hihat') {
-        const noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.05, audioCtx.sampleRate);
-        const output = noiseBuffer.getChannelData(0);
-        for (let i = 0; i < noiseBuffer.length; i++) output[i] = Math.random() * 2 - 1;
-
-        const whiteNoise = audioCtx.createBufferSource();
-        whiteNoise.buffer = noiseBuffer;
-        const filter = audioCtx.createBiquadFilter();
-        filter.type = 'highpass';
-        filter.frequency.value = 7000;
-
-        const gain = audioCtx.createGain();
-        gain.gain.setValueAtTime(0.3, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
-
-        whiteNoise.connect(filter);
-        filter.connect(gain);
-        gain.connect(audioCtx.destination);
-        whiteNoise.start(now);
-      } else if (type === 'openhat') {
-        const noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.3, audioCtx.sampleRate);
-        const output = noiseBuffer.getChannelData(0);
-        for (let i = 0; i < noiseBuffer.length; i++) output[i] = Math.random() * 2 - 1;
-
-        const whiteNoise = audioCtx.createBufferSource();
-        whiteNoise.buffer = noiseBuffer;
-        const filter = audioCtx.createBiquadFilter();
-        filter.type = 'highpass';
-        filter.frequency.value = 5000;
-
-        const gain = audioCtx.createGain();
-        gain.gain.setValueAtTime(0.4, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-
-        whiteNoise.connect(filter);
-        filter.connect(gain);
-        gain.connect(audioCtx.destination);
-        whiteNoise.start(now);
-      }
-    };
-
-    const applyGridConfig = (config) => {
+  if (randBtn) {
+    randBtn.addEventListener('click', () => {
       const rows = document.querySelectorAll('.seq-row');
-      rows.forEach((row, rIdx) => {
+      rows.forEach((row) => {
         const buttons = row.querySelectorAll('.step-btn');
-        buttons.forEach((btn, sIdx) => {
-          if (config[rIdx] && config[rIdx][sIdx]) {
+        buttons.forEach((btn) => {
+          if (Math.random() < 0.25) {
             btn.classList.add('active');
           } else {
             btn.classList.remove('active');
           }
         });
       });
-    };
-
-    const getCurrentGridConfig = () => {
-      const rows = document.querySelectorAll('.seq-row');
-      const config = [];
-      rows.forEach((row) => {
-        const rowStates = [];
-        const buttons = row.querySelectorAll('.step-btn');
-        buttons.forEach((btn) => {
-          rowStates.push(btn.classList.contains('active'));
-        });
-        config.push(rowStates);
-      });
-      return config;
-    };
-
-    const presets = {
-      boombap: [
-        [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
-        [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
-        [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
-        [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,1,0]
-      ],
-      trap: [
-        [1,0,0,0, 0,0,0,1, 1,0,0,0, 0,0,0,0],
-        [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,1],
-        [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1],
-        [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,1]
-      ],
-      house: [
-        [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
-        [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
-        [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
-        [0,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,1,0]
-      ],
-      bounce: [
-        [1,0,0,1, 0,0,1,0, 0,1,0,0, 1,0,0,0],
-        [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,1],
-        [1,1,0,1, 1,1,0,1, 1,1,0,1, 1,1,0,1],
-        [0,0,0,0, 0,0,0,1, 0,0,0,0, 0,0,0,0]
-      ]
-    };
-
-    presetBtns.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const style = btn.dataset.preset;
-        if (presets[style]) applyGridConfig(presets[style]);
-      });
     });
+  }
 
-    memSlots.forEach((slot) => {
-      const idx = parseInt(slot.dataset.memIndex, 10);
-      const loadBtn = slot.querySelector('.mem-load-btn');
-      const saveBtn = slot.querySelector('.mem-save-btn');
-      const delBtn = slot.querySelector('.mem-del-btn');
-      const statusEl = slot.querySelector('.mem-status');
-
-      saveBtn.addEventListener('click', () => {
-        userMemories[idx] = getCurrentGridConfig();
-        loadBtn.classList.add('saved');
-        statusEl.textContent = 'Enregistré';
-      });
-
-      loadBtn.addEventListener('click', () => {
-        if (userMemories[idx]) {
-          applyGridConfig(userMemories[idx]);
-          loadBtn.classList.add('loaded-flash');
-          setTimeout(() => loadBtn.classList.remove('loaded-flash'), 300);
-        } else {
-          userMemories[idx] = getCurrentGridConfig();
-          loadBtn.classList.add('saved');
-          statusEl.textContent = 'Enregistré';
-        }
-      });
-
-      delBtn.addEventListener('click', () => {
-        userMemories[idx] = null;
-        loadBtn.classList.remove('saved');
-        statusEl.textContent = 'Vide';
-      });
-    });
-
-    if (randBtn) {
-      randBtn.addEventListener('click', () => {
-        const rows = document.querySelectorAll('.seq-row');
-        rows.forEach((row) => {
-          const buttons = row.querySelectorAll('.step-btn');
-          buttons.forEach((btn) => {
-            if (Math.random() < 0.25) {
-              btn.classList.add('active');
-            } else {
-              btn.classList.remove('active');
-            }
-          });
-        });
-      });
-    }
-
-    const stepTick = () => {
-      document.querySelectorAll('.step-btn').forEach((btn) => btn.classList.remove('playing'));
-      document.querySelectorAll(`.step-btn[data-step="${currentSeqStep}"]`).forEach((btn) => {
-        btn.classList.add('playing');
-        if (btn.classList.contains('active')) {
-          const trackType = btn.closest('.seq-row').dataset.track;
-          playSound(trackType);
-        }
-      });
-
-      currentSeqStep = (currentSeqStep + 1) % 16;
-    };
-
-    const startSequencer = () => {
-      initAudio();
-      isPlayingSeq = true;
-      if (playBtn) {
-        playBtn.querySelector('.icon').textContent = '⏹';
-        playBtn.querySelector('.label').textContent = 'Stopper';
-        playBtn.classList.add('playing');
+  const stepTick = () => {
+    document.querySelectorAll('.step-btn').forEach((btn) => btn.classList.remove('playing'));
+    document.querySelectorAll(`.step-btn[data-step="${currentSeqStep}"]`).forEach((btn) => {
+      btn.classList.add('playing');
+      if (btn.classList.contains('active')) {
+        const trackType = btn.closest('.seq-row').dataset.track;
+        playSound(trackType);
       }
-      const intervalMs = (60 / bpm / 4) * 1000;
-      seqIntervalId = setInterval(stepTick, intervalMs);
-    };
-
-    const stopSequencer = () => {
-      isPlayingSeq = false;
-      if (seqIntervalId) clearInterval(seqIntervalId);
-      if (playBtn) {
-        playBtn.querySelector('.icon').textContent = '▶';
-        playBtn.querySelector('.label').textContent = 'Jouer le Beat';
-        playBtn.classList.remove('playing');
-      }
-      document.querySelectorAll('.step-btn').forEach((btn) => btn.classList.remove('playing'));
-      currentSeqStep = 0;
-    };
-
-    stepBtns.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        initAudio();
-        btn.classList.toggle('active');
-        if (btn.classList.contains('active')) {
-          const trackType = btn.closest('.seq-row').dataset.track;
-          playSound(trackType);
-        }
-      });
     });
 
+    currentSeqStep = (currentSeqStep + 1) % 16;
+  };
+
+  const startSequencer = () => {
+    initAudio();
+    isPlayingSeq = true;
     if (playBtn) {
-      playBtn.addEventListener('click', () => {
-        if (isPlayingSeq) stopSequencer();
-        else startSequencer();
-      });
+      playBtn.querySelector('.icon').textContent = '⏹';
+      playBtn.querySelector('.label').textContent = 'Stopper';
+      playBtn.classList.add('playing');
     }
+    const intervalMs = (60 / bpm / 4) * 1000;
+    seqIntervalId = setInterval(stepTick, intervalMs);
+  };
 
-    if (bpmSlider && bpmVal) {
-      bpmSlider.addEventListener('input', (e) => {
-        bpm = parseInt(e.target.value, 10);
-        bpmVal.textContent = bpm.toString();
-        if (isPlayingSeq) {
-          clearInterval(seqIntervalId);
-          const intervalMs = (60 / bpm / 4) * 1000;
-          seqIntervalId = setInterval(stepTick, intervalMs);
-        }
-      });
+  const stopSequencer = () => {
+    isPlayingSeq = false;
+    if (seqIntervalId) clearInterval(seqIntervalId);
+    if (playBtn) {
+      playBtn.querySelector('.icon').textContent = '▶';
+      playBtn.querySelector('.label').textContent = 'Jouer le Beat';
+      playBtn.classList.remove('playing');
     }
+    document.querySelectorAll('.step-btn').forEach((btn) => btn.classList.remove('playing'));
+    currentSeqStep = 0;
+  };
 
-    if (clearBtn) {
-      clearBtn.addEventListener('click', () => {
-        stepBtns.forEach((btn) => btn.classList.remove('active'));
-      });
-    }
+  stepBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      initAudio();
+      btn.classList.toggle('active');
+      if (btn.classList.contains('active')) {
+        const trackType = btn.closest('.seq-row').dataset.track;
+        playSound(trackType);
+      }
+    });
+  });
+
+  if (playBtn) {
+    playBtn.addEventListener('click', () => {
+      if (isPlayingSeq) stopSequencer();
+      else startSequencer();
+    });
+  }
+
+  if (bpmSlider && bpmVal) {
+    bpmSlider.addEventListener('input', (e) => {
+      bpm = parseInt(e.target.value, 10);
+      bpmVal.textContent = bpm.toString();
+      if (isPlayingSeq) {
+        clearInterval(seqIntervalId);
+        const intervalMs = (60 / bpm / 4) * 1000;
+        seqIntervalId = setInterval(stepTick, intervalMs);
+      }
+    });
+  }
+
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      stepBtns.forEach((btn) => btn.classList.remove('active'));
+    });
   }
 </script>
 
@@ -741,45 +745,6 @@ const timelineSteps = [
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-  }
-
-  .rap-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-
-  .rap-tab {
-    flex: 1 1 180px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.9rem 1.25rem;
-    border-radius: 12px;
-    border: 1px solid var(--border, #334155);
-    background: #1e293b;
-    color: var(--text-muted, #94a3b8);
-    font: inherit;
-    font-weight: 700;
-    cursor: pointer;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
-  }
-
-  .rap-tab::before { font-size: 1.1rem; line-height: 1; }
-  .rap-tab[data-tab='cours']::before { content: '🎓'; }
-  .rap-tab[data-tab='rap']::before { content: '🎤'; }
-  .rap-tab[data-tab='fun']::before { content: '😄'; }
-
-  .rap-tab:hover {
-    border-color: var(--primary, #38bdf8);
-    color: var(--text, #f1f5f9);
-  }
-
-  .rap-tab[aria-selected='true'] {
-    border-color: var(--primary, #38bdf8);
-    color: var(--text, #f1f5f9);
-    box-shadow: 0 0 0 1px var(--primary, #38bdf8), 0 0 16px rgba(56, 189, 248, 0.25);
   }
 
   .rap-panel[hidden] { display: none; }
