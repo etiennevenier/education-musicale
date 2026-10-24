@@ -1038,6 +1038,7 @@ function splitGlossaryTerms(text: string): GlossarySegment[] {
   }
 
   .score-open {
+    min-height: 38px;
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
@@ -1077,6 +1078,7 @@ function splitGlossaryTerms(text: string): GlossarySegment[] {
     width: min(1100px, calc(100vw - 2rem));
     max-width: 100%;
     max-height: calc(100vh - 2rem);
+    max-height: calc(100dvh - 2rem);
     padding: 0;
     border: 1px solid #334155;
     border-radius: 14px;
@@ -1218,6 +1220,7 @@ function splitGlossaryTerms(text: string): GlossarySegment[] {
     width: auto;
     max-width: 100%;
     max-height: calc(100vh - 13rem);
+    max-height: calc(100dvh - 13rem);
     height: auto;
     object-fit: contain;
     margin: 0 auto;
