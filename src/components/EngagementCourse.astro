@@ -1,4 +1,6 @@
 ---
+import { Image } from 'astro:assets';
+import memorialImage from '../assets/engagement/Bloody_Sunday_memorial.jpg';
 import CourseTabs from './CourseTabs.astro';
 import VideoCard from './VideoCard.astro';
 import EngagementDecrypteur from './EngagementDecrypteur.astro';
@@ -38,8 +40,6 @@ const tabs: EngagementTab[] = [
     kind: 'decrypteur',
   },
 ];
-
-const memorialImage = relativeUrl('/musique-engagee/Bloody_Sunday_memorial.jpg');
 ---
 
 <div class="engagement-course">
@@ -74,7 +74,7 @@ const memorialImage = relativeUrl('/musique-engagee/Bloody_Sunday_memorial.jpg')
             data-lightbox-open
             aria-label="Agrandir l'image — Mémorial du Bloody Sunday"
           >
-            <img
+            <Image
               src={memorialImage}
               width="1200"
               height="1600"
@@ -92,7 +92,7 @@ const memorialImage = relativeUrl('/musique-engagee/Bloody_Sunday_memorial.jpg')
 
   <dialog class="engagement-lightbox" aria-label="Mémorial du Bloody Sunday">
     <button type="button" class="engagement-lightbox-close" aria-label="Fermer">×</button>
-    <img
+    <Image
       src={memorialImage}
       width="1200"
       height="1600"
