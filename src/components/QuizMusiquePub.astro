@@ -197,6 +197,7 @@ const choiceLetters = ['A', 'B', 'C', 'D'] as const;
 </div>
 
 <script>
+  import { shuffle } from '../utils/random';
   import { audioManager } from '../utils/audioManager';
   import {
     PUB_QUIZ_LENGTH,
@@ -212,19 +213,6 @@ const choiceLetters = ['A', 'B', 'C', 'D'] as const;
   interface QuizQuestion {
     sound: PubSoundEntry;
     choices: QuizChoice[];
-  }
-
-  function shuffle<T>(items: readonly T[]): T[] {
-    const result = [...items];
-
-    for (let index = result.length - 1; index > 0; index -= 1) {
-      const randomIndex = Math.floor(Math.random() * (index + 1));
-      const current = result[index];
-      result[index] = result[randomIndex] as T;
-      result[randomIndex] = current as T;
-    }
-
-    return result;
   }
 
   /**

@@ -72,6 +72,7 @@ import { hymneVideosList } from '../data/hymnesData';
 </div>
 
 <script>
+  import { shuffle } from '../utils/random';
   import { hymneVideosList } from '../data/hymnesData';
   import type { HymneVideoItem } from '../data/hymnesData';
 
@@ -108,15 +109,6 @@ import { hymneVideosList } from '../data/hymnesData';
   const toggleButtons = Array.from(card.querySelectorAll<HTMLButtonElement>('.btn-option'));
 
   // --- Utilitaires -------------------------------------------------------
-
-  function shuffle<T>(array: T[]): T[] {
-    const a = [...array];
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-  }
 
   // https://www.youtube.com/watch?v=XXXX  ou  https://youtu.be/XXXX  ->  identifiant XXXX
   function getYouTubeId(url: string): string | null {

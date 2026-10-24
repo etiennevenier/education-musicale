@@ -176,6 +176,7 @@ const firstListenUrl = firstSong
 </div>
 
 <script>
+  import { shuffle } from '../utils/random';
   import { CAUSE_LABELS, SONGS } from '../data/engagementSongs';
   import type { Cause, EngagementSong } from '../data/engagementSongs';
 
@@ -210,19 +211,6 @@ const firstListenUrl = firstSong
     song: EngagementSong;
     text: EvidenceItem[];
     answer: Answer;
-  };
-
-  const shuffle = <T,>(items: readonly T[]): T[] => {
-    const result = [...items];
-    for (let i = result.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      const current = result[i];
-      const random = result[j];
-      if (current === undefined || random === undefined) continue;
-      result[i] = random;
-      result[j] = current;
-    }
-    return result;
   };
 
   const createEvidence = (song: EngagementSong): EvidenceItem[] =>
@@ -308,7 +296,6 @@ const firstListenUrl = firstSong
     const summaryList = root.querySelector<HTMLOListElement>('[data-summary-list]')!;
     const resetButton = root.querySelector<HTMLButtonElement>('[data-reset]')!;
     const restartButton = root.querySelector<HTMLButtonElement>('[data-restart]')!;
-    const live = root.querySelector<HTMLElement>('[data-live]')!;
     const causeButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-cause]'));
     const dots = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-dot]'));
 

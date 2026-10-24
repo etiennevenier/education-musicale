@@ -76,6 +76,7 @@ import { OPERA_QUIZ_LENGTH } from '../data/operaData';
 </section>
 
 <script>
+  import { shuffle } from '../utils/random';
   import {
     drawOperaQuestions,
     OPERA_QUIZ_LENGTH,
@@ -158,14 +159,6 @@ import { OPERA_QUIZ_LENGTH } from '../data/operaData';
   }
 
   /** Mélange de Fisher-Yates. */
-  function shuffle<T>(array: readonly T[]): T[] {
-    const a = [...array];
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-  }
 
   /** Une question à choix multiples a plusieurs bonnes réponses. */
   function isMulti(question: OperaQuestion): boolean {

@@ -1,6 +1,7 @@
 ---
 import CourseTabs from './CourseTabs.astro';
 import VideoCard from './VideoCard.astro';
+import { relativeUrl } from '../utils/navigation';
 
 interface RisquesVideo {
   badge: string;
@@ -93,7 +94,7 @@ const tabs: RisquesTab[] = [
         </header>
 
         <div class="audio-controls">
-          <audio id="sim-audio" src="/public/risques-auditifs/tchoupi.mp3" preload="metadata"></audio>
+          <audio id="sim-audio" src={relativeUrl('/risques-auditifs/tchoupi.mp3')} preload="metadata"></audio>
           <button type="button" id="btn-play-pause" class="btn-primary">
             <span class="icon">▶</span> <span class="label">Lancer l'écoute</span>
           </button>

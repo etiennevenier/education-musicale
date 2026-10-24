@@ -415,7 +415,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     correctAnswers: ['Air'],
     explanation:
       "Mélodie légère et mémorable chantée par le ténor : c'est un air.",
-    audioUrl: audio('15 Aria et blind la donna è mobile.mp3'),
+    audioUrl: audio('15 Aria et blind la donna e mobile.mp3'),
     clipTitle: 'Rigoletto — Verdi',
   },
   {
@@ -426,7 +426,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     correctAnswers: ['Air'],
     explanation:
       "Air chanté, avec une mélodie construite et un accompagnement orchestral : ce n'est pas un récitatif.",
-    audioUrl: audio('16 Aria et blind flûte enchantée.mp3'),
+    audioUrl: audio('16 Aria et blind flute enchantee.mp3'),
     clipTitle: 'La Flûte enchantée — Mozart',
   },
   // --- 26 à 33 : air ou récitatif (les récitatifs) -------------------------
@@ -460,7 +460,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     correctAnswers: ['Récitatif'],
     explanation:
       "La déclamation sert le drame, sans mélodie régulière : c'est un récitatif.",
-    audioUrl: audio('03 recitatif Orphée.mp3'),
+    audioUrl: audio('03 recitatif Orphee.mp3'),
     clipTitle: 'Orfeo ed Euridice — Gluck',
   },
   {
@@ -632,7 +632,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     correctAnswers: ['La donna è mobile (Rigoletto - Verdi)'],
     explanation:
       "« La donna è mobile » est l'air du Duc de Mantoue, au début du dernier acte de Rigoletto.",
-    audioUrl: audio('15 Aria et blind la donna è mobile.mp3'),
+    audioUrl: audio('15 Aria et blind la donna e mobile.mp3'),
     clipTitle: 'La donna è mobile — Rigoletto (Verdi)',
   },
   {

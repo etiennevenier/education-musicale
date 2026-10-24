@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { siteData } from '../data/sequences';
+import { relativeUrl } from '../utils/navigation';
 ---
 
 <Layout title="Sommaire Admin - Toutes les pages">
@@ -13,13 +14,13 @@ import { siteData } from '../data/sequences';
         <section class="level-box">
           <h3>{level.title}</h3>
           <p class="level-url">
-            <a href={`/education-musicale/${level.slug}`} target="_blank">📄 Page d'accueil du niveau (/{level.slug})</a>
+            <a href={relativeUrl(`/${level.slug}`)} target="_blank">📄 Page d'accueil du niveau (/{level.slug})</a>
           </p>
           <ul>
             {level.sequences.map((seq, idx) => (
               <li>
                 <span class="num">S{idx + 1}</span>
-                <a href={`/education-musicale/${level.slug}/${seq.slug}`} target="_blank">
+                <a href={relativeUrl(`/${level.slug}/${seq.slug}`)} target="_blank">
                   {seq.title}
                 </a>
               </li>

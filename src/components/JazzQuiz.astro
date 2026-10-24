@@ -39,6 +39,7 @@ const questionsPerGame = Math.min(JAZZ_QUESTIONS_PER_GAME, jazzQuizQuestions.len
 </div>
 
 <script>
+  import { shuffle } from '../utils/random';
   import {
     jazzQuizQuestions,
     JAZZ_QUESTIONS_PER_GAME,
@@ -76,14 +77,6 @@ const questionsPerGame = Math.min(JAZZ_QUESTIONS_PER_GAME, jazzQuizQuestions.len
   let autoNextTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Mélange de Fisher-Yates.
-  function shuffle<T>(array: readonly T[]): T[] {
-    const a = [...array];
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-  }
 
   function clearAutoNext() {
     if (autoNextTimer) {

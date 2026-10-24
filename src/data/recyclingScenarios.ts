@@ -6,6 +6,8 @@
  * critères juridiques qui permettent de déterminer si elle est autorisée.
  */
 
+import { shuffle } from '../utils/random';
+
 export interface Scenario {
   id: string;
   texte: string; // Situation factuelle, sans mots-clés évidents
@@ -323,22 +325,6 @@ export const SCENARIOS: Scenario[] = [
       "Légal. L'œuvre de Dvořák est dans le domaine public et le compositeur a entièrement créé son propre enregistrement.",
   },
 ];
-
-/** Mélange de Fisher-Yates : chaque carte a la même chance à chaque position. */
-const shuffle = <T>(items: readonly T[]): T[] => {
-  const result = [...items];
-
-  for (let i = result.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const current = result[i];
-    const random = result[j];
-    if (current === undefined || random === undefined) continue;
-    result[i] = random;
-    result[j] = current;
-  }
-
-  return result;
-};
 
 /**
  * Tire un deck équilibré pour une session :

@@ -85,10 +85,6 @@ export const siteData: Record<string, LevelData> = {
         slug: 'musique-et-tempo',
         title: 'Musique et Tempo',
         description: 'Découverte de la vitesse en musique et des variations de tempo.',
-        audios: [
-          { title: 'Extrait n°1 — Presto', subtitle: 'Écoute comparative', src: '/audio/6eme/tempo-presto.mp3' },
-          { title: 'Chant / Playback', subtitle: 'Accompagnement de travail', src: '/audio/6eme/tempo-playback.mp3' }
-        ],
         videos: [
           {
             badge: 'Notion de cours',
@@ -115,8 +111,7 @@ export const siteData: Record<string, LevelData> = {
             title: "J'veux du soleil — Instrumental",
             url: 'https://www.youtube.com/watch?v=gmOS8sYlbUg'
           }
-        ],
-        pdfUrl: '/docs/6eme/fiche-tempo.pdf'
+        ]
       },
      {
         slug: 'musique-et-nuances',

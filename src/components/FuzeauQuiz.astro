@@ -53,6 +53,7 @@
 </div>
 
 <script>
+  import { shuffle } from '../utils/random';
   import { fuzeauInstruments as instruments, type Instrument } from '../data/fuzeauInstruments';
   import { relativeUrl } from '../utils/navigation';
   import { playAudio, stopAudio } from '../utils/audioManager';
@@ -144,15 +145,6 @@
     if (!t) return false;
     if (t === e) return true;
     return e.length >= 5 && levenshtein(t, e) <= 1;
-  }
-
-  function shuffle<T>(array: readonly T[]): T[] {
-    const a = [...array];
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
   }
 
   function getFilteredInstruments(): Instrument[] {

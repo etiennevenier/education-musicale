@@ -2,10 +2,10 @@
  * Données du quiz « L'Ostinato » (séquence 5ème « Musique et Répétition »).
  *
  * Les fichiers MP3 sont dans /public/ostinato. Les noms sont conservés à
- * l'identique (majuscules et accents compris) pour retrouver les fichiers :
+ * l'identique (majuscules comprises) pour retrouver les fichiers :
  * - « Extrait 6/7/8 … Fois » prend une majuscule ;
- * - « Extrait 3/4 Mélodique » est stocké en NFD sur macOS : l'audioManager
- *   réessaie automatiquement avec l'encodage NFD en cas de 404.
+ * - les noms de fichiers n'ont volontairement aucun accent (« Melodique »),
+ *   pour éviter les différences d'encodage entre macOS et le serveur Linux.
  */
 
 export type OstinatoPart = 'type' | 'repetitions' | 'superposes';
@@ -62,7 +62,7 @@ const typeQuestions: OstinatoChoiceQuestion[] = [
     id: 'type-3-melodique',
     part: 'type',
     kind: 'choice',
-    audioUrl: '/ostinato/Extrait 3 Mélodique.mp3',
+    audioUrl: '/ostinato/Extrait 3 Melodique.mp3',
     prompt: "Écoute l'extrait : quel type d'ostinato entends-tu ?",
     options: OSTINATO_TYPE_OPTIONS,
     correctAnswer: 'Mélodique',
@@ -71,7 +71,7 @@ const typeQuestions: OstinatoChoiceQuestion[] = [
     id: 'type-4-melodique',
     part: 'type',
     kind: 'choice',
-    audioUrl: '/ostinato/Extrait 4 Mélodique.mp3',
+    audioUrl: '/ostinato/Extrait 4 Melodique.mp3',
     prompt: "Écoute l'extrait : quel type d'ostinato entends-tu ?",
     options: OSTINATO_TYPE_OPTIONS,
     correctAnswer: 'Mélodique',

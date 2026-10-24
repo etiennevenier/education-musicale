@@ -425,6 +425,7 @@ const rowIndexById: Record<string, number> = Object.fromEntries(
 </section>
 
 <script>
+  import { shuffle } from '../utils/random';
   import { onAudioEvent } from '../utils/audioManager';
 
   interface BruitomaticPresetData {
@@ -994,17 +995,6 @@ const rowIndexById: Record<string, number> = Object.fromEntries(
       Math.floor(Math.random() * (max - min + 1)) + min;
 
     const pickOne = <T extends unknown>(items: T[]): T => items[randomInt(0, items.length - 1)]!;
-
-    const shuffle = <T extends unknown>(items: T[]): T[] => {
-      const copy = [...items];
-      for (let index = copy.length - 1; index > 0; index -= 1) {
-        const swapIndex = randomInt(0, index);
-        const current = copy[index]!;
-        copy[index] = copy[swapIndex]!;
-        copy[swapIndex] = current;
-      }
-      return copy;
-    };
 
     const randomizePattern = () => {
       const allTracks = Array.from(tracks.values());
