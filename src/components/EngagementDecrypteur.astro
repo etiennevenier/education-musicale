@@ -1,5 +1,6 @@
 ---
 import { CAUSE_LABELS, SONGS, type Cause } from '../data/engagementSongs';
+import { getListenUrl } from '../utils/engagementEvaluation';
 
 const causes = (
   Object.entries(CAUSE_LABELS) as [Cause, { label: string; icon: string }][]
@@ -7,7 +8,7 @@ const causes = (
 
 const firstSong = SONGS[0];
 const firstListenUrl = firstSong
-  ? `https://www.youtube.com/results?search_query=${encodeURIComponent(`${firstSong.artiste}${firstSong.titre} audio`)}`
+  ? getListenUrl(firstSong)
   : 'https://www.youtube.com/results?search_query=musique+engagee';
 ---
 
@@ -176,96 +177,11 @@ const firstListenUrl = firstSong
 </div>
 
 <script>
-  import { shuffle } from '../utils/random';
   import { CAUSE_LABELS, SONGS } from '../data/engagementSongs';
-  import type { Cause, EngagementSong } from '../data/engagementSongs';
+  import type { Cause } from '../data/engagementSongs';
+  import { acceptedCauses, createEvidence, evaluate, getListenUrl } from '../utils/engagementEvaluation';
+  import type { EvidenceItem, EvidenceReport, Result, SongState } from '../utils/engagementEvaluation';
 
-  type EvidenceItem = {
-    id: string;
-    text: string;
-    correct: boolean;
-  };
-
-  type EvidenceReport = {
-    found: string[];
-    missed: string[];
-    trapsSelected: string[];
-    trapsAvoided: string[];
-    perfect: boolean;
-  };
-
-  type Result = {
-    causeOk: boolean;
-    text: EvidenceReport;
-    perfect: boolean;
-  };
-
-  type Answer = {
-    cause: Cause | null;
-    text: Set<string>;
-    validated: boolean;
-    result: Result | null;
-  };
-
-  type SongState = {
-    song: EngagementSong;
-    text: EvidenceItem[];
-    answer: Answer;
-  };
-
-  const createEvidence = (song: EngagementSong): EvidenceItem[] =>
-    shuffle([
-      ...song.indicesTextuels.map((text, index) => ({
-        id: `${song.id}-text-true-${index}`,
-        text,
-        correct: true,
-      })),
-      ...song.leurresTextuels.map((text, index) => ({
-        id: `${song.id}-text-false-${index}`,
-        text,
-        correct: false,
-      })),
-    ]);
-
-  const acceptedCauses = (song: EngagementSong): Cause[] => [
-    song.causePrincipale,
-    ...(song.causesAcceptees ?? []),
-  ];
-
-  const assessEvidence = (items: EvidenceItem[], selected: Set<string>): EvidenceReport => {
-    const found = items
-      .filter((item) => item.correct && selected.has(item.id))
-      .map((item) => item.text);
-    const missed = items
-      .filter((item) => item.correct && !selected.has(item.id))
-      .map((item) => item.text);
-    const trapsSelected = items
-      .filter((item) => !item.correct && selected.has(item.id))
-      .map((item) => item.text);
-    const trapsAvoided = items
-      .filter((item) => !item.correct && !selected.has(item.id))
-      .map((item) => item.text);
-
-    return {
-      found,
-      missed,
-      trapsSelected,
-      trapsAvoided,
-      perfect: missed.length === 0 && trapsSelected.length === 0,
-    };
-  };
-
-  const evaluate = (state: SongState): Result => {
-    const causeOk =
-      state.answer.cause !== null && acceptedCauses(state.song).includes(state.answer.cause);
-    const text = assessEvidence(state.text, state.answer.text);
-
-    return {
-      causeOk,
-      text,
-      perfect: causeOk && text.perfect,
-    };
-  };
   const root = document.querySelector<HTMLElement>('[data-decrypteur]');
 
   if (root) {
@@ -298,6 +214,7 @@ const firstListenUrl = firstSong
     const restartButton = root.querySelector<HTMLButtonElement>('[data-restart]')!;
     const causeButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-cause]'));
     const dots = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-dot]'));
+    const live = root.querySelector<HTMLElement>('[data-live]')!;
 
     let session: SongState[] = [];
     let currentIndex = 0;
@@ -488,8 +405,7 @@ const firstListenUrl = firstSong
       songYear.textContent = String(song.annee);
       songContext.textContent = song.contexte;
 
-      const listenUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(`${song.artiste}${song.titre} audio`)}`;
-      listenLink.href = listenUrl;
+      listenLink.href = getListenUrl(song);
       listenLink.title = `Écouter ${song.titre} - ${song.artiste} sur YouTube`;
       listenLink.setAttribute(
         'aria-label',
@@ -615,6 +531,7 @@ const firstListenUrl = firstSong
       state.answer.result = result;
 
       renderFeedback(state, result);
+      live.textContent = `${state.song.titre} : ${feedbackTitle.textContent ?? ''}`;
       syncChoices();
       textList.querySelectorAll<HTMLInputElement>('input').forEach((i) => (i.disabled = true));
       validateButton.disabled = true;
