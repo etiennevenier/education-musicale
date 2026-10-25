@@ -1,0 +1,488 @@
+/*
+ * CSS commun aux outils d'entraînement (LectureNotes, ClavierNotes, OreilleClavier, OreilleNom).
+ * Sélecteurs groupés : chaque règle garde la spécificité d'origine (#tool-… .préfixe-…).
+ * Généré par scripts/dedupe-tools-css.mjs ; le CSS propre à chaque outil reste dans son composant.
+ */
+
+#tool-clavier-notes,
+#tool-oreille-clavier {
+  --accent: #7e22ce;
+  --accent-strong: #a855f7;
+  --accent-soft: #faf5ff;
+  --accent-border: #e9d5ff;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 12px;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+  color: #0f172a;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+@media (min-width: 640px) {
+  #tool-clavier-notes,
+  #tool-oreille-clavier {
+    padding: 28px 32px 32px;
+  }
+}
+
+#tool-notes .notes-header,
+#tool-clavier-notes .cn-header,
+#tool-oreille-clavier .oc-header,
+#tool-oreille-nom .on-header {
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+#tool-notes .notes-header h1,
+#tool-clavier-notes .cn-header h1,
+#tool-oreille-clavier .oc-header h1,
+#tool-oreille-nom .on-header h1 {
+  margin: 0;
+  font-size: clamp(1.7rem, 5vw, 2.7rem);
+  line-height: 1.1;
+  font-weight: 900;
+  color: var(--accent);
+}
+
+#tool-clavier-notes .cn-level-btn:hover,
+#tool-clavier-notes .cn-level-btn:focus-visible,
+#tool-oreille-clavier .oc-level-btn:hover,
+#tool-oreille-clavier .oc-level-btn:focus-visible,
+#tool-oreille-nom .on-level-btn:hover,
+#tool-oreille-nom .on-level-btn:focus-visible {
+  border-color: var(--accent-strong);
+  background: var(--accent-soft);
+  outline: none;
+}
+
+#tool-clavier-notes .cn-level-btn:active,
+#tool-oreille-clavier .oc-level-btn:active,
+#tool-oreille-nom .on-level-btn:active {
+  transform: scale(0.98);
+}
+
+#tool-clavier-notes .cn-game,
+#tool-oreille-clavier .oc-game,
+#tool-oreille-nom .on-game {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+#tool-clavier-notes .cn-hud,
+#tool-oreille-clavier .oc-hud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem 1rem;
+  padding: 0.7rem 0.9rem;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: 14px;
+  color: #475569;
+  font-size: 0.98rem;
+  font-weight: 600;
+}
+
+#tool-notes .notes-hud strong,
+#tool-clavier-notes .cn-hud strong,
+#tool-oreille-clavier .oc-hud strong {
+  color: var(--accent);
+  font-weight: 800;
+}
+
+#tool-notes .notes-hud-time strong,
+#tool-clavier-notes .cn-hud-time strong,
+#tool-oreille-clavier .oc-hud-time strong,
+#tool-oreille-nom .on-hud-time strong {
+  display: inline-block;
+  min-width: 3.1rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+#tool-oreille-clavier .oc-audio-btn:hover,
+#tool-oreille-nom .on-audio-btn:hover {
+  border-color: var(--accent-strong);
+}
+
+#tool-oreille-clavier .oc-audio-btn.is-playing,
+#tool-oreille-nom .on-audio-btn.is-playing {
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 0 4px rgba(192, 132, 252, 0.25);
+}
+
+#tool-clavier-notes .cn-caption,
+#tool-oreille-clavier .oc-caption {
+  margin: -0.2rem 0 0;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+#tool-clavier-notes .cn-feedback,
+#tool-oreille-clavier .oc-feedback {
+  min-height: 2rem;
+  margin: 0;
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+#tool-clavier-notes .cn-feedback.correct,
+#tool-oreille-clavier .oc-feedback.correct,
+#tool-oreille-nom .on-feedback.correct {
+  color: #059669;
+}
+
+#tool-clavier-notes .cn-feedback.incorrect,
+#tool-oreille-clavier .oc-feedback.incorrect,
+#tool-oreille-nom .on-feedback.incorrect {
+  color: #e11d48;
+}
+
+#tool-clavier-notes .cn-answers.is-locked,
+#tool-oreille-nom .on-answers.is-locked {
+  pointer-events: none;
+}
+
+#tool-clavier-notes .cn-answer-btn:hover,
+#tool-clavier-notes .cn-answer-btn:focus-visible,
+#tool-oreille-nom .on-answer-btn:hover,
+#tool-oreille-nom .on-answer-btn:focus-visible {
+  border-color: var(--accent-strong);
+  background: var(--accent-soft);
+  outline: none;
+}
+
+#tool-clavier-notes .cn-answer-btn:active,
+#tool-oreille-nom .on-answer-btn:active {
+  transform: scale(0.96);
+}
+
+#tool-clavier-notes .cn-answer-btn.is-correct,
+#tool-oreille-nom .on-answer-btn.is-correct {
+  border-color: #059669;
+  background: #ecfdf5;
+  color: #047857;
+}
+
+#tool-clavier-notes .cn-answer-btn.is-wrong,
+#tool-oreille-nom .on-answer-btn.is-wrong {
+  border-color: #e11d48;
+  background: #fff1f2;
+  color: #be123c;
+}
+
+#tool-clavier-notes .cn-result,
+#tool-oreille-clavier .oc-result,
+#tool-oreille-nom .on-result {
+  padding: 1.25rem 0 1.5rem;
+  text-align: center;
+}
+
+#tool-oreille-clavier .oc-result:focus,
+#tool-oreille-nom .on-result:focus {
+  outline: none;
+}
+
+#tool-clavier-notes .cn-result h2,
+#tool-oreille-clavier .oc-result h2,
+#tool-oreille-nom .on-result h2 {
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.9rem, 6vw, 2.6rem);
+  font-weight: 900;
+  color: var(--accent);
+}
+
+#tool-clavier-notes .cn-result-reason,
+#tool-oreille-clavier .oc-result-reason,
+#tool-oreille-nom .on-result-reason {
+  margin: 0;
+  color: #64748b;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+#tool-clavier-notes .cn-stats,
+#tool-oreille-clavier .oc-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 1.35rem 0;
+}
+
+#tool-clavier-notes .cn-stat,
+#tool-oreille-clavier .oc-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.9rem 0.35rem;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: 16px;
+}
+
+#tool-clavier-notes .cn-stat-value,
+#tool-oreille-clavier .oc-stat-value,
+#tool-oreille-nom .on-stat-value {
+  color: var(--accent);
+  font-size: clamp(1.35rem, 6vw, 2.1rem);
+  font-weight: 900;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+#tool-notes .notes-stat-label,
+#tool-clavier-notes .cn-stat-label,
+#tool-oreille-clavier .oc-stat-label,
+#tool-oreille-nom .on-stat-label {
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+#tool-clavier-notes .cn-result-actions,
+#tool-oreille-clavier .oc-result-actions,
+#tool-oreille-nom .on-result-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+#tool-clavier-notes .cn-primary-btn,
+#tool-oreille-clavier .oc-primary-btn,
+#tool-oreille-nom .on-primary-btn {
+  width: 100%;
+  max-width: 420px;
+  min-height: 54px;
+  padding: 0.9rem 1.25rem;
+  border: 0;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, var(--accent-strong), #7e22ce);
+  color: #ffffff;
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 10px 22px -10px rgba(168, 85, 247, 0.8);
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+}
+
+#tool-clavier-notes .cn-primary-btn:hover,
+#tool-oreille-clavier .oc-primary-btn:hover,
+#tool-oreille-nom .on-primary-btn:hover {
+  box-shadow: 0 12px 26px -10px rgba(168, 85, 247, 0.95);
+}
+
+#tool-clavier-notes .cn-primary-btn:active,
+#tool-oreille-clavier .oc-primary-btn:active,
+#tool-oreille-nom .on-primary-btn:active {
+  transform: scale(0.98);
+}
+
+@media (max-width: 640px) {
+  #tool-clavier-notes .cn-header,
+  #tool-oreille-clavier .oc-header,
+  #tool-oreille-nom .on-header {
+    margin-bottom: 1.25rem;
+  }
+
+  #tool-clavier-notes .cn-hud,
+  #tool-oreille-clavier .oc-hud {
+    font-size: 0.88rem;
+    padding: 0.6rem 0.75rem;
+  }
+}
+
+@media (max-width: 640px) and (orientation: portrait) {
+  html:has(#tool-clavier-notes),
+  body:has(#tool-clavier-notes),
+  html:has(#tool-oreille-clavier),
+  body:has(#tool-oreille-clavier),
+  html:has(#tool-oreille-nom),
+  body:has(#tool-oreille-nom) {
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+  }
+
+  body:has(#tool-notes),
+  body:has(#tool-clavier-notes),
+  body:has(#tool-oreille-clavier) {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 0.35rem 0.5rem 0.5rem;
+  }
+
+  main.container:has(#tool-notes),
+  main.container:has(#tool-clavier-notes),
+  main.container:has(#tool-oreille-clavier) {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 0;
+  }
+
+  #tool-clavier-notes,
+  #tool-oreille-clavier {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    padding: 6px;
+    border-radius: 16px;
+  }
+
+  #tool-clavier-notes .cn-header,
+  #tool-oreille-clavier .oc-header {
+    display: none;
+  }
+
+  #tool-clavier-notes .cn-hud,
+  #tool-oreille-clavier .oc-hud {
+    flex: 0 0 auto;
+    gap: 0.2rem 0.6rem;
+    padding: 0.4rem 0.55rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+  }
+
+  #tool-clavier-notes .cn-caption,
+  #tool-oreille-clavier .oc-caption {
+    display: none;
+  }
+
+  #tool-clavier-notes .cn-feedback,
+  #tool-oreille-clavier .oc-feedback {
+    flex: 0 0 auto;
+    min-height: 1.4rem;
+    font-size: 1rem;
+  }
+
+  #tool-clavier-notes .cn-stats,
+  #tool-oreille-clavier .oc-stats {
+    grid-template-columns: 1fr;
+    gap: 0.7rem;
+    margin: 0.6rem 0;
+  }
+
+  #tool-clavier-notes .cn-stat,
+  #tool-oreille-clavier .oc-stat {
+    flex-direction: row-reverse;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+  }
+
+  #tool-clavier-notes .cn-primary-btn,
+  #tool-oreille-clavier .oc-primary-btn,
+  #tool-oreille-nom .on-primary-btn {
+    min-height: 48px;
+  }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  #tool-clavier-notes,
+  #tool-oreille-clavier {
+    padding: 6px 8px;
+    border-radius: 14px;
+  }
+
+  #tool-clavier-notes .cn-header,
+  #tool-oreille-clavier .oc-header {
+    display: none;
+  }
+
+  #tool-clavier-notes .cn-game,
+  #tool-oreille-clavier .oc-game {
+    gap: 0.4rem;
+  }
+
+  #tool-clavier-notes .cn-hud,
+  #tool-oreille-clavier .oc-hud {
+    padding: 0.25rem 0.6rem;
+    font-size: 0.78rem;
+    border-radius: 10px;
+  }
+
+  #tool-clavier-notes .cn-caption,
+  #tool-oreille-clavier .oc-caption {
+    display: none;
+  }
+
+  #tool-clavier-notes .cn-feedback,
+  #tool-oreille-clavier .oc-feedback {
+    min-height: 1.3rem;
+    font-size: 0.95rem;
+  }
+}
+
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 550px) {
+  html:has(#tool-clavier-notes),
+  body:has(#tool-clavier-notes),
+  html:has(#tool-oreille-clavier),
+  body:has(#tool-oreille-clavier),
+  html:has(#tool-oreille-nom),
+  body:has(#tool-oreille-nom) {
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+  }
+
+  body:has(#tool-clavier-notes),
+  body:has(#tool-oreille-clavier) {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+  }
+
+  main.container:has(#tool-clavier-notes),
+  main.container:has(#tool-oreille-clavier) {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: none;
+    min-height: 0;
+  }
+
+  #tool-clavier-notes,
+  #tool-oreille-clavier {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    max-height: 100dvh;
+    width: 100%;
+    max-width: none;
+    min-height: 0;
+    margin: 0;
+    padding: 4px 6px;
+    border-radius: 0;
+    overflow: hidden;
+  }
+
+  #tool-clavier-notes .cn-game,
+  #tool-oreille-clavier .oc-game {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}

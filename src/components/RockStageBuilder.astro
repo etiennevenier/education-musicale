@@ -1,196 +1,18 @@
 ---
 import { relativeUrl } from '../utils/navigation';
-
-interface StageItem {
-  id: string;
-  label: string;
-  image: string;
-  kind: 'instrument' | 'tag';
-}
-
-interface ItemGroup {
-  id: string;
-  title: string;
-  hint: string;
-  items: StageItem[];
-}
-
-interface RockStyle {
-  id: string;
-  name: string;
-  image: string;
-  signature: string;
-  requirements: string[];
-}
+import { groups as rawGroups, styles as rawStyles } from '../data/rockStageData';
 
 // Les visuels vivent dans public/rock/quizrock ; relativeUrl tient compte du base Astro.
 const image = (file: string) => relativeUrl(`/rock/quizrock/${file}`);
+const withImage = <T extends { file: string }>(entry: T) => ({
+  ...entry,
+  image: image(entry.file),
+});
 
-const groups: ItemGroup[] = [
-  {
-    id: 'instruments',
-    title: '🎷 Instruments',
-    hint: 'Tous les instruments au même niveau : à toi de choisir.',
-    items: [
-      // Ordre volontairement mélangé : aucune catégorie ne révèle le rôle d'un instrument.
-      { id: 'guitare', label: 'Guitare électrique', image: image('guitare.jpg'), kind: 'instrument' },
-      { id: 'violon', label: 'Violon', image: image('violon.jpg'), kind: 'instrument' },
-      { id: 'basse', label: 'Basse', image: image('basse.jpg'), kind: 'instrument' },
-      { id: 'synthetiseur', label: 'Synthétiseur', image: image('synthetiseur.jpg'), kind: 'instrument' },
-      { id: 'contrebasse', label: 'Contrebasse', image: image('contrebasse.jpg'), kind: 'instrument' },
-      { id: 'batterie', label: 'Batterie', image: image('batterie.jpg'), kind: 'instrument' },
-      { id: 'trompette', label: 'Trompette', image: image('trompette.jpg'), kind: 'instrument' },
-      { id: 'piano', label: 'Piano', image: image('piano.jpg'), kind: 'instrument' },
-      { id: 'chant', label: 'Chant', image: image('chant.jpg'), kind: 'instrument' },
-      { id: 'trombone', label: 'Trombone', image: image('trombone.jpg'), kind: 'instrument' },
-      { id: 'saxophone', label: 'Saxophone', image: image('saxophone.jpg'), kind: 'instrument' },
-      { id: 'clarinette', label: 'Clarinette', image: image('clarinette.jpg'), kind: 'instrument' },
-      { id: 'harpe', label: 'Harpe', image: image('harpe.jpg'), kind: 'instrument' },
-      { id: 'fluteabec', label: 'Flûte à bec', image: image('fluteabec.jpg'), kind: 'instrument' },
-      { id: 'basson', label: 'Basson', image: image('basson.jpg'), kind: 'instrument' },
-    ],
-  },
-  {
-    id: 'etiquettes',
-    title: '🏷️ Étiquettes & Contexte',
-    hint: 'Les ingrédients qui donnent sa couleur au morceau.',
-    items: [
-      { id: 'grilledeblues', label: 'Grille de blues', image: image('grilledeblues.jpg'), kind: 'tag' },
-      { id: 'annees50', label: 'Années 50', image: image('annees50.jpg'), kind: 'tag' },
-      { id: 'jazzinfluence', label: 'Influence du jazz', image: image('jazzinfluence.jpg'), kind: 'tag' },
-      {
-        id: 'ecritureinfluencedrogue',
-        label: 'Écriture sous influence de drogues',
-        image: image('ecritureinfluencedrogue.jpg'),
-        kind: 'tag',
-      },
-      {
-        id: 'saturation',
-        label: 'Saturation poussée à l’extrême',
-        image: image('saturation.jpg'),
-        kind: 'tag',
-      },
-      { id: 'formatcourt', label: 'Format court', image: image('formatcourt.jpg'), kind: 'tag' },
-      { id: '3accords', label: '3 accords', image: image('3accords.jpg'), kind: 'tag' },
-      { id: 'textesrebelles', label: 'Textes rebelles', image: image('textesrebelles.jpg'), kind: 'tag' },
-      {
-        id: 'harmoniesvocales',
-        label: 'Harmonies vocales très travaillées',
-        image: image('harmoniesvocales.jpg'),
-        kind: 'tag',
-      },
-      { id: 'sonsale', label: 'Son sale', image: image('sonsale.jpg'), kind: 'tag' },
-      {
-        id: 'alternancecalmeexplosion',
-        label: 'Alternance calme / explosion',
-        image: image('alternancecalmeexplosion.jpg'),
-        kind: 'tag',
-      },
-      {
-        id: 'paillettesmaquillage',
-        label: 'Paillettes et maquillage',
-        image: image('paillettesmaquillage.jpg'),
-        kind: 'tag',
-      },
-    ],
-  },
-];
-
-const items: StageItem[] = groups.flatMap((group) => group.items);
-
-const styles: RockStyle[] = [
-  {
-    id: 'rocknroll',
-    name: "Rock 'n' Roll",
-    image: image('rocknroll.jpg'),
-    signature:
-      '1954 : Rock Around The Clock par Bill Haley and His Comets. La secousse qui invente le rock.',
-    requirements: [
-      'guitare',
-      'batterie',
-      'chant',
-      'contrebasse',
-      'saxophone',
-      'grilledeblues',
-      'annees50',
-      'jazzinfluence',
-    ],
-  },
-  {
-    id: 'rockpsychedelique',
-    name: 'Rock Psychédélique',
-    image: image('rockpsychedelique.jpg'),
-    signature:
-      'La basse remplace la contrebasse, les morceaux s’allongent et l’écriture sous influence ouvre de nouveaux mondes sonores.',
-    requirements: ['guitare', 'basse', 'batterie', 'chant', 'ecritureinfluencedrogue'],
-  },
-  {
-    id: 'hardrock',
-    name: 'Hard Rock',
-    image: image('hardrock.jpg'),
-    signature:
-      'Le même groupe, mais avec une saturation poussée à l’extrême : plus lourd, plus fort, plus agressif.',
-    requirements: ['guitare', 'basse', 'batterie', 'chant', 'saturation'],
-  },
-  {
-    id: 'punkrock',
-    name: 'Punk Rock',
-    image: image('punkrock.jpg'),
-    signature:
-      'Trois accords, format court, textes rebelles : l’énergie brute contre les solos interminables.',
-    requirements: [
-      'guitare',
-      'basse',
-      'batterie',
-      'chant',
-      'formatcourt',
-      '3accords',
-      'textesrebelles',
-    ],
-  },
-  {
-    id: 'poprock',
-    name: 'Pop-Rock',
-    image: image('poprock.jpg'),
-    signature:
-      'Des harmonies vocales très travaillées et un format court : la mélodie passe avant la puissance.',
-    requirements: ['guitare', 'basse', 'batterie', 'chant', 'harmoniesvocales', 'formatcourt'],
-  },
-  {
-    id: 'grunge',
-    name: 'Grunge',
-    image: image('grunge.jpg'),
-    signature:
-      'Un son sale et des alternances calme / explosion : l’énergie de Seattle au début des années 90.',
-    requirements: ['guitare', 'basse', 'batterie', 'chant', 'sonsale', 'alternancecalmeexplosion'],
-  },
-  {
-    id: 'glamrock',
-    name: 'Glam Rock',
-    image: image('glamrock.jpg'),
-    signature:
-      'Paillettes et maquillage : le rock devient un spectacle total, flamboyant et théâtral.',
-    requirements: ['guitare', 'basse', 'batterie', 'chant', 'paillettesmaquillage'],
-  },
-  {
-    id: 'newwave',
-    name: 'New Wave',
-    image: image('newwave.jpg'),
-    signature:
-      'Le synthétiseur entre dans le groupe : le rock rencontre l’électronique des années 80.',
-    requirements: ['guitare', 'basse', 'batterie', 'chant', 'synthetiseur'],
-  },
-];
-
-const stageData = { items, styles };
+const groups = rawGroups.map((group) => ({ ...group, items: group.items.map(withImage) }));
+const items = groups.flatMap((group) => group.items);
+const styles = rawStyles.map(withImage);
 ---
-
-<script
-  is:inline
-  type="application/json"
-  id="rock-stage-data"
-  set:html={JSON.stringify(stageData)}
-></script>
 
 <div class="rock-stage-builder">
   <header class="studio-intro">
@@ -198,7 +20,7 @@ const stageData = { items, styles };
     <h3>🎸 Le Studio Rock</h3>
     <p>
       Compose ton groupe et empile les ingrédients sur la scène. La jauge te dit si tu chauffes…
-      Réunis les bons éléments pour débloquer 8 grands styles du rock.
+      Réunis les bons éléments pour débloquer {styles.length} grands styles du rock.
     </p>
   </header>
 
@@ -388,60 +210,24 @@ const stageData = { items, styles };
 
 
 <script>
+  import { items, styles, type RockStyle } from '../data/rockStageData';
+  import {
+    evaluateAll,
+    getGaugeDetail,
+    getHeat,
+    getIntruderRemark,
+    getTargetNames,
+    MIN_ITEMS_FOR_GAUGE,
+    type HeatLevel,
+  } from '../utils/rockStageEvaluation';
+  import { plural } from '../utils/plural';
   import { shuffle } from '../utils/random';
-  interface StageItem {
-    id: string;
-    label: string;
-    image: string;
-    kind: 'instrument' | 'tag';
-  }
-
-  interface RockStyle {
-    id: string;
-    name: string;
-    image: string;
-    signature: string;
-    requirements: string[];
-  }
-
-  interface StageData {
-    items: StageItem[];
-    styles: RockStyle[];
-  }
-
-  interface Evaluation {
-    style: RockStyle;
-    score: number;
-    matched: number;
-    missing: number;
-    extras: number;
-  }
-
-  interface HeatLevel {
-    min: number;
-    heat: 'cold' | 'warm' | 'hot' | 'fire' | 'perfect';
-    headline: string;
-  }
 
   const STORAGE_KEY = 'rock-stage-builder:discovered';
 
-  const HEAT_LEVELS: HeatLevel[] = [
-    { min: 100, heat: 'perfect', headline: 'Match parfait !' },
-    { min: 90, heat: 'fire', headline: 'Brûlant !' },
-    { min: 60, heat: 'hot', headline: 'Ça chauffe sérieusement !' },
-    { min: 1, heat: 'warm', headline: 'Tu chauffes !' },
-    { min: 0, heat: 'cold', headline: 'Tu chauffes !' },
-  ];
-
-  const plural = (count: number, singular: string, pluralForm = `${singular}s`) =>
-    `${count} ${count > 1 ? pluralForm : singular}`;
-
-  const dataElement = document.getElementById('rock-stage-data');
   const root = document.querySelector<HTMLElement>('.rock-stage-builder');
 
-  if (dataElement?.textContent && root) {
-    const { items, styles } = JSON.parse(dataElement.textContent) as StageData;
-
+  if (root) {
     const itemById = new Map(items.map((item) => [item.id, item]));
     const styleById = new Map(styles.map((style) => [style.id, style]));
 
@@ -496,44 +282,6 @@ const stageData = { items, styles };
     // La position des cartes change à chaque chargement de page.
     root.querySelectorAll<HTMLElement>('[data-rack-grid]').forEach(shuffleChildren);
 
-    const evaluate = (style: RockStyle): Evaluation => {
-      const required = new Set(style.requirements);
-      let matched = 0;
-
-      selection.forEach((id) => {
-        if (required.has(id)) matched += 1;
-      });
-
-      const extras = selection.size - matched;
-
-      return {
-        style,
-        score: matched === 0 ? 0 : Math.round((matched / (required.size + extras)) * 100),
-        matched,
-        missing: required.size - matched,
-        extras,
-      };
-    };
-
-    const evaluateAll = (): { best: Evaluation; tied: Evaluation[] } | null => {
-      const evaluations = styles.map(evaluate);
-      if (evaluations.length === 0) return null;
-
-      const topScore = evaluations.reduce((max, entry) => Math.max(max, entry.score), 0);
-      const contenders = evaluations
-        .filter((entry) => entry.score === topScore)
-        .sort((a, b) => a.missing - b.missing || a.extras - b.extras);
-      const best = contenders[0];
-      if (!best) return null;
-
-      return {
-        best,
-        tied: contenders.filter(
-          (entry) => entry.missing === best.missing && entry.extras === best.extras,
-        ),
-      };
-    };
-
     const applyGauge = (
       score: number | null,
       heat: HeatLevel['heat'],
@@ -550,18 +298,6 @@ const stageData = { items, styles };
       }
       if (gaugeValue) gaugeValue.textContent = score === null ? '—' : `${score} %`;
       if (gaugeHeadline) gaugeHeadline.textContent = headline;
-    };
-
-    const getIntruderRemark = (extras: number): string | null => {
-      if (extras === 0) return null;
-      if (extras === 1) {
-        return 'Il y a un passager clandestin dans ton groupe… L\'un de ces éléments n\'a rien à faire là ! 🕵️';
-      }
-      if (extras === 2) {
-        return 'Oula ! Au moins deux éléments gâchent la synergie de ton groupe. 🥊';
-      }
-
-      return "C'est un joyeux bazar ! Plusieurs éléments n'ont absolument rien à faire ensemble. 💥";
     };
 
     const renderIntruderNote = (extras: number | null) => {
@@ -605,7 +341,10 @@ const stageData = { items, styles };
     const showUnlockCard = (style: RockStyle) => {
       if (unlockPanel) unlockPanel.hidden = false;
       if (unlockImage) {
-        unlockImage.src = style.image;
+        const cardImage = galleryCards
+          .find((card) => card.dataset.styleCard === style.id)
+          ?.querySelector<HTMLImageElement>('img');
+        if (cardImage) unlockImage.src = cardImage.src;
         unlockImage.alt = `Carte du style ${style.name}`;
       }
       if (unlockName) unlockName.textContent = style.name;
@@ -636,7 +375,7 @@ const stageData = { items, styles };
 
     const renderGauge = () => {
       // En dessous de 3 éléments, l'évaluation n'a pas assez de matière : on reste neutre.
-      if (selection.size < 3) {
+      if (selection.size < MIN_ITEMS_FOR_GAUGE) {
         applyGauge(null, 'cold', 'Analyse en cours…');
         if (gaugeTarget) {
           gaugeTarget.textContent =
@@ -649,7 +388,7 @@ const stageData = { items, styles };
         return;
       }
 
-      const result = evaluateAll();
+      const result = evaluateAll(styles, selection);
 
       if (!result) {
         applyGauge(null, 'cold', 'Analyse en cours…');
@@ -664,30 +403,15 @@ const stageData = { items, styles };
         applyGauge(0, 'cold', "C'est congelé !");
         if (gaugeTarget) gaugeTarget.textContent = "Style le plus proche : Aucun pour l'instant";
       } else {
-        const level = HEAT_LEVELS.find((entry) => best.score >= entry.min) ?? HEAT_LEVELS[0];
-        if (level) applyGauge(best.score, level.heat, level.headline);
+        const level = getHeat(best.score);
+        applyGauge(best.score, level.heat, level.headline);
 
         if (gaugeTarget) {
-          const names =
-            tied.length > 1
-              ? `${tied
-                  .slice(0, 2)
-                  .map((entry) => entry.style.name)
-                  .join(' ou ')}${tied.length > 2 ? ` (+${tied.length - 2} autres pistes)` : ''}`
-              : best.style.name;
-          gaugeTarget.textContent = `Style le plus proche : ${names}`;
+          gaugeTarget.textContent = `Style le plus proche : ${getTargetNames(best, tied)}`;
         }
       }
 
-      if (gaugeDetail) {
-        if (best.score === 100) {
-          gaugeDetail.textContent = 'Tous les ingrédients sont réunis, sans élément en trop.';
-        } else {
-          const extrasLabel =
-            best.extras > 0 ? `${plural(best.extras, 'élément')} en trop` : 'sans intrus';
-          gaugeDetail.textContent = `${best.matched} / ${best.style.requirements.length} ingrédients · ${extrasLabel}`;
-        }
-      }
+      if (gaugeDetail) gaugeDetail.textContent = getGaugeDetail(best);
 
       renderIntruderNote(best.extras);
       if (best.score === 100) unlockStyle(best.style);

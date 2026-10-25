@@ -1,4 +1,5 @@
 ---
+import '../../styles/tools-shared.css';
 // Outil « Oreille — Noms » : l'élève écoute une note synthétisée et clique
 // sur son nom. Le Do de référence est toujours disponible.
 import { relativeUrl } from '../../utils/navigation';
@@ -107,19 +108,6 @@ import { relativeUrl } from '../../utils/navigation';
     #tool-oreille-nom { padding: 28px 32px 32px; }
   }
 
-  #tool-oreille-nom .on-header {
-    text-align: center;
-    margin-bottom: 1.75rem;
-  }
-
-  #tool-oreille-nom .on-header h1 {
-    margin: 0;
-    font-size: clamp(1.7rem, 5vw, 2.7rem);
-    line-height: 1.1;
-    font-weight: 900;
-    color: var(--accent);
-  }
-
   #tool-oreille-nom .on-levels {
     display: grid;
     grid-template-columns: 1fr;
@@ -148,15 +136,6 @@ import { relativeUrl } from '../../utils/navigation';
     transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.1s ease;
   }
 
-  #tool-oreille-nom .on-level-btn:hover,
-  #tool-oreille-nom .on-level-btn:focus-visible {
-    border-color: var(--accent-strong);
-    background: var(--accent-soft);
-    outline: none;
-  }
-
-  #tool-oreille-nom .on-level-btn:active { transform: scale(0.98); }
-
   #tool-oreille-nom .on-level-title {
     color: var(--accent);
     font-size: 1.15rem;
@@ -167,12 +146,6 @@ import { relativeUrl } from '../../utils/navigation';
     color: #64748b;
     font-size: 0.95rem;
     font-weight: 500;
-  }
-
-  #tool-oreille-nom .on-game {
-    display: flex;
-    flex-direction: column;
-    gap: 0.85rem;
   }
 
   #tool-oreille-nom .on-hud {
@@ -191,12 +164,6 @@ import { relativeUrl } from '../../utils/navigation';
   }
 
   #tool-oreille-nom .on-hud strong { color: var(--accent); font-weight: 800; }
-  #tool-oreille-nom .on-hud-time strong {
-    display: inline-block;
-    min-width: 3.1rem;
-    font-variant-numeric: tabular-nums;
-    text-align: right;
-  }
 
   /* --- Écoute --- */
   #tool-oreille-nom .on-audio {
@@ -223,17 +190,11 @@ import { relativeUrl } from '../../utils/navigation';
     transition: transform 0.1s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   }
 
-  #tool-oreille-nom .on-audio-btn:hover { border-color: var(--accent-strong); }
   #tool-oreille-nom .on-audio-btn:active { transform: scale(0.97); }
 
   #tool-oreille-nom .on-audio-btn--play {
     border-color: #d8b4fe;
     background: linear-gradient(160deg, #f3e8ff, #ede9fe);
-  }
-
-  #tool-oreille-nom .on-audio-btn.is-playing {
-    border-color: var(--accent-strong);
-    box-shadow: 0 0 0 4px rgba(192, 132, 252, 0.25);
   }
 
   #tool-oreille-nom .on-audio-icon {
@@ -266,16 +227,11 @@ import { relativeUrl } from '../../utils/navigation';
     font-weight: 700;
   }
 
-  #tool-oreille-nom .on-feedback.correct { color: #059669; }
-  #tool-oreille-nom .on-feedback.incorrect { color: #e11d48; }
-
   #tool-oreille-nom .on-answers {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(88px, 100%), 1fr));
     gap: 0.5rem;
   }
-
-  #tool-oreille-nom .on-answers.is-locked { pointer-events: none; }
 
   #tool-oreille-nom .on-answer-btn {
     min-height: 56px;
@@ -294,38 +250,7 @@ import { relativeUrl } from '../../utils/navigation';
     transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.1s ease;
   }
 
-  #tool-oreille-nom .on-answer-btn:hover,
-  #tool-oreille-nom .on-answer-btn:focus-visible {
-    border-color: var(--accent-strong);
-    background: var(--accent-soft);
-    outline: none;
-  }
-  #tool-oreille-nom .on-answer-btn:active { transform: scale(0.96); }
-  #tool-oreille-nom .on-answer-btn.is-correct { border-color: #059669; background: #ecfdf5; color: #047857; }
-  #tool-oreille-nom .on-answer-btn.is-wrong { border-color: #e11d48; background: #fff1f2; color: #be123c; }
-
-
   /* --- Bilan --- */
-  #tool-oreille-nom .on-result {
-    padding: 1.25rem 0 1.5rem;
-    text-align: center;
-  }
-
-  #tool-oreille-nom .on-result:focus { outline: none; }
-
-  #tool-oreille-nom .on-result h2 {
-    margin: 0 0 0.4rem;
-    font-size: clamp(1.9rem, 6vw, 2.6rem);
-    font-weight: 900;
-    color: var(--accent);
-  }
-
-  #tool-oreille-nom .on-result-reason {
-    margin: 0;
-    color: #64748b;
-    font-size: 1.05rem;
-    font-weight: 600;
-  }
 
   #tool-oreille-nom .on-stats {
     display: grid;
@@ -344,64 +269,13 @@ import { relativeUrl } from '../../utils/navigation';
     border-radius: 16px;
   }
 
-  #tool-oreille-nom .on-stat-value {
-    color: var(--accent);
-    font-size: clamp(1.35rem, 6vw, 2.1rem);
-    font-weight: 900;
-    line-height: 1.15;
-    font-variant-numeric: tabular-nums;
-  }
-
-  #tool-oreille-nom .on-stat-label {
-    color: #64748b;
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-
-  #tool-oreille-nom .on-result-actions {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.4rem;
-  }
-
-  #tool-oreille-nom .on-primary-btn {
-    width: 100%;
-    max-width: 420px;
-    min-height: 54px;
-    padding: 0.9rem 1.25rem;
-    border: 0;
-    border-radius: 9999px;
-    background: linear-gradient(135deg, var(--accent-strong), #7e22ce);
-    color: #ffffff;
-    font: inherit;
-    font-size: 1.1rem;
-    font-weight: 800;
-    cursor: pointer;
-    touch-action: manipulation;
-    box-shadow: 0 10px 22px -10px rgba(168, 85, 247, 0.8);
-    transition: transform 0.1s ease, box-shadow 0.2s ease;
-  }
-
-  #tool-oreille-nom .on-primary-btn:hover { box-shadow: 0 12px 26px -10px rgba(168, 85, 247, 0.95); }
-  #tool-oreille-nom .on-primary-btn:active { transform: scale(0.98); }
-
   @media (max-width: 640px) {
-    #tool-oreille-nom .on-header { margin-bottom: 1.25rem; }
     #tool-oreille-nom .on-hud { font-size: 0.88rem; padding: 0.6rem 0.75rem; }
     #tool-oreille-nom .on-audio-btn { min-height: 84px; }
   }
 
   /* Portrait smartphone : l'outil épouse exactement la hauteur visible. */
   @media (max-width: 640px) and (orientation: portrait) {
-    html:has(#tool-oreille-nom),
-    body:has(#tool-oreille-nom) {
-      height: 100dvh;
-      max-height: 100dvh;
-      overflow: hidden;
-    }
 
     body:has(#tool-oreille-nom) {
       display: flex;
@@ -522,17 +396,10 @@ import { relativeUrl } from '../../utils/navigation';
       padding: 0.75rem 1rem;
       border-radius: 12px;
     }
-    #tool-oreille-nom .on-primary-btn { min-height: 48px; }
   }
 
   /* Paysage mobile bas : aucun défilement vertical, réponses sur une ligne. */
   @media (pointer: coarse) and (orientation: landscape) and (max-height: 550px) {
-    html:has(#tool-oreille-nom),
-    body:has(#tool-oreille-nom) {
-      height: 100dvh;
-      max-height: 100dvh;
-      overflow: hidden;
-    }
 
     body:has(#tool-oreille-nom) {
       display: flex;
@@ -922,7 +789,4 @@ import { relativeUrl } from '../../utils/navigation';
     });
   })();
 </script>
-
-
-
 

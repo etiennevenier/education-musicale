@@ -1,4 +1,5 @@
 ---
+import '../../styles/tools-shared.css';
 // Outil « Oreille — Clavier » : une note est jouée, l'élève clique sur la
 // touche du piano qui correspond. Le clavier complet est toujours affiché ;
 // seules les notes de l'ambitus du niveau sont jouées par l'outil.
@@ -98,40 +99,7 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
 </section>
 
 <style is:global>
-  #tool-oreille-clavier {
-    --accent: #7e22ce;
-    --accent-strong: #a855f7;
-    --accent-soft: #faf5ff;
-    --accent-border: #e9d5ff;
-    width: 100%;
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 12px;
-    background: #ffffff;
-    border-radius: 24px;
-    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
-    color: #0f172a;
-    box-sizing: border-box;
-    overflow-x: hidden;
-    font-family: system-ui, -apple-system, sans-serif;
-  }
 
-  @media (min-width: 640px) {
-    #tool-oreille-clavier { padding: 28px 32px 32px; }
-  }
-
-  #tool-oreille-clavier .oc-header {
-    text-align: center;
-    margin-bottom: 1.75rem;
-  }
-
-  #tool-oreille-clavier .oc-header h1 {
-    margin: 0;
-    font-size: clamp(1.7rem, 5vw, 2.7rem);
-    line-height: 1.1;
-    font-weight: 900;
-    color: var(--accent);
-  }
   #tool-oreille-clavier .oc-levels {
     display: grid;
     grid-template-columns: 1fr;
@@ -160,15 +128,6 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
     transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.1s ease;
   }
 
-  #tool-oreille-clavier .oc-level-btn:hover,
-  #tool-oreille-clavier .oc-level-btn:focus-visible {
-    border-color: var(--accent-strong);
-    background: var(--accent-soft);
-    outline: none;
-  }
-
-  #tool-oreille-clavier .oc-level-btn:active { transform: scale(0.98); }
-
   #tool-oreille-clavier .oc-level-title {
     color: var(--accent);
     font-size: 1.15rem;
@@ -179,35 +138,6 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
     color: #64748b;
     font-size: 0.95rem;
     font-weight: 500;
-  }
-
-  #tool-oreille-clavier .oc-game {
-    display: flex;
-    flex-direction: column;
-    gap: 0.85rem;
-  }
-
-  #tool-oreille-clavier .oc-hud {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.35rem 1rem;
-    padding: 0.7rem 0.9rem;
-    background: var(--accent-soft);
-    border: 1px solid var(--accent-border);
-    border-radius: 14px;
-    color: #475569;
-    font-size: 0.98rem;
-    font-weight: 600;
-  }
-
-  #tool-oreille-clavier .oc-hud strong { color: var(--accent); font-weight: 800; }
-  #tool-oreille-clavier .oc-hud-time strong {
-    display: inline-block;
-    min-width: 3.1rem;
-    font-variant-numeric: tabular-nums;
-    text-align: right;
   }
 
   /* --- Écoute --- */
@@ -228,13 +158,7 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
     transition: transform 0.1s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   }
 
-  #tool-oreille-clavier .oc-audio-btn:hover { border-color: var(--accent-strong); }
   #tool-oreille-clavier .oc-audio-btn:active { transform: scale(0.98); }
-
-  #tool-oreille-clavier .oc-audio-btn.is-playing {
-    border-color: var(--accent-strong);
-    box-shadow: 0 0 0 4px rgba(192, 132, 252, 0.25);
-  }
 
   #tool-oreille-clavier .oc-audio-icon {
     font-size: 1.5rem;
@@ -325,149 +249,14 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
 
   #tool-oreille-clavier .oc-piano.is-locked { pointer-events: none; }
 
-  #tool-oreille-clavier .oc-caption {
-    margin: -0.2rem 0 0;
-    text-align: center;
-    color: #64748b;
-    font-size: 0.9rem;
-  }
-
-  #tool-oreille-clavier .oc-feedback {
-    min-height: 2rem;
-    margin: 0;
-    text-align: center;
-    font-size: 1.15rem;
-    font-weight: 700;
-  }
-
-  #tool-oreille-clavier .oc-feedback.correct { color: #059669; }
-  #tool-oreille-clavier .oc-feedback.incorrect { color: #e11d48; }
-
-
   /* --- Bilan --- */
-  #tool-oreille-clavier .oc-result {
-    padding: 1.25rem 0 1.5rem;
-    text-align: center;
-  }
-
-  #tool-oreille-clavier .oc-result:focus { outline: none; }
-
-  #tool-oreille-clavier .oc-result h2 {
-    margin: 0 0 0.4rem;
-    font-size: clamp(1.9rem, 6vw, 2.6rem);
-    font-weight: 900;
-    color: var(--accent);
-  }
-
-  #tool-oreille-clavier .oc-result-reason {
-    margin: 0;
-    color: #64748b;
-    font-size: 1.05rem;
-    font-weight: 600;
-  }
-
-  #tool-oreille-clavier .oc-stats {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.6rem;
-    margin: 1.35rem 0;
-  }
-
-  #tool-oreille-clavier .oc-stat {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    padding: 0.9rem 0.35rem;
-    background: var(--accent-soft);
-    border: 1px solid var(--accent-border);
-    border-radius: 16px;
-  }
-
-  #tool-oreille-clavier .oc-stat-value {
-    color: var(--accent);
-    font-size: clamp(1.35rem, 6vw, 2.1rem);
-    font-weight: 900;
-    line-height: 1.15;
-    font-variant-numeric: tabular-nums;
-  }
-
-  #tool-oreille-clavier .oc-stat-label {
-    color: #64748b;
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-
-  #tool-oreille-clavier .oc-result-actions {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.4rem;
-  }
-
-  #tool-oreille-clavier .oc-primary-btn {
-    width: 100%;
-    max-width: 420px;
-    min-height: 54px;
-    padding: 0.9rem 1.25rem;
-    border: 0;
-    border-radius: 9999px;
-    background: linear-gradient(135deg, var(--accent-strong), #7e22ce);
-    color: #ffffff;
-    font: inherit;
-    font-size: 1.1rem;
-    font-weight: 800;
-    cursor: pointer;
-    touch-action: manipulation;
-    box-shadow: 0 10px 22px -10px rgba(168, 85, 247, 0.8);
-    transition: transform 0.1s ease, box-shadow 0.2s ease;
-  }
-
-  #tool-oreille-clavier .oc-primary-btn:hover { box-shadow: 0 12px 26px -10px rgba(168, 85, 247, 0.95); }
-  #tool-oreille-clavier .oc-primary-btn:active { transform: scale(0.98); }
 
   @media (max-width: 640px) {
-    #tool-oreille-clavier .oc-header { margin-bottom: 1.25rem; }
-    #tool-oreille-clavier .oc-hud { font-size: 0.88rem; padding: 0.6rem 0.75rem; }
     #tool-oreille-clavier .oc-piano { height: clamp(140px, 26dvh, 180px); }
   }
 
   /* Portrait smartphone : l'outil épouse exactement la hauteur visible. */
   @media (max-width: 640px) and (orientation: portrait) {
-    html:has(#tool-oreille-clavier),
-    body:has(#tool-oreille-clavier) {
-      height: 100dvh;
-      max-height: 100dvh;
-      overflow: hidden;
-    }
-
-    body:has(#tool-oreille-clavier) {
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-      padding: 0.35rem 0.5rem 0.5rem;
-    }
-
-    main.container:has(#tool-oreille-clavier) {
-      flex: 1 1 auto;
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      min-height: 0;
-    }
-
-    #tool-oreille-clavier {
-      flex: 1 1 auto;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      min-height: 0;
-      padding: 6px;
-      border-radius: 16px;
-    }
-
-    #tool-oreille-clavier .oc-header { display: none; }
 
     #tool-oreille-clavier #oc-menu,
     #tool-oreille-clavier #oc-game,
@@ -502,14 +291,6 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
 
     #tool-oreille-clavier #oc-game { justify-content: space-between; }
 
-    #tool-oreille-clavier .oc-hud {
-      flex: 0 0 auto;
-      gap: 0.2rem 0.6rem;
-      padding: 0.4rem 0.55rem;
-      border-radius: 10px;
-      font-size: 0.8rem;
-    }
-
     #tool-oreille-clavier .oc-audio-btn {
       flex: 0 0 auto;
       min-height: 48px;
@@ -525,53 +306,16 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
       height: auto;
     }
 
-    #tool-oreille-clavier .oc-caption { display: none; }
-
-    #tool-oreille-clavier .oc-feedback {
-      flex: 0 0 auto;
-      min-height: 1.4rem;
-      font-size: 1rem;
-    }
-
     #tool-oreille-clavier #oc-result {
       justify-content: center;
       padding: 0;
     }
 
-    #tool-oreille-clavier .oc-stats {
-      grid-template-columns: 1fr;
-      gap: 0.7rem;
-      margin: 0.6rem 0;
-    }
-
     /* Cartes empilées : libellé à gauche, valeur à droite, sans compression. */
-    #tool-oreille-clavier .oc-stat {
-      flex-direction: row-reverse;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-      padding: 0.75rem 1rem;
-      border-radius: 12px;
-    }
-    #tool-oreille-clavier .oc-primary-btn { min-height: 48px; }
   }
 
   /* Paysage compact : le clavier et le bouton de retour restent visibles. */
   @media (max-height: 500px) and (orientation: landscape) {
-    #tool-oreille-clavier {
-      padding: 6px 8px;
-      border-radius: 14px;
-    }
-
-    #tool-oreille-clavier .oc-header { display: none; }
-
-    #tool-oreille-clavier .oc-game { gap: 0.4rem; }
-
-    #tool-oreille-clavier .oc-hud {
-      padding: 0.25rem 0.6rem;
-      font-size: 0.78rem;
-      border-radius: 10px;
-    }
 
     #tool-oreille-clavier .oc-audio-btn {
       min-height: 40px;
@@ -581,57 +325,12 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
     #tool-oreille-clavier .oc-audio-text { font-size: 0.92rem; }
 
     #tool-oreille-clavier .oc-piano { height: clamp(92px, 26dvh, 130px); }
-    #tool-oreille-clavier .oc-caption { display: none; }
-
-    #tool-oreille-clavier .oc-feedback {
-      min-height: 1.3rem;
-      font-size: 0.95rem;
-    }
 
   }
 
   /* Paysage mobile : aucun défilement vertical, le clavier reste visible. */
   @media (pointer: coarse) and (orientation: landscape) and (max-height: 550px) {
-    html:has(#tool-oreille-clavier),
-    body:has(#tool-oreille-clavier) {
-      height: 100dvh;
-      max-height: 100dvh;
-      overflow: hidden;
-    }
 
-    body:has(#tool-oreille-clavier) {
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-      margin: 0;
-      padding: 0;
-    }
-
-    main.container:has(#tool-oreille-clavier) {
-      flex: 1 1 auto;
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      max-width: none;
-      min-height: 0;
-    }
-
-    #tool-oreille-clavier {
-      flex: 1 1 auto;
-      display: flex;
-      flex-direction: column;
-      height: 100dvh;
-      max-height: 100dvh;
-      width: 100%;
-      max-width: none;
-      min-height: 0;
-      margin: 0;
-      padding: 4px 6px;
-      border-radius: 0;
-      overflow: hidden;
-    }
-
-    #tool-oreille-clavier .oc-game { flex: 1 1 auto; min-height: 0; }
     #tool-oreille-clavier .oc-piano { flex: 0 0 auto; }
   }
 </style>
@@ -921,6 +620,4 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
     });
   })();
 </script>
-
-
 

@@ -1,4 +1,6 @@
 ---
+import { CARDS_PER_GAME } from '../utils/recyclageEvaluation';
+
 interface TechniqueOption {
   id: 'reprise' | 'sample' | 'remix';
   emoji: string;
@@ -51,7 +53,6 @@ const criteria: CriterionOption[] = [
   },
 ];
 
-const CARDS_PER_GAME = 8;
 const slots = Array.from({ length: CARDS_PER_GAME }, (_, index) => index);
 ---
 
@@ -226,35 +227,19 @@ const slots = Array.from({ length: CARDS_PER_GAME }, (_, index) => index);
     TECHNIQUE_LABELS,
     type Scenario,
   } from '../data/recyclageData';
-
-  type CriterionId = 'oeuvreLibre' | 'enregistrementLibre' | 'exception' | 'accord';
-
-  interface Answer {
-    technique: Scenario['technique'] | null;
-    criteria: Record<CriterionId, boolean>;
-    validated: boolean;
-    success: boolean;
-  }
-
-  interface Validation {
-    techniqueOk: boolean;
-    verdictOk: boolean;
-    criteriaOk: boolean;
-    success: boolean;
-    actualLegal: boolean;
-    studentLegal: boolean;
-  }
-
-  const CRITERION_IDS: CriterionId[] = [
-    'oeuvreLibre',
-    'enregistrementLibre',
-    'exception',
-    'accord',
-  ];
-  const CARDS_PER_GAME = 8;
-
-  const isCriterionId = (value: string | undefined): value is CriterionId =>
-    value !== undefined && (CRITERION_IDS as string[]).includes(value);
+  import {
+    buildNotes,
+    CARDS_PER_GAME,
+    CRITERION_IDS,
+    createAnswer,
+    getExpectedCriteria,
+    getFeedbackTitle,
+    isCriterionId,
+    isTechniqueId,
+    validateAnswer,
+    type Answer,
+    type Validation,
+  } from '../utils/recyclageEvaluation';
 
   const plural = (count: number, singular: string, pluralForm = `${singular}s`) =>
     `${count} ${count > 1 ? pluralForm : singular}`;
@@ -286,108 +271,7 @@ const slots = Array.from({ length: CARDS_PER_GAME }, (_, index) => index);
     let currentIndex = 0;
     let lastFocused: HTMLElement | null = null;
 
-    const createAnswer = (): Answer => ({
-      technique: null,
-      criteria: {
-        oeuvreLibre: false,
-        enregistrementLibre: false,
-        exception: false,
-        accord: false,
-      },
-      validated: false,
-      success: false,
-    });
-
-    const getStudentVerdict = (criteria: Record<CriterionId, boolean>): boolean =>
-      criteria.exception || (criteria.oeuvreLibre && criteria.enregistrementLibre) || criteria.accord;
-
     const labelFor = (technique: Scenario['technique']): string => TECHNIQUE_LABELS[technique];
-
-    const buildNotes = (
-      scenario: Scenario,
-      answer: Answer,
-      validation: Validation,
-    ): string[] => {
-      const notes: string[] = [];
-
-      if (!validation.techniqueOk && answer.technique) {
-        notes.push(
-          `Technique : tu as choisi « ${labelFor(answer.technique)} », or la bonne réponse est « ${labelFor(scenario.technique)} ».`,
-        );
-      }
-
-      if (!validation.verdictOk) {
-        notes.push(
-          validation.actualLegal
-            ? 'Verdict : cette situation est légale, mais ton diagnostic la déclare interdite.'
-            : 'Verdict : cette situation est illégale, mais ton diagnostic la déclare autorisée.',
-        );
-
-        if (!validation.actualLegal) {
-          if (scenario.oeuvreLibre && !scenario.enregistrementLibre) {
-            notes.push(
-              "L'œuvre était dans le domaine public, MAIS l'enregistrement utilisé est récent : il reste protégé par les droits voisins.",
-            );
-          } else if (!scenario.oeuvreLibre && scenario.enregistrementLibre) {
-            notes.push(
-              "L'enregistrement est bien le tien, MAIS l'œuvre originale reste protégée : il faut l'accord des ayants droit (ou une déclaration à la SACEM).",
-            );
-          } else if (scenario.exception !== null) {
-            notes.push(
-              `Seule l'exception de ${scenario.exception} autorise cet usage, et elle ne s'applique pas à ta copie.`,
-            );
-          } else if (scenario.accord) {
-            notes.push(
-              'Les ayants droit avaient donné leur accord, mais pas pour cet usage commercial.',
-            );
-          }
-        } else if (scenario.exception !== null) {
-          notes.push(
-            `L'exception de ${scenario.exception} rend ici l'usage légal, même sans accord des ayants droit.`,
-          );
-        } else if (scenario.accord) {
-          notes.push('Les ayants droit avaient bien donné leur accord : ce recyclage est autorisé.');
-        } else if (scenario.oeuvreLibre && scenario.enregistrementLibre) {
-          notes.push(
-            "L'œuvre et l'enregistrement utilisés sont tous deux libres : il n'y a rien à demander.",
-          );
-        }
-      }
-
-      if (answer.criteria.oeuvreLibre !== scenario.oeuvreLibre) {
-        notes.push(
-          scenario.oeuvreLibre
-            ? "Critère « œuvre dans le domaine public » : c'est vrai, l'auteur est mort depuis plus de 70 ans."
-            : "Critère « œuvre dans le domaine public » : c'est faux, l'œuvre est encore protégée.",
-        );
-      }
-
-      if (answer.criteria.enregistrementLibre !== scenario.enregistrementLibre) {
-        notes.push(
-          scenario.enregistrementLibre
-            ? "Critère « enregistrement libre » : c'est vrai (réenregistré ou droits voisins éteints)."
-            : "Critère « enregistrement libre » : c'est faux, cet enregistrement est encore protégé.",
-        );
-      }
-
-      if (answer.criteria.exception !== (scenario.exception !== null)) {
-        notes.push(
-          scenario.exception !== null
-            ? `Critère « exception légale » : l'exception de ${scenario.exception} s'applique bien.`
-            : "Critère « exception légale » : aucune parodie ni citation ne s'applique ici.",
-        );
-      }
-
-      if (answer.criteria.accord !== scenario.accord) {
-        notes.push(
-          scenario.accord
-            ? "Critère « accord des ayants droit » : un accord a bien été obtenu."
-            : "Critère « accord des ayants droit » : aucun accord n'a été obtenu.",
-        );
-      }
-
-      return notes;
-    };
 
     const renderFeedback = (
       card: HTMLElement,
@@ -412,19 +296,7 @@ const slots = Array.from({ length: CARDS_PER_GAME }, (_, index) => index);
       }
 
       const title = feedback.querySelector<HTMLElement>('[data-feedback-title]');
-      if (title) {
-        if (validation.success && validation.criteriaOk) {
-          title.textContent = 'Analyse complète : technique et raisonnement justes.';
-        } else if (validation.success) {
-          title.textContent = 'Bon verdict, mais certains critères sont mal identifiés.';
-        } else if (!validation.verdictOk) {
-          title.textContent = validation.actualLegal
-            ? "Cette situation était légale : tu l'as jugée interdite."
-            : "Cette situation est illégale : tu l'as crue autorisée.";
-        } else {
-          title.textContent = "Le verdict est bon, mais la technique n'est pas la bonne.";
-        }
-      }
+      if (title) title.textContent = getFeedbackTitle(validation);
 
       const verdict = feedback.querySelector<HTMLElement>('[data-feedback-verdict]');
       if (verdict) {
@@ -436,12 +308,7 @@ const slots = Array.from({ length: CARDS_PER_GAME }, (_, index) => index);
           `« ${chosenTechnique} » (attendue : ${labelFor(scenario.technique)}).`;
       }
 
-      const checks: Record<CriterionId, boolean> = {
-        oeuvreLibre: scenario.oeuvreLibre,
-        enregistrementLibre: scenario.enregistrementLibre,
-        exception: scenario.exception !== null,
-        accord: scenario.accord,
-      };
+      const checks = getExpectedCriteria(scenario);
 
       CRITERION_IDS.forEach((criterionId) => {
         const row = feedback.querySelector<HTMLElement>(`[data-diff-row="${criterionId}"]`);
@@ -581,28 +448,12 @@ const slots = Array.from({ length: CARDS_PER_GAME }, (_, index) => index);
 
       answer.validated = true;
 
-      const actualLegal = estLegal(scenario);
-      const studentLegal = getStudentVerdict(answer.criteria);
-      const techniqueOk = answer.technique === scenario.technique;
-      const verdictOk = studentLegal === actualLegal;
-      const criteriaOk =
-        answer.criteria.oeuvreLibre === scenario.oeuvreLibre &&
-        answer.criteria.enregistrementLibre === scenario.enregistrementLibre &&
-        answer.criteria.exception === (scenario.exception !== null) &&
-        answer.criteria.accord === scenario.accord;
-      const success = techniqueOk && verdictOk;
+      const validation = validateAnswer(scenario, answer);
+      const { success, actualLegal, studentLegal } = validation;
 
       answer.success = success;
       card.dataset.cardState = success ? 'success' : 'danger';
 
-      const validation: Validation = {
-        techniqueOk,
-        verdictOk,
-        criteriaOk,
-        success,
-        actualLegal,
-        studentLegal,
-      };
       const notes = buildNotes(scenario, answer, validation);
 
       card.querySelectorAll<HTMLButtonElement>('[data-technique]').forEach((button) => {
@@ -727,7 +578,7 @@ const slots = Array.from({ length: CARDS_PER_GAME }, (_, index) => index);
 
     const requestNewSession = () => {
       const started = answers.some((answer) => answer.validated || answer.technique !== null);
-      if (started && !window.confirm('Réinitialiser la session et tirer 8 nouvelles cartes ?')) {
+      if (started && !window.confirm(`Réinitialiser la session et tirer ${CARDS_PER_GAME} nouvelles cartes ?`)) {
         return;
       }
       startSession();
@@ -739,7 +590,7 @@ const slots = Array.from({ length: CARDS_PER_GAME }, (_, index) => index);
           const answer = answers[index];
           const technique = button.dataset.technique;
           if (!answer || answer.validated) return;
-          if (technique !== 'reprise' && technique !== 'sample' && technique !== 'remix') return;
+          if (!isTechniqueId(technique)) return;
 
           answer.technique = technique;
 

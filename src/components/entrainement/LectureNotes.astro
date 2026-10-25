@@ -1,4 +1,5 @@
 ---
+import '../../styles/tools-shared.css';
 // Outil « Lecture de notes » — structure, contenus et logique repris du portail pédagogique d'origine.
 import { relativeUrl } from '../../utils/navigation';
 ---
@@ -218,19 +219,6 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
 
 #tool-notes .notes-card { width: 100%; min-width: 0; padding: 8px; background: #ffffff; }
 
-#tool-notes .notes-header {
-  text-align: center;
-  margin-bottom: 1.75rem;
-}
-
-#tool-notes .notes-header h1 {
-  margin: 0;
-  font-size: clamp(1.7rem, 5vw, 2.7rem);
-  line-height: 1.1;
-  font-weight: 900;
-  color: var(--accent);
-}
-
 #tool-notes .notes-levels {
   display: grid;
   grid-template-columns: 1fr;
@@ -339,15 +327,6 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
   font-weight: 600;
 }
 
-#tool-notes .notes-hud strong { color: var(--accent); font-weight: 800; }
-
-#tool-notes .notes-hud-time strong {
-  display: inline-block;
-  min-width: 3.1rem;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
-
 #tool-notes .notes-staff {
   display: flex;
   align-items: center;
@@ -454,14 +433,6 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
   font-weight: 900;
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
-}
-
-#tool-notes .notes-stat-label {
-  color: #64748b;
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 #tool-notes .notes-score-actions {
@@ -599,21 +570,6 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
   body:has(#tool-notes) {
     height: 100dvh;
     max-height: 100dvh;
-  }
-
-  body:has(#tool-notes) {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    padding: 0.35rem 0.5rem 0.5rem;
-  }
-
-  main.container:has(#tool-notes) {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    min-height: 0;
   }
 
   #tool-notes {
