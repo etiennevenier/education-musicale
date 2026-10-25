@@ -395,8 +395,3 @@ export function getCurrentAudioUrl(): string | null {
 export function onAudioEvent(event: AudioEventName, listener: AudioListener): () => void {
   return audioManager.on(event, listener);
 }
-
-export function offAudioEvent(event: AudioEventName, listener: AudioListener): void {
-  audioManager.off(event, listener);
-}
-

@@ -45,14 +45,6 @@ export const CAUSE_LABELS: Record<Cause, { label: string; icon: string }> = {
   memoire: { label: 'Mémoire & Histoire', icon: '🕯️' },
 };
 
-export const POSTURE_LABELS: Record<Posture, { label: string; icon: string }> = {
-  colere: { label: 'Colère & Révolte', icon: '🔥' },
-  tristesse_lassitude: { label: 'Tristesse & Lassitude', icon: '🌧️' },
-  ironie_satire: { label: 'Ironie & Satire', icon: '🎭' },
-  hommage: { label: 'Hommage & Fraternité', icon: '🤝' },
-  espoir_rassemblement: { label: 'Espoir & Rassemblement', icon: '🌅' },
-};
-
 const SONGS_DATA: EngagementSong[] = [
   {
     id: 'renaud-hexagone',
