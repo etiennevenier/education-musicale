@@ -42,29 +42,20 @@ export interface ChallengeHandlers {
   onEnd?: (result: ChallengeResult) => void;
 }
 
-/** Formate une durée en « m:ss » (ex. 24 300 ms → « 0:24 »). */
-export function formatClock(ms: number): string {
-  const totalSeconds = Math.max(0, Math.round(ms / 1000));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+function formatMmSs(ms: number, round: (n: number) => number): string {
+  const total = Math.max(0, round(ms / 1000));
+  return `${Math.floor(total / 60)}:${(total % 60).toString().padStart(2, '0')}`;
 }
 
-/**
- * Formate un temps restant en compte à rebours « m:ss ».
- * On arrondit au supérieur pour afficher « 1:00 » au démarrage.
- */
-export function formatCountdown(ms: number): string {
-  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-}
+/** Durée en « m:ss » (ex. 24 300 ms → « 0:24 »). */
+export const formatClock = (ms: number): string => formatMmSs(ms, Math.round);
+
+/** Compte à rebours « m:ss », arrondi au supérieur : « 1:00 » au démarrage. */
+export const formatCountdown = (ms: number): string => formatMmSs(ms, Math.ceil);
 
 export class ChallengeSession {
   private readonly handlers: ChallengeHandlers;
   private startedAt = 0;
-  private timeoutId: number | null = null;
   private intervalId: number | null = null;
   private running = false;
   private scoreValue = 0;
@@ -89,13 +80,12 @@ export class ChallengeSession {
   /** Démarre le chronomètre et la session (remet le score à zéro). */
   start(): void {
     this.cancel();
-    this.startedAt = Date.now();
+    this.startedAt = performance.now();
     this.scoreValue = 0;
     this.answeredValue = 0;
     this.running = true;
 
     this.emitTick();
-    this.timeoutId = window.setTimeout(() => this.finish('timeout'), CHALLENGE_DURATION_MS);
     this.intervalId = window.setInterval(() => {
       this.emitTick();
       if (this.elapsedMs() >= CHALLENGE_DURATION_MS) this.finish('timeout');
@@ -128,7 +118,7 @@ export class ChallengeSession {
   }
 
   private elapsedMs(): number {
-    return Math.max(0, Date.now() - this.startedAt);
+    return Math.max(0, performance.now() - this.startedAt);
   }
 
   private emitTick(): void {
@@ -161,10 +151,6 @@ export class ChallengeSession {
   }
 
   private clearTimers(): void {
-    if (this.timeoutId !== null) {
-      window.clearTimeout(this.timeoutId);
-      this.timeoutId = null;
-    }
     if (this.intervalId !== null) {
       window.clearInterval(this.intervalId);
       this.intervalId = null;
