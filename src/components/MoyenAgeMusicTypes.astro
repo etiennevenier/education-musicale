@@ -119,7 +119,6 @@ import { relativeUrl } from '../utils/navigation';
     resumeAudio,
     stopAudio,
   } from '../utils/audioManager';
-  import { isTrackExposedInVisiblePanel } from '../utils/audioVisibility';
 
   const root = document.getElementById('moyen-age-music-types');
 
@@ -345,7 +344,7 @@ import { relativeUrl } from '../utils/navigation';
           const currentPlayer = players.find((player) =>
             sameTrack(getCurrentAudioUrl(), player.url),
           );
-          if (currentPlayer && !isTrackExposedInVisiblePanel(currentPlayer.url)) {
+           {
             stopAudio();
           }
           return;

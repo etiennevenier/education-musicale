@@ -479,7 +479,6 @@ function splitGlossaryTerms(text: string): GlossarySegment[] {
     resumeAudio,
     stopAudio,
   } from '../utils/audioManager';
-  import { isTrackExposedInVisiblePanel } from '../utils/audioVisibility';
 
   const course = document.getElementById('moyen-age-course');
 
@@ -579,9 +578,7 @@ function splitGlossaryTerms(text: string): GlossarySegment[] {
           const currentUrl = getCurrentAudioUrl();
           if (!currentUrl || !sameTrack(currentUrl)) return;
 
-          // Si un autre onglet visible propose déjà la même piste (par exemple
-          // « Les types de musique » avec ce chant grégorien), on le laisse jouer.
-          if (!isTrackExposedInVisiblePanel(currentUrl)) stopAudio();
+        stopAudio();
         });
 
         visibilityObserver.observe(notationPanel, {

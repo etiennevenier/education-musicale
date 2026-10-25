@@ -7,6 +7,7 @@
  */
 
 import { midiToFrequency } from './musicNotes';
+import { getSharedAudioContext, getMasterGainNode } from './audioManager';
 
 interface Partial {
   ratio: number;
@@ -29,36 +30,11 @@ interface ActiveVoice {
   filter: BiquadFilterNode;
 }
 
-interface WebAudioWindow extends Window {
-  webkitAudioContext?: typeof AudioContext;
-}
-
-let audioContext: AudioContext | null = null;
-let masterGain: GainNode | null = null;
 const activeVoices = new Set<ActiveVoice>();
-
-/** Crée (ou réutilise) le contexte audio partagé par l'outil. */
-function getAudioContext(): AudioContext | null {
-  if (typeof window === 'undefined') return null;
-
-  if (!audioContext) {
-    const ContextClass = window.AudioContext ?? (window as WebAudioWindow).webkitAudioContext;
-    if (!ContextClass) return null;
-
-    audioContext = new ContextClass();
-    masterGain = audioContext.createGain();
-    masterGain.gain.value = 0.3;
-    masterGain.connect(audioContext.destination);
-  }
-
-  // iOS / Safari : le contexte reste suspendu tant qu'aucun geste n'a eu lieu.
-  if (audioContext.state === 'suspended') void audioContext.resume();
-  return audioContext;
-}
 
 /** À appeler depuis un geste utilisateur pour débloquer le son (iOS, Safari). */
 export function unlockAudio(): void {
-  getAudioContext();
+  getSharedAudioContext();
 }
 
 export interface PlayNoteOptions {
@@ -70,9 +46,10 @@ export interface PlayNoteOptions {
   delay?: number;
 }
 
-/** Joue une note de piano synthétique. */
+/** Joue une note de piano synthétique connectée au gestionnaire central. */
 export function playPianoNote(midi: number, options: PlayNoteOptions = {}): void {
-  const context = getAudioContext();
+  const context = getSharedAudioContext();
+  const masterGain = getMasterGainNode();
   if (!context || !masterGain) return;
 
   const duration = options.duration ?? 1.7;
@@ -129,7 +106,7 @@ export function playPianoNote(midi: number, options: PlayNoteOptions = {}): void
 
 /** Coupe immédiatement toutes les notes en cours (changement de question, bilan…). */
 export function stopAllNotes(): void {
-  const context = audioContext;
+  const context = getSharedAudioContext();
   if (!context) return;
 
   const now = context.currentTime;

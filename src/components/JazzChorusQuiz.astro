@@ -112,7 +112,6 @@ const chorusGameData = {
       </button>
       <span id="jcAudioStatus" class="jc-audio-status" aria-live="polite"></span>
     </div>
-    <audio id="jcAudio" preload="none"></audio>
 
     <div class="jc-answer">
       <div class="jc-field">
@@ -163,6 +162,16 @@ const chorusGameData = {
 
 <script>
   import { shuffle } from '../utils/random';
+  import {
+    getAudioState,
+    getCurrentAudioUrl,
+    onAudioEvent,
+    pauseAudio,
+    playAudio,
+    resumeAudio,
+    stopAudio,
+  } from '../utils/audioManager';
+
   interface ChorusItem {
     file: string;
     instrument: string;
@@ -196,7 +205,6 @@ const chorusGameData = {
     const playIcon = $<HTMLSpanElement>('jcPlayIcon');
     const playLabel = $<HTMLSpanElement>('jcPlayLabel');
     const audioStatus = $<HTMLSpanElement>('jcAudioStatus');
-    const audio = $<HTMLAudioElement>('jcAudio');
     const input = $<HTMLInputElement>('jcInput');
     const suggestionsList = $<HTMLUListElement>('jcSuggestions');
     const validateButton = $<HTMLButtonElement>('jcValidateBtn');
@@ -217,8 +225,6 @@ const chorusGameData = {
       element.classList.toggle('hidden', hidden);
     }
 
-    // Mélange de Fisher-Yates.
-
     function normalize(value: string): string {
       return value
         .normalize('NFD')
@@ -233,14 +239,6 @@ const chorusGameData = {
       playIcon.textContent = '▶';
       playLabel.textContent = "Écouter l'extrait";
       playButton.setAttribute('aria-label', "Écouter l'extrait");
-    }
-
-    function stopAudio() {
-      audio.pause();
-      audio.removeAttribute('src');
-      audio.load();
-      resetPlayButton();
-      audioStatus.textContent = '';
     }
 
     function updateProgress() {
@@ -341,8 +339,8 @@ const chorusGameData = {
       feedback.className = 'jc-feedback hidden';
       setHidden(nextButton, true);
       stopAudio();
-      audio.src = queue[questionIndex].audioUrl;
-      audio.load();
+      resetPlayButton();
+      audioStatus.textContent = '';
       updateProgress();
       if (focusInput) input.focus();
     }
@@ -431,47 +429,69 @@ const chorusGameData = {
       });
     }
 
-    playButton.addEventListener('click', async () => {
-      if (!audio.getAttribute('src')) return;
-      if (audio.paused) {
-        try {
-          await audio.play();
-        } catch {
-          audioStatus.textContent = 'Lecture impossible pour cet extrait.';
-        }
+    // --- Lecture audio : le lecteur partagé du site pilote tout ------------
+    // On ne réagit qu'aux événements de SON extrait : les autres composants
+    // (vidéos, autres quiz, audioManager) peuvent jouer sans interférer.
+
+    const isCurrentTrack = (url: string | null): boolean => {
+      const cur = getCurrentAudioUrl();
+      if (!url || !cur) return false;
+      return url.normalize('NFC') === cur.normalize('NFC');
+    };
+
+    onAudioEvent('statechange', ({ state }) => {
+      const trackUrl = queue[questionIndex]?.audioUrl ?? null;
+
+      if (!isCurrentTrack(trackUrl)) {
+        // Un autre lecteur du site joue : bouton remis à son état par défaut.
+        resetPlayButton();
+        audioStatus.textContent = '';
+        return;
+      }
+
+      if (state === 'playing') {
+        playIcon.textContent = '⏸';
+        playLabel.textContent = 'Pause';
+        playButton.setAttribute('aria-label', "Mettre l'extrait en pause");
+        audioStatus.textContent = 'Lecture en cours…';
+      } else if (state === 'paused') {
+        playIcon.textContent = '▶';
+        playLabel.textContent = "Reprendre l'écoute";
+        playButton.setAttribute('aria-label', "Reprendre l'écoute de l'extrait");
+        audioStatus.textContent = '';
+      } else if (state === 'ended') {
+        playIcon.textContent = '↻';
+        playLabel.textContent = "Réécouter l'extrait";
+        playButton.setAttribute('aria-label', "Réécouter l'extrait");
+        audioStatus.textContent = '';
+      } else if (state === 'error') {
+        resetPlayButton();
+        audioStatus.textContent = 'Extrait audio indisponible.';
       } else {
-        audio.pause();
+        resetPlayButton();
+        audioStatus.textContent = '';
       }
     });
 
-    audio.addEventListener('play', () => {
-      playIcon.textContent = '⏸';
-      playLabel.textContent = 'Pause';
-      playButton.setAttribute('aria-label', "Mettre l'extrait en pause");
-      audioStatus.textContent = 'Lecture en cours…';
+    playButton.addEventListener('click', () => {
+      const track = queue[questionIndex];
+      if (!track) return;
+
+      const url = track.audioUrl;
+      const state = getAudioState();
+
+      if (isCurrentTrack(url) && state === 'playing') {
+        pauseAudio();
+        return;
+      }
+      if (isCurrentTrack(url) && state === 'paused') {
+        void resumeAudio();
+        return;
+      }
+      void playAudio(url);
     });
 
-    audio.addEventListener('pause', () => {
-      // Ignore la pause provoquée par le changement d'extrait (currentTime remis à 0).
-      if (audio.ended || !audio.getAttribute('src') || audio.currentTime === 0) return;
-      playIcon.textContent = '▶';
-      playLabel.textContent = "Reprendre l'écoute";
-      playButton.setAttribute('aria-label', "Reprendre l'écoute de l'extrait");
-      audioStatus.textContent = '';
-    });
-
-    audio.addEventListener('ended', () => {
-      playIcon.textContent = '↻';
-      playLabel.textContent = "Réécouter l'extrait";
-      playButton.setAttribute('aria-label', "Réécouter l'extrait");
-      audioStatus.textContent = '';
-    });
-
-    audio.addEventListener('error', () => {
-      if (!audio.getAttribute('src')) return;
-      resetPlayButton();
-      audioStatus.textContent = 'Extrait audio indisponible.';
-    });
+    // --- Interactions formulaire -------------------------------------------
 
     input.addEventListener('input', () => {
       if (isAnswered) return;
@@ -547,9 +567,6 @@ const chorusGameData = {
 
     startGame();
   }
-
-
-
 </script>
 
 <style is:global>
@@ -919,4 +936,3 @@ const chorusGameData = {
     }
   }
 </style>
-

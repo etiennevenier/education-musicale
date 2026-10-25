@@ -395,3 +395,73 @@ export function getCurrentAudioUrl(): string | null {
 export function onAudioEvent(event: AudioEventName, listener: AudioListener): () => void {
   return audioManager.on(event, listener);
 }
+// Rajout de fonctions fines de gestion du contexte audio partagé, pour les synthés et autres sources Web Audio.
+// par gemini pour se conformer aux consignes du lot 8.
+
+let sharedAudioCtx: AudioContext | null = null;
+let masterGainNode: GainNode | null = null;
+let isMuted = false;
+
+/**
+ * Récupère ou initialise l'instance unique (Singleton) d'AudioContext avec le nœud Master Gain.
+ */
+export function getSharedAudioContext(): AudioContext {
+  if (!sharedAudioCtx) {
+    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    sharedAudioCtx = new AudioContextClass();
+
+    // Création d'un nœud de contrôle de volume/sourdine maître global
+    masterGainNode = sharedAudioCtx.createGain();
+    masterGainNode.connect(sharedAudioCtx.destination);
+  }
+
+  if (sharedAudioCtx.state === 'suspended') {
+    sharedAudioCtx.resume();
+  }
+
+  return sharedAudioCtx;
+}
+
+/**
+ * Retourne le GainNode maître pour y connecter les synthés ou sources, 
+ * garantissant le respect de la sourdine globale.
+ */
+export function getMasterGainNode(): GainNode {
+  const ctx = getSharedAudioContext();
+  if (!masterGainNode && ctx) {
+    masterGainNode = ctx.createGain();
+    masterGainNode.connect(ctx.destination);
+  }
+  return masterGainNode!;
+}
+
+/**
+ * Active ou désactive la sourdine globale instantanément sur toute l'application.
+ */
+export function toggleGlobalMute(): boolean {
+  isMuted = !isMuted;
+  const gainNode = getMasterGainNode();
+  if (gainNode && sharedAudioCtx) {
+    // Passage instantané du volume à 0 ou 1
+    gainNode.gain.setValueAtTime(isMuted ? 0 : 1, sharedAudioCtx.currentTime);
+  }
+  return isMuted;
+}
+
+/**
+ * Vérifie l'état actuel de la sourdine globale.
+ */
+export function getGlobalMuteState(): boolean {
+  return isMuted;
+}
+
+/**
+ * Ferme proprement le contexte audio pour libérer la mémoire (nettoyage lourd).
+ */
+export async function closeAudioContext(): Promise<void> {
+  if (sharedAudioCtx && sharedAudioCtx.state !== 'closed') {
+    await sharedAudioCtx.close();
+    sharedAudioCtx = null;
+    masterGainNode = null;
+  }
+}
