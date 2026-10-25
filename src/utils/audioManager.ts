@@ -42,7 +42,23 @@ export interface PlayAudioOptions {
 export type AudioListener = (payload: AudioEventPayload) => void;
 
 /** Volume master commun à tous les MP3 du site. */
-export const DEFAULT_AUDIO_VOLUME = 0.85;
+import {
+  DEFAULT_AUDIO_VOLUME,
+  getAudioContext,
+  getMasterBus,
+  getGlobalMuteState,
+  setMasterVolume,
+} from './audioContext';
+
+export { DEFAULT_AUDIO_VOLUME };
+// Compatibilité : anciens imports depuis audioManager
+export {
+  getAudioContext as getSharedAudioContext,
+  getMasterBus as getMasterGainNode,
+  toggleGlobalMute,
+  getGlobalMuteState,
+  suspendAudioContext as closeAudioContext,
+} from './audioContext';
 
 const MIN_VOLUME = 0;
 const MAX_VOLUME = 1;
@@ -54,9 +70,7 @@ function clamp(value: number, min = MIN_VOLUME, max = MAX_VOLUME): number {
 
 class AudioManager {
   private audio: HTMLAudioElement | null = null;
-  private context: AudioContext | null = null;
   private trackGain: GainNode | null = null;
-  private masterGain: GainNode | null = null;
   private graphAttempted = false;
   private usesWebAudio = false;
 
@@ -104,12 +118,9 @@ class AudioManager {
 
     if (options.loop !== undefined) audio.loop = options.loop;
     this.applyVolume();
-    this.ensureWebAudio();
 
-    // Le contexte Web Audio ne peut démarrer que sur une interaction utilisateur.
-    if (this.context && this.context.state === 'suspended') {
-      void this.context.resume().catch(() => {});
-    }
+       this.ensureWebAudio();
+    if (this.usesWebAudio) getAudioContext(); // reprend un contexte suspendu
 
     try {
       await audio.play();
@@ -164,8 +175,8 @@ class AudioManager {
   }
 
   /** Règle le volume master (0 à 1). Retourne la valeur réellement appliquée. */
-  setVolume(level: number): number {
-    this.masterVolume = clamp(level);
+    setVolume(level: number): number {
+    this.masterVolume = setMasterVolume(level);
     this.applyVolume();
     return this.masterVolume;
   }
@@ -231,48 +242,29 @@ class AudioManager {
    * source -> gain de piste -> gain master -> limiteur -> sortie.
    * En cas d'échec (navigateur sans Web Audio), on retombe sur audio.volume.
    */
+  /** Branche l'élément audio sur le bus partagé : source -> gain de piste -> bus. */
+/** Branche l'élément audio sur le bus partagé : source -> gain de piste -> bus. */
   private ensureWebAudio(): void {
-    if (this.graphAttempted || !this.audio || typeof window === 'undefined') return;
+    if (this.graphAttempted || !this.audio) return;
     this.graphAttempted = true;
 
-    const AudioContextClass =
-      window.AudioContext ||
-      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-
-    if (!AudioContextClass) {
+    const context = getAudioContext();
+    const bus = getMasterBus();
+    if (!context || !bus) {
       this.applyFallbackVolume();
       return;
     }
 
     try {
-      const context = new AudioContextClass();
       const source = context.createMediaElementSource(this.audio);
       const trackGain = context.createGain();
-      const masterGain = context.createGain();
-      const limiter = context.createDynamicsCompressor();
-
       trackGain.gain.value = clamp(this.playOptions.volume ?? 1);
-      masterGain.gain.value = this.masterVolume;
-
-      // Réglages de limiteur : évite les pics et la saturation (clipping).
-      limiter.threshold.value = -2;
-      limiter.knee.value = 0;
-      limiter.ratio.value = 20;
-      limiter.attack.value = 0.003;
-      limiter.release.value = 0.25;
-
       source.connect(trackGain);
-      trackGain.connect(masterGain);
-      masterGain.connect(limiter);
-      limiter.connect(context.destination);
+      trackGain.connect(bus);
 
-      this.context = context;
       this.trackGain = trackGain;
-      this.masterGain = masterGain;
       this.usesWebAudio = true;
-
-      // Le gain Web Audio gère tout le volume : on neutralise audio.volume.
-      this.audio.volume = 1;
+      this.audio.volume = 1; // le bus gère le volume
     } catch {
       this.usesWebAudio = false;
       this.applyFallbackVolume();
@@ -311,11 +303,9 @@ class AudioManager {
 
   private applyVolume(): void {
     const trackVolume = clamp(this.playOptions.volume ?? 1);
-
-    if (this.trackGain) this.trackGain.gain.value = trackVolume;
-    if (this.masterGain) this.masterGain.gain.value = this.masterVolume;
-
-    if (this.audio && !this.usesWebAudio) {
+    if (this.usesWebAudio && this.trackGain) {
+      this.trackGain.gain.value = trackVolume;
+    } else if (this.audio) {
       this.applyFallbackVolume(trackVolume);
     }
   }
@@ -323,6 +313,7 @@ class AudioManager {
   private applyFallbackVolume(trackVolume = clamp(this.playOptions.volume ?? 1)): void {
     if (!this.audio) return;
     this.audio.volume = clamp(this.masterVolume * trackVolume);
+    this.audio.muted = getGlobalMuteState();
   }
 
   private setState(next: AudioState): void {
@@ -394,74 +385,4 @@ export function getCurrentAudioUrl(): string | null {
 
 export function onAudioEvent(event: AudioEventName, listener: AudioListener): () => void {
   return audioManager.on(event, listener);
-}
-// Rajout de fonctions fines de gestion du contexte audio partagé, pour les synthés et autres sources Web Audio.
-// par gemini pour se conformer aux consignes du lot 8.
-
-let sharedAudioCtx: AudioContext | null = null;
-let masterGainNode: GainNode | null = null;
-let isMuted = false;
-
-/**
- * Récupère ou initialise l'instance unique (Singleton) d'AudioContext avec le nœud Master Gain.
- */
-export function getSharedAudioContext(): AudioContext {
-  if (!sharedAudioCtx) {
-    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    sharedAudioCtx = new AudioContextClass();
-
-    // Création d'un nœud de contrôle de volume/sourdine maître global
-    masterGainNode = sharedAudioCtx.createGain();
-    masterGainNode.connect(sharedAudioCtx.destination);
-  }
-
-  if (sharedAudioCtx.state === 'suspended') {
-    sharedAudioCtx.resume();
-  }
-
-  return sharedAudioCtx;
-}
-
-/**
- * Retourne le GainNode maître pour y connecter les synthés ou sources, 
- * garantissant le respect de la sourdine globale.
- */
-export function getMasterGainNode(): GainNode {
-  const ctx = getSharedAudioContext();
-  if (!masterGainNode && ctx) {
-    masterGainNode = ctx.createGain();
-    masterGainNode.connect(ctx.destination);
-  }
-  return masterGainNode!;
-}
-
-/**
- * Active ou désactive la sourdine globale instantanément sur toute l'application.
- */
-export function toggleGlobalMute(): boolean {
-  isMuted = !isMuted;
-  const gainNode = getMasterGainNode();
-  if (gainNode && sharedAudioCtx) {
-    // Passage instantané du volume à 0 ou 1
-    gainNode.gain.setValueAtTime(isMuted ? 0 : 1, sharedAudioCtx.currentTime);
-  }
-  return isMuted;
-}
-
-/**
- * Vérifie l'état actuel de la sourdine globale.
- */
-export function getGlobalMuteState(): boolean {
-  return isMuted;
-}
-
-/**
- * Ferme proprement le contexte audio pour libérer la mémoire (nettoyage lourd).
- */
-export async function closeAudioContext(): Promise<void> {
-  if (sharedAudioCtx && sharedAudioCtx.state !== 'closed') {
-    await sharedAudioCtx.close();
-    sharedAudioCtx = null;
-    masterGainNode = null;
-  }
 }

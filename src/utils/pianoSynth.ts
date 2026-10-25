@@ -7,34 +7,53 @@
  */
 
 import { midiToFrequency } from './musicNotes';
-import { getSharedAudioContext, getMasterGainNode } from './audioManager';
+import { getAudioContext, getMasterBus } from './audioContext';
 
-interface Partial {
-  ratio: number;
-  gain: number;
-  type: OscillatorType;
-}
-
-/** Harmoniques du timbre « piano » (léger désaccord pour un rendu naturel). */
-const PARTIALS: Partial[] = [
-  { ratio: 1, gain: 0.55, type: 'triangle' },
-  { ratio: 2, gain: 0.18, type: 'sine' },
-  { ratio: 3, gain: 0.09, type: 'sine' },
-  { ratio: 4.01, gain: 0.045, type: 'sine' },
-  { ratio: 5.02, gain: 0.02, type: 'sine' },
-];
+const HARMONICS = [0.55, 0.18, 0.15, 0.045, 0.04];
+const MAX_VOICES = 24;
 
 interface ActiveVoice {
-  oscillators: OscillatorNode[];
+  oscillator: OscillatorNode;
   gain: GainNode;
   filter: BiquadFilterNode;
 }
 
 const activeVoices = new Set<ActiveVoice>();
+const waveCache = new WeakMap<AudioContext, PeriodicWave>();
+
+function getPianoWave(context: AudioContext): PeriodicWave {
+  let wave = waveCache.get(context);
+  if (!wave) {
+    const real = new Float32Array(HARMONICS.length + 1);
+    const imag = new Float32Array([0, ...HARMONICS]);
+    wave = context.createPeriodicWave(real, imag);
+    waveCache.set(context, wave);
+  }
+  return wave;
+}
+
+function releaseVoice(voice: ActiveVoice, context: AudioContext, fade: number): void {
+  const now = context.currentTime;
+  const param = voice.gain.gain as AudioParam & {
+    cancelAndHoldAtTime?: (time: number) => AudioParam;
+  };
+  if (typeof param.cancelAndHoldAtTime === 'function') {
+    param.cancelAndHoldAtTime(now);
+  } else {
+    param.cancelScheduledValues(now);
+    param.setValueAtTime(Math.max(param.value, 0.0001), now);
+  }
+  param.exponentialRampToValueAtTime(0.0001, now + fade);
+  try {
+    voice.oscillator.stop(now + fade + 0.02);
+  } catch {
+    // L'oscillateur était déjà arrêté : rien à faire.
+  }
+}
 
 /** À appeler depuis un geste utilisateur pour débloquer le son (iOS, Safari). */
 export function unlockAudio(): void {
-  getSharedAudioContext();
+  getAudioContext();
 }
 
 export interface PlayNoteOptions {
@@ -48,12 +67,18 @@ export interface PlayNoteOptions {
 
 /** Joue une note de piano synthétique connectée au gestionnaire central. */
 export function playPianoNote(midi: number, options: PlayNoteOptions = {}): void {
-  const context = getSharedAudioContext();
-  const masterGain = getMasterGainNode();
-  if (!context || !masterGain) return;
+  const context = getAudioContext();
+  const bus = getMasterBus();
+  if (!context || !bus) return;
+
+  while (activeVoices.size >= MAX_VOICES) {
+    const oldest = activeVoices.values().next().value as ActiveVoice;
+    activeVoices.delete(oldest);
+    releaseVoice(oldest, context, 0.04);
+  }
 
   const duration = options.duration ?? 1.7;
-  const velocity = options.velocity ?? 1;
+  const velocity = Math.min(1, Math.max(options.velocity ?? 1, 0.01));
   const start = context.currentTime + (options.delay ?? 0);
   const frequency = midiToFrequency(midi);
 
@@ -61,67 +86,44 @@ export function playPianoNote(midi: number, options: PlayNoteOptions = {}): void
   const filter = context.createBiquadFilter();
   filter.type = 'lowpass';
   filter.Q.value = 0.6;
-  filter.frequency.setValueAtTime(Math.min(frequency * 9, 12_000), start);
-  filter.frequency.exponentialRampToValueAtTime(
-    Math.max(frequency * 2.2, 900),
-    start + duration,
-  );
+  
+  const cutoffStart = Math.min(frequency * 9, 12_000);
+  const cutoffEnd = Math.min(Math.max(frequency * 2.2, 900), cutoffStart);
+  filter.frequency.setValueAtTime(cutoffStart, start);
+  filter.frequency.exponentialRampToValueAtTime(cutoffEnd, start + duration);
 
-  // Enveloppe percussive : attaque très courte, décroissance naturelle.
   const peak = 0.45 * velocity;
   noteGain.gain.setValueAtTime(0.0001, start);
   noteGain.gain.exponentialRampToValueAtTime(peak, start + 0.01);
   noteGain.gain.exponentialRampToValueAtTime(peak * 0.45, start + 0.14);
   noteGain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
 
+  const oscillator = context.createOscillator();
+  oscillator.setPeriodicWave(getPianoWave(context));
+  oscillator.frequency.value = frequency;
+  oscillator.detune.value = (Math.random() - 0.5) * 6;
+
+  oscillator.connect(noteGain);
   noteGain.connect(filter);
-  filter.connect(masterGain);
+  filter.connect(bus);
+  oscillator.start(start);
+  oscillator.stop(start + duration + 0.05);
 
-  const oscillators: OscillatorNode[] = [];
-  for (const partial of PARTIALS) {
-    const oscillator = context.createOscillator();
-    oscillator.type = partial.type;
-    oscillator.frequency.value = frequency * partial.ratio;
-    oscillator.detune.value = (Math.random() - 0.5) * 6;
-
-    const partialGain = context.createGain();
-    partialGain.gain.value = partial.gain;
-
-    oscillator.connect(partialGain);
-    partialGain.connect(noteGain);
-    oscillator.start(start);
-    oscillator.stop(start + duration + 0.05);
-    oscillators.push(oscillator);
-  }
-
-  const voice: ActiveVoice = { oscillators, gain: noteGain, filter };
+  const voice: ActiveVoice = { oscillator, gain: noteGain, filter };
   activeVoices.add(voice);
 
-  oscillators[0].onended = () => {
+  oscillator.onended = () => {
     activeVoices.delete(voice);
+    oscillator.disconnect();
     noteGain.disconnect();
     filter.disconnect();
   };
 }
 
-/** Coupe immédiatement toutes les notes en cours (changement de question, bilan…). */
 export function stopAllNotes(): void {
-  const context = getSharedAudioContext();
+  const context = getAudioContext();
   if (!context) return;
-
-  const now = context.currentTime;
-  activeVoices.forEach((voice) => {
-    voice.gain.gain.cancelScheduledValues(now);
-    voice.gain.gain.setValueAtTime(Math.max(voice.gain.gain.value, 0.0001), now);
-    voice.gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
-    voice.oscillators.forEach((oscillator) => {
-      try {
-        oscillator.stop(now + 0.08);
-      } catch {
-        // L'oscillateur était déjà arrêté : rien à faire.
-      }
-    });
-  });
+  activeVoices.forEach((voice) => releaseVoice(voice, context, 0.06));
   activeVoices.clear();
 }
 
