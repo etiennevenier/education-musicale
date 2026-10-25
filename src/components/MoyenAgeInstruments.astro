@@ -1,11 +1,10 @@
 ---
 import { medievalInstruments } from '../data/moyenAgeData';
-import { relativeUrl } from '../utils/navigation.js';
+import { relativeUrl } from '../utils/navigation';
 
 // Les fichiers sont dans /public/moyen-age/.
 // On préfixe avec le base du site (ex. /education-musicale) pour GitHub Pages.
-const base = relativeUrl('/');
-const instrumentSrc = (path: string) => `${base}${path}`;
+const instrumentSrc = (path: string) => relativeUrl(path);
 ---
 
 <div class="instrument-gallery" id="medieval-instrument-gallery">

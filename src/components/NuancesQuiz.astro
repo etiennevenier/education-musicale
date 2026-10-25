@@ -1,7 +1,7 @@
 ---
 ---
 
-<div class="quiz-card">
+<div class="nuances-card">
   <div class="quiz-header">
     <span class="badge">Quiz Écoute</span>
     <h4>Devine la suite des 3 Nuances !</h4>
@@ -104,7 +104,7 @@
   // Génère un tirage aléatoire des 3 nuances (mélangées)
   function generateNewSequence() {
     // On prend les 3 nuances distinctes et on les mélange
-    currentSequence = [...NUANCE_OPTIONS].sort(() => Math.random() - 0.5);
+    currentSequence = shuffle(NUANCE_OPTIONS);
     
     // Réinitialiser le formulaire
     select1.value = '';
@@ -216,7 +216,7 @@
 </script>
 
 <style>
-  .quiz-card {
+  .nuances-card {
     background: #0f172a;
     border: 1px solid #334155;
     border-radius: 12px;

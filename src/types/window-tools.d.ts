@@ -1,7 +1,6 @@
 /**
- * API exposées sur `window` par les outils d'entraînement.
- * Chaque outil est désormais affiché sur sa propre page, mais ces méthodes
- * restent disponibles pour arrêter proprement audio et animations.
+ * Déclarations globales pour `window`.
+ * Seul le constructeur Web Audio préfixé (anciennes versions de Safari) est déclaré ici.
  */
 export {};
 

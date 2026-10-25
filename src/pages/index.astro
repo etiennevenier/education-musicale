@@ -1,6 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { relativeUrl } from '../utils/navigation.js';
+import { relativeUrl } from '../utils/navigation';
 
 const levels = [
   { slug: '6eme', label: '6ème' },
@@ -8,8 +8,6 @@ const levels = [
   { slug: '4eme', label: '4ème' },
   { slug: '3eme', label: '3ème' },
 ];
-
-const baseUrl = relativeUrl('/');
 ---
 
 <Layout title="Choix du niveau">
@@ -20,7 +18,7 @@ const baseUrl = relativeUrl('/');
 
     <div class="level-grid">
       {levels.map((lvl) => (
-        <a href={`${baseUrl}/${lvl.slug}`} class="level-btn">
+        <a href={relativeUrl(`/${lvl.slug}`)} class="level-btn">
           <span>{lvl.label}</span>
           <span class="arrow">&rarr;</span>
         </a>
