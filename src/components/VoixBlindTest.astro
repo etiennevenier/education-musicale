@@ -48,6 +48,7 @@ const baseUrl = relativeUrl('/');
 
 <script>
   import { shuffle } from '../utils/random';
+  import { getResultTier } from '../utils/quiz';
   import { loadAudio, onAudioEvent, playAudio, stopAudio } from '../utils/audioManager';
 
   type TessitureId = 'soprano' | 'alto' | 'tenor' | 'basse';
@@ -220,11 +221,17 @@ const baseUrl = relativeUrl('/');
   });
 
   function getResultMessage(note: number, total: number) {
-    const ratio = total > 0 ? note / total : 0;
-    if (ratio === 1) return { emoji: '🏆', text: "Parfait ! Tu reconnais toutes les tessitures à l'oreille !" };
-    if (ratio >= 0.8) return { emoji: '🌟', text: 'Excellent ! Tu as une très bonne oreille musicale.' };
-    if (ratio >= 0.5) return { emoji: '👍', text: "Bien joué ! Encore un peu d'entraînement pour progresser." };
-    return { emoji: '💪', text: "Continue à écouter et à t'entraîner, tu vas y arriver !" };
+    const tier = getResultTier(note, total);
+    switch (tier) {
+      case 'perfect':
+        return { emoji: '🏆', text: "Parfait ! Tu reconnais toutes les tessitures à l'oreille !" };
+      case 'great':
+        return { emoji: '🌟', text: 'Excellent ! Tu as une très bonne oreille musicale.' };
+      case 'ok':
+        return { emoji: '👍', text: "Bien joué ! Encore un peu d'entraînement pour progresser." };
+      default:
+        return { emoji: '💪', text: "Continue à écouter et à t'entraîner, tu vas y arriver !" };
+    }
   }
 
   function showResult() {

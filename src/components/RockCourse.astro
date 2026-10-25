@@ -137,39 +137,18 @@ const articleUrl = 'https://hardforce.com/actu/35694/lejourou-run-dmc-aerosmith-
 </div>
 
 <script>
-  const tabs = document.querySelectorAll<HTMLButtonElement>('.rock-course .main-tab');
+  import { setupMainTabs } from '../utils/tabs';
 
-  const selectTab = (tab: HTMLButtonElement) => {
-    const root = tab.closest('.rock-course');
-    if (!root) return;
+  const root = document.querySelector<HTMLElement>('.rock-course');
 
-    root.querySelectorAll<HTMLButtonElement>('.main-tab').forEach((item) => {
-      const isActive = item === tab;
-      item.setAttribute('aria-selected', isActive ? 'true' : 'false');
-      item.tabIndex = isActive ? 0 : -1;
-      item.classList.toggle('is-active', isActive);
+  if (root) {
+    // Initialisation globale de la navigation des onglets
+    setupMainTabs(root, {
+      panelSelector: '.rock-panel',
     });
+  }
 
-    root.querySelectorAll<HTMLElement>('.rock-panel').forEach((panel) => {
-      panel.hidden = panel.dataset.panel !== tab.dataset.mainTab;
-    });
-  };
-
-  tabs.forEach((tab, index) => {
-    tab.addEventListener('click', () => selectTab(tab));
-    tab.addEventListener('keydown', (event) => {
-      if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
-      event.preventDefault();
-      const nextIndex =
-        event.key === 'Home' ? 0
-        : event.key === 'End' ? tabs.length - 1
-        : event.key === 'ArrowRight' ? (index + 1) % tabs.length
-        : (index - 1 + tabs.length) % tabs.length;
-      tabs[nextIndex].focus();
-      selectTab(tabs[nextIndex]);
-    });
-  });
-
+  // Gestion spécifique de la lightbox pour l'image du schéma rythmique
   const lightbox = document.querySelector<HTMLDialogElement>('.rock-lightbox');
   const openButton = document.querySelector<HTMLButtonElement>('[data-lightbox-open]');
 

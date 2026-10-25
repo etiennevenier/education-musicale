@@ -86,37 +86,13 @@ const tabs: PubTab[] = [
 </div>
 
 <script>
-  const pubRoot = document.querySelector<HTMLElement>('.pub-course');
+  import { setupMainTabs } from '../utils/tabs';
 
-  if (pubRoot) {
-    const tabs = pubRoot.querySelectorAll<HTMLButtonElement>('.main-tab');
+  const root = document.querySelector<HTMLElement>('.pub-course');
 
-    const selectTab = (tab: HTMLButtonElement) => {
-      pubRoot.querySelectorAll<HTMLButtonElement>('.main-tab').forEach((item) => {
-        const isActive = item === tab;
-        item.setAttribute('aria-selected', isActive ? 'true' : 'false');
-        item.tabIndex = isActive ? 0 : -1;
-        item.classList.toggle('is-active', isActive);
-      });
-
-      pubRoot.querySelectorAll<HTMLElement>('.pub-panel').forEach((panel) => {
-        panel.hidden = panel.dataset.panel !== tab.dataset.mainTab;
-      });
-    };
-
-    tabs.forEach((tab, index) => {
-      tab.addEventListener('click', () => selectTab(tab));
-      tab.addEventListener('keydown', (event) => {
-        if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
-        event.preventDefault();
-        const nextIndex =
-          event.key === 'Home' ? 0
-          : event.key === 'End' ? tabs.length - 1
-          : event.key === 'ArrowRight' ? (index + 1) % tabs.length
-          : (index - 1 + tabs.length) % tabs.length;
-        tabs[nextIndex].focus();
-        selectTab(tabs[nextIndex]);
-      });
+  if (root) {
+    setupMainTabs(root, {
+      panelSelector: '.pub-panel',
     });
   }
 </script>
@@ -138,4 +114,3 @@ const tabs: PubTab[] = [
     gap: 1rem;
   }
 </style>
-

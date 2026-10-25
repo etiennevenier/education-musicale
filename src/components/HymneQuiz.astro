@@ -37,6 +37,7 @@ import '../styles/quiz-card.css';
 
 <script>
   import { shuffle } from '../utils/random';
+  import { getResultTier } from '../utils/quiz';
   import { hymneQuizList } from '../data/hymnesData';
   import type { HymneQuizItem } from '../data/hymnesData';
 
@@ -77,15 +78,12 @@ import '../styles/quiz-card.css';
   const resultContainer = $<HTMLDivElement>('hqResultContainer');
   const btnNext = $<HTMLButtonElement>('hqBtnNext');
 
-  // --- Utilitaires -------------------------------------------------------
-
   // --- Progression et score ----------------------------------------------
 
   function updateProgress() {
     const total = queue.length;
     progressLabel.textContent = `Question ${questionIndex + 1} / ${total}`;
     scoreLabel.textContent = `Score : ${score}`;
-    // La barre avance quand la question est répondue
     const done = questionIndex + (isAnswered ? 1 : 0);
     progressFill.style.width = `${(done / total) * 100}%`;
   }
@@ -99,7 +97,7 @@ import '../styles/quiz-card.css';
   // --- Boutons de réponse ------------------------------------------------
 
   function buildOptions() {
-    ANSWERS.forEach(answer => {
+    ANSWERS.forEach((answer) => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'btn-option';
@@ -107,7 +105,7 @@ import '../styles/quiz-card.css';
       btn.textContent = answer.label;
       btn.addEventListener('click', () => {
         if (isAnswered || !currentQuestion) return;
-        optionsContainer.querySelectorAll<HTMLButtonElement>('.btn-option').forEach(b => (b.disabled = true));
+        optionsContainer.querySelectorAll<HTMLButtonElement>('.btn-option').forEach((b) => (b.disabled = true));
         checkAnswer(answer.value === currentQuestion.isHymn, btn);
       });
       optionsContainer.appendChild(btn);
@@ -121,7 +119,6 @@ import '../styles/quiz-card.css';
     score = 0;
     questionIndex = 0;
 
-    // Les 15 situations, chacune une seule fois, dans un ordre aléatoire
     queue = shuffle(hymneQuizList);
 
     resultContainer.classList.add('hidden');
@@ -150,7 +147,6 @@ import '../styles/quiz-card.css';
         <p class="situation-text"></p>
       </div>
     `;
-    // textContent : le texte de la situation est affiché tel quel (pas d'HTML interprété)
     questionContainer.querySelector('.situation-text')!.textContent = q.text;
 
     optionsContainer.innerHTML = '';
@@ -170,7 +166,6 @@ import '../styles/quiz-card.css';
       autoNextTimer = setTimeout(goToNext, AUTO_NEXT_DELAY);
     } else {
       element.classList.add('incorrect');
-      // On montre aussi la bonne réponse pour que l'élève fasse le lien avec l'explication
       const good = optionsContainer.querySelector<HTMLElement>(
         `.btn-option[data-value="${String(currentQuestion.isHymn)}"]`
       );
@@ -183,17 +178,18 @@ import '../styles/quiz-card.css';
     updateNextButton();
   }
 
-  function getResultMessage(note: number, total: number) {
-    const ratio = note / total;
-    if (ratio === 1) return { emoji: '🏆', text: 'Parfait ! Tu sais exactement ce qui fait un hymne !' };
-    if (ratio >= 0.8) return { emoji: '🌟', text: 'Excellent travail, tu distingues très bien les hymnes des chansons personnelles !' };
-    if (ratio >= 0.5) return { emoji: '👍', text: 'Bien joué ! Encore un petit effort pour progresser.' };
-    return { emoji: '💪', text: "Continue à t'entraîner, tu vas y arriver !" };
-  }
-
   function showResult() {
     const total = queue.length;
-    const { emoji, text } = getResultMessage(score, total);
+    const tier = getResultTier(score, total);
+
+    const messages = {
+      perfect: { emoji: '🏆', text: 'Parfait ! Tu sais exactement ce qui fait un hymne !' },
+      great: { emoji: '🌟', text: 'Excellent travail, tu distingues très bien les hymnes des chansons personnelles !' },
+      ok: { emoji: '👍', text: 'Bien joué ! Encore un petit effort pour progresser.' },
+      retry: { emoji: '💪', text: "Continue à t'entraînement, tu vas y arriver !" },
+    } as const;
+
+    const { emoji, text } = messages[tier];
 
     progressBox.classList.add('hidden');
     questionContainer.classList.add('hidden');
@@ -214,7 +210,6 @@ import '../styles/quiz-card.css';
 
   // --- Événements ---------------------------------------------------------
 
-  // Utilisé par le bouton « Suivant » ET par le minuteur après une bonne réponse
   function goToNext() {
     clearAutoNext();
     if (!isAnswered) return;
@@ -231,105 +226,7 @@ import '../styles/quiz-card.css';
   startGame();
 </script>
 
-<!--
-  is:global est indispensable : Astro "scope" les styles avec un attribut
-  data-astro-cid ajouté uniquement aux éléments du template. Les éléments créés par
-  le script (boutons de réponse, texte de la situation, écran de résultat) ne l'ont pas
-  et ne recevraient aucun style. Tous les sélecteurs sont préfixés par .quiz-card
-  pour ne pas affecter le reste du site. Ce CSS reprend celui de TimbreQuiz /
-  PlansSonoresQuiz ; seul le bloc « Boutons de réponse (hymne) » est propre à ce
-  composant (classe .options-binary, distincte de .options-text de PlansSonoresQuiz
-  pour éviter tout conflit si les deux composants sont sur la même page).
--->
 <style is:global>
-  .quiz-card {
-    background: #0f172a;
-    border: 1px solid #334155;
-    border-radius: 12px;
-    padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-    max-width: 100%;
-    overflow: hidden;
-    box-sizing: border-box;
-    container-type: inline-size;
-  }
-
-  .quiz-card * {
-    box-sizing: border-box;
-  }
-
-  .quiz-card .hidden {
-    display: none !important;
-  }
-
-  .quiz-card .fuzeau-header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .quiz-card .badge {
-    background: #e11d48;
-    color: #ffffff;
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
-  }
-
-  .quiz-card .fuzeau-header h4 {
-    margin: 0;
-    color: #f1f5f9;
-    font-size: 1.1rem;
-  }
-
-  /* --- Progression --- */
-  .quiz-card .progress-box {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-  }
-
-  .quiz-card .progress-text {
-    display: flex;
-    justify-content: space-between;
-    color: #cbd5e1;
-    font-size: 0.85rem;
-    font-weight: 700;
-  }
-
-  .quiz-card .score-label {
-    color: #38bdf8;
-  }
-
-  .quiz-card .progress-bar {
-    height: 8px;
-    background: #1e293b;
-    border-radius: 999px;
-    overflow: hidden;
-  }
-
-  .quiz-card .progress-fill {
-    height: 100%;
-    width: 0;
-    background: linear-gradient(90deg, #0284c7, #38bdf8);
-    border-radius: 999px;
-    transition: width 0.3s ease;
-  }
-
-  .quiz-card .question-container {
-    background: #1e293b;
-    border: 1px solid #334155;
-    border-radius: 8px;
-    padding: 1.25rem;
-    text-align: center;
-    overflow: hidden;
-    color: #f1f5f9;
-  }
-
   .quiz-card .question-container p {
     margin: 0 0 0.75rem;
   }
@@ -348,7 +245,7 @@ import '../styles/quiz-card.css';
     color: #f8fafc;
   }
 
-  /* --- Boutons de réponse (hymne) : même style que les boutons de PlansSonoresQuiz --- */
+  /* --- Boutons de réponse (hymne) --- */
   .quiz-card .options-binary {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -378,122 +275,5 @@ import '../styles/quiz-card.css';
     text-align: center;
     cursor: pointer;
     transition: all 0.2s;
-  }
-
-  .quiz-card .btn-option:hover:not(:disabled) {
-    border-color: #38bdf8;
-    transform: scale(1.02);
-  }
-
-  .quiz-card .btn-option:disabled {
-    cursor: default;
-  }
-
-  .quiz-card .btn-option.correct {
-    background: #064e3b;
-    border-color: #10b981;
-    color: #a7f3d0;
-    box-shadow: 0 0 10px #10b981;
-  }
-
-  .quiz-card .btn-option.incorrect {
-    background: #881337;
-    border-color: #f43f5e;
-    color: #fecdd3;
-    box-shadow: 0 0 10px #f43f5e;
-  }
-
-  .quiz-card .action-footer {
-    display: flex;
-    justify-content: flex-end;
-  }
-
-  .quiz-card .btn-next {
-    background: #334155;
-    color: #f1f5f9;
-    border: none;
-    padding: 0.6rem 1.2rem;
-    border-radius: 6px;
-    font-weight: 700;
-    cursor: pointer;
-  }
-
-  .quiz-card .btn-next:hover:not(:disabled) {
-    background: #475569;
-  }
-
-  .quiz-card .btn-next:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-
-  .quiz-card .feedback-msg {
-    padding: 0.75rem;
-    border-radius: 6px;
-    font-weight: 700;
-    text-align: center;
-  }
-
-  .quiz-card .feedback-msg.success {
-    background: #064e3b;
-    color: #a7f3d0;
-  }
-
-  .quiz-card .feedback-msg.error {
-    background: #881337;
-    color: #fecdd3;
-  }
-
-  /* --- Écran de résultat --- */
-  .quiz-card .result-container {
-    background: #1e293b;
-    border: 1px solid #334155;
-    border-radius: 8px;
-    padding: 2rem 1.25rem;
-    text-align: center;
-    color: #f1f5f9;
-  }
-
-  .quiz-card .result-emoji {
-    font-size: 3rem;
-    line-height: 1;
-  }
-
-  .quiz-card .result-title {
-    margin: 0.75rem 0 0.25rem;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #cbd5e1;
-  }
-
-  .quiz-card .result-score {
-    margin: 0 0 0.5rem;
-    font-size: 1.6rem;
-    font-weight: 800;
-  }
-
-  .quiz-card .result-note {
-    font-size: 3rem;
-    color: #38bdf8;
-  }
-
-  .quiz-card .result-text {
-    margin: 0 0 1.25rem;
-    color: #e2e8f0;
-  }
-
-  .quiz-card .btn-restart {
-    background: #0284c7;
-    color: #fff;
-    border: none;
-    padding: 0.75rem 1.75rem;
-    border-radius: 6px;
-    font-weight: 700;
-    font-size: 1rem;
-    cursor: pointer;
-  }
-
-  .quiz-card .btn-restart:hover {
-    background: #0369a1;
   }
 </style>

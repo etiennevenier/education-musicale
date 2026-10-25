@@ -53,6 +53,7 @@
 </div>
 
 <script>
+  import { getResultTier } from '../utils/quiz';
   import { shuffle } from '../utils/random';
   import { fuzeauInstruments as instruments, type Instrument } from '../data/fuzeauInstruments';
   import { relativeUrl } from '../utils/navigation';
@@ -459,35 +460,42 @@
     updateNextButton();
   }
 
-  function getResultMessage(note: number, total: number): ResultMessage {
-    const ratio = note / total;
-    if (ratio === 1) return { emoji: '🏆', text: "Parfait ! Tu as l'oreille d'un musicien d'orchestre !" };
-    if (ratio >= 0.8) return { emoji: '🌟', text: 'Excellent travail, tu reconnais très bien les timbres !' };
-    if (ratio >= 0.5) return { emoji: '👍', text: 'Bien joué ! Encore un petit effort pour progresser.' };
-    return { emoji: '💪', text: "Continue à t'entraîner, tu vas y arriver !" };
+function getResultMessage(note: number, total: number): ResultMessage {
+  const tier = getResultTier(note, total);
+
+  switch (tier) {
+    case 'perfect':
+      return { emoji: '🏆', text: "Parfait ! Tu as l'oreille d'un musicien d'orchestre !" };
+    case 'great':
+      return { emoji: '🌟', text: 'Excellent travail, tu reconnais très bien les timbres !' };
+    case 'ok':
+      return { emoji: '👍', text: 'Bien joué ! Encore un petit effort pour progresser.' };
+    default:
+      return { emoji: '💪', text: "Continue à t'entraîner, tu vas y arriver !" };
   }
+}
 
-  function showResult(): void {
-    stopSound();
-    const total = queue.length;
-    const { emoji, text } = getResultMessage(score, total);
+function showResult(): void {
+  stopSound();
+  const total = queue.length;
+  const { emoji, text } = getResultMessage(score, total);
 
-    progressBox.classList.add('hidden');
-    questionContainer.classList.add('hidden');
-    optionsContainer.classList.add('hidden');
-    actionFooter.classList.add('hidden');
-    quizFeedback.className = 'feedback-msg hidden';
+  progressBox.classList.add('hidden');
+  questionContainer.classList.add('hidden');
+  optionsContainer.classList.add('hidden');
+  actionFooter.classList.add('hidden');
+  quizFeedback.className = 'feedback-msg hidden';
 
-    resultContainer.innerHTML = `
-      <div class="result-emoji">${emoji}</div>
-      <p class="result-title">Partie terminée !</p>
-      <p class="result-score"><span class="result-note">${score}</span> / ${total}</p>
-      <p class="result-text">${text}</p>
-      <button id="btnRestart" class="btn-restart">🔄 Recommencer</button>
-    `;
-    resultContainer.classList.remove('hidden');
-    (document.getElementById('btnRestart') as HTMLButtonElement).addEventListener('click', () => startGame(true));
-  }
+  resultContainer.innerHTML = `
+    <div class="result-emoji">${emoji}</div>
+    <p class="result-title">Partie terminée !</p>
+    <p class="result-score"><span class="result-note">${score}</span> / ${total}</p>
+    <p class="result-text">${text}</p>
+    <button id="btnRestart" class="btn-restart">🔄 Recommencer</button>
+  `;
+  resultContainer.classList.remove('hidden');
+  (document.getElementById('btnRestart') as HTMLButtonElement).addEventListener('click', () => startGame(true));
+}
 
   // --- Événements ---------------------------------------------------------
 

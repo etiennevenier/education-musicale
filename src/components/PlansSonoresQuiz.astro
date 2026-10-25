@@ -49,6 +49,7 @@ import '../styles/quiz-card.css';
 
 <script>
   import { shuffle } from '../utils/random';
+  import { getResultTier } from '../utils/quiz';
   import { plansSonoresList, allInstrumentsList } from '../data/plansSonoresData';
   import type { PlansSonoresItem } from '../data/plansSonoresData';
   import { relativeUrl } from '../utils/navigation';
@@ -495,11 +496,17 @@ import '../styles/quiz-card.css';
   }
 
   function getResultMessage(note: number, total: number) {
-    const ratio = note / total;
-    if (ratio === 1) return { emoji: '🏆', text: "Parfait ! Tu as l'oreille d'un musicien d'orchestre !" };
-    if (ratio >= 0.8) return { emoji: '🌟', text: 'Excellent travail, tu distingues très bien les plans sonores !' };
-    if (ratio >= 0.5) return { emoji: '👍', text: 'Bien joué ! Encore un petit effort pour progresser.' };
-    return { emoji: '💪', text: "Continue à t'entraîner, tu vas y arriver !" };
+    const tier = getResultTier(note, total);
+    switch (tier) {
+      case 'perfect':
+        return { emoji: '🏆', text: "Parfait ! Tu as l'oreille d'un musicien d'orchestre !" };
+      case 'great':
+        return { emoji: '🌟', text: 'Excellent travail, tu distingues très bien les plans sonores !' };
+      case 'ok':
+        return { emoji: '👍', text: 'Bien joué ! Encore un petit effort pour progresser.' };
+      default:
+        return { emoji: '💪', text: "Continue à t'entraîner, tu vas y arriver !" };
+    }
   }
 
   function showResult() {

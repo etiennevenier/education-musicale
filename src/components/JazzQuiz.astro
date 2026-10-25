@@ -40,6 +40,7 @@ const questionsPerGame = Math.min(JAZZ_QUESTIONS_PER_GAME, jazzQuizQuestions.len
 
 <script>
   import { shuffle } from '../utils/random';
+  import { getResultTier } from '../utils/quiz';
   import {
     jazzQuizQuestions,
     JAZZ_QUESTIONS_PER_GAME,
@@ -180,17 +181,17 @@ const questionsPerGame = Math.min(JAZZ_QUESTIONS_PER_GAME, jazzQuizQuestions.len
   }
 
   function getResultMessage(note: number, total: number) {
-    const ratio = note / total;
-    if (ratio === 1) {
-      return { emoji: '🏆', text: 'Parfait ! Tu maîtrises le cours sur le jazz.' };
+    const tier = getResultTier(note, total);
+    switch (tier) {
+      case 'perfect':
+        return { emoji: '🏆', text: 'Parfait ! Tu maîtrises le cours sur le jazz.' };
+      case 'great':
+        return { emoji: '🌟', text: 'Excellent ! Encore une petite révision pour viser le sans-faute.' };
+      case 'ok':
+        return { emoji: '👍', text: 'Bien joué ! Relis la fiche de cours et retente ta chance.' };
+      default:
+        return { emoji: '💪', text: 'Continue à réviser la fiche de cours, tu vas y arriver !' };
     }
-    if (ratio >= 0.8) {
-      return { emoji: '🌟', text: 'Excellent ! Encore une petite révision pour viser le sans-faute.' };
-    }
-    if (ratio >= 0.5) {
-      return { emoji: '👍', text: 'Bien joué ! Relis la fiche de cours et retente ta chance.' };
-    }
-    return { emoji: '💪', text: 'Continue à réviser la fiche de cours, tu vas y arriver !' };
   }
 
   function showResult() {

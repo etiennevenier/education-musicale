@@ -137,38 +137,15 @@ const comparaison8 = [
 </div>
 
 <script>
-  const tabs = document.querySelectorAll<HTMLButtonElement>('.recyclage-course .main-tab');
+  import { setupMainTabs } from '../utils/tabs';
 
-  const selectTab = (tab: HTMLButtonElement) => {
-    const root = tab.closest('.recyclage-course');
-    if (!root) return;
+  const root = document.querySelector<HTMLElement>('.recyclage-course');
 
-    root.querySelectorAll<HTMLButtonElement>('.main-tab').forEach((item) => {
-      const isActive = item === tab;
-      item.setAttribute('aria-selected', isActive ? 'true' : 'false');
-      item.tabIndex = isActive ? 0 : -1;
-      item.classList.toggle('is-active', isActive);
+  if (root) {
+    setupMainTabs(root, {
+      panelSelector: '.recyclage-panel',
     });
-
-    root.querySelectorAll<HTMLElement>('.recyclage-panel').forEach((panel) => {
-      panel.hidden = panel.dataset.panel !== tab.dataset.mainTab;
-    });
-  };
-
-  tabs.forEach((tab, index) => {
-    tab.addEventListener('click', () => selectTab(tab));
-    tab.addEventListener('keydown', (event) => {
-      if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
-      event.preventDefault();
-      const nextIndex =
-        event.key === 'Home' ? 0
-        : event.key === 'End' ? tabs.length - 1
-        : event.key === 'ArrowRight' ? (index + 1) % tabs.length
-        : (index - 1 + tabs.length) % tabs.length;
-      tabs[nextIndex].focus();
-      selectTab(tabs[nextIndex]);
-    });
-  });
+  }
 </script>
 
 <style>

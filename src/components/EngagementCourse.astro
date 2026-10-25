@@ -101,37 +101,13 @@ const tabs: EngagementTab[] = [
 </div>
 
 <script>
+  import { setupMainTabs } from '../utils/tabs';
+
   const engagementRoot = document.querySelector<HTMLElement>('.engagement-course');
 
   if (engagementRoot) {
-    const tabs = engagementRoot.querySelectorAll<HTMLButtonElement>('.main-tab');
-
-    const selectTab = (tab: HTMLButtonElement) => {
-      engagementRoot.querySelectorAll<HTMLButtonElement>('.main-tab').forEach((item) => {
-        const isActive = item === tab;
-        item.setAttribute('aria-selected', isActive ? 'true' : 'false');
-        item.tabIndex = isActive ? 0 : -1;
-        item.classList.toggle('is-active', isActive);
-      });
-
-      engagementRoot.querySelectorAll<HTMLElement>('.engagement-panel').forEach((panel) => {
-        panel.hidden = panel.dataset.panel !== tab.dataset.mainTab;
-      });
-    };
-
-    tabs.forEach((tab, index) => {
-      tab.addEventListener('click', () => selectTab(tab));
-      tab.addEventListener('keydown', (event) => {
-        if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
-        event.preventDefault();
-        const nextIndex =
-          event.key === 'Home' ? 0
-          : event.key === 'End' ? tabs.length - 1
-          : event.key === 'ArrowRight' ? (index + 1) % tabs.length
-          : (index - 1 + tabs.length) % tabs.length;
-        tabs[nextIndex].focus();
-        selectTab(tabs[nextIndex]);
-      });
+    setupMainTabs(engagementRoot, {
+      panelSelector: '.engagement-panel',
     });
 
     const lightbox = engagementRoot.querySelector<HTMLDialogElement>('.engagement-lightbox');
@@ -358,4 +334,3 @@ const tabs: EngagementTab[] = [
     }
   }
 </style>
-
