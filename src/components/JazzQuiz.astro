@@ -77,8 +77,6 @@ const questionsPerGame = Math.min(JAZZ_QUESTIONS_PER_GAME, jazzQuizQuestions.len
   let currentEntry: QuizEntry | null = null;
   let autoNextTimer: ReturnType<typeof setTimeout> | null = null;
 
-  // Mélange de Fisher-Yates.
-
   function clearAutoNext() {
     if (autoNextTimer) {
       clearTimeout(autoNextTimer);

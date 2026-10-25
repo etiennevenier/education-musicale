@@ -652,7 +652,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
 export const OPERA_QUIZ_LENGTH = 10;
 
 /**
- * Tire `count` questions au hasard dans la banque (mélange de Fisher-Yates).
+ * Tire `count` questions au hasard dans la banque.
  * Un même extrait audio n'est jamais proposé deux fois dans la même partie,
  * même s'il sert à deux questions différentes (air/récitatif et blindtest).
  * `random` permet de rendre le tirage déterministe dans les tests.

@@ -93,8 +93,6 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
   let btnPlay: HTMLButtonElement | null = null;
   let autoNextTimer: ReturnType<typeof setTimeout> | null = null;
 
-  // Mélange de Fisher-Yates : tirage sans doublon.
-
   function clearAutoNext() {
     if (autoNextTimer) {
       clearTimeout(autoNextTimer);
