@@ -64,9 +64,6 @@ const projectVideos = [
     title: "It Don't Mean A Thing — entraînement sans mélodie",
     url: 'https://www.youtube.com/watch?v=-P5Qg1VVaME',
   },
-];
-
-const projectIllustrationVideos = [
   {
     badge: 'Scat',
     title: 'Ella Fitzgerald & Duke Ellington',
@@ -146,7 +143,7 @@ const projectIllustrationVideos = [
         </li>
       </ul>
 
-      <h4 class="videos-title">Vidéos du cours</h4>
+      <h4 class="videos-title">Ressources Vidéos</h4>
       <div class="video-grid">
         {historyVideos.map((video) => (
           <VideoCard badge={video.badge} title={video.title} url={video.url} />
@@ -179,7 +176,7 @@ const projectIllustrationVideos = [
         <span class="fact-chip"><strong>Clé</strong> Improviser sur la grille</span>
       </div>
 
-      <h4 class="videos-title">Écoutes et tutoriels</h4>
+      <h4 class="videos-title">Ressources Vidéos</h4>
       <div class="video-grid">
         {scatVideos.map((video) => (
           <VideoCard badge={video.badge} title={video.title} url={video.url} />
@@ -215,16 +212,9 @@ const projectIllustrationVideos = [
         Entraîne-toi à chanter le projet musical, puis essaye d’improviser en scat sur la grille.
       </p>
 
-      <h4 class="videos-title">Vidéos d’entraînement</h4>
+      <h4 class="videos-title">Ressources Vidéos</h4>
       <div class="video-grid">
         {projectVideos.map((video) => (
-          <VideoCard badge={video.badge} title={video.title} url={video.url} />
-        ))}
-      </div>
-
-      <h4 class="videos-title videos-title--spaced">Vidéos d’illustration</h4>
-      <div class="video-grid">
-        {projectIllustrationVideos.map((video) => (
           <VideoCard badge={video.badge} title={video.title} url={video.url} />
         ))}
       </div>

@@ -1,5 +1,6 @@
 ---
-const baseUrl = import.meta.env.BASE_URL;
+import { relativeUrl } from '../utils/navigation';
+const baseUrl = relativeUrl('/');
 ---
 
 <div class="blindtest-card" data-base-url={baseUrl}>

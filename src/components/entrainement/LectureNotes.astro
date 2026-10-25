@@ -1,5 +1,6 @@
 ---
 // Outil « Lecture de notes » — structure, contenus et logique repris du portail pédagogique d'origine.
+import { relativeUrl } from '../../utils/navigation';
 ---
 
 <section id="tool-notes">
@@ -50,7 +51,7 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
 
   <div class="notes-card">
     <!-- HEADER -->
-    <a id="notes-hub-back" class="hub-back tool-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
+    <a id="notes-hub-back" class="hub-back tool-back" href={relativeUrl('/entrainement')} aria-label="Retour à l'entraînement">
       <span aria-hidden="true">←</span>
       <span class="hub-back-text">Retour à l'entraînement</span>
       <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>

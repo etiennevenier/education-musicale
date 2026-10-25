@@ -64,6 +64,7 @@
 </div>
 
 <script>
+  import { shuffle } from '../utils/random';
   // Nuances retenues avec des volumes (gains) bien tranchés pour éviter l'ambiguïté
   const NUANCE_OPTIONS = [
     { code: 'p', label: 'Piano (Doux)', gain: 0.08 },
@@ -91,7 +92,7 @@
 
   function initAudio() {
     if (!audioCtx) {
-      audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       masterGain = audioCtx.createGain();
       masterGain.connect(audioCtx.destination);
     }

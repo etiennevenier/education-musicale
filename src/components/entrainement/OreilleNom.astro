@@ -1,10 +1,11 @@
 ---
 // Outil « Oreille — Noms » : l'élève écoute une note synthétisée et clique
 // sur son nom. Le Do de référence est toujours disponible.
+import { relativeUrl } from '../../utils/navigation';
 ---
 
 <section id="tool-oreille-nom">
-  <a id="on-back" class="hub-back tool-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
+  <a id="on-back" class="hub-back tool-back" href={relativeUrl('/entrainement')} aria-label="Retour à l'entraînement">
     <span aria-hidden="true">←</span>
     <span class="hub-back-text">Retour à l'entraînement</span>
     <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
@@ -619,6 +620,7 @@
 </style>
 
 <script>
+  import { shuffle } from '../../utils/random';
   import {
     ChallengeSession,
     CHALLENGE_QUESTION_COUNT,
@@ -724,15 +726,7 @@
 
     const pickMidi = (midis: number[]): number => {
       if (targetBag.length === 0) {
-        targetBag = [...midis];
-        for (let i = targetBag.length - 1; i > 0; i -= 1) {
-          const j = Math.floor(Math.random() * (i + 1));
-          const first = targetBag[i];
-          const second = targetBag[j];
-          if (first === undefined || second === undefined) continue;
-          targetBag[i] = second;
-          targetBag[j] = first;
-        }
+        targetBag = shuffle(midis);
         if (targetBag.length > 1 && targetBag[0] === lastMidi) {
           const first = targetBag[0];
           const second = targetBag[1];

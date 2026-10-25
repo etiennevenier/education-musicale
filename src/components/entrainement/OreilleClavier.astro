@@ -3,6 +3,7 @@
 // touche du piano qui correspond. Le clavier complet est toujours affiché ;
 // seules les notes de l'ambitus du niveau sont jouées par l'outil.
 import { buildKeyboard } from '../../utils/musicNotes';
+import { relativeUrl } from '../../utils/navigation';
 
 const FULL_KEYBOARD = buildKeyboard(60, 72, { spelling: 'natural' });
 const WHITE_KEY_COUNT = FULL_KEYBOARD.filter((key) => key.type === 'white').length;
@@ -10,7 +11,7 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
 ---
 
 <section id="tool-oreille-clavier">
-  <a id="oc-back" class="hub-back tool-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
+  <a id="oc-back" class="hub-back tool-back" href={relativeUrl('/entrainement')} aria-label="Retour à l'entraînement">
     <span aria-hidden="true">←</span>
     <span class="hub-back-text">Retour à l'entraînement</span>
     <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
@@ -636,6 +637,7 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
 </style>
 
 <script>
+  import { shuffle } from '../../utils/random';
   import {
     ChallengeSession,
     CHALLENGE_QUESTION_COUNT,
@@ -739,15 +741,7 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
     /** Pioche sans répétition immédiate : le sac est mélangé à chaque tour. */
     const pickTarget = (level: LevelConfig): number => {
       if (targetBag.length === 0) {
-        targetBag = [...level.targets];
-        for (let i = targetBag.length - 1; i > 0; i -= 1) {
-          const j = Math.floor(Math.random() * (i + 1));
-          const first = targetBag[i];
-          const second = targetBag[j];
-          if (first === undefined || second === undefined) continue;
-          targetBag[i] = second;
-          targetBag[j] = first;
-        }
+        targetBag = shuffle(level.targets);
         if (targetBag.length > 1 && targetBag[0] === lastMidi) {
           const first = targetBag[0];
           const second = targetBag[1];

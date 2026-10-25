@@ -1,10 +1,11 @@
 ---
 // Outil « Piano interactif » — repris intégralement du portail pédagogique d'origine.
+import { relativeUrl } from '../../utils/navigation';
 ---
 
 <div id="tool-piano">
   <div class="piano-body">
-            <a class="hub-back tool-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
+            <a class="hub-back tool-back" href={relativeUrl('/entrainement')} aria-label="Retour à l'entraînement">
                 <span aria-hidden="true">←</span>
                 <span class="hub-back-text">Retour à l'entraînement</span>
                 <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>

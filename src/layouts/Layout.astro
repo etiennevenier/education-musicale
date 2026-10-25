@@ -1,5 +1,6 @@
 ---
 import '../styles/tools-landscape.css';
+import { relativeUrl } from '../utils/navigation';
 
 interface Props {
   title: string;
@@ -29,6 +30,7 @@ const isHome =
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title} - Éducation Musicale</title>
+    <link rel="icon" type="image/svg+xml" href={relativeUrl('/favicon.svg')} />
   </head>
   <body
     class:list={[
@@ -39,10 +41,10 @@ const isHome =
     ]}
   >
     <header class="site-header">
-      <h1><a href="/education-musicale/">Éducation Musicale</a></h1>
+      <h1><a href={relativeUrl('/')}>Éducation Musicale</a></h1>
       {siteSubtitle && <p class="site-subtitle">{siteSubtitle}</p>}
       {!isHome && (
-        <a href="/education-musicale/" class="back-link">&larr; {backLabel}</a>
+        <a href={relativeUrl('/')} class="back-link">&larr; {backLabel}</a>
       )}
     </header>
 

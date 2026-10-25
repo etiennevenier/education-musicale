@@ -1,11 +1,12 @@
 ---
 // Outil « Dessiner les clefs » — repris intégralement du portail pédagogique d'origine.
+import { relativeUrl } from '../../utils/navigation';
 ---
 
 <div id="tool-clefs">
   <div class="app">
     <!-- Retour standard : une seule position, en haut à gauche de l'outil. -->
-    <a class="hub-back tool-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
+    <a class="hub-back tool-back" href={relativeUrl('/entrainement')} aria-label="Retour à l'entraînement">
         <span aria-hidden="true">←</span>
         <span class="hub-back-text">Retour à l'entraînement</span>
         <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
@@ -973,10 +974,5 @@
     selectClef('sol');
     syncGhostVisibility();
 
-    // Interface utilisée par la plateforme
-    window.ClefsTool = {
-        stop() { stopHold(); cancelAnimation(); },          // coupe l'appui long et la lecture en cours
-        onShow() { setProgress(Number(slider.value)); }     // à l'ouverture : resynchronise l'affichage
-    };
 })();
 </script>

@@ -283,7 +283,7 @@ const tabs: RisquesTab[] = [
       const initAudioContext = () => {
         if (audioCtx) return;
 
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         audioCtx = new AudioContextClass();
 
         sourceNode = audioCtx.createMediaElementSource(audioElement);

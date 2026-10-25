@@ -93,6 +93,7 @@
 </div>
 
 <script>
+  import { shuffle } from '../utils/random';
   // ---------- État ----------
   let audioCtx: AudioContext | null = null;
   let isPlaying = false;
@@ -286,7 +287,7 @@
   // ---------- Audio ----------
   function initAudio() {
     if (!audioCtx) {
-      audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
   }
 
@@ -394,11 +395,7 @@
   });
 
   shuffleBtn.addEventListener('click', () => {
-    // Mélange de Fisher-Yates
-    for (let i = currentBeats.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [currentBeats[i], currentBeats[j]] = [currentBeats[j], currentBeats[i]];
-    }
+    currentBeats = shuffle(currentBeats);
     renderBeats();
     triggerFeedback('rhythm');
   });

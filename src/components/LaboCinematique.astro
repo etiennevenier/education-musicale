@@ -228,6 +228,7 @@ const analyses: LaboAnalysis[] = [
 
 <script>
   import { onAudioEvent, playAudio, stopAudio } from '../utils/audioManager';
+  import { shuffle } from '../utils/random';
 
   type GifId = 'triste' | 'joyeux' | 'neutre';
   type MusicId = 'triste' | 'joyeuse' | 'drole';
@@ -307,11 +308,7 @@ const analyses: LaboAnalysis[] = [
       const container = root.querySelector<HTMLElement>('.labo-tracks');
       if (!container) return;
 
-      const ordered = [...trackButtons];
-      for (let i = ordered.length - 1; i > 0; i -= 1) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [ordered[i], ordered[j]] = [ordered[j], ordered[i]];
-      }
+      const ordered = shuffle([...trackButtons]);
 
       ordered.forEach((button, index) => {
         container.append(button);

@@ -25,5 +25,6 @@ npx astro check  # vérifie les types et les composants
 - Noms de fichiers **sans accent** (`Melodique`, pas `Mélodique`) : macOS et Linux n'encodent pas
   les accents de la même façon, ce qui provoque des 404 en ligne.
 - Les URLs de `public/` passent par `relativeUrl()` (`src/utils/navigation.ts`) pour inclure le
-  préfixe `/education-musicale`.
+  préfixe `/education-musicale` et le préfixe se pose à l'affichage.
 - Le mélange aléatoire se fait avec `shuffle` de `src/utils/random.ts` (ne pas le recopier).
+- Le préfixe /education-musicale est ajouté à l'affichage par relativeUrl() ; certains fichiers de src/data/ le portent déjà (engagementSongs, operaData, pubSounds), d'autres stockent des chemins nus que le composant préfixe.

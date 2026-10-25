@@ -70,10 +70,13 @@ const isPubSequence = sequenceData.slug === 'musique-et-pub';
 const isRisquesAuditifsSequence = sequenceData.slug === 'musique-et-risques-auditifs';
 const isRapSequence = sequenceData.slug === 'musique-et-rap';
 const isMetissageSequence = sequenceData.slug === 'musique-et-metissage';
+const isPlansSonoresSequence = sequenceData.slug === 'musique-et-plans-sonores';
+const isHymnesSequence = sequenceData.slug === 'musique-et-hymnes';
+const isVoixSequence = sequenceData.slug === 'musique-et-voix';
 ---
 
 <Layout title={`${levelData.title} — ${sequenceData.title}`}>
-  <main class="sequence-container">
+  <div class="sequence-container">
     <header class="sequence-header">
       <span class="sequence-badge">{levelData.title}</span>
       <h2>{sequenceData.title}</h2>
@@ -151,15 +154,15 @@ const isMetissageSequence = sequenceData.slug === 'musique-et-metissage';
     )}
 
     {/* Outil interactif pour la séquence Plans Sonores */}
-{sequenceData.slug === 'musique-et-plans-sonores' && (
-  <section class="section-block">
-    <h3>Outils et Expérimentations</h3>
-    <PlansSonoresQuiz />
-  </section>
-)}
+    {isPlansSonoresSequence && (
+      <section class="section-block">
+        <h3>Outils et Expérimentations</h3>
+        <PlansSonoresQuiz />
+      </section>
+    )}
 
  {/* Outils interactifs pour la séquence Musique et Hymnes */}
-{sequenceData.slug === 'musique-et-hymnes' && (
+{isHymnesSequence && (
   <div class="sequence-tools" style="display: flex; flex-direction: column; gap: 2rem;">
     <section class="section-block">
       <h3>1. Quiz : Hymne ou Chanson personnelle ?</h3>
@@ -173,7 +176,7 @@ const isMetissageSequence = sequenceData.slug === 'musique-et-metissage';
   </div>
 )}
 
-{sequenceData.slug === 'musique-et-voix' && <VoixBlindTest />}
+{isVoixSequence && <VoixBlindTest />}
 
     {/* Quiz audio pour la séquence Musique et Répétition */}
     {isRepetitionSequence && (
@@ -221,7 +224,7 @@ const isMetissageSequence = sequenceData.slug === 'musique-et-metissage';
       </section>
     )}
    
-  </main>
+  </div>
 </Layout>
 
 <style>

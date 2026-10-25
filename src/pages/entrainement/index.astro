@@ -1,39 +1,40 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import { relativeUrl } from '../../utils/navigation';
 
 const tools = [
   {
-    href: '/education-musicale/entrainement/lecture-notes',
+    href: relativeUrl('/entrainement/lecture-notes'),
     icon: '🎼',
     title: 'Lecture de Notes',
   },
   {
-    href: '/education-musicale/entrainement/lecture-rythmique',
+    href: relativeUrl('/entrainement/lecture-rythmique'),
     icon: '🥁',
     title: 'Lecture Rythmique',
   },
   {
-    href: '/education-musicale/entrainement/piano-interactif',
+    href: relativeUrl('/entrainement/piano-interactif'),
     icon: '🎹',
     title: 'Piano Interactif',
   },
   {
-    href: '/education-musicale/entrainement/dessiner-clefs',
+    href: relativeUrl('/entrainement/dessiner-clefs'),
     icon: '✒️',
     title: 'Dessiner les Clefs',
   },
   {
-    href: '/education-musicale/entrainement/clavier-notes',
+    href: relativeUrl('/entrainement/clavier-notes'),
     icon: '🔴',
     title: 'Identification Clavier',
   },
   {
-    href: '/education-musicale/entrainement/oreille-nom',
+    href: relativeUrl('/entrainement/oreille-nom'),
     icon: '👂',
     title: 'Oreille — Noms',
   },
   {
-    href: '/education-musicale/entrainement/oreille-clavier',
+    href: relativeUrl('/entrainement/oreille-clavier'),
     icon: '🔔',
     title: 'Oreille — Clavier',
   },

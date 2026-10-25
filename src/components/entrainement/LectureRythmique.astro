@@ -1,11 +1,12 @@
 ---
 // Outil « Lecture rythmique » — repris intégralement du portail pédagogique d'origine.
+import { relativeUrl } from '../../utils/navigation';
 ---
 
 <div id="tool-rhythm">
   <div class="app">
     <div class="rhythm-top">
-        <a class="hub-back tool-back" href="/education-musicale/entrainement" aria-label="Retour à l'entraînement">
+        <a class="hub-back tool-back" href={relativeUrl('/entrainement')} aria-label="Retour à l'entraînement">
             <span aria-hidden="true">←</span>
             <span class="hub-back-text">Retour à l'entraînement</span>
             <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
@@ -1514,16 +1515,5 @@
     }
 
     newRhythm();
-
-    // Interface utilisée par la plateforme : coupe proprement exercice et réécoute quand on quitte l'outil
-    window.RhythmTool = {
-        stop() {
-            stopReplay(true);
-            if (state === 'running') {
-                cancelExercise();
-                setPhase('', 'Prêt ?', 'Clique sur « Démarrer l\'exercice ».');
-            }
-        },
-    };
 })();
 </script>
