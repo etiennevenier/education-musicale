@@ -588,6 +588,8 @@ import { relativeUrl } from '../../utils/navigation';
 </style>
 
 <script>
+import { getAudioContext, getMasterBus } from '../../utils/audioContext';
+import { stopAudio } from '../../utils/audioManager';    
 (function () {
     'use strict';
 
@@ -962,32 +964,29 @@ import { relativeUrl } from '../../utils/navigation';
     /* =====================================================================
        5. AUDIO : horloge Web Audio + planificateur « lookahead »
     ===================================================================== */
-    let ctx: AudioContext | null = null;
     let noiseBuffer: AudioBuffer | null = null;
     let bus: GainNode | null = null;   // sortie des sons planifiés : on peut la couper d'un coup (arrêt d'une réécoute)
+    const BUS_DELAY = 0.006;           // s : pré-délai du limiteur du bus partagé (≈ 6 ms)
 
-    /** Crée le contexte Web Audio (repli sur le constructeur préfixé de Safari). */
-    function createAudioContext(): AudioContext {
-        const Ctor = window.AudioContext || window.webkitAudioContext;
-        if (!Ctor) throw new Error('Web Audio API non disponible');
-        return new Ctor();
-    }
-
+    /** Contexte Web Audio partagé du site (reprend un contexte suspendu). */
     function getCtx(): AudioContext {
-        if (!ctx) {
-            ctx = createAudioContext();
-            noiseBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.05), ctx.sampleRate);
+        const ac = getAudioContext();
+        if (!ac) throw new Error('Web Audio API non disponible');
+        return ac;
+    }
+    function getNoise(ac: AudioContext): AudioBuffer {
+        if (!noiseBuffer) {
+            noiseBuffer = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.05), ac.sampleRate);
             const d = noiseBuffer.getChannelData(0);
             for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
         }
-        if (ctx.state === 'suspended') ctx.resume();
-        return ctx;
+        return noiseBuffer;
     }
     function newBus(): void {
         const ac = getCtx();
         killBus();
         bus = ac.createGain();
-        bus.connect(ac.destination);
+        bus.connect(getMasterBus() ?? ac.destination);
     }
     function killBus(): void {
         if (bus) { try { bus.disconnect(); } catch { /* déjà déconnecté */ } bus = null; }
@@ -995,14 +994,15 @@ import { relativeUrl } from '../../utils/navigation';
 
     // Latence de sortie : ce que l'élève ENTEND à l'instant t correspond au temps audio (t - latence).
     function latency(): number {
-        return (ctx && (ctx.outputLatency || ctx.baseLatency)) || 0;
+        const ac = getAudioContext();
+        return ac ? (ac.outputLatency || ac.baseLatency || 0) + BUS_DELAY : 0;
     }
     const audioNow = (): number => getCtx().currentTime - latency();
 
     // Clic de métronome planifié à l'instant précis `time` (horloge audio)
     function playClick(time: number, accent: boolean, soft: boolean): void {
         const ac = getCtx();
-        const out = bus || ac.destination;
+        const out = bus ?? getMasterBus() ?? ac.destination;
         const osc = ac.createOscillator();
         const gain = ac.createGain();
         osc.type = 'triangle';
@@ -1018,7 +1018,7 @@ import { relativeUrl } from '../../utils/navigation';
     // variant 'model' = un son de bois plus aigu, pour reconnaître « la question ».
     function playPerc(time: number, variant: 'tap' | 'model', out?: AudioNode | null): void {
         const ac = getCtx();
-        const dest = out || ac.destination;
+        const dest = out ?? getMasterBus() ?? ac.destination;
         const osc = ac.createOscillator();
         const g = ac.createGain();
         if (variant === 'model') {
@@ -1041,7 +1041,7 @@ import { relativeUrl } from '../../utils/navigation';
 
         const n = ac.createBufferSource();
         const ng = ac.createGain();
-        n.buffer = noiseBuffer;
+        n.buffer = getNoise(ac);
         ng.gain.setValueAtTime(0.35, time);
         ng.gain.exponentialRampToValueAtTime(0.001, time + 0.04);
         n.connect(ng); ng.connect(dest);
@@ -1170,7 +1170,8 @@ import { relativeUrl } from '../../utils/navigation';
     }
 
     /* ---------- Exercice ---------- */
-    function startExercise(): void {
+        function startExercise(): void {
+        stopAudio();                      // une seule source sonore à la fois sur le site
         stopReplay(true);
         getCtx(); newBus();
         clearResults();
@@ -1264,8 +1265,9 @@ import { relativeUrl } from '../../utils/navigation';
         if (state !== 'result') return;
         const same = replayKind === kind;
         stopReplay(false);
-        if (same) return;                                 // un second clic sur le même bouton = arrêt
+         if (same) return;                                 // un second clic sur le même bouton = arrêt
 
+        stopAudio();
         getCtx(); newBus();
         replayKind = kind;
         buildClock(true);                                 // mesure d'intro + métronome discret : même cadre pour les deux
@@ -1349,8 +1351,8 @@ import { relativeUrl } from '../../utils/navigation';
     // Tactile (iOS / Safari) : le contexte audio ne se débloque qu'au relâchement du doigt (pointerup / touchend)
     function unlockAudioOnTouch(): void {
         if (toolEl.classList.contains('hidden')) return;
-        getCtx();
-        if (ctx && ctx.state === 'running') {
+        const ac = getAudioContext();           // crée et reprend le contexte partagé
+        if (ac && ac.state === 'running') {
             document.removeEventListener('pointerup', unlockAudioOnTouch, true);
             document.removeEventListener('touchend', unlockAudioOnTouch, true);
         }
@@ -1449,6 +1451,12 @@ import { relativeUrl } from '../../utils/navigation';
     /* =====================================================================
        10. COMMANDES
     ===================================================================== */
+    // Onglet masqué : exercice et réécoute n'ont plus de sens, on les arrête proprement.
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) return;
+        if (state === 'running') cancelExercise();
+        stopReplay(true);
+    });
     function newRhythm(): void {
         stopReplay(true); stopTimers(); killBus();
         state = 'idle';
