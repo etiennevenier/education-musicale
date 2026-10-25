@@ -1,11 +1,11 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { siteData } from '../../data/sequences';
-import PulseVsRythme from '../../components/PulseVsRythme.astro';
+import PulsationVsRythme from '../../components/PulsationVsRythme.astro';
 import TapTempo from '../../components/TapTempo.astro';
 import NuancesInteractive from '../../components/NuancesInteractive.astro';
 import NuancesQuiz from '../../components/NuancesQuiz.astro';
-import FuzeauQuiz from '../../components/FuzeauQuiz.astro';
+import TimbreQuiz from '../../components/TimbreQuiz.astro';
 import VideoCard from '../../components/VideoCard.astro';
 import AstucesTimbre from '../../components/AstucesTimbre.astro';
 import PlansSonoresQuiz from '../../components/PlansSonoresQuiz.astro';
@@ -128,7 +128,7 @@ const isVoixSequence = sequenceData.slug === 'musique-et-voix';
         <h3>Outils et Expérimentations</h3>
         <div class="tools-grid">
           <TapTempo />
-          <PulseVsRythme />
+          <PulsationVsRythme />
         </div>
       </section>
     )}
@@ -148,7 +148,7 @@ const isVoixSequence = sequenceData.slug === 'musique-et-voix';
     {isTimbreSequence && (
       <section class="section-block">
         <h3>Outils et Expérimentations</h3>
-        <FuzeauQuiz />
+        <TimbreQuiz />
         <AstucesTimbre />
       </section>
     )}

@@ -1,6 +1,6 @@
 ---
 import CourseTabs from './CourseTabs.astro';
-import QuizOpera from './QuizOpera.astro';
+import OperaQuiz from './OperaQuiz.astro';
 import VideoCard from './VideoCard.astro';
 
 interface OperaVideo {
@@ -64,7 +64,7 @@ const tabs: OperaTab[] = [
       data-panel={tab.id}
     >
       {tab.kind === 'quiz' ? (
-        <QuizOpera />
+        <OperaQuiz />
       ) : (
         <div class="opera-videos">
           {(tab.videos ?? []).map((video) => (

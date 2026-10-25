@@ -1,4 +1,4 @@
-<div class="fuzeau-card">
+<div class="quiz-card">
   <div class="fuzeau-header">
     <span class="badge">Atelier Fuzeau</span>
     <h4>Jeu d'Identification des Timbres</h4>
@@ -523,10 +523,10 @@
   attribut data-astro-cid ajouté uniquement aux éléments du template. Les éléments
   créés par le script (images, boutons, champ de saisie, liste, cartes) ne l'ont pas
   et ne recevaient donc aucun style. Tous les sélecteurs sont préfixés par
-  .fuzeau-card pour ne pas affecter le reste du site.
+  .quiz-card pour ne pas affecter le reste du site.
 -->
 <style is:global>
-  .fuzeau-card {
+  .quiz-card {
     background: #0f172a;
     border: 1px solid #334155;
     border-radius: 12px;
@@ -540,21 +540,21 @@
     container-type: inline-size;
   }
 
-  .fuzeau-card * {
+  .quiz-card * {
     box-sizing: border-box;
   }
 
-  .fuzeau-card .hidden {
+  .quiz-card .hidden {
     display: none !important;
   }
 
-  .fuzeau-card .fuzeau-header {
+  .quiz-card .fuzeau-header {
     display: flex;
     align-items: center;
     gap: 0.75rem;
   }
 
-  .fuzeau-card .badge {
+  .quiz-card .badge {
     background: #e11d48;
     color: #ffffff;
     font-size: 0.7rem;
@@ -564,13 +564,13 @@
     border-radius: 4px;
   }
 
-  .fuzeau-card .fuzeau-header h4 {
+  .quiz-card .fuzeau-header h4 {
     margin: 0;
     color: #f1f5f9;
     font-size: 1.1rem;
   }
 
-  .fuzeau-card .filters-bar {
+  .quiz-card .filters-bar {
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
@@ -579,7 +579,7 @@
     border-radius: 8px;
   }
 
-  .fuzeau-card .filter-group {
+  .quiz-card .filter-group {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -587,13 +587,13 @@
     max-width: 100%;
   }
 
-  .fuzeau-card .filter-group label {
+  .quiz-card .filter-group label {
     font-size: 0.85rem;
     color: #cbd5e1;
     font-weight: 600;
   }
 
-  .fuzeau-card .quiz-select {
+  .quiz-card .quiz-select {
     background: #0f172a;
     color: #f8fafc;
     border: 1px solid #475569;
@@ -606,13 +606,13 @@
   }
 
   /* --- Progression --- */
-  .fuzeau-card .progress-box {
+  .quiz-card .progress-box {
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
   }
 
-  .fuzeau-card .progress-text {
+  .quiz-card .progress-text {
     display: flex;
     justify-content: space-between;
     color: #cbd5e1;
@@ -620,18 +620,18 @@
     font-weight: 700;
   }
 
-  .fuzeau-card #scoreLabel {
+  .quiz-card #scoreLabel {
     color: #38bdf8;
   }
 
-  .fuzeau-card .progress-bar {
+  .quiz-card .progress-bar {
     height: 8px;
     background: #1e293b;
     border-radius: 999px;
     overflow: hidden;
   }
 
-  .fuzeau-card .progress-fill {
+  .quiz-card .progress-fill {
     height: 100%;
     width: 0;
     background: linear-gradient(90deg, #0284c7, #38bdf8);
@@ -639,7 +639,7 @@
     transition: width 0.3s ease;
   }
 
-  .fuzeau-card .question-container {
+  .quiz-card .question-container {
     background: #1e293b;
     border: 1px solid #334155;
     border-radius: 8px;
@@ -649,11 +649,11 @@
     color: #f1f5f9;
   }
 
-  .fuzeau-card .question-container p {
+  .quiz-card .question-container p {
     margin: 0 0 0.75rem;
   }
 
-  .fuzeau-card .btn-play-sound {
+  .quiz-card .btn-play-sound {
     background: #0284c7;
     color: #fff;
     border: none;
@@ -664,12 +664,12 @@
     cursor: pointer;
   }
 
-  .fuzeau-card .btn-play-sound:hover {
+  .quiz-card .btn-play-sound:hover {
     background: #0369a1;
   }
 
   /* --- Image de la question (mode 2) --- */
-  .fuzeau-card .q-img-wrap {
+  .quiz-card .q-img-wrap {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -679,7 +679,7 @@
     overflow: hidden;
   }
 
-  .fuzeau-card .q-img {
+  .quiz-card .q-img {
     display: block;
     width: auto;
     height: auto;
@@ -691,25 +691,25 @@
   }
 
   /* --- Saisie / recherche (modes 1 et 2) --- */
-  .fuzeau-card .options-search {
+  .quiz-card .options-search {
     display: block;
     width: 100%;
   }
 
-  .fuzeau-card .search-box {
+  .quiz-card .search-box {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
     width: 100%;
   }
 
-  .fuzeau-card .search-row {
+  .quiz-card .search-row {
     display: flex;
     gap: 0.5rem;
     width: 100%;
   }
 
-  .fuzeau-card .search-input {
+  .quiz-card .search-input {
     flex: 1;
     min-width: 0;
     background: #1e293b;
@@ -721,34 +721,34 @@
     font-weight: 600;
   }
 
-  .fuzeau-card .search-input:focus {
+  .quiz-card .search-input:focus {
     outline: none;
     border-color: #38bdf8;
   }
 
-  .fuzeau-card .search-input::placeholder {
+  .quiz-card .search-input::placeholder {
     color: #94a3b8;
     font-weight: 400;
   }
 
-  .fuzeau-card .search-input:disabled {
+  .quiz-card .search-input:disabled {
     opacity: 1;
     cursor: default;
   }
 
-  .fuzeau-card .search-input.correct {
+  .quiz-card .search-input.correct {
     background: #064e3b;
     border-color: #10b981;
     color: #a7f3d0;
   }
 
-  .fuzeau-card .search-input.incorrect {
+  .quiz-card .search-input.incorrect {
     background: #881337;
     border-color: #f43f5e;
     color: #fecdd3;
   }
 
-  .fuzeau-card .btn-validate {
+  .quiz-card .btn-validate {
     background: #0284c7;
     color: #fff;
     border: none;
@@ -759,16 +759,16 @@
     cursor: pointer;
   }
 
-  .fuzeau-card .btn-validate:hover:not(:disabled) {
+  .quiz-card .btn-validate:hover:not(:disabled) {
     background: #0369a1;
   }
 
-  .fuzeau-card .btn-validate:disabled {
+  .quiz-card .btn-validate:disabled {
     opacity: 0.5;
     cursor: default;
   }
 
-  .fuzeau-card .search-list {
+  .quiz-card .search-list {
     list-style: none;
     margin: 0;
     padding: 0;
@@ -779,7 +779,7 @@
     border-radius: 6px;
   }
 
-  .fuzeau-card .search-item {
+  .quiz-card .search-item {
     padding: 0.6rem 0.9rem;
     color: #f8fafc;
     font-weight: 600;
@@ -787,24 +787,24 @@
     border-bottom: 1px solid #334155;
   }
 
-  .fuzeau-card .search-item:last-child {
+  .quiz-card .search-item:last-child {
     border-bottom: none;
   }
 
-  .fuzeau-card .search-item:hover,
-  .fuzeau-card .search-item.active {
+  .quiz-card .search-item:hover,
+  .quiz-card .search-item.active {
     background: #334155;
     color: #38bdf8;
   }
 
-  .fuzeau-card .search-empty {
+  .quiz-card .search-empty {
     padding: 0.6rem 0.9rem;
     color: #94a3b8;
     font-style: italic;
   }
 
   /* --- Association Son ↔ Image (mode 3) --- */
-  .fuzeau-card .options-grid-images {
+  .quiz-card .options-grid-images {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.75rem;
@@ -813,12 +813,12 @@
   }
 
   @container (min-width: 700px) {
-    .fuzeau-card .options-grid-images {
+    .quiz-card .options-grid-images {
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
 
-  .fuzeau-card .card-image-option {
+  .quiz-card .card-image-option {
     background: #1e293b;
     border: 2px solid #475569;
     border-radius: 8px;
@@ -833,7 +833,7 @@
     justify-content: center;
   }
 
-  .fuzeau-card .card-image-option img {
+  .quiz-card .card-image-option img {
     display: block;
     max-width: 100%;
     max-height: 100%;
@@ -842,27 +842,27 @@
     object-fit: contain;
   }
 
-  .fuzeau-card .card-image-option:hover {
+  .quiz-card .card-image-option:hover {
     border-color: #38bdf8;
     transform: scale(1.02);
   }
 
-  .fuzeau-card .card-image-option.correct {
+  .quiz-card .card-image-option.correct {
     border-color: #10b981;
     box-shadow: 0 0 10px #10b981;
   }
 
-  .fuzeau-card .card-image-option.incorrect {
+  .quiz-card .card-image-option.incorrect {
     border-color: #f43f5e;
     box-shadow: 0 0 10px #f43f5e;
   }
 
-  .fuzeau-card .action-footer {
+  .quiz-card .action-footer {
     display: flex;
     justify-content: flex-end;
   }
 
-  .fuzeau-card .btn-next {
+  .quiz-card .btn-next {
     background: #334155;
     color: #f1f5f9;
     border: none;
@@ -872,34 +872,34 @@
     cursor: pointer;
   }
 
-  .fuzeau-card .btn-next:hover:not(:disabled) {
+  .quiz-card .btn-next:hover:not(:disabled) {
     background: #475569;
   }
 
-  .fuzeau-card .btn-next:disabled {
+  .quiz-card .btn-next:disabled {
     opacity: 0.4;
     cursor: not-allowed;
   }
 
-  .fuzeau-card .feedback-msg {
+  .quiz-card .feedback-msg {
     padding: 0.75rem;
     border-radius: 6px;
     font-weight: 700;
     text-align: center;
   }
 
-  .fuzeau-card .feedback-msg.success {
+  .quiz-card .feedback-msg.success {
     background: #064e3b;
     color: #a7f3d0;
   }
 
-  .fuzeau-card .feedback-msg.error {
+  .quiz-card .feedback-msg.error {
     background: #881337;
     color: #fecdd3;
   }
 
   /* --- Écran de résultat --- */
-  .fuzeau-card .result-container {
+  .quiz-card .result-container {
     background: #1e293b;
     border: 1px solid #334155;
     border-radius: 8px;
@@ -908,35 +908,35 @@
     color: #f1f5f9;
   }
 
-  .fuzeau-card .result-emoji {
+  .quiz-card .result-emoji {
     font-size: 3rem;
     line-height: 1;
   }
 
-  .fuzeau-card .result-title {
+  .quiz-card .result-title {
     margin: 0.75rem 0 0.25rem;
     font-size: 1.1rem;
     font-weight: 700;
     color: #cbd5e1;
   }
 
-  .fuzeau-card .result-score {
+  .quiz-card .result-score {
     margin: 0 0 0.5rem;
     font-size: 1.6rem;
     font-weight: 800;
   }
 
-  .fuzeau-card .result-note {
+  .quiz-card .result-note {
     font-size: 3rem;
     color: #38bdf8;
   }
 
-  .fuzeau-card .result-text {
+  .quiz-card .result-text {
     margin: 0 0 1.25rem;
     color: #e2e8f0;
   }
 
-  .fuzeau-card .btn-restart {
+  .quiz-card .btn-restart {
     background: #0284c7;
     color: #fff;
     border: none;
@@ -947,7 +947,7 @@
     cursor: pointer;
   }
 
-  .fuzeau-card .btn-restart:hover {
+  .quiz-card .btn-restart:hover {
     background: #0369a1;
   }
 </style>

@@ -2,7 +2,7 @@
 import { hymneQuizList } from '../data/hymnesData';
 ---
 
-<div class="fuzeau-card hymne-quiz-card">
+<div class="quiz-card hymne-quiz-card">
   <div class="fuzeau-header">
     <span class="badge">Écoute &amp; Analyse</span>
     <h4>Jeu : Hymne ou Pas Hymne ?</h4>
@@ -234,14 +234,14 @@ import { hymneQuizList } from '../data/hymnesData';
   is:global est indispensable : Astro "scope" les styles avec un attribut
   data-astro-cid ajouté uniquement aux éléments du template. Les éléments créés par
   le script (boutons de réponse, texte de la situation, écran de résultat) ne l'ont pas
-  et ne recevraient aucun style. Tous les sélecteurs sont préfixés par .fuzeau-card
-  pour ne pas affecter le reste du site. Ce CSS reprend celui de FuzeauQuiz /
+  et ne recevraient aucun style. Tous les sélecteurs sont préfixés par .quiz-card
+  pour ne pas affecter le reste du site. Ce CSS reprend celui de Timbrequiz /
   PlansSonoresQuiz ; seul le bloc « Boutons de réponse (hymne) » est propre à ce
   composant (classe .options-binary, distincte de .options-text de PlansSonoresQuiz
   pour éviter tout conflit si les deux composants sont sur la même page).
 -->
 <style is:global>
-  .fuzeau-card {
+  .quiz-card {
     background: #0f172a;
     border: 1px solid #334155;
     border-radius: 12px;
@@ -255,21 +255,21 @@ import { hymneQuizList } from '../data/hymnesData';
     container-type: inline-size;
   }
 
-  .fuzeau-card * {
+  .quiz-card * {
     box-sizing: border-box;
   }
 
-  .fuzeau-card .hidden {
+  .quiz-card .hidden {
     display: none !important;
   }
 
-  .fuzeau-card .fuzeau-header {
+  .quiz-card .fuzeau-header {
     display: flex;
     align-items: center;
     gap: 0.75rem;
   }
 
-  .fuzeau-card .badge {
+  .quiz-card .badge {
     background: #e11d48;
     color: #ffffff;
     font-size: 0.7rem;
@@ -279,20 +279,20 @@ import { hymneQuizList } from '../data/hymnesData';
     border-radius: 4px;
   }
 
-  .fuzeau-card .fuzeau-header h4 {
+  .quiz-card .fuzeau-header h4 {
     margin: 0;
     color: #f1f5f9;
     font-size: 1.1rem;
   }
 
   /* --- Progression --- */
-  .fuzeau-card .progress-box {
+  .quiz-card .progress-box {
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
   }
 
-  .fuzeau-card .progress-text {
+  .quiz-card .progress-text {
     display: flex;
     justify-content: space-between;
     color: #cbd5e1;
@@ -300,18 +300,18 @@ import { hymneQuizList } from '../data/hymnesData';
     font-weight: 700;
   }
 
-  .fuzeau-card .score-label {
+  .quiz-card .score-label {
     color: #38bdf8;
   }
 
-  .fuzeau-card .progress-bar {
+  .quiz-card .progress-bar {
     height: 8px;
     background: #1e293b;
     border-radius: 999px;
     overflow: hidden;
   }
 
-  .fuzeau-card .progress-fill {
+  .quiz-card .progress-fill {
     height: 100%;
     width: 0;
     background: linear-gradient(90deg, #0284c7, #38bdf8);
@@ -319,7 +319,7 @@ import { hymneQuizList } from '../data/hymnesData';
     transition: width 0.3s ease;
   }
 
-  .fuzeau-card .question-container {
+  .quiz-card .question-container {
     background: #1e293b;
     border: 1px solid #334155;
     border-radius: 8px;
@@ -329,17 +329,17 @@ import { hymneQuizList } from '../data/hymnesData';
     color: #f1f5f9;
   }
 
-  .fuzeau-card .question-container p {
+  .quiz-card .question-container p {
     margin: 0 0 0.75rem;
   }
 
-  .fuzeau-card .situation-label {
+  .quiz-card .situation-label {
     color: #94a3b8;
     font-size: 0.85rem;
     font-weight: 600;
   }
 
-  .fuzeau-card .question-container .situation-text {
+  .quiz-card .question-container .situation-text {
     margin: 0;
     font-size: 1.15rem;
     font-weight: 700;
@@ -348,7 +348,7 @@ import { hymneQuizList } from '../data/hymnesData';
   }
 
   /* --- Boutons de réponse (hymne) : même style que les boutons de PlansSonoresQuiz --- */
-  .fuzeau-card .options-binary {
+  .quiz-card .options-binary {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 0.75rem;
@@ -356,12 +356,12 @@ import { hymneQuizList } from '../data/hymnesData';
   }
 
   @container (min-width: 700px) {
-    .fuzeau-card .options-binary {
+    .quiz-card .options-binary {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
-  .fuzeau-card .btn-option {
+  .quiz-card .btn-option {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -379,35 +379,35 @@ import { hymneQuizList } from '../data/hymnesData';
     transition: all 0.2s;
   }
 
-  .fuzeau-card .btn-option:hover:not(:disabled) {
+  .quiz-card .btn-option:hover:not(:disabled) {
     border-color: #38bdf8;
     transform: scale(1.02);
   }
 
-  .fuzeau-card .btn-option:disabled {
+  .quiz-card .btn-option:disabled {
     cursor: default;
   }
 
-  .fuzeau-card .btn-option.correct {
+  .quiz-card .btn-option.correct {
     background: #064e3b;
     border-color: #10b981;
     color: #a7f3d0;
     box-shadow: 0 0 10px #10b981;
   }
 
-  .fuzeau-card .btn-option.incorrect {
+  .quiz-card .btn-option.incorrect {
     background: #881337;
     border-color: #f43f5e;
     color: #fecdd3;
     box-shadow: 0 0 10px #f43f5e;
   }
 
-  .fuzeau-card .action-footer {
+  .quiz-card .action-footer {
     display: flex;
     justify-content: flex-end;
   }
 
-  .fuzeau-card .btn-next {
+  .quiz-card .btn-next {
     background: #334155;
     color: #f1f5f9;
     border: none;
@@ -417,34 +417,34 @@ import { hymneQuizList } from '../data/hymnesData';
     cursor: pointer;
   }
 
-  .fuzeau-card .btn-next:hover:not(:disabled) {
+  .quiz-card .btn-next:hover:not(:disabled) {
     background: #475569;
   }
 
-  .fuzeau-card .btn-next:disabled {
+  .quiz-card .btn-next:disabled {
     opacity: 0.4;
     cursor: not-allowed;
   }
 
-  .fuzeau-card .feedback-msg {
+  .quiz-card .feedback-msg {
     padding: 0.75rem;
     border-radius: 6px;
     font-weight: 700;
     text-align: center;
   }
 
-  .fuzeau-card .feedback-msg.success {
+  .quiz-card .feedback-msg.success {
     background: #064e3b;
     color: #a7f3d0;
   }
 
-  .fuzeau-card .feedback-msg.error {
+  .quiz-card .feedback-msg.error {
     background: #881337;
     color: #fecdd3;
   }
 
   /* --- Écran de résultat --- */
-  .fuzeau-card .result-container {
+  .quiz-card .result-container {
     background: #1e293b;
     border: 1px solid #334155;
     border-radius: 8px;
@@ -453,35 +453,35 @@ import { hymneQuizList } from '../data/hymnesData';
     color: #f1f5f9;
   }
 
-  .fuzeau-card .result-emoji {
+  .quiz-card .result-emoji {
     font-size: 3rem;
     line-height: 1;
   }
 
-  .fuzeau-card .result-title {
+  .quiz-card .result-title {
     margin: 0.75rem 0 0.25rem;
     font-size: 1.1rem;
     font-weight: 700;
     color: #cbd5e1;
   }
 
-  .fuzeau-card .result-score {
+  .quiz-card .result-score {
     margin: 0 0 0.5rem;
     font-size: 1.6rem;
     font-weight: 800;
   }
 
-  .fuzeau-card .result-note {
+  .quiz-card .result-note {
     font-size: 3rem;
     color: #38bdf8;
   }
 
-  .fuzeau-card .result-text {
+  .quiz-card .result-text {
     margin: 0 0 1.25rem;
     color: #e2e8f0;
   }
 
-  .fuzeau-card .btn-restart {
+  .quiz-card .btn-restart {
     background: #0284c7;
     color: #fff;
     border: none;
@@ -492,7 +492,7 @@ import { hymneQuizList } from '../data/hymnesData';
     cursor: pointer;
   }
 
-  .fuzeau-card .btn-restart:hover {
+  .quiz-card .btn-restart:hover {
     background: #0369a1;
   }
 </style>

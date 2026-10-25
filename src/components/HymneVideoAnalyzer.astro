@@ -2,7 +2,7 @@
 import { hymneVideosList } from '../data/hymnesData';
 ---
 
-<div id="hvCard" class="fuzeau-card hymne-video-card">
+<div id="hvCard" class="quiz-card hymne-video-card">
   <div class="fuzeau-header">
     <span class="badge">Analyseur Pédagogique</span>
     <h4>Analyse : Le Pouvoir de Rassemblement</h4>
@@ -303,12 +303,12 @@ import { hymneVideosList } from '../data/hymnesData';
   is:global est indispensable : Astro "scope" les styles avec un attribut
   data-astro-cid ajouté uniquement aux éléments du template. Les éléments créés par
   le script (écran de résultat) ne l'ont pas et ne recevraient aucun style. Tous les
-  sélecteurs sont préfixés par .fuzeau-card pour ne pas affecter le reste du site.
-  Ce CSS reprend celui de FuzeauQuiz / PlansSonoresQuiz ; les blocs « Layout 2
+  sélecteurs sont préfixés par .quiz-card pour ne pas affecter le reste du site.
+  Ce CSS reprend celui de Timbrequiz / PlansSonoresQuiz ; les blocs « Layout 2
   colonnes », « Lecteur vidéo » et « Questionnaire » sont propres à ce composant.
 -->
 <style is:global>
-  .fuzeau-card {
+  .quiz-card {
     background: #0f172a;
     border: 1px solid #334155;
     border-radius: 12px;
@@ -322,21 +322,21 @@ import { hymneVideosList } from '../data/hymnesData';
     container-type: inline-size;
   }
 
-  .fuzeau-card * {
+  .quiz-card * {
     box-sizing: border-box;
   }
 
-  .fuzeau-card .hidden {
+  .quiz-card .hidden {
     display: none !important;
   }
 
-  .fuzeau-card .fuzeau-header {
+  .quiz-card .fuzeau-header {
     display: flex;
     align-items: center;
     gap: 0.75rem;
   }
 
-  .fuzeau-card .badge {
+  .quiz-card .badge {
     background: #e11d48;
     color: #ffffff;
     font-size: 0.7rem;
@@ -346,20 +346,20 @@ import { hymneVideosList } from '../data/hymnesData';
     border-radius: 4px;
   }
 
-  .fuzeau-card .fuzeau-header h4 {
+  .quiz-card .fuzeau-header h4 {
     margin: 0;
     color: #f1f5f9;
     font-size: 1.1rem;
   }
 
   /* --- Progression --- */
-  .fuzeau-card .progress-box {
+  .quiz-card .progress-box {
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
   }
 
-  .fuzeau-card .progress-text {
+  .quiz-card .progress-text {
     display: flex;
     justify-content: space-between;
     color: #cbd5e1;
@@ -367,18 +367,18 @@ import { hymneVideosList } from '../data/hymnesData';
     font-weight: 700;
   }
 
-  .fuzeau-card .score-label {
+  .quiz-card .score-label {
     color: #38bdf8;
   }
 
-  .fuzeau-card .progress-bar {
+  .quiz-card .progress-bar {
     height: 8px;
     background: #1e293b;
     border-radius: 999px;
     overflow: hidden;
   }
 
-  .fuzeau-card .progress-fill {
+  .quiz-card .progress-fill {
     height: 100%;
     width: 0;
     background: linear-gradient(90deg, #0284c7, #38bdf8);
@@ -387,7 +387,7 @@ import { hymneVideosList } from '../data/hymnesData';
   }
 
   /* --- Layout 2 colonnes : 1 colonne en mobile, 2 colonnes dès 700px de large --- */
-  .fuzeau-card .hv-layout {
+  .quiz-card .hv-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 1.25rem;
@@ -395,21 +395,21 @@ import { hymneVideosList } from '../data/hymnesData';
   }
 
   @container (min-width: 700px) {
-    .fuzeau-card .hv-layout {
+    .quiz-card .hv-layout {
       grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
       align-items: start;
     }
   }
 
   /* --- Lecteur vidéo (colonne gauche) --- */
-  .fuzeau-card .hv-player-col {
+  .quiz-card .hv-player-col {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
     min-width: 0;
   }
 
-  .fuzeau-card .video-wrap {
+  .quiz-card .video-wrap {
     position: relative;
     width: 100%;
     aspect-ratio: 16 / 9;
@@ -419,7 +419,7 @@ import { hymneVideosList } from '../data/hymnesData';
     overflow: hidden;
   }
 
-  .fuzeau-card .video-wrap iframe {
+  .quiz-card .video-wrap iframe {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -427,7 +427,7 @@ import { hymneVideosList } from '../data/hymnesData';
     border: 0;
   }
 
-  .fuzeau-card .video-title {
+  .quiz-card .video-title {
     margin: 0;
     color: #f1f5f9;
     font-size: 1.05rem;
@@ -435,19 +435,19 @@ import { hymneVideosList } from '../data/hymnesData';
     line-height: 1.4;
   }
 
-  .fuzeau-card .video-link {
+  .quiz-card .video-link {
     color: #38bdf8;
     font-size: 0.8rem;
     font-weight: 600;
     text-decoration: none;
   }
 
-  .fuzeau-card .video-link:hover {
+  .quiz-card .video-link:hover {
     text-decoration: underline;
   }
 
   /* --- Questionnaire (colonne droite) --- */
-  .fuzeau-card .question-container {
+  .quiz-card .question-container {
     background: #1e293b;
     border: 1px solid #334155;
     border-radius: 8px;
@@ -457,7 +457,7 @@ import { hymneVideosList } from '../data/hymnesData';
     color: #f1f5f9;
   }
 
-  .fuzeau-card .hv-quiz-col {
+  .quiz-card .hv-quiz-col {
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
@@ -465,20 +465,20 @@ import { hymneVideosList } from '../data/hymnesData';
     text-align: left;
   }
 
-  .fuzeau-card .hv-step {
+  .quiz-card .hv-step {
     display: flex;
     flex-direction: column;
     gap: 0.6rem;
   }
 
-  .fuzeau-card .step-title {
+  .quiz-card .step-title {
     margin: 0;
     color: #f8fafc;
     font-size: 1rem;
     font-weight: 700;
   }
 
-  .fuzeau-card .options-toggle {
+  .quiz-card .options-toggle {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 0.6rem;
@@ -486,7 +486,7 @@ import { hymneVideosList } from '../data/hymnesData';
   }
 
   /* --- Boutons de réponse : même style que les boutons de PlansSonoresQuiz --- */
-  .fuzeau-card .btn-option {
+  .quiz-card .btn-option {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -504,38 +504,38 @@ import { hymneVideosList } from '../data/hymnesData';
     transition: all 0.2s;
   }
 
-  .fuzeau-card .btn-option:hover:not(:disabled) {
+  .quiz-card .btn-option:hover:not(:disabled) {
     border-color: #38bdf8;
     transform: scale(1.02);
   }
 
-  .fuzeau-card .btn-option:disabled {
+  .quiz-card .btn-option:disabled {
     cursor: default;
   }
 
   /* Choix en cours (avant validation) : doit rester AVANT .correct / .incorrect */
-  .fuzeau-card .btn-option.selected {
+  .quiz-card .btn-option.selected {
     background: #0c4a6e;
     border-color: #38bdf8;
     color: #e0f2fe;
     box-shadow: 0 0 10px rgba(56, 189, 248, 0.45);
   }
 
-  .fuzeau-card .btn-option.correct {
+  .quiz-card .btn-option.correct {
     background: #064e3b;
     border-color: #10b981;
     color: #a7f3d0;
     box-shadow: 0 0 10px #10b981;
   }
 
-  .fuzeau-card .btn-option.incorrect {
+  .quiz-card .btn-option.incorrect {
     background: #881337;
     border-color: #f43f5e;
     color: #fecdd3;
     box-shadow: 0 0 10px #f43f5e;
   }
 
-  .fuzeau-card .btn-validate {
+  .quiz-card .btn-validate {
     background: #0284c7;
     color: #fff;
     border: none;
@@ -546,27 +546,27 @@ import { hymneVideosList } from '../data/hymnesData';
     cursor: pointer;
   }
 
-  .fuzeau-card .btn-validate-full {
+  .quiz-card .btn-validate-full {
     min-height: 44px;
     width: 100%;
     padding: 0.8rem 1.25rem;
   }
 
-  .fuzeau-card .btn-validate:hover:not(:disabled) {
+  .quiz-card .btn-validate:hover:not(:disabled) {
     background: #0369a1;
   }
 
-  .fuzeau-card .btn-validate:disabled {
+  .quiz-card .btn-validate:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
 
-  .fuzeau-card .action-footer {
+  .quiz-card .action-footer {
     display: flex;
     justify-content: flex-end;
   }
 
-  .fuzeau-card .btn-next {
+  .quiz-card .btn-next {
     background: #334155;
     color: #f1f5f9;
     border: none;
@@ -576,34 +576,34 @@ import { hymneVideosList } from '../data/hymnesData';
     cursor: pointer;
   }
 
-  .fuzeau-card .btn-next:hover:not(:disabled) {
+  .quiz-card .btn-next:hover:not(:disabled) {
     background: #475569;
   }
 
-  .fuzeau-card .btn-next:disabled {
+  .quiz-card .btn-next:disabled {
     opacity: 0.4;
     cursor: not-allowed;
   }
 
-  .fuzeau-card .feedback-msg {
+  .quiz-card .feedback-msg {
     padding: 0.75rem;
     border-radius: 6px;
     font-weight: 700;
     text-align: center;
   }
 
-  .fuzeau-card .feedback-msg.success {
+  .quiz-card .feedback-msg.success {
     background: #064e3b;
     color: #a7f3d0;
   }
 
-  .fuzeau-card .feedback-msg.error {
+  .quiz-card .feedback-msg.error {
     background: #881337;
     color: #fecdd3;
   }
 
   /* --- Écran de résultat --- */
-  .fuzeau-card .result-container {
+  .quiz-card .result-container {
     background: #1e293b;
     border: 1px solid #334155;
     border-radius: 8px;
@@ -612,35 +612,35 @@ import { hymneVideosList } from '../data/hymnesData';
     color: #f1f5f9;
   }
 
-  .fuzeau-card .result-emoji {
+  .quiz-card .result-emoji {
     font-size: 3rem;
     line-height: 1;
   }
 
-  .fuzeau-card .result-title {
+  .quiz-card .result-title {
     margin: 0.75rem 0 0.25rem;
     font-size: 1.1rem;
     font-weight: 700;
     color: #cbd5e1;
   }
 
-  .fuzeau-card .result-score {
+  .quiz-card .result-score {
     margin: 0 0 0.5rem;
     font-size: 1.6rem;
     font-weight: 800;
   }
 
-  .fuzeau-card .result-note {
+  .quiz-card .result-note {
     font-size: 3rem;
     color: #38bdf8;
   }
 
-  .fuzeau-card .result-text {
+  .quiz-card .result-text {
     margin: 0 0 1.25rem;
     color: #e2e8f0;
   }
 
-  .fuzeau-card .btn-restart {
+  .quiz-card .btn-restart {
     background: #0284c7;
     color: #fff;
     border: none;
@@ -651,7 +651,7 @@ import { hymneVideosList } from '../data/hymnesData';
     cursor: pointer;
   }
 
-  .fuzeau-card .btn-restart:hover {
+  .quiz-card .btn-restart:hover {
     background: #0369a1;
   }
 </style>
