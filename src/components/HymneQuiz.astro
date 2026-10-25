@@ -24,7 +24,7 @@ import '../styles/quiz-card.css';
   <!-- Zone de Choix / Réponses -->
   <div id="hqOptionsContainer" class="options-binary"></div>
 
-  <div id="hqQuizFeedback" class="feedback-msg hidden"></div>
+  <div id="hqQuizFeedback" class="feedback-msg hidden" role="status" aria-live="polite"></div>
 
   <!-- Validation & Suivant -->
   <div id="hqActionFooter" class="action-footer">
@@ -37,14 +37,21 @@ import '../styles/quiz-card.css';
 
 <script>
   import { shuffle } from '../utils/random';
-  import { getResultTier } from '../utils/quiz';
+  import type { ResultMessages } from '../utils/quiz';
   import { hymneQuizList } from '../data/hymnesData';
   import type { HymneQuizItem } from '../data/hymnesData';
+  import { buildResultHtml, getAutoNextDelay, getResultMessage } from '../utils/quiz';
 
   const ANSWERS = [
     { value: true, label: "👥 C'est un Hymne (Collectif)" },
     { value: false, label: '👤 Pas un Hymne (Chanson personnelle)' },
   ];
+    const RESULT_MESSAGES: ResultMessages = {
+    perfect: { emoji: '🏆', text: 'Parfait ! Tu sais exactement ce qui fait un hymne !' },
+    great: { emoji: '🌟', text: 'Excellent travail, tu distingues très bien les hymnes des chansons personnelles !' },
+    ok: { emoji: '👍', text: 'Bien joué ! Encore un petit effort pour progresser.' },
+    retry: { emoji: '💪', text: "Continue à t'entraîner, tu vas y arriver !" },
+  };
 
   let currentQuestion: HymneQuizItem | null = null;
   let isAnswered = false;
@@ -55,7 +62,6 @@ import '../styles/quiz-card.css';
   let score = 0;
 
   // Passage automatique à la question suivante après une BONNE réponse uniquement
-  const AUTO_NEXT_DELAY = 1200; // en millisecondes
   let autoNextTimer: ReturnType<typeof setTimeout> | null = null;
 
   function clearAutoNext() {
@@ -77,6 +83,19 @@ import '../styles/quiz-card.css';
   const actionFooter = $<HTMLDivElement>('hqActionFooter');
   const resultContainer = $<HTMLDivElement>('hqResultContainer');
   const btnNext = $<HTMLButtonElement>('hqBtnNext');
+
+  function setFeedback(kind: 'success' | 'error' | null, text = '') {
+    quizFeedback.textContent = text;
+    quizFeedback.className = kind ? `feedback-msg ${kind}` : 'feedback-msg hidden';
+  }
+
+  /** Bascule entre l'écran de jeu et l'écran de résultat. */
+  function showQuizScreen(visible: boolean) {
+    [progressBox, questionContainer, optionsContainer, actionFooter].forEach((el) =>
+      el.classList.toggle('hidden', !visible),
+    );
+    resultContainer.classList.toggle('hidden', visible);
+  }
 
   // --- Progression et score ----------------------------------------------
 
@@ -121,12 +140,8 @@ import '../styles/quiz-card.css';
 
     queue = shuffle(hymneQuizList);
 
-    resultContainer.classList.add('hidden');
     resultContainer.innerHTML = '';
-    progressBox.classList.remove('hidden');
-    questionContainer.classList.remove('hidden');
-    optionsContainer.classList.remove('hidden');
-    actionFooter.classList.remove('hidden');
+    showQuizScreen(true);
 
     loadQuestion();
   }
@@ -134,7 +149,7 @@ import '../styles/quiz-card.css';
   function loadQuestion() {
     clearAutoNext();
     isAnswered = false;
-    quizFeedback.className = 'feedback-msg hidden';
+    setFeedback(null);
 
     const q = queue[questionIndex];
     currentQuestion = q;
@@ -161,50 +176,35 @@ import '../styles/quiz-card.css';
     if (isCorrect) {
       score++;
       element.classList.add('correct');
-      quizFeedback.textContent = `✨ Bravo ! ${currentQuestion.explanation}`;
-      quizFeedback.className = 'feedback-msg success';
-      autoNextTimer = setTimeout(goToNext, AUTO_NEXT_DELAY);
+      const message = `✨ Bravo ! ${currentQuestion.explanation}`;
+      setFeedback('success', message);
+      autoNextTimer = setTimeout(goToNext, getAutoNextDelay(message));
     } else {
       element.classList.add('incorrect');
       const good = optionsContainer.querySelector<HTMLElement>(
         `.btn-option[data-value="${String(currentQuestion.isHymn)}"]`
       );
       if (good) good.classList.add('correct');
-      quizFeedback.textContent = `❌ Dommage ! ${currentQuestion.explanation}`;
-      quizFeedback.className = 'feedback-msg error';
+      setFeedback('error', `❌ Dommage ! ${currentQuestion.explanation}`);
     }
 
     updateProgress();
     updateNextButton();
   }
 
-  function showResult() {
+    function showResult() {
     const total = queue.length;
-    const tier = getResultTier(score, total);
+    const { emoji, text } = getResultMessage(score, total, RESULT_MESSAGES);
 
-    const messages = {
-      perfect: { emoji: '🏆', text: 'Parfait ! Tu sais exactement ce qui fait un hymne !' },
-      great: { emoji: '🌟', text: 'Excellent travail, tu distingues très bien les hymnes des chansons personnelles !' },
-      ok: { emoji: '👍', text: 'Bien joué ! Encore un petit effort pour progresser.' },
-      retry: { emoji: '💪', text: "Continue à t'entraînement, tu vas y arriver !" },
-    } as const;
-
-    const { emoji, text } = messages[tier];
-
-    progressBox.classList.add('hidden');
-    questionContainer.classList.add('hidden');
-    optionsContainer.classList.add('hidden');
-    actionFooter.classList.add('hidden');
-    quizFeedback.className = 'feedback-msg hidden';
-
-    resultContainer.innerHTML = `
-      <div class="result-emoji">${emoji}</div>
-      <p class="result-title">Partie terminée !</p>
-      <p class="result-score"><span class="result-note">${score}</span> / ${total}</p>
-      <p class="result-text">${text}</p>
-      <button id="hqBtnRestart" class="btn-restart">🔄 Recommencer</button>
-    `;
-    resultContainer.classList.remove('hidden');
+    showQuizScreen(false);
+    setFeedback(null);
+    resultContainer.innerHTML = buildResultHtml({
+      emoji,
+      text,
+      score,
+      total,
+      restartId: 'hqBtnRestart',
+    });
     $<HTMLButtonElement>('hqBtnRestart').addEventListener('click', startGame);
   }
 
@@ -255,21 +255,7 @@ import '../styles/quiz-card.css';
     }
   }
 
-  .quiz-card .btn-option {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 0;
+    .quiz-card .options-binary .btn-option {
     min-height: 64px;
-    padding: 0.75rem 1rem;
-    background: #1e293b;
-    color: #f8fafc;
-    border: 2px solid #475569;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 700;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
   }
 </style>
