@@ -1,7 +1,8 @@
-import { test } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { readdirSync, statSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import { settleAnimations } from './axeSettle';
 
 const DIST = join(process.cwd(), 'dist');
 const BASE = '/education-musicale';
@@ -29,6 +30,7 @@ test('règle color-contrast sur toutes les pages', async ({ browser }) => {
   const page = await context.newPage();
   for (const p of pages) {
     await page.goto(BASE + p, { waitUntil: 'load', timeout: 30000 }).catch(() => {});
+    await settleAnimations(page);
     try {
       const res = await new AxeBuilder({ page }).withRules(['color-contrast']).analyze();
       for (const v of res.violations) {
@@ -54,4 +56,5 @@ test('règle color-contrast sur toutes les pages', async ({ browser }) => {
   writeFileSync('lh/contrast.json', JSON.stringify(results, null, 2));
   await context.close();
   console.log(`CONTRAST_DONE nodes=${results.length}`);
+  expect(results, 'violations color-contrast (état initial, toutes les pages)').toEqual([]);
 });

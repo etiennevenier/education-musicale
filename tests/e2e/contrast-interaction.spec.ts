@@ -1,7 +1,8 @@
-import { test, type Page } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { readdirSync, statSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import { settleAnimations } from './axeSettle';
 
 const DIST = join(process.cwd(), 'dist');
 const BASE = '/education-musicale';
@@ -25,6 +26,7 @@ const results: Array<Record<string, unknown>> = [];
 
 async function scan(page: Page, pagePath: string, state: string): Promise<void> {
   try {
+    await settleAnimations(page);
     const res = await new AxeBuilder({ page }).withRules(['color-contrast']).analyze();
     for (const v of res.violations) {
       for (const n of v.nodes) {
@@ -114,4 +116,5 @@ test('color-contrast après interaction (quiz, résultat, hover/focus)', async (
     `CONTRAST_INTERACTION nodes=${nodes.length} pages=${pagesTouched.size} erreurs=${results.length - nodes.length}`,
   );
   await context.close();
+  expect(results, 'violations color-contrast après interaction (toutes les pages)').toEqual([]);
 });
