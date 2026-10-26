@@ -228,6 +228,7 @@ const tabs: RisquesTab[] = [
 
 <script>
   import { setupMainTabs } from '../utils/tabs';
+  import { getAudioContext, getMasterBus } from '../utils/audioContext';
 
   // --- Gestion des Onglets ---
   const risquesRoot = document.querySelector<HTMLElement>('.risques-course');
@@ -257,8 +258,9 @@ const tabs: RisquesTab[] = [
       const initAudioContext = () => {
         if (audioCtx) return;
 
-        const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-        audioCtx = new AudioContextClass();
+        audioCtx = getAudioContext();
+        if (!audioCtx) return;
+        const bus = getMasterBus() ?? audioCtx.destination;
 
         sourceNode = audioCtx.createMediaElementSource(audioElement);
 
@@ -274,11 +276,11 @@ const tabs: RisquesTab[] = [
 
         sourceNode.connect(lowPassFilter);
         lowPassFilter.connect(hyperFilter);
-        hyperFilter.connect(audioCtx.destination);
+        hyperFilter.connect(bus);
 
         gainAcouphene = audioCtx.createGain();
         gainAcouphene.gain.value = 0;
-        gainAcouphene.connect(audioCtx.destination);
+        gainAcouphene.connect(bus);
       };
 
       const startAcouphene = () => {

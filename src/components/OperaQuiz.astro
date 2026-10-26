@@ -62,10 +62,12 @@ import '../styles/quiz-card.css';
 
 <script>
   import { shuffle } from '../utils/random';
-  import { drawOperaQuestions, type OperaQuestion } from '../data/operaData';
+  import type { OperaQuestion } from '../data/operaData';
+  const { drawOperaQuestions } = await import('../data/operaData');
   import { relativeUrl } from '../utils/navigation';
   import { isCorrectSelection, isMulti } from '../utils/operaQuizEngine';
-  import { renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
+  import { renderNextButton, renderProgress, showQuizResult } from '../utils/quizUi';
+  import { QuizSession } from '../utils/quizSession';
   import { bindPlayButton } from '../utils/quizAudio';
   import { stopAudio } from '../utils/audioManager';
 
@@ -97,10 +99,7 @@ import '../styles/quiz-card.css';
 
   const player = bindPlayButton($<HTMLButtonElement>('qoBtnPlay'));
 
-  let session: OperaQuestion[] = [];
-  let index = 0;
-  let score = 0;
-  let answered = false;
+  let questions: OperaQuestion[] = [];
   let currentQuestion: OperaQuestion | null = null;
   let currentOptions: string[] = [];
   let hasAudio = false;
@@ -108,45 +107,16 @@ import '../styles/quiz-card.css';
 
   // Lecture automatique : jamais au chargement de la page, dès la 1re interaction.
   let autoPlayEnabled = false;
-  let autoNextTimer: ReturnType<typeof setTimeout> | null = null;
 
   const setHidden = (el: HTMLElement, hidden: boolean) => el.classList.toggle('hidden', hidden);
-
-  function clearAutoNext(): void {
-    if (autoNextTimer) {
-      clearTimeout(autoNextTimer);
-      autoNextTimer = null;
-    }
-  }
 
   /** L'onglet du quiz est masqué au chargement : on ne lance pas un son non demandé. */
   function isQuizVisible(): boolean {
     return !document.hidden && root.offsetParent !== null;
   }
 
-  function updateProgress(): void {
-    const total = session.length;
-    renderProgress(
-      { progressLabel, scoreLabel, progressFill },
-      { unit: 'question', index, total, score, answered },
-    );
-    const done = index + (answered ? 1 : 0);
-    progressBar.setAttribute('aria-valuenow', String(total ? Math.round((done / total) * 100) : 0));
-  }
-
-  function updateActions(): void {
-    const multi = currentQuestion ? isMulti(currentQuestion) : false;
-    setHidden(btnValidate, !multi || answered);
-    btnValidate.disabled = answered || selected.size === 0;
-    renderNextButton(btnNext, {
-      unit: 'question',
-      isLast: index >= session.length - 1,
-      answered,
-    });
-  }
-
   function toggleOption(option: string, btn: HTMLButtonElement): void {
-    if (answered) return;
+    if (session.isAnswered) return;
     if (selected.has(option)) {
       selected.delete(option);
       btn.classList.remove('selected');
@@ -156,7 +126,7 @@ import '../styles/quiz-card.css';
       btn.classList.add('selected');
       btn.setAttribute('aria-pressed', 'true');
     }
-    updateActions();
+    session.render();
   }
 
   function buildOptions(question: OperaQuestion): void {
@@ -172,7 +142,7 @@ import '../styles/quiz-card.css';
         btn.addEventListener('click', () => toggleOption(option, btn));
       } else {
         btn.addEventListener('click', () => {
-          if (answered) return;
+          if (session.isAnswered) return;
           selected.clear();
           selected.add(option);
           validateAnswer();
@@ -201,12 +171,10 @@ import '../styles/quiz-card.css';
 
   function validateAnswer(): void {
     const question = currentQuestion;
-    if (!question || answered) return;
-    answered = true;
+    if (!question || session.isAnswered) return;
 
     const correctSet = new Set(question.correctAnswers);
     const isCorrect = isCorrectSelection(selected, correctSet);
-    if (isCorrect) score += 1;
 
     optionsBox.querySelectorAll<HTMLButtonElement>('.btn-option').forEach((btn) => {
       const option = btn.textContent ?? '';
@@ -218,86 +186,92 @@ import '../styles/quiz-card.css';
     });
 
     showFeedback(question, isCorrect);
-    updateProgress();
-    updateActions();
-
-    // Bonne réponse : suite automatique. Mauvaise réponse : l'élève avance lui-même.
-    if (isCorrect) {
-      clearAutoNext();
-      autoNextTimer = scheduleAutoNext(goToNext, feedbackBox.textContent ?? '');
-    }
+    session.answer(isCorrect, '');
   }
 
-  function renderQuestion(): void {
-    clearAutoNext();
-    stopAudio();
-    answered = false;
-    selected.clear();
-
-    const question = session[index];
-    if (!question) return;
-    currentQuestion = question;
-    currentOptions = shuffle(question.options);
-
-    kindLabel.textContent = KIND_LABELS[question.kind];
-    questionText.textContent = question.prompt;
-    setHidden(hintText, !isMulti(question));
-
-    hasAudio = Boolean(question.audioUrl);
-    setHidden(audioBox, !hasAudio);
-    player.setUrl(question.audioUrl ? relativeUrl(question.audioUrl) : null);
-
-    feedbackBox.textContent = '';
-    feedbackBox.className = 'feedback-msg hidden';
-
-    buildOptions(question);
-    updateProgress();
-    updateActions();
-
-    // Le focus sur le panneau annonce la nouvelle question sans le perdre sur « suivant ».
-    questionContainer.focus({ preventScroll: true });
-
-    if (autoPlayEnabled && hasAudio && isQuizVisible()) player.play();
-  }
-
-  function goToNext(): void {
-    clearAutoNext();
-    if (!answered) return;
-    autoPlayEnabled = true;
-    if (index >= session.length - 1) {
-      showResult();
-      return;
-    }
-    index += 1;
-    renderQuestion();
-  }
-
-  function showResult(): void {
-    clearAutoNext();
-    stopAudio();
-    player.setUrl(null);
-    showQuizResult({
+  const session = new QuizSession({
+    unit: 'question',
+    progress: { progressLabel, scoreLabel, progressFill },
+    nextBtn: btnNext,
+    feedback: feedbackBox,
+    result: {
       hide: [progressBox, questionContainer, optionsBox, actionFooter],
-      feedback: feedbackBox,
       container: resultView,
-      score,
-      total: session.length,
       restartId: 'qoBtnRestart',
-      onRestart: () => {
-        autoPlayEnabled = true;
-        startGame();
-      },
-    });
-    resultView.focus({ preventScroll: true });
-  }
+    },
+    game: [progressBox, questionContainer, optionsBox, actionFooter],
+    feedbackOnAnswer: false,
+    render: ({ index, total, score, answered }) => {
+      renderProgress(
+        { progressLabel, scoreLabel, progressFill },
+        { unit: 'question', index, total, score, answered },
+      );
+      const done = index + (answered ? 1 : 0);
+      progressBar.setAttribute('aria-valuenow', String(total ? Math.round((done / total) * 100) : 0));
+
+      const multi = currentQuestion ? isMulti(currentQuestion) : false;
+      setHidden(btnValidate, !multi || answered);
+      btnValidate.disabled = answered || selected.size === 0;
+      renderNextButton(btnNext, {
+        unit: 'question',
+        isLast: index >= total - 1,
+        answered,
+      });
+    },
+    renderQuestion: (index, autoplay) => {
+      stopAudio();
+      selected.clear();
+
+      const question = questions[index];
+      if (!question) return;
+      currentQuestion = question;
+      currentOptions = shuffle(question.options);
+
+      kindLabel.textContent = KIND_LABELS[question.kind];
+      questionText.textContent = question.prompt;
+      setHidden(hintText, !isMulti(question));
+
+      hasAudio = Boolean(question.audioUrl);
+      setHidden(audioBox, !hasAudio);
+      player.setUrl(question.audioUrl ? relativeUrl(question.audioUrl) : null);
+
+      feedbackBox.textContent = '';
+      feedbackBox.className = 'feedback-msg hidden';
+
+      buildOptions(question);
+      session.render();
+
+      // Le focus sur le panneau annonce la nouvelle question sans le perdre sur « suivant ».
+      questionContainer.focus({ preventScroll: true });
+
+      if (autoplay && hasAudio && isQuizVisible()) player.play();
+    },
+    showResult: (score, total) => {
+      stopAudio();
+      player.setUrl(null);
+      showQuizResult({
+        hide: [progressBox, questionContainer, optionsBox, actionFooter],
+        feedback: feedbackBox,
+        container: resultView,
+        score,
+        total,
+        restartId: 'qoBtnRestart',
+        onRestart: () => {
+          autoPlayEnabled = true;
+          startGame();
+        },
+      });
+      resultView.focus({ preventScroll: true });
+    },
+    onRestart: () => {
+      autoPlayEnabled = true;
+      startGame();
+    },
+  });
 
   function startGame(): void {
-    clearAutoNext();
     stopAudio();
-    session = drawOperaQuestions();
-    index = 0;
-    score = 0;
-    answered = false;
+    questions = drawOperaQuestions();
     currentQuestion = null;
     currentOptions = [];
     selected.clear();
@@ -305,11 +279,11 @@ import '../styles/quiz-card.css';
     resultView.innerHTML = '';
     setHidden(resultView, true);
     [progressBox, questionContainer, optionsBox, actionFooter].forEach((el) => setHidden(el, false));
-    renderQuestion();
+    session.start(questions.length, autoPlayEnabled);
   }
 
   btnValidate.addEventListener('click', validateAnswer);
-  btnNext.addEventListener('click', goToNext);
+  btnNext.addEventListener('click', () => session.next());
 
   startGame();
 </script>

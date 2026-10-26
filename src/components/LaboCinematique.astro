@@ -107,7 +107,7 @@ import { gifs, musics, analyses } from '../data/laboCinematiqueData';
           <span class="labo-screen-icon" aria-hidden="true">🎞️</span>
           Glisse un GIF ici ou clique sur un visuel
         </p>
-        <img class="labo-screen-img" id="laboScreenImg" alt="" hidden />
+        <img class="labo-screen-img" id="laboScreenImg" alt="" hidden decoding="async" />
         <video
           class="labo-screen-img"
           id="laboScreenVideo"
@@ -196,7 +196,8 @@ import { gifs, musics, analyses } from '../data/laboCinematiqueData';
 <script>
   import { onAudioEvent, playAudio, stopAudio } from '../utils/audioManager';
   import { shuffle } from '../utils/random';
-  import {
+  import type { AnalysisId, GifId, MusicId } from '../data/laboCinematiqueData';
+  const {
     analysisNames,
     asAnalysisId,
     asGifId,
@@ -204,10 +205,7 @@ import { gifs, musics, analyses } from '../data/laboCinematiqueData';
     explanations,
     getCorrectAnalysis,
     pairNotes,
-    type AnalysisId,
-    type GifId,
-    type MusicId,
-  } from '../data/laboCinematiqueData';
+  } = await import('../data/laboCinematiqueData');
 
   interface DraggedItem {
     type: 'gif' | 'music';

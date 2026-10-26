@@ -41,7 +41,7 @@ const groupLabel = `Play ${letters.join(' + ')}`;
       const letter = letters[index];
       return (
         <article class="dual-card" data-card data-letter={letter} data-label={track.label}>
-          <audio src={track.src} preload="metadata" data-audio></audio>
+          <audio src={track.src} preload="none" data-audio></audio>
 
           <div class="dual-card-head">
             <span class="dual-letter" aria-hidden="true">{letter}</span>

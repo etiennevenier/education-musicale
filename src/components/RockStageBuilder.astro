@@ -210,7 +210,8 @@ const styles = rawStyles.map(withImage);
 
 
 <script>
-  import { items, styles, type RockStyle } from '../data/rockStageData';
+  import type { RockStyle } from '../data/rockStageData';
+  const { items, styles } = await import('../data/rockStageData');
   import {
     evaluateAll,
     getGaugeDetail,

@@ -49,8 +49,9 @@ import '../styles/quiz-card.css';
 
 <script>
   import { shuffle } from '../utils/random';
-  import { renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
-  import { plansSonoresList, allInstrumentsList } from '../data/plansSonoresData';
+  import { showQuizResult } from '../utils/quizUi';
+  import { QuizSession } from '../utils/quizSession';
+  const { plansSonoresList, allInstrumentsList } = await import('../data/plansSonoresData');
   import type { PlansSonoresItem } from '../data/plansSonoresData';
   import { relativeUrl } from '../utils/navigation';
   import {
@@ -74,23 +75,10 @@ import '../styles/quiz-card.css';
 
   let currentQuestion: PlansSonoresItem | null = null;
   let currentFilter: QuestionFilter = 'all';
-  let isAnswered = false;
   let btnPlay: HTMLButtonElement | null = null;
 
   // État de la partie
   let queue: PlansSonoresItem[] = [];
-  let questionIndex = 0;
-  let score = 0;
-
-  // Passage automatique à la question suivante après une BONNE réponse uniquement
-  let autoNextTimer: ReturnType<typeof setTimeout> | null = null;
-
-  function clearAutoNext() {
-    if (autoNextTimer) {
-      clearTimeout(autoNextTimer);
-      autoNextTimer = null;
-    }
-  }
 
   const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -206,19 +194,6 @@ import '../styles/quiz-card.css';
     playSound(currentQuestion.audioUrl);
   }
 
-  // --- Progression et score ----------------------------------------------
-
-  function updateProgress() {
-    renderProgress(
-      { progressLabel, scoreLabel, progressFill },
-      { unit: 'question', index: questionIndex, total: queue.length, score, answered: isAnswered },
-    );
-  }
-
-  function updateNextButton() {
-    renderNextButton(btnNext, { unit: 'question', isLast: questionIndex >= queue.length - 1, answered: isAnswered });
-  }
-
   // --- Saisie avec suggestions (questions « instrument du thème ») -------
   // La liste n'apparaît que lorsque l'élève a tapé au moins une lettre.
 
@@ -309,14 +284,14 @@ import '../styles/quiz-card.css';
 
     // Clic sur une suggestion : validation immédiate
     function choose(name: string) {
-      if (isAnswered || !currentQuestion) return;
+      if (session.isAnswered || !currentQuestion) return;
       input.value = name;
       finish(normalizeAnswer(name) === normalizeAnswer(currentQuestion.correctAnswer));
     }
 
     // Validation du texte tel qu'il est écrit
     function submitTyped() {
-      if (isAnswered || !currentQuestion) return;
+      if (session.isAnswered || !currentQuestion) return;
       if (!input.value.trim()) return;
       finish(isTypedAnswerCorrect(input.value, currentQuestion.correctAnswer));
     }
@@ -359,7 +334,7 @@ import '../styles/quiz-card.css';
       btn.className = 'btn-option';
       btn.textContent = label;
       btn.addEventListener('click', () => {
-        if (isAnswered || !currentQuestion) return;
+        if (session.isAnswered || !currentQuestion) return;
         optionsContainer.querySelectorAll<HTMLButtonElement>('.btn-option').forEach(b => (b.disabled = true));
         checkAnswer(label === currentQuestion.correctAnswer, btn);
       });
@@ -370,100 +345,82 @@ import '../styles/quiz-card.css';
   // --- Partie : démarrage, questions, résultat ---------------------------
 
   // autoPlay = true : le son démarre tout de suite
-  function startGame(autoPlay = false) {
-    clearAutoNext();
-    stopSound();
-    score = 0;
-    questionIndex = 0;
-
-    // Tous les extraits du type choisi, chacun une seule fois, dans un ordre aléatoire
-    queue = shuffle(getFilteredQuestions());
-
-    resultContainer.classList.add('hidden');
-    resultContainer.innerHTML = '';
-    progressBox.classList.remove('hidden');
-    questionContainer.classList.remove('hidden');
-    optionsContainer.classList.remove('hidden');
-    actionFooter.classList.remove('hidden');
-
-    loadQuestion(autoPlay);
-  }
-
-  // autoPlay = false par défaut : à la toute première question (chargement de
-  // la page) le son ne se lance pas. Il se lance seulement après un clic
-  // « Question Suivante » ou « Recommencer ».
-  function loadQuestion(autoPlay = false) {
-    clearAutoNext();
-    isAnswered = false;
-    quizFeedback.className = 'feedback-msg hidden';
-    stopSound();
-
-    const q = queue[questionIndex];
-    currentQuestion = q;
-    updateProgress();
-    updateNextButton();
-
-    questionContainer.innerHTML = '';
-    optionsContainer.innerHTML = '';
-
-    const isInstrumentQuestion = q.type === 'theme-instrument';
-    const prompt = isInstrumentQuestion
-      ? "Écoute l'extrait : quel instrument joue le <strong>thème</strong> (la mélodie principale) ?"
-      : "Écoute l'extrait : qu'entends-tu ?";
-
-    questionContainer.innerHTML = `
-      <div class="audio-q-box">
-        <p>${prompt}</p>
-        <button type="button" id="psBtnPlay" class="btn-play-sound">${PLAY_LABELS.idle}</button>
-      </div>
-    `;
-    btnPlay = $<HTMLButtonElement>('psBtnPlay');
-    btnPlay.addEventListener('click', togglePlay);
-    if (autoPlay) playSound(q.audioUrl);
-
-    if (isInstrumentQuestion) {
-      // Saisie libre, suggestions seulement pendant la frappe
-      optionsContainer.className = 'options-search';
-      optionsContainer.appendChild(buildSearchBox());
-    } else {
-      // 3 boutons : thème seul / accompagnement seul / thème + accompagnement
-      optionsContainer.className = 'options-text';
-      buildPlanOptions();
-    }
-  }
-
   function checkAnswer(isCorrect: boolean, element: HTMLElement) {
-    if (isAnswered || !currentQuestion) return;
-    isAnswered = true;
+    if (session.isAnswered || !currentQuestion) return;
 
     if (isCorrect) {
-      score++;
       element.classList.add('correct');
-      quizFeedback.textContent = "";
-      quizFeedback.className = 'feedback-msg success';
-      autoNextTimer = scheduleAutoNext(goToNext, quizFeedback.textContent ?? '');
     } else {
       element.classList.add('incorrect');
-      quizFeedback.textContent = "";
-      quizFeedback.className = 'feedback-msg error';
     }
 
-    updateProgress();
-    updateNextButton();
+    session.answer(isCorrect, '');
   }
 
-
-  function showResult() {
-    stopSound();
-    showQuizResult({
+  const session = new QuizSession({
+    unit: 'question',
+    progress: { progressLabel, scoreLabel, progressFill },
+    nextBtn: btnNext,
+    feedback: quizFeedback,
+    result: {
       hide: [progressBox, questionContainer, optionsContainer, actionFooter],
-      feedback: quizFeedback,
       container: resultContainer,
-      score,
-      total: queue.length,
       restartId: 'psBtnRestart',
-      onRestart: () => startGame(true),
-    });
+    },
+    game: [progressBox, questionContainer, optionsContainer, actionFooter],
+    renderQuestion: (index, autoplay) => {
+      stopSound();
+      const q = queue[index];
+      currentQuestion = q;
+
+      questionContainer.innerHTML = '';
+      optionsContainer.innerHTML = '';
+
+      const isInstrumentQuestion = q.type === 'theme-instrument';
+      const prompt = isInstrumentQuestion
+        ? "Écoute l'extrait : quel instrument joue le <strong>thème</strong> (la mélodie principale) ?"
+        : "Écoute l'extrait : qu'entends-tu ?";
+
+      questionContainer.innerHTML = `
+        <div class="audio-q-box">
+          <p>${prompt}</p>
+          <button type="button" id="psBtnPlay" class="btn-play-sound">${PLAY_LABELS.idle}</button>
+        </div>
+      `;
+      btnPlay = $<HTMLButtonElement>('psBtnPlay');
+      btnPlay.addEventListener('click', togglePlay);
+      if (autoplay) playSound(q.audioUrl);
+
+      if (isInstrumentQuestion) {
+        // Saisie libre, suggestions seulement pendant la frappe
+        optionsContainer.className = 'options-search';
+        optionsContainer.appendChild(buildSearchBox());
+      } else {
+        // 3 boutons : thème seul / accompagnement seul / thème + accompagnement
+        optionsContainer.className = 'options-text';
+        buildPlanOptions();
+      }
+    },
+    showResult: (score, total) => {
+      stopSound();
+      showQuizResult({
+        hide: [progressBox, questionContainer, optionsContainer, actionFooter],
+        feedback: quizFeedback,
+        container: resultContainer,
+        score,
+        total,
+        restartId: 'psBtnRestart',
+        onRestart: () => startGame(true),
+      });
+    },
+    onRestart: () => startGame(true),
+  });
+
+  function startGame(autoPlay = false) {
+    stopSound();
+    // Tous les extraits du type choisi, chacun une seule fois, dans un ordre aléatoire
+    queue = shuffle(getFilteredQuestions());
+    session.start(queue.length, autoPlay);
   }
 
   // --- Événements ---------------------------------------------------------
@@ -474,19 +431,7 @@ import '../styles/quiz-card.css';
     startGame();
   });
 
-  // Utilisé par le bouton « Suivant » ET par le minuteur après une bonne réponse
-  function goToNext() {
-    clearAutoNext();
-    if (!isAnswered) return;
-    if (questionIndex >= queue.length - 1) {
-      showResult();
-    } else {
-      questionIndex++;
-      loadQuestion(true);
-    }
-  }
-
-  btnNext.addEventListener('click', goToNext);
+  btnNext.addEventListener('click', () => session.next());
 
   startGame();
 </script>

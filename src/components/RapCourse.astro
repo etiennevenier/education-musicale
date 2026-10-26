@@ -143,7 +143,7 @@ const timelineSteps = [
 ];
 ---
 
-<div class="rap-course">
+<div class="rap-course" data-timeline={JSON.stringify(timelineSteps)}>
   <CourseTabs tabs={tabs} ariaLabel="Musique et Rap" />
 
   <!-- Panneaux de contenu -->
@@ -363,15 +363,34 @@ const timelineSteps = [
   ))}
 </div>
 
-<script is:inline define:vars={{ timelineSteps }}>
+<script>
+  import { getAudioContext, getMasterBus } from '../utils/audioContext';
+
+  type TimelineStep = {
+    num: string;
+    period: string;
+    title: string;
+    badge: string;
+    points: string[];
+  };
+  type GridCell = number | boolean;
+  type GridConfig = GridCell[][];
+
   document.addEventListener('DOMContentLoaded', () => {
-    const rapRoot = document.querySelector('.rap-course');
+    const rapRoot = document.querySelector<HTMLElement>('.rap-course');
     if (!rapRoot) return;
 
-    const tabs = Array.from(rapRoot.querySelectorAll('.main-tabs [role="tab"]'));
-    const panels = Array.from(rapRoot.querySelectorAll('.rap-panel[data-panel]'));
+    let timelineSteps: TimelineStep[] = [];
+    try {
+      timelineSteps = JSON.parse(rapRoot.dataset.timeline || '[]') as TimelineStep[];
+    } catch {
+      // Données de frise indisponibles : l'outil reste inerte.
+    }
 
-    const selectTab = (targetId) => {
+    const tabs = Array.from(rapRoot.querySelectorAll<HTMLElement>('.main-tabs [role="tab"]'));
+    const panels = Array.from(rapRoot.querySelectorAll<HTMLElement>('.rap-panel[data-panel]'));
+
+    const selectTab = (targetId: string | undefined) => {
       if (!targetId) return;
 
       tabs.forEach((tab) => {
@@ -392,9 +411,9 @@ const timelineSteps = [
         selectTab(tab.dataset.mainTab);
       });
 
-      tab.addEventListener('keydown', (event) => {
+      tab.addEventListener('keydown', (event: KeyboardEvent) => {
         const currentIndex = tabs.indexOf(tab);
-        let nextIndex = null;
+        let nextIndex: number | null = null;
 
         if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
           nextIndex = (currentIndex + 1) % tabs.length;
@@ -416,17 +435,17 @@ const timelineSteps = [
     });
 
     // --- Frise chronologique ---
-    const rangeInput = document.querySelector('#timeline-range');
+    const rangeInput = document.querySelector<HTMLInputElement>('#timeline-range');
     if (rangeInput) {
-      const periodEl = document.querySelector('#range-period-label');
-      const counterEl = document.querySelector('#range-counter-label');
-      const tagEl = document.querySelector('#slide-tag');
-      const titleEl = document.querySelector('#slide-title');
-      const pointsEl = document.querySelector('#slide-points');
-      const tickEls = Array.from(document.querySelectorAll('.tick-mark'));
-      const liTemplate = pointsEl ? pointsEl.firstElementChild : null;
+      const periodEl = document.querySelector<HTMLElement>('#range-period-label');
+      const counterEl = document.querySelector<HTMLElement>('#range-counter-label');
+      const tagEl = document.querySelector<HTMLElement>('#slide-tag');
+      const titleEl = document.querySelector<HTMLElement>('#slide-title');
+      const pointsEl = document.querySelector<HTMLElement>('#slide-points');
+      const tickEls = Array.from(document.querySelectorAll<HTMLElement>('.tick-mark'));
+      const liTemplate = pointsEl ? (pointsEl.firstElementChild as HTMLElement | null) : null;
 
-      const showStep = (i) => {
+      const showStep = (i: number) => {
         const step = timelineSteps[i];
         if (!step) return;
         if (periodEl) periodEl.textContent = step.period;
@@ -435,8 +454,8 @@ const timelineSteps = [
         if (titleEl) titleEl.textContent = step.title;
         if (pointsEl && liTemplate) {
           pointsEl.replaceChildren(
-            ...step.points.map((pt) => {
-              const li = liTemplate.cloneNode(false);
+            ...step.points.map((pt: string) => {
+              const li = liTemplate.cloneNode(false) as HTMLElement;
               li.innerHTML = pt;
               return li;
             })
@@ -457,33 +476,33 @@ const timelineSteps = [
   });
 
   // --- MOTEUR WEB AUDIO SÉQUENCEUR 808 & MÉMOIRES ---
-  let audioCtx = null;
+  let audioCtx: AudioContext | null = null;
   let isPlayingSeq = false;
   let currentSeqStep = 0;
   let bpm = 90;
-  let seqIntervalId = null;
+  let seqIntervalId: number | null = null;
 
-  const userMemories = [null, null, null, null];
+  const userMemories: (GridConfig | null)[] = [null, null, null, null];
 
-  const playBtn = document.querySelector('#seq-play-btn');
-  const bpmSlider = document.querySelector('#bpm-slider');
-  const bpmVal = document.querySelector('#bpm-val');
-  const clearBtn = document.querySelector('#seq-clear-btn');
-  const randBtn = document.querySelector('#seq-rand-btn');
-  const stepBtns = document.querySelectorAll('.step-btn');
-  const presetBtns = document.querySelectorAll('.preset-btn');
-  const memSlots = document.querySelectorAll('.mem-slot');
+  const playBtn = document.querySelector<HTMLButtonElement>('#seq-play-btn');
+  const bpmSlider = document.querySelector<HTMLInputElement>('#bpm-slider');
+  const bpmVal = document.querySelector<HTMLElement>('#bpm-val');
+  const clearBtn = document.querySelector<HTMLButtonElement>('#seq-clear-btn');
+  const randBtn = document.querySelector<HTMLButtonElement>('#seq-rand-btn');
+  const stepBtns = document.querySelectorAll<HTMLElement>('.step-btn');
+  const presetBtns = document.querySelectorAll<HTMLElement>('.preset-btn');
+  const memSlots = document.querySelectorAll<HTMLElement>('.mem-slot');
 
   const initAudio = () => {
     if (!audioCtx) {
-      const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
-      audioCtx = new AudioCtxClass();
+      audioCtx = getAudioContext();
     }
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
   };
 
-  const playSound = (type) => {
+  const playSound = (type: string) => {
     if (!audioCtx) return;
+    const bus = getMasterBus() ?? audioCtx.destination;
     const now = audioCtx.currentTime;
 
     if (type === 'kick') {
@@ -494,7 +513,7 @@ const timelineSteps = [
       gain.gain.setValueAtTime(1, now);
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
       osc.connect(gain);
-      gain.connect(audioCtx.destination);
+      gain.connect(bus);
       osc.start(now);
       osc.stop(now + 0.4);
     } else if (type === 'snare') {
@@ -514,7 +533,7 @@ const timelineSteps = [
 
       whiteNoise.connect(noiseFilter);
       noiseFilter.connect(noiseGain);
-      noiseGain.connect(audioCtx.destination);
+      noiseGain.connect(bus);
       whiteNoise.start(now);
     } else if (type === 'hihat') {
       const noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.05, audioCtx.sampleRate);
@@ -533,7 +552,7 @@ const timelineSteps = [
 
       whiteNoise.connect(filter);
       filter.connect(gain);
-      gain.connect(audioCtx.destination);
+      gain.connect(bus);
       whiteNoise.start(now);
     } else if (type === 'openhat') {
       const noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.3, audioCtx.sampleRate);
@@ -552,15 +571,15 @@ const timelineSteps = [
 
       whiteNoise.connect(filter);
       filter.connect(gain);
-      gain.connect(audioCtx.destination);
+      gain.connect(bus);
       whiteNoise.start(now);
     }
   };
 
-  const applyGridConfig = (config) => {
-    const rows = document.querySelectorAll('.seq-row');
+  const applyGridConfig = (config: GridConfig) => {
+    const rows = document.querySelectorAll<HTMLElement>('.seq-row');
     rows.forEach((row, rIdx) => {
-      const buttons = row.querySelectorAll('.step-btn');
+      const buttons = row.querySelectorAll<HTMLElement>('.step-btn');
       buttons.forEach((btn, sIdx) => {
         if (config[rIdx] && config[rIdx][sIdx]) {
           btn.classList.add('active');
@@ -571,12 +590,12 @@ const timelineSteps = [
     });
   };
 
-  const getCurrentGridConfig = () => {
-    const rows = document.querySelectorAll('.seq-row');
-    const config = [];
+  const getCurrentGridConfig = (): GridConfig => {
+    const rows = document.querySelectorAll<HTMLElement>('.seq-row');
+    const config: GridConfig = [];
     rows.forEach((row) => {
-      const rowStates = [];
-      const buttons = row.querySelectorAll('.step-btn');
+      const rowStates: GridCell[] = [];
+      const buttons = row.querySelectorAll<HTMLElement>('.step-btn');
       buttons.forEach((btn) => {
         rowStates.push(btn.classList.contains('active'));
       });
@@ -585,7 +604,7 @@ const timelineSteps = [
     return config;
   };
 
-  const presets = {
+  const presets: Record<string, GridConfig> = {
     boombap: [
       [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
       [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
@@ -615,16 +634,16 @@ const timelineSteps = [
   presetBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
       const style = btn.dataset.preset;
-      if (presets[style]) applyGridConfig(presets[style]);
+      if (style && presets[style]) applyGridConfig(presets[style]);
     });
   });
 
   memSlots.forEach((slot) => {
-    const idx = parseInt(slot.dataset.memIndex, 10);
-    const loadBtn = slot.querySelector('.mem-load-btn');
-    const saveBtn = slot.querySelector('.mem-save-btn');
-    const delBtn = slot.querySelector('.mem-del-btn');
-    const statusEl = slot.querySelector('.mem-status');
+    const idx = parseInt(slot.dataset.memIndex ?? '0', 10);
+    const loadBtn = slot.querySelector<HTMLElement>('.mem-load-btn')!;
+    const saveBtn = slot.querySelector<HTMLElement>('.mem-save-btn')!;
+    const delBtn = slot.querySelector<HTMLElement>('.mem-del-btn')!;
+    const statusEl = slot.querySelector<HTMLElement>('.mem-status')!;
 
     saveBtn.addEventListener('click', () => {
       userMemories[idx] = getCurrentGridConfig();
@@ -668,12 +687,12 @@ const timelineSteps = [
   }
 
   const stepTick = () => {
-    document.querySelectorAll('.step-btn').forEach((btn) => btn.classList.remove('playing'));
-    document.querySelectorAll(`.step-btn[data-step="${currentSeqStep}"]`).forEach((btn) => {
+    document.querySelectorAll<HTMLElement>('.step-btn').forEach((btn) => btn.classList.remove('playing'));
+    document.querySelectorAll<HTMLElement>(`.step-btn[data-step="${currentSeqStep}"]`).forEach((btn) => {
       btn.classList.add('playing');
       if (btn.classList.contains('active')) {
-        const trackType = btn.closest('.seq-row').dataset.track;
-        playSound(trackType);
+        const trackType = (btn.closest('.seq-row') as HTMLElement | null)?.dataset.track;
+        if (trackType) playSound(trackType);
       }
     });
 
@@ -684,23 +703,27 @@ const timelineSteps = [
     initAudio();
     isPlayingSeq = true;
     if (playBtn) {
-      playBtn.querySelector('.icon').textContent = '⏹';
-      playBtn.querySelector('.label').textContent = 'Stopper';
+      const icon = playBtn.querySelector<HTMLElement>('.icon');
+      const label = playBtn.querySelector<HTMLElement>('.label');
+      if (icon) icon.textContent = '⏹';
+      if (label) label.textContent = 'Stopper';
       playBtn.classList.add('playing');
     }
     const intervalMs = (60 / bpm / 4) * 1000;
-    seqIntervalId = setInterval(stepTick, intervalMs);
+    seqIntervalId = window.setInterval(stepTick, intervalMs);
   };
 
   const stopSequencer = () => {
     isPlayingSeq = false;
-    if (seqIntervalId) clearInterval(seqIntervalId);
+    if (seqIntervalId !== null) window.clearInterval(seqIntervalId);
     if (playBtn) {
-      playBtn.querySelector('.icon').textContent = '▶';
-      playBtn.querySelector('.label').textContent = 'Jouer le Beat';
+      const icon = playBtn.querySelector<HTMLElement>('.icon');
+      const label = playBtn.querySelector<HTMLElement>('.label');
+      if (icon) icon.textContent = '▶';
+      if (label) label.textContent = 'Jouer le Beat';
       playBtn.classList.remove('playing');
     }
-    document.querySelectorAll('.step-btn').forEach((btn) => btn.classList.remove('playing'));
+    document.querySelectorAll<HTMLElement>('.step-btn').forEach((btn) => btn.classList.remove('playing'));
     currentSeqStep = 0;
   };
 
@@ -709,8 +732,8 @@ const timelineSteps = [
       initAudio();
       btn.classList.toggle('active');
       if (btn.classList.contains('active')) {
-        const trackType = btn.closest('.seq-row').dataset.track;
-        playSound(trackType);
+        const trackType = (btn.closest('.seq-row') as HTMLElement | null)?.dataset.track;
+        if (trackType) playSound(trackType);
       }
     });
   });
@@ -723,13 +746,13 @@ const timelineSteps = [
   }
 
   if (bpmSlider && bpmVal) {
-    bpmSlider.addEventListener('input', (e) => {
-      bpm = parseInt(e.target.value, 10);
+    bpmSlider.addEventListener('input', (e: Event) => {
+      bpm = parseInt((e.target as HTMLInputElement).value, 10);
       bpmVal.textContent = bpm.toString();
       if (isPlayingSeq) {
-        clearInterval(seqIntervalId);
+        if (seqIntervalId !== null) window.clearInterval(seqIntervalId);
         const intervalMs = (60 / bpm / 4) * 1000;
-        seqIntervalId = setInterval(stepTick, intervalMs);
+        seqIntervalId = window.setInterval(stepTick, intervalMs);
       }
     });
   }
@@ -739,6 +762,14 @@ const timelineSteps = [
       stepBtns.forEach((btn) => btn.classList.remove('active'));
     });
   }
+
+  // Pause le séquenceur quand l'onglet passe en arrière-plan et libère le timer au départ.
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && isPlayingSeq) stopSequencer();
+  });
+  window.addEventListener('pagehide', () => {
+    if (isPlayingSeq) stopSequencer();
+  });
 
   // Indice de défilement : fondu à droite tant qu'il reste des temps, phrase jusqu'au premier glissement
   (function () {
@@ -757,7 +788,6 @@ const timelineSteps = [
       if (grid.scrollLeft > 8) swiped = true;
       update();
     }, { passive: true });
-    window.addEventListener('resize', update);
     if ('ResizeObserver' in window) new ResizeObserver(update).observe(grid);
     update();
   })();

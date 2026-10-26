@@ -36,11 +36,11 @@ import '../styles/quiz-card.css';
 </div>
 
 <script>
-  import { renderNextButton, renderProgress } from '../utils/quizUi';
   import { shuffle } from '../utils/random';
-  import { hymneQuizList } from '../data/hymnesData';
+  const { hymneQuizList } = await import('../data/hymnesData');
   import type { HymneQuizItem } from '../data/hymnesData';
-  import { buildResultHtml, getAutoNextDelay } from '../utils/quiz';
+  import { buildResultHtml } from '../utils/quiz';
+  import { QuizSession } from '../utils/quizSession';
 
   const ANSWERS = [
     { value: true, label: "👥 C'est un Hymne (Collectif)" },
@@ -48,22 +48,7 @@ import '../styles/quiz-card.css';
   ];
 
   let currentQuestion: HymneQuizItem | null = null;
-  let isAnswered = false;
-
-  // État de la partie
   let queue: HymneQuizItem[] = [];
-  let questionIndex = 0;
-  let score = 0;
-
-  // Passage automatique à la question suivante après une BONNE réponse uniquement
-  let autoNextTimer: ReturnType<typeof setTimeout> | null = null;
-
-  function clearAutoNext() {
-    if (autoNextTimer) {
-      clearTimeout(autoNextTimer);
-      autoNextTimer = null;
-    }
-  }
 
   const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -78,33 +63,12 @@ import '../styles/quiz-card.css';
   const resultContainer = $<HTMLDivElement>('hqResultContainer');
   const btnNext = $<HTMLButtonElement>('hqBtnNext');
 
-  function setFeedback(kind: 'success' | 'error' | null, text = '') {
-    quizFeedback.textContent = text;
-    quizFeedback.className = kind ? `feedback-msg ${kind}` : 'feedback-msg hidden';
-  }
-
-  /** Bascule entre l'écran de jeu et l'écran de résultat. */
   function showQuizScreen(visible: boolean) {
     [progressBox, questionContainer, optionsContainer, actionFooter].forEach((el) =>
       el.classList.toggle('hidden', !visible),
     );
     resultContainer.classList.toggle('hidden', visible);
   }
-
-  // --- Progression et score ----------------------------------------------
-
-  function updateProgress() {
-    renderProgress(
-      { progressLabel, scoreLabel, progressFill },
-      { unit: 'question', index: questionIndex, total: queue.length, score, answered: isAnswered },
-    );
-  }
-
-  function updateNextButton() {
-    renderNextButton(btnNext, { unit: 'question', isLast: questionIndex >= queue.length - 1, answered: isAnswered });
-  }
-
-  // --- Boutons de réponse ------------------------------------------------
 
   function buildOptions() {
     ANSWERS.forEach((answer) => {
@@ -114,7 +78,7 @@ import '../styles/quiz-card.css';
       btn.dataset.value = String(answer.value);
       btn.textContent = answer.label;
       btn.addEventListener('click', () => {
-        if (isAnswered || !currentQuestion) return;
+        if (session.isAnswered || !currentQuestion) return;
         optionsContainer.querySelectorAll<HTMLButtonElement>('.btn-option').forEach((b) => (b.disabled = true));
         checkAnswer(answer.value === currentQuestion.isHymn, btn);
       });
@@ -122,94 +86,65 @@ import '../styles/quiz-card.css';
     });
   }
 
-  // --- Partie : démarrage, questions, résultat ---------------------------
-
-  function startGame() {
-    clearAutoNext();
-    score = 0;
-    questionIndex = 0;
-
-    queue = shuffle(hymneQuizList);
-
-    resultContainer.innerHTML = '';
-    showQuizScreen(true);
-
-    loadQuestion();
-  }
-
-  function loadQuestion() {
-    clearAutoNext();
-    isAnswered = false;
-    setFeedback(null);
-
-    const q = queue[questionIndex];
-    currentQuestion = q;
-    updateProgress();
-    updateNextButton();
-
-    questionContainer.innerHTML = `
-      <div class="situation-q-box">
-        <p class="situation-label">Cette situation, est-ce un hymne ?</p>
-        <p class="situation-text"></p>
-      </div>
-    `;
-    questionContainer.querySelector('.situation-text')!.textContent = q.text;
-
-    optionsContainer.innerHTML = '';
-    optionsContainer.className = 'options-grid';
-    buildOptions();
-  }
-
   function checkAnswer(isCorrect: boolean, element: HTMLElement) {
-    if (isAnswered || !currentQuestion) return;
-    isAnswered = true;
+    if (session.isAnswered || !currentQuestion) return;
 
     if (isCorrect) {
-      score++;
       element.classList.add('correct');
-      const message = currentQuestion.explanation;
-      setFeedback('success', message);
-      autoNextTimer = setTimeout(goToNext, getAutoNextDelay(message));
     } else {
       element.classList.add('incorrect');
       const good = optionsContainer.querySelector<HTMLElement>(
         `.btn-option[data-value="${String(currentQuestion.isHymn)}"]`
       );
       if (good) good.classList.add('correct');
-      setFeedback('error', currentQuestion.explanation);
     }
 
-    updateProgress();
-    updateNextButton();
+    session.answer(isCorrect, currentQuestion.explanation);
   }
 
-    function showResult() {
-    const total = queue.length;
-
-    showQuizScreen(false);
-    setFeedback(null);
-    resultContainer.innerHTML = buildResultHtml({
-      score,
-      total,
+  const session = new QuizSession({
+    unit: 'question',
+    progress: { progressLabel, scoreLabel, progressFill },
+    nextBtn: btnNext,
+    feedback: quizFeedback,
+    result: {
+      hide: [progressBox, questionContainer, optionsContainer, actionFooter],
+      container: resultContainer,
       restartId: 'hqBtnRestart',
-    });
-    $<HTMLButtonElement>('hqBtnRestart').addEventListener('click', startGame);
+    },
+    game: [progressBox, questionContainer, optionsContainer, actionFooter],
+    renderQuestion: (index) => {
+      const q = queue[index];
+      currentQuestion = q;
+
+      questionContainer.innerHTML = `
+        <div class="situation-q-box">
+          <p class="situation-label">Cette situation, est-ce un hymne ?</p>
+          <p class="situation-text"></p>
+        </div>
+      `;
+      questionContainer.querySelector('.situation-text')!.textContent = q.text;
+
+      optionsContainer.innerHTML = '';
+      optionsContainer.className = 'options-grid';
+      buildOptions();
+    },
+    showResult: (score, total) => {
+      showQuizScreen(false);
+      quizFeedback.textContent = '';
+      quizFeedback.className = 'feedback-msg hidden';
+      resultContainer.innerHTML = buildResultHtml({ score, total, restartId: 'hqBtnRestart' });
+      $<HTMLButtonElement>('hqBtnRestart').addEventListener('click', startGame);
+    },
+    onRestart: () => startGame(),
+  });
+
+  function startGame() {
+    queue = shuffle(hymneQuizList);
+    session.start(queue.length);
   }
 
-  // --- Événements ---------------------------------------------------------
-
-  function goToNext() {
-    clearAutoNext();
-    if (!isAnswered) return;
-    if (questionIndex >= queue.length - 1) {
-      showResult();
-    } else {
-      questionIndex++;
-      loadQuestion();
-    }
-  }
-
-  btnNext.addEventListener('click', goToNext);
+  btnNext.addEventListener('click', () => session.next());
 
   startGame();
 </script>

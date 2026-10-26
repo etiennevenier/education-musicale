@@ -35,6 +35,8 @@
 </div>
 
 <script>
+  import { getAudioContext, getMasterBus } from '../utils/audioContext';
+
   const NUANCES = [
     { symbol: 'pp', name: 'Pianissimo', desc: 'Très doux', gain: 0.03 },
     { symbol: 'p',  name: 'Piano', desc: 'Doux', gain: 0.10 },
@@ -55,6 +57,7 @@
   let isPlaying = false;
   let isAnim = false;
   let timerId: number | null = null;
+  let animTimerId: number | null = null;
   let lastNoteIndex = -1;
 
   const nuanceRange = document.getElementById('nuanceRange') as HTMLInputElement;
@@ -82,9 +85,11 @@
 
   function initAudio() {
     if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioCtx = getAudioContext();
+      if (!audioCtx) return;
+      const bus = getMasterBus() ?? audioCtx.destination;
       masterGain = audioCtx.createGain();
-      masterGain.connect(audioCtx.destination);
+      masterGain.connect(bus);
     }
     if (audioCtx.state === 'suspended') {
       audioCtx.resume();
@@ -162,6 +167,14 @@
     }
   }
 
+  function stopAnim() {
+    if (animTimerId !== null) {
+      window.clearInterval(animTimerId);
+      animTimerId = null;
+    }
+    isAnim = false;
+  }
+
   function animateNuance(targetIdx: number) {
     if (isAnim) return;
     isAnim = true;
@@ -170,10 +183,11 @@
     let current = parseInt(nuanceRange.value, 10);
     const step = targetIdx > current ? 1 : -1;
 
-    const interval = setInterval(() => {
+    stopAnim();
+    isAnim = true;
+    animTimerId = window.setInterval(() => {
       if (current === targetIdx) {
-        clearInterval(interval);
-        isAnim = false;
+        stopAnim();
         return;
       }
       current += step;
@@ -181,6 +195,24 @@
       updateUI(current);
     }, 700);
   }
+
+  function pausePlayback() {
+    if (isPlaying) {
+      isPlaying = false;
+      if (timerId !== null) {
+        window.clearInterval(timerId);
+        timerId = null;
+      }
+      btnPlay.textContent = '▶ Écouter la séquence';
+      btnPlay.classList.remove('active');
+    }
+    stopAnim();
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) pausePlayback();
+  });
+  window.addEventListener('pagehide', pausePlayback);
 
   nuanceRange.addEventListener('input', (e) => {
     const val = parseInt((e.target as HTMLInputElement).value, 10);

@@ -382,6 +382,8 @@ import { relativeUrl } from '../../utils/navigation';
 </style>
 
 <script>
+    import { getAudioContext, getMasterBus } from '../../utils/audioContext';
+
     (function () {
         /* Types — Astro compile le contenu des balises <script> en TypeScript. */
         type KeyType = 'white' | 'black';
@@ -417,19 +419,20 @@ import { relativeUrl } from '../../utils/navigation';
             return el;
         }
 
-        /** Contexte Web Audio (avec repli sur le constructeur préfixé de Safari). */
-        function createAudioContext(): AudioContext {
-            const Ctor = window.AudioContext || window.webkitAudioContext;
-            if (!Ctor) throw new Error('Web Audio API non disponible');
-            return new Ctor();
+        /** Contexte Web Audio partagé (contexte unique + bus master). */
+        function getPianoContext(): AudioContext {
+            const ac = getAudioContext();
+            if (!ac) throw new Error('Web Audio API non disponible');
+            return ac;
         }
 
         function playPianoNote(midiNumber: number): void {
             if (!pianoAudioCtx) {
-                pianoAudioCtx = createAudioContext();
+                pianoAudioCtx = getPianoContext();
             }
             const ac = pianoAudioCtx;
             if (ac.state === 'suspended') ac.resume();
+            const bus = getMasterBus() ?? ac.destination;
 
             const freq = 440 * Math.pow(2, (midiNumber - 69) / 12);
             const t = ac.currentTime;
@@ -442,7 +445,7 @@ import { relativeUrl } from '../../utils/navigation';
             gain.gain.exponentialRampToValueAtTime(0.001, t + 1.0);
 
             osc.connect(gain);
-            gain.connect(ac.destination);
+            gain.connect(bus);
             osc.start();
             osc.stop(t + 1.0);
         }
@@ -695,7 +698,8 @@ import { relativeUrl } from '../../utils/navigation';
 
         // Tactile (iOS / Safari) : on relance le contexte audio au relâchement du doigt
         const unlockPianoAudio = (): void => {
-            if (pianoAudioCtx && pianoAudioCtx.state === 'suspended') pianoAudioCtx.resume();
+            const ac = getAudioContext();
+            if (ac && ac.state === 'suspended') ac.resume();
         };
         document.addEventListener('pointerup', unlockPianoAudio, true);
         document.addEventListener('touchend', unlockPianoAudio, true);

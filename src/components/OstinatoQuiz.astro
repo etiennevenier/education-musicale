@@ -41,14 +41,14 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
 
 <script>
   import { shuffle } from '../utils/random';
-  import { renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
-  import {
-    ostinatoQuestions,
-    OSTINATO_QUESTIONS_PER_GAME,
-    type OstinatoChoiceQuestion,
-    type OstinatoNumberQuestion,
-    type OstinatoQuestion,
+  import { showQuizResult } from '../utils/quizUi';
+  import { QuizSession } from '../utils/quizSession';
+  import type {
+    OstinatoChoiceQuestion,
+    OstinatoNumberQuestion,
+    OstinatoQuestion,
   } from '../data/ostinatoData';
+  const { ostinatoQuestions, OSTINATO_QUESTIONS_PER_GAME } = await import('../data/ostinatoData');
   import { relativeUrl } from '../utils/navigation';
   import {
     getAudioState,
@@ -85,20 +85,9 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
   const resultContainer = $<HTMLDivElement>('ostinatoResultContainer');
 
   let queue: OstinatoQuestion[] = [];
-  let questionIndex = 0;
-  let score = 0;
-  let isAnswered = false;
   let currentQuestion: OstinatoQuestion | null = null;
   let btnPlay: HTMLButtonElement | null = null;
   let autoPlayEnabled = false;
-  let autoNextTimer: ReturnType<typeof setTimeout> | null = null;
-
-  function clearAutoNext() {
-    if (autoNextTimer) {
-      clearTimeout(autoNextTimer);
-      autoNextTimer = null;
-    }
-  }
 
   function setPlayState(state: PlayState) {
     if (btnPlay) btnPlay.textContent = PLAY_LABELS[state];
@@ -140,39 +129,10 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
     void playAudio(url);
   }
 
-  function updateProgress() {
-    renderProgress(
-      { progressLabel, scoreLabel, progressFill },
-      { unit: 'question', index: questionIndex, total: queue.length, score, answered: isAnswered },
-    );
-  }
-
-  function updateNextButton() {
-    renderNextButton(btnNext, { unit: 'question', isLast: questionIndex >= queue.length - 1, answered: isAnswered });
-  }
-
   function formatAnswer(question: OstinatoQuestion): string {
     return question.kind === 'choice'
       ? question.correctAnswer.toLowerCase()
       : String(question.correctAnswer);
-  }
-
-  function finishAnswer(isCorrect: boolean) {
-    if (!currentQuestion || isAnswered) return;
-    isAnswered = true;
-
-    if (isCorrect) {
-      score += 1;
-      quizFeedback.textContent = '';
-      quizFeedback.className = 'feedback-msg hidden';
-      autoNextTimer = scheduleAutoNext(goToNext, quizFeedback.textContent ?? '');
-    } else {
-      quizFeedback.textContent = '';
-      quizFeedback.className = 'feedback-msg hidden';
-    }
-
-    updateProgress();
-    updateNextButton();
   }
 
   // --- Construction des réponses ------------------------------------------
@@ -185,7 +145,7 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
       btn.textContent = label;
 
       btn.addEventListener('click', () => {
-        if (isAnswered) return;
+        if (session.isAnswered) return;
 
         optionsContainer.querySelectorAll<HTMLButtonElement>('.btn-option').forEach((b) => {
           b.disabled = true;
@@ -201,14 +161,7 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
           });
         }
 
-        if (currentQuestion && currentQuestion.kind === 'number' && !isCorrect) {
-          quizFeedback.textContent = `La bonne réponse était : ${formatAnswer(currentQuestion)}.`;
-          quizFeedback.className = 'feedback-msg error';
-        } else {
-          quizFeedback.textContent = '';
-          quizFeedback.className = 'feedback-msg hidden';
-        }
-        finishAnswer(isCorrect);
+        session.answer(isCorrect, '');
       });
 
       optionsContainer.appendChild(btn);
@@ -237,7 +190,7 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
     const validate = wrapper.querySelector('.btn-validate') as HTMLButtonElement;
 
     function submit() {
-      if (isAnswered) return;
+      if (session.isAnswered) return;
 
       const raw = input.value.trim();
       const value = Number.parseInt(raw, 10);
@@ -253,15 +206,14 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
 
       const isCorrect = value === question.correctAnswer;
       input.classList.add(isCorrect ? 'correct' : 'incorrect');
-      if (currentQuestion && currentQuestion.kind === 'number' && !isCorrect) {
-          quizFeedback.textContent = `La bonne réponse était : ${formatAnswer(currentQuestion)}.`;
-          quizFeedback.className = 'feedback-msg error';
-        } else {
-          quizFeedback.textContent = '';
-          quizFeedback.className = 'feedback-msg hidden';
-        }
-        finishAnswer(isCorrect);
+
+      if (!isCorrect) {
+        quizFeedback.textContent = `La bonne réponse était : ${formatAnswer(question)}.`;
+        quizFeedback.className = 'feedback-msg error';
       }
+
+      session.answer(isCorrect, '');
+    }
 
     validate.addEventListener('click', submit);
     input.addEventListener('keydown', (event) => {
@@ -276,96 +228,74 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
 
   // --- Déroulement de la partie -------------------------------------------
 
-  function loadQuestion() {
-    clearAutoNext();
-    isAnswered = false;
-    stopAudio();
-    quizFeedback.className = 'feedback-msg hidden';
-    quizFeedback.textContent = '';
+  const session = new QuizSession({
+    unit: 'question',
+    progress: { progressLabel, scoreLabel, progressFill },
+    nextBtn: btnNext,
+    feedback: quizFeedback,
+    result: {
+      hide: [progressBox, questionContainer, optionsContainer, actionFooter],
+      container: resultContainer,
+      restartId: 'ostinatoBtnRestart',
+    },
+    game: [progressBox, questionContainer, optionsContainer, actionFooter],
+    feedbackOnAnswer: false,
+    renderQuestion: (index, autoplay) => {
+      stopAudio();
+      const question = queue[index];
+      if (!question) return;
+      currentQuestion = question;
 
-    const question = queue[questionIndex];
-    if (!question) return;
-    currentQuestion = question;
+      questionContainer.innerHTML = `
+        <div class="audio-q-box">
+          <p class="question-prompt"></p>
+          <button type="button" id="ostinatoBtnPlay" class="btn-play-sound">${PLAY_LABELS.idle}</button>
+        </div>
+      `;
+      questionContainer.querySelector('.question-prompt')!.textContent = question.prompt;
+      btnPlay = $<HTMLButtonElement>('ostinatoBtnPlay');
+      btnPlay.addEventListener('click', togglePlay);
+      if (autoplay) togglePlay();
 
-    updateProgress();
-    updateNextButton();
+      optionsContainer.innerHTML = '';
 
-    questionContainer.innerHTML = `
-      <div class="audio-q-box">
-        <p>${question.prompt}</p>
-        <button type="button" id="ostinatoBtnPlay" class="btn-play-sound">${PLAY_LABELS.idle}</button>
-      </div>
-    `;
-    btnPlay = $<HTMLButtonElement>('ostinatoBtnPlay');
-    btnPlay.addEventListener('click', togglePlay);
-    if (autoPlayEnabled) togglePlay();
-
-    optionsContainer.innerHTML = '';
-
-    if (question.kind === 'choice') {
-      optionsContainer.className = 'options-choice';
-      buildChoiceOptions(question);
-    } else {
-      optionsContainer.className = 'options-number';
-      buildNumberInput(question);
-    }
-  }
+      if (question.kind === 'choice') {
+        optionsContainer.className = 'options-choice';
+        buildChoiceOptions(question);
+      } else {
+        optionsContainer.className = 'options-number';
+        buildNumberInput(question);
+      }
+    },
+    showResult: (score, total) => {
+      stopAudio();
+      showQuizResult({
+        hide: [progressBox, questionContainer, optionsContainer, actionFooter],
+        feedback: quizFeedback,
+        container: resultContainer,
+        score,
+        total,
+        restartId: 'ostinatoBtnRestart',
+        onRestart: () => {
+          autoPlayEnabled = true;
+          startGame();
+        },
+      });
+    },
+    onRestart: () => {
+      autoPlayEnabled = true;
+      startGame();
+    },
+  });
 
   function startGame() {
-    clearAutoNext();
     stopAudio();
-
-    score = 0;
-    questionIndex = 0;
-    currentQuestion = null;
-
     // Tirage de 10 questions parmi toutes celles du quiz, dans un ordre aléatoire.
     queue = shuffle(ostinatoQuestions).slice(0, OSTINATO_QUESTIONS_PER_GAME);
-
-    resultContainer.classList.add('hidden');
-    resultContainer.innerHTML = '';
-    progressBox.classList.remove('hidden');
-    questionContainer.classList.remove('hidden');
-    optionsContainer.classList.remove('hidden');
-    actionFooter.classList.remove('hidden');
-
-    loadQuestion();
+    session.start(queue.length, autoPlayEnabled);
   }
 
-  function goToNext() {
-    clearAutoNext();
-    if (!isAnswered) return;
-
-    if (questionIndex >= queue.length - 1) {
-      showResult();
-    } else {
-      questionIndex += 1;
-      autoPlayEnabled = true;
-      loadQuestion();
-    }
-  }
-
-
-  function showResult() {
-    clearAutoNext();
-    stopAudio();
-    showQuizResult({
-      hide: [progressBox, questionContainer, optionsContainer, actionFooter],
-      feedback: quizFeedback,
-      container: resultContainer,
-      score,
-      total: queue.length,
-      restartId: 'ostinatoBtnRestart',
-      onRestart: () => {
-        autoPlayEnabled = true;
-        startGame();
-      },
-    });
-  }
-
-  // --- Événements ---------------------------------------------------------
-
-  btnNext.addEventListener('click', goToNext);
+  btnNext.addEventListener('click', () => session.next());
 
   startGame();
 </script>

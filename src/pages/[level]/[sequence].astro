@@ -53,26 +53,31 @@ if (!levelData || !sequenceData) {
   return Astro.redirect('/404');
 }
 
+// Les séquences « cours » : un composant dédié, sélectionné par slug.
+const courses: Record<string, typeof MoyenAgeCourse> = {
+  'musique-et-moyen-age': MoyenAgeCourse,
+  'musique-et-jazz': JazzCourse,
+  'musique-et-heros': HerosCourse,
+  'musique-et-opera': OperaCourse,
+  'musique-et-cinema': CinemaCourse,
+  'musique-et-bruits': BruitsCourse,
+  'musique-et-rock': RockCourse,
+  'musique-et-recyclage': RecyclageCourse,
+  'musique-et-engagement': EngagementCourse,
+  'musique-et-pub': PubCourse,
+  'musique-et-risques-auditifs': RisquesAuditifsCourse,
+  'musique-et-rap': RapCourse,
+  'musique-et-metissage': MetissageCourse,
+};
+const Course = courses[sequenceData.slug];
+
 const isTempoSequence = sequenceData.slug === 'musique-et-tempo';
 const isNuancesSequence = sequenceData.slug === 'musique-et-nuances';
 const isTimbreSequence = sequenceData.slug === 'musique-et-timbre';
-const isRepetitionSequence = sequenceData.slug === 'musique-et-repetition';
-const isMoyenAgeSequence = sequenceData.slug === 'musique-et-moyen-age';
-const isJazzSequence = sequenceData.slug === 'musique-et-jazz';
-const isHerosSequence = sequenceData.slug === 'musique-et-heros';
-const isOperaSequence = sequenceData.slug === 'musique-et-opera';
-const isCinemaSequence = sequenceData.slug === 'musique-et-cinema';
-const isBruitsSequence = sequenceData.slug === 'musique-et-bruits';
-const isRockSequence = sequenceData.slug === 'musique-et-rock';
-const isRecyclageSequence = sequenceData.slug === 'musique-et-recyclage';
-const isEngagementSequence = sequenceData.slug === 'musique-et-engagement';
-const isPubSequence = sequenceData.slug === 'musique-et-pub';
-const isRisquesAuditifsSequence = sequenceData.slug === 'musique-et-risques-auditifs';
-const isRapSequence = sequenceData.slug === 'musique-et-rap';
-const isMetissageSequence = sequenceData.slug === 'musique-et-metissage';
 const isPlansSonoresSequence = sequenceData.slug === 'musique-et-plans-sonores';
 const isHymnesSequence = sequenceData.slug === 'musique-et-hymnes';
 const isVoixSequence = sequenceData.slug === 'musique-et-voix';
+const isRepetitionSequence = sequenceData.slug === 'musique-et-repetition';
 ---
 
 <Layout title={`${levelData.title} — ${sequenceData.title}`}>
@@ -83,44 +88,8 @@ const isVoixSequence = sequenceData.slug === 'musique-et-voix';
       {sequenceData.description && <p class="sequence-desc">{sequenceData.description}</p>}
     </header>
 
-    {/* Parcours complet pour la séquence Musique et Moyen-Âge */}
-    {isMoyenAgeSequence && <MoyenAgeCourse />}
-
-    {/* Parcours complet pour la séquence Musique et Jazz */}
-    {isJazzSequence && <JazzCourse />}
-
-    {/* Parcours complet pour la séquence Musique et Héros */}
-    {isHerosSequence && <HerosCourse />}
-
-    {/* Parcours complet pour la séquence Musique et Opéra */}
-    {isOperaSequence && <OperaCourse />}
-
-    {/* Parcours complet pour la séquence Musique et Cinéma */}
-    {isCinemaSequence && <CinemaCourse />}
-
-    {/* Parcours complet pour la séquence Musique et Bruits */}
-    {isBruitsSequence && <BruitsCourse />}
-
-    {/* Parcours complet pour la séquence Musique et Rock */}
-    {isRockSequence && <RockCourse />}
-
-    {/* Parcours complet pour la séquence Musique et Recyclage */}
-    {isRecyclageSequence && <RecyclageCourse />}
-
-    {/* Parcours complet pour la séquence Musique et Engagement */}
-    {isEngagementSequence && <EngagementCourse />}
-
-    {/* Parcours complet pour la séquence Musique et Publicité */}
-    {isPubSequence && <PubCourse />}
-
-    {/* Parcours complet pour la séquence Musique et Risques Auditifs */}
-    {isRisquesAuditifsSequence && <RisquesAuditifsCourse />}
-
-    {/* Parcours complet pour la séquence Musique et Rap */}
-    {isRapSequence && <RapCourse />}
-
-    {/* Parcours complet pour la séquence Musique et Métissage */}
-    {isMetissageSequence && <MetissageCourse />}
+    {/* Parcours complet dédié : un composant par séquence « cours » */}
+    {Course && <Course />}
 
     {/* Outils interactifs pour la séquence Tempo */}
     {isTempoSequence && (

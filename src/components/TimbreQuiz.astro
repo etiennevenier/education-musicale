@@ -53,9 +53,11 @@
 </div>
 
 <script>
-  import { renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
+  import { showQuizResult } from '../utils/quizUi';
   import { shuffle } from '../utils/random';
-  import { fuzeauInstruments as instruments, type Instrument } from '../data/fuzeauInstruments';
+  import { QuizSession } from '../utils/quizSession';
+  import type { Instrument } from '../data/fuzeauInstruments';
+  const { fuzeauInstruments: instruments } = await import('../data/fuzeauInstruments');
   import { relativeUrl } from '../utils/navigation';
   import { playAudio, stopAudio } from '../utils/audioManager';
   import '../styles/quiz-card.css';
@@ -74,22 +76,9 @@
   let currentInstrument: Instrument | null = null;
   let currentMode: QuizMode = 'audio';
   let currentLevel: QuizLevel = 'vert';
-  let isAnswered = false;
 
   // État de la partie
   let queue: Instrument[] = [];
-  let questionIndex = 0;
-  let score = 0;
-
-  // Passage automatique à la question suivante après une BONNE réponse uniquement
-  let autoNextTimer: ReturnType<typeof setTimeout> | null = null;
-
-  function clearAutoNext(): void {
-    if (autoNextTimer !== null) {
-      clearTimeout(autoNextTimer);
-      autoNextTimer = null;
-    }
-  }
 
   const levelSelect = document.getElementById('levelSelect') as HTMLSelectElement;
   const modeSelect = document.getElementById('modeSelect') as HTMLSelectElement;
@@ -186,19 +175,6 @@
     });
   }
 
-  // --- Progression et score ----------------------------------------------
-
-  function updateProgress() {
-    renderProgress(
-      { progressLabel, scoreLabel, progressFill },
-      { unit: 'question', index: questionIndex, total: queue.length, score, answered: isAnswered },
-    );
-  }
-
-  function updateNextButton() {
-    renderNextButton(btnNext, { unit: 'question', isLast: questionIndex >= queue.length - 1, answered: isAnswered });
-  }
-
   // --- Saisie avec suggestions (modes 1 et 2) ----------------------------
   // La liste n'apparaît que lorsque l'élève a tapé au moins une lettre.
 
@@ -291,7 +267,7 @@
 
     // Clic sur une suggestion : validation immédiate
     function choose(inst: Instrument): void {
-      if (isAnswered) return;
+      if (session.isAnswered) return;
       const instrument = currentInstrument;
       if (!instrument) return;
       input.value = inst.name;
@@ -300,7 +276,7 @@
 
     // Validation du texte tel qu'il est écrit
     function submitTyped(): void {
-      if (isAnswered) return;
+      if (session.isAnswered) return;
       const instrument = currentInstrument;
       if (!instrument) return;
       if (!input.value.trim()) return;
@@ -339,134 +315,131 @@
   // --- Partie : démarrage, questions, résultat ---------------------------
 
   // autoPlay = true : le son démarre tout de suite (modes 1 et 3 uniquement)
-  function startGame(autoPlay = false): void {
-    clearAutoNext();
-    stopSound();
-    score = 0;
-    questionIndex = 0;
-
-    // Tous les instruments du niveau choisi (12, ou 36 pour « Tous les niveaux »),
-    // chacun une seule fois, dans un ordre aléatoire
-    queue = shuffle(getFilteredInstruments());
-
-    resultContainer.classList.add('hidden');
-    resultContainer.innerHTML = '';
-    progressBox.classList.remove('hidden');
-    questionContainer.classList.remove('hidden');
-    optionsContainer.classList.remove('hidden');
-    actionFooter.classList.remove('hidden');
-
-    loadQuestion(autoPlay);
-  }
-
-  // autoPlay = false par défaut : à la toute première question (chargement de
-  // la page) le son ne se lance pas. Il se lance seulement après un clic
-  // « Question Suivante » ou « Recommencer ».
-  function loadQuestion(autoPlay = false): void {
-    clearAutoNext();
-    isAnswered = false;
-    quizFeedback.className = 'feedback-msg hidden';
-    stopSound();
-
-    const instrument = queue[questionIndex];
-    currentInstrument = instrument;
-    updateProgress();
-    updateNextButton();
-
-    questionContainer.innerHTML = '';
-    optionsContainer.innerHTML = '';
-
-    // 1. Question Audio : saisie libre, suggestions seulement pendant la frappe
-    if (currentMode === 'audio') {
-      questionContainer.innerHTML = `
-        <div class="audio-q-box">
-          <p>Écoute l'extrait audio et écris quel instrument joue :</p>
-          <button id="btnPlaySound" class="btn-play-sound">🔊 Écouter l'extrait</button>
-        </div>
-      `;
-      (document.getElementById('btnPlaySound') as HTMLButtonElement).addEventListener('click', () => playSound(instrument.audioUrl));
-      if (autoPlay) playSound(instrument.audioUrl);
-
-      optionsContainer.className = 'options-search';
-      optionsContainer.appendChild(buildSearchBox());
-    }
-
-    // 2. Question Visuelle : même principe
-    else if (currentMode === 'image') {
-      questionContainer.innerHTML = `
-        <div class="image-q-box">
-          <p>Quel est le nom de cet instrument ?</p>
-          <div class="q-img-wrap">
-            <img src="${instrument.imageUrl}" alt="Instrument à identifier" class="q-img" />
-          </div>
-        </div>
-      `;
-      attachImageFallback(questionContainer);
-
-      optionsContainer.className = 'options-search';
-      optionsContainer.appendChild(buildSearchBox());
-    }
-
-    // 3. Association Son ↔ Image (4 propositions : 1 bonne + 3 leurres)
-    else if (currentMode === 'assoc') {
-      const options = getRandomOptions(instrument, 4);
-
-      questionContainer.innerHTML = `
-        <div class="audio-q-box">
-          <p>Écoute le son et clique sur la bonne image :</p>
-          <button id="btnPlaySound" class="btn-play-sound">🔊 Écouter le son</button>
-        </div>
-      `;
-      (document.getElementById('btnPlaySound') as HTMLButtonElement).addEventListener('click', () => playSound(instrument.audioUrl));
-      if (autoPlay) playSound(instrument.audioUrl);
-
-      optionsContainer.className = 'options-grid-images';
-      options.forEach(opt => {
-        const card = document.createElement('div');
-        card.className = 'card-image-option';
-        card.innerHTML = `<img src="${opt.imageUrl}" alt="${opt.name}" />`;
-        card.addEventListener('click', () => checkAnswer(opt.id === instrument.id, card));
-        optionsContainer.appendChild(card);
-      });
-      attachImageFallback(optionsContainer);
-    }
-  }
-
   function checkAnswer(isCorrect: boolean, element: HTMLElement): void {
-    if (isAnswered) return;
+    if (session.isAnswered) return;
     const instrument = currentInstrument;
     if (!instrument) return;
-    isAnswered = true;
 
     if (isCorrect) {
-      score++;
       element.classList.add('correct');
-      quizFeedback.textContent = "";
-      quizFeedback.className = 'feedback-msg success';
-      autoNextTimer = scheduleAutoNext(goToNext, quizFeedback.textContent ?? '');
     } else {
       element.classList.add('incorrect');
-      quizFeedback.textContent = "";
-      quizFeedback.className = 'feedback-msg error';
     }
 
-    updateProgress();
-    updateNextButton();
+    session.answer(isCorrect, '');
   }
 
-
-function showResult() {
-  stopSound();
-  showQuizResult({
-    hide: [progressBox, questionContainer, optionsContainer, actionFooter],
+  const session = new QuizSession({
+    unit: 'question',
+    progress: { progressLabel, scoreLabel, progressFill },
+    nextBtn: btnNext,
     feedback: quizFeedback,
-    container: resultContainer,
-    score,
-    total: queue.length,
-    restartId: 'btnRestart',
+    result: {
+      hide: [progressBox, questionContainer, optionsContainer, actionFooter],
+      container: resultContainer,
+      restartId: 'btnRestart',
+    },
+    game: [progressBox, questionContainer, optionsContainer, actionFooter],
+    renderQuestion: (index, autoplay) => {
+      stopSound();
+      const instrument = queue[index];
+      currentInstrument = instrument;
+
+      questionContainer.innerHTML = '';
+      optionsContainer.innerHTML = '';
+
+      // 1. Question Audio : saisie libre, suggestions seulement pendant la frappe
+      if (currentMode === 'audio') {
+        questionContainer.innerHTML = `
+          <div class="audio-q-box">
+            <p>Écoute l'extrait audio et écris quel instrument joue :</p>
+            <button id="btnPlaySound" class="btn-play-sound">🔊 Écouter l'extrait</button>
+          </div>
+        `;
+        (document.getElementById('btnPlaySound') as HTMLButtonElement).addEventListener('click', () => playSound(instrument.audioUrl));
+        if (autoplay) playSound(instrument.audioUrl);
+
+        optionsContainer.className = 'options-search';
+        optionsContainer.appendChild(buildSearchBox());
+      }
+
+      // 2. Question Visuelle : même principe
+      else if (currentMode === 'image') {
+        const imageBox = document.createElement('div');
+        imageBox.className = 'image-q-box';
+        const imagePrompt = document.createElement('p');
+        imagePrompt.textContent = 'Quel est le nom de cet instrument ?';
+        const imageWrap = document.createElement('div');
+        imageWrap.className = 'q-img-wrap';
+        const image = document.createElement('img');
+        image.src = instrument.imageUrl;
+        image.alt = 'Instrument à identifier';
+        image.className = 'q-img';
+        image.width = 749;
+        image.height = 1091;
+        image.loading = 'lazy';
+        image.decoding = 'async';
+        imageWrap.appendChild(image);
+        imageBox.append(imagePrompt, imageWrap);
+        questionContainer.replaceChildren(imageBox);
+        attachImageFallback(questionContainer);
+
+        optionsContainer.className = 'options-search';
+        optionsContainer.appendChild(buildSearchBox());
+      }
+
+      // 3. Association Son ↔ Image (4 propositions : 1 bonne + 3 leurres)
+      else {
+        const options = getRandomOptions(instrument, 4);
+
+        questionContainer.innerHTML = `
+          <div class="audio-q-box">
+            <p>Écoute le son et clique sur la bonne image :</p>
+            <button id="btnPlaySound" class="btn-play-sound">🔊 Écouter le son</button>
+          </div>
+        `;
+        (document.getElementById('btnPlaySound') as HTMLButtonElement).addEventListener('click', () => playSound(instrument.audioUrl));
+        if (autoplay) playSound(instrument.audioUrl);
+
+        optionsContainer.className = 'options-grid-images';
+        options.forEach(opt => {
+          const card = document.createElement('div');
+          card.className = 'card-image-option';
+          const img = document.createElement('img');
+          img.src = opt.imageUrl;
+          img.alt = opt.name;
+          img.width = 749;
+          img.height = 1091;
+          img.loading = 'lazy';
+          img.decoding = 'async';
+          card.appendChild(img);
+          card.addEventListener('click', () => checkAnswer(opt.id === instrument.id, card));
+          optionsContainer.appendChild(card);
+        });
+        attachImageFallback(optionsContainer);
+      }
+    },
+    showResult: (score, total) => {
+      stopSound();
+      showQuizResult({
+        hide: [progressBox, questionContainer, optionsContainer, actionFooter],
+        feedback: quizFeedback,
+        container: resultContainer,
+        score,
+        total,
+        restartId: 'btnRestart',
+        onRestart: () => startGame(true),
+      });
+    },
     onRestart: () => startGame(true),
   });
-}
+
+  function startGame(autoPlay = false): void {
+    stopSound();
+    // Tous les instruments du niveau choisi, chacun une seule fois, dans un ordre aléatoire
+    queue = shuffle(getFilteredInstruments());
+    session.start(queue.length, autoPlay);
+  }
 
   // --- Événements ---------------------------------------------------------
 
@@ -481,19 +454,7 @@ function showResult() {
     startGame();
   });
 
-  // Utilisé par le bouton « Suivant » ET par le minuteur après une bonne réponse
-  function goToNext(): void {
-    clearAutoNext();
-    if (!isAnswered) return;
-    if (questionIndex >= queue.length - 1) {
-      showResult();
-    } else {
-      questionIndex++;
-      loadQuestion(true);
-    }
-  }
-
-  btnNext.addEventListener('click', goToNext);
+  btnNext.addEventListener('click', () => session.next());
 
   startGame();
 </script>

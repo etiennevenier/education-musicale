@@ -3,6 +3,7 @@ import CourseTabs from './CourseTabs.astro';
 import VideoCard from './VideoCard.astro';
 import RockStageBuilder from './RockStageBuilder.astro';
 import rythmeImage from '../assets/Rythme Walk This Way.jpg';
+import { Image } from 'astro:assets';
 
 interface RockVideo {
   badge: string;
@@ -102,12 +103,11 @@ const articleUrl = 'https://hardforce.com/actu/35694/lejourou-run-dmc-aerosmith-
             data-lightbox-open
             aria-label="Agrandir le schéma rythmique de Walk This Way"
           >
-            <img
-              src={rythmeImage.src}
-              width={rythmeImage.width}
-              height={rythmeImage.height}
+            <Image
+              src={rythmeImage}
               alt="Schéma rythmique de Walk This Way"
               loading="lazy"
+              decoding="async"
             />
           </button>
 
@@ -127,11 +127,10 @@ const articleUrl = 'https://hardforce.com/actu/35694/lejourou-run-dmc-aerosmith-
 
   <dialog class="rock-lightbox" aria-label="Schéma rythmique de Walk This Way">
     <button type="button" class="rock-lightbox-close" aria-label="Fermer">×</button>
-    <img
-      src={rythmeImage.src}
-      width={rythmeImage.width}
-      height={rythmeImage.height}
+    <Image
+      src={rythmeImage}
       alt="Schéma rythmique de Walk This Way"
+      decoding="async"
     />
   </dialog>
 </div>

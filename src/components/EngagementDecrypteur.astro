@@ -177,7 +177,7 @@ const firstListenUrl = firstSong
 </div>
 
 <script>
-  import { CAUSE_LABELS, SONGS } from '../data/engagementSongs';
+  const { CAUSE_LABELS, SONGS } = await import('../data/engagementSongs');
   import type { Cause } from '../data/engagementSongs';
   import { acceptedCauses, createEvidence, evaluate, getListenUrl } from '../utils/engagementEvaluation';
   import type { EvidenceItem, EvidenceReport, Result, SongState } from '../utils/engagementEvaluation';

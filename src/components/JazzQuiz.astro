@@ -41,12 +41,9 @@ const questionsPerGame = Math.min(JAZZ_QUESTIONS_PER_GAME, jazzQuizQuestions.len
 
 <script>
   import { shuffle } from '../utils/random';
-  import { renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
-  import {
-    jazzQuizQuestions,
-    JAZZ_QUESTIONS_PER_GAME,
-    type JazzQuizQuestion,
-  } from '../data/jazzQuizData';
+  import { QuizSession } from '../utils/quizSession';
+  import type { JazzQuizQuestion } from '../data/jazzQuizData';
+  const { jazzQuizQuestions, JAZZ_QUESTIONS_PER_GAME } = await import('../data/jazzQuizData');
 
   interface QuizEntry {
     question: JazzQuizQuestion;
@@ -71,82 +68,46 @@ const questionsPerGame = Math.min(JAZZ_QUESTIONS_PER_GAME, jazzQuizQuestions.len
   const resultContainer = $<HTMLDivElement>('jqResultContainer');
 
   let queue: QuizEntry[] = [];
-  let questionIndex = 0;
-  let score = 0;
-  let isAnswered = false;
   let currentEntry: QuizEntry | null = null;
-  let autoNextTimer: ReturnType<typeof setTimeout> | null = null;
 
-  function clearAutoNext() {
-    if (autoNextTimer) {
-      clearTimeout(autoNextTimer);
-      autoNextTimer = null;
-    }
-  }
+  const session = new QuizSession({
+    unit: 'question',
+    progress: { progressLabel, scoreLabel, progressFill },
+    nextBtn: btnNext,
+    feedback: quizFeedback,
+    result: {
+      hide: [progressBox, questionContainer, optionsContainer, actionFooter],
+      container: resultContainer,
+      restartId: 'jqBtnRestart',
+    },
+    game: [progressBox, questionContainer, optionsContainer, actionFooter],
+    renderQuestion: (index) => {
+      const entry = queue[index];
+      currentEntry = entry;
 
-  function updateProgress() {
-    renderProgress(
-      { progressLabel, scoreLabel, progressFill },
-      { unit: 'question', index: questionIndex, total: queue.length, score, answered: isAnswered },
-    );
-  }
+      questionContainer.innerHTML = `
+        <span class="question-kind">Question ${index + 1}</span>
+        <p class="question-text"></p>
+      `;
+      // textContent : le texte de la question est affiché tel quel.
+      questionContainer.querySelector('.question-text')!.textContent = entry.question.question;
 
-  function updateNextButton() {
-    renderNextButton(btnNext, { unit: 'question', isLast: questionIndex >= queue.length - 1, answered: isAnswered });
-  }
-
-  function startGame() {
-    clearAutoNext();
-    score = 0;
-    questionIndex = 0;
-
-    queue = shuffle(jazzQuizQuestions)
-      .slice(0, QUESTIONS_PER_GAME)
-      .map((question) => ({ question, options: shuffle(question.options) }));
-
-    resultContainer.classList.add('hidden');
-    resultContainer.innerHTML = '';
-    progressBox.classList.remove('hidden');
-    questionContainer.classList.remove('hidden');
-    optionsContainer.classList.remove('hidden');
-    actionFooter.classList.remove('hidden');
-
-    loadQuestion();
-  }
-
-  function loadQuestion() {
-    clearAutoNext();
-    isAnswered = false;
-    quizFeedback.className = 'feedback-msg hidden';
-    quizFeedback.textContent = '';
-
-    const entry = queue[questionIndex];
-    currentEntry = entry;
-    updateProgress();
-    updateNextButton();
-
-    questionContainer.innerHTML = `
-      <span class="question-kind">Question ${questionIndex + 1}</span>
-      <p class="question-text"></p>
-    `;
-    // textContent : le texte de la question est affiché tel quel.
-    questionContainer.querySelector('.question-text')!.textContent = entry.question.question;
-
-    optionsContainer.innerHTML = '';
-    entry.options.forEach((option) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'btn-option';
-      btn.dataset.option = option;
-      btn.textContent = option;
-      btn.addEventListener('click', () => checkAnswer(option, btn));
-      optionsContainer.appendChild(btn);
-    });
-  }
+      optionsContainer.innerHTML = '';
+      entry.options.forEach((option) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn-option';
+        btn.dataset.option = option;
+        btn.textContent = option;
+        btn.addEventListener('click', () => checkAnswer(option, btn));
+        optionsContainer.appendChild(btn);
+      });
+    },
+    onRestart: () => startGame(),
+  });
 
   function checkAnswer(option: string, button: HTMLButtonElement) {
-    if (isAnswered || !currentEntry) return;
-    isAnswered = true;
+    if (session.isAnswered || !currentEntry) return;
 
     optionsContainer
       .querySelectorAll<HTMLButtonElement>('.btn-option')
@@ -155,51 +116,26 @@ const questionsPerGame = Math.min(JAZZ_QUESTIONS_PER_GAME, jazzQuizQuestions.len
     const isCorrect = option === currentEntry.question.correctAnswer;
 
     if (isCorrect) {
-      score++;
       button.classList.add('correct');
-      quizFeedback.textContent = currentEntry.question.explanation;
-      quizFeedback.className = 'feedback-msg success';
-      autoNextTimer = scheduleAutoNext(goToNext, quizFeedback.textContent ?? '');
     } else {
       button.classList.add('incorrect');
       const goodAnswer = Array.from(
         optionsContainer.querySelectorAll<HTMLButtonElement>('.btn-option')
       ).find((btn) => btn.dataset.option === currentEntry?.question.correctAnswer);
       goodAnswer?.classList.add('correct');
-      quizFeedback.textContent = currentEntry.question.explanation;
-      quizFeedback.className = 'feedback-msg error';
     }
 
-    updateProgress();
-    updateNextButton();
+    session.answer(isCorrect, currentEntry.question.explanation);
   }
 
-
-  function showResult() {
-    showQuizResult({
-      hide: [progressBox, questionContainer, optionsContainer, actionFooter],
-      feedback: quizFeedback,
-      container: resultContainer,
-      score,
-      total: queue.length,
-      restartId: 'jqBtnRestart',
-      onRestart: () => startGame(),
-    });
+  function startGame() {
+    queue = shuffle(jazzQuizQuestions)
+      .slice(0, QUESTIONS_PER_GAME)
+      .map((question) => ({ question, options: shuffle(question.options) }));
+    session.start(queue.length);
   }
 
-  // Utilisé par le bouton « suivante » ET par le minuteur après une bonne réponse.
-  function goToNext() {
-    clearAutoNext();
-    if (!isAnswered) return;
-    if (questionIndex >= queue.length - 1) {
-      showResult();
-    } else {
-      questionIndex++;
-      loadQuestion();
-    }
-  }
-
-  btnNext.addEventListener('click', goToNext);
+  btnNext.addEventListener('click', () => session.next());
 
   startGame();
 </script>

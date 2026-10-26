@@ -74,11 +74,32 @@ const astuces = [
     currentIndex = index;
   }
 
-  // Défilement automatique toutes les 10 secondes
-  setInterval(() => {
-    const next = (currentIndex + 1) % total;
-    showSlide(next);
-  }, 10000);
+  // Défilement automatique toutes les 10 secondes (suspendu quand l'onglet est masqué)
+  let autoTimer: number | null = null;
+
+  function startAutoSlide() {
+    if (autoTimer !== null || total <= 1) return;
+    autoTimer = window.setInterval(() => {
+      const next = (currentIndex + 1) % total;
+      showSlide(next);
+    }, 10000);
+  }
+
+  function stopAutoSlide() {
+    if (autoTimer !== null) {
+      window.clearInterval(autoTimer);
+      autoTimer = null;
+    }
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stopAutoSlide();
+    else startAutoSlide();
+  });
+
+  window.addEventListener('pagehide', stopAutoSlide);
+
+  startAutoSlide();
 
   // Clic sur les puces pour naviguer
   dots.forEach(dot => {

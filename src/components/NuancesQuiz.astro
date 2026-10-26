@@ -75,6 +75,7 @@ const CHOICES = [
 <script>
   import { shuffle } from '../utils/random';
   import { stopAudio } from '../utils/audioManager';
+  import { getAudioContext, getMasterBus } from '../utils/audioContext';
   import {
     renderNextButton,
     renderProgress,
@@ -135,9 +136,11 @@ const CHOICES = [
 
   function initAudio() {
     if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioCtx = getAudioContext();
+      if (!audioCtx) return;
+      const bus = getMasterBus() ?? audioCtx.destination;
       masterGain = audioCtx.createGain();
-      masterGain.connect(audioCtx.destination);
+      masterGain.connect(bus);
     }
     if (audioCtx.state === 'suspended') {
       audioCtx.resume();

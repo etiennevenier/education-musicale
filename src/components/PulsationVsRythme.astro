@@ -94,6 +94,7 @@
 
 <script>
   import { shuffle } from '../utils/random';
+  import { getAudioContext, getMasterBus } from '../utils/audioContext';
   // ---------- État ----------
   let audioCtx: AudioContext | null = null;
   let isPlaying = false;
@@ -287,13 +288,14 @@
   // ---------- Audio ----------
   function initAudio() {
     if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioCtx = getAudioContext();
     }
   }
 
   // Pulsation : son mat, type bloc de bois grave
   function playPulseSound() {
     if (!audioCtx) return;
+    const bus = getMasterBus() ?? audioCtx.destination;
     const t = audioCtx.currentTime;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
@@ -303,7 +305,7 @@
     gain.gain.setValueAtTime(0.55, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
     osc.connect(gain);
-    gain.connect(audioCtx.destination);
+    gain.connect(bus);
     osc.start(t);
     osc.stop(t + 0.1);
   }
@@ -311,6 +313,7 @@
   // Rythme : son aigu, bref et incisif
   function playRhythmSound() {
     if (!audioCtx) return;
+    const bus = getMasterBus() ?? audioCtx.destination;
     const t = audioCtx.currentTime;
     const osc = audioCtx.createOscillator();
     const filter = audioCtx.createBiquadFilter();
@@ -323,7 +326,7 @@
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
     osc.connect(filter);
     filter.connect(gain);
-    gain.connect(audioCtx.destination);
+    gain.connect(bus);
     osc.start(t);
     osc.stop(t + 0.07);
   }

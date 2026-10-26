@@ -220,13 +220,8 @@ const slots = Array.from({ length: CARDS_PER_GAME }, (_, index) => index);
 </div>
 
 <script>
-  import {
-    estLegal,
-    getBalancedDeck,
-    SCENARIOS,
-    TECHNIQUE_LABELS,
-    type Scenario,
-  } from '../data/recyclageData';
+  import type { Scenario } from '../data/recyclageData';
+  const { estLegal, getBalancedDeck, SCENARIOS, TECHNIQUE_LABELS } = await import('../data/recyclageData');
   import {
     buildNotes,
     CARDS_PER_GAME,

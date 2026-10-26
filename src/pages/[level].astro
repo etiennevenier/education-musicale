@@ -4,12 +4,9 @@ import { siteData, getActiveSequenceIndex } from '../data/sequences';
 import { relativeUrl } from '../utils/navigation';
 
 export function getStaticPaths() {
-  return [
-    { params: { level: '6eme' } },
-    { params: { level: '5eme' } },
-    { params: { level: '4eme' } },
-    { params: { level: '3eme' } },
-  ];
+  return Object.values(siteData).map((level) => ({
+    params: { level: level.slug },
+  }));
 }
 
 const { level } = Astro.params;
