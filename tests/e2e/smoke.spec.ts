@@ -27,20 +27,13 @@ test.describe('Smoke : pages sans erreur console', () => {
       const errors: string[] = [];
       page.on('console', (msg) => {
         // Bruit interne Chromium (Compute Pressure API), indépendant du site.
-        if (msg.type() !== 'error' || msg.text().includes('compute-pressure')) return;
-        // Vignette YouTube 404 (vidéo supprimée) : déjà ignorée côté réseau ci-dessous,
-        // mais Chromium la remonte aussi en console avec un message sans URL.
-        const failedUrl = msg.location().url;
-        if (failedUrl.includes('i.ytimg.com') && msg.text().includes('Failed to load resource')) {
-          return;
+        if (msg.type() === 'error' && !msg.text().includes('compute-pressure')) {
+          errors.push(msg.text());
         }
-        errors.push(msg.text());
       });
       page.on('pageerror', (err) => errors.push(String(err)));
       page.on('response', (res) => {
-        // Les vignettes YouTube (i.ytimg.com) peuvent renvoyer 404 pour une vidéo
-        // supprimée : géré par la façade, ce n'est pas une erreur du site.
-        if (res.status() >= 400 && !res.url().includes('i.ytimg.com')) {
+        if (res.status() >= 400) {
           errors.push(`HTTP ${res.status()} ${res.url()}`);
         }
       });
