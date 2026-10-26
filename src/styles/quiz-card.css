@@ -9,7 +9,7 @@
   --qc-text-soft: #e2e8f0;
   --qc-muted: #cbd5e1;
   --qc-accent: #38bdf8;
-  --qc-accent-strong: #0284c7;
+  --qc-accent-strong: var(--accent-sky-strong);
   --qc-accent-hover: #0369a1;
   --qc-badge: #e11d48;
   --qc-ok-bg: #064e3b;
