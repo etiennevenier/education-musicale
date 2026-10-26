@@ -1,0 +1,434 @@
+---
+import { relativeUrl } from '../utils/navigation';
+
+export interface DualAudioTrack {
+  /** Libellé court et lisible affiché sous la lettre A/B/C. */
+  label: string;
+  src: string;
+}
+
+interface Props {
+  tracks: DualAudioTrack[];
+  /** Nom accessible de la comparaison. */
+  label?: string;
+  /** Affiche le bouton de lecture simultanée de toutes les pistes (opt-in). */
+  showSimultaneousButton?: boolean;
+  /** Nuance visuelle du bloc (0, 1 ou 2) pour distinguer les comparaisons. */
+  tone?: 0 | 1 | 2;
+}
+
+const {
+  tracks,
+  label = 'Comparaison audio',
+  showSimultaneousButton = false,
+  tone = 0,
+} = Astro.props;
+
+// Astro est configuré avec un base path (/education-musicale) : les fichiers de
+// public/ sont donc servis sous ce préfixe. On le rajoute aux chemins relatifs.
+const resolvedTracks = tracks.map((track: DualAudioTrack) => ({
+  ...track,
+  src: /^([a-z]+:)?\/\//i.test(track.src) ? track.src : relativeUrl(track.src),
+}));
+
+const letters = resolvedTracks.map((_: DualAudioTrack, index: number) => String.fromCharCode(65 + index));
+const groupLabel = `Play ${letters.join(' + ')}`;
+---
+
+<section class="dual-player" data-dual-player data-tone={tone} aria-label={label}>
+  <div class="dual-grid">
+    {resolvedTracks.map((track: DualAudioTrack, index: number) => {
+      const letter = letters[index];
+      return (
+        <article class="dual-card" data-card data-letter={letter} data-label={track.label}>
+          <audio src={track.src} preload="metadata" data-audio></audio>
+
+          <div class="dual-card-head">
+            <span class="dual-letter" aria-hidden="true">{letter}</span>
+            <p class="dual-label">{track.label}</p>
+          </div>
+
+          <div class="dual-track">
+            <span class="dual-rail" aria-hidden="true"></span>
+            <span class="dual-fill" data-fill aria-hidden="true"></span>
+            <input
+              class="dual-range"
+              type="range"
+              min="0"
+              max="100"
+              step="any"
+              value="0"
+              data-range
+              aria-label={`Progression — ${track.label}`}
+            />
+            <button
+              class="dual-marker"
+              type="button"
+              data-marker
+              hidden
+              aria-label={`Revenir au repère — ${track.label}`}
+            ></button>
+          </div>
+
+          <div class="dual-times">
+            <span data-current>0:00</span>
+            <span data-duration>0:00</span>
+          </div>
+
+          <div class="dual-controls">
+            <button
+              class="dual-play"
+              type="button"
+              data-play
+              aria-label={`Lire ${track.label}`}
+            >▶</button>
+            <button class="dual-ghost" type="button" data-cue>Repère</button>
+            <button class="dual-ghost" type="button" data-reset disabled>Reset</button>
+            <span class="dual-cue-time" data-cue-time hidden></span>
+          </div>
+        </article>
+      );
+    })}
+  </div>
+
+  {showSimultaneousButton && (
+    <div class="dual-actions">
+      <button class="dual-all" type="button" data-play-all>{groupLabel}</button>
+    </div>
+  )}
+</section>
+
+<script>
+  import { initDualPlayers } from '../utils/dualPlayer';
+
+  initDualPlayers();
+</script>
+
+<style>
+  .dual-player {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0.9rem;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    border-radius: 16px;
+    background: rgba(30, 41, 59, 0.35);
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  /* Filet d'accent discret, décliné selon la teinte du bloc. */
+  .dual-player::before {
+    content: '';
+    position: absolute;
+    top: 1rem;
+    bottom: 1rem;
+    left: 0;
+    width: 3px;
+    border-radius: 0 9999px 9999px 0;
+    background: rgba(148, 163, 184, 0.35);
+  }
+
+  .dual-player[data-tone='1'] {
+    border-color: rgba(56, 189, 248, 0.2);
+    background: rgba(12, 74, 110, 0.22);
+  }
+
+  .dual-player[data-tone='1']::before {
+    background: rgba(56, 189, 248, 0.5);
+  }
+
+  .dual-player[data-tone='2'] {
+    border-color: rgba(148, 163, 184, 0.22);
+    background: rgba(71, 85, 105, 0.24);
+  }
+
+  .dual-player[data-tone='2']::before {
+    background: rgba(148, 163, 184, 0.5);
+  }
+
+  .dual-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+
+  .dual-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .dual-player[data-tone='1'] .dual-card {
+    background: #1b2b3f;
+    border-color: #31485f;
+  }
+
+  .dual-player[data-tone='2'] .dual-card {
+    background: #212f3f;
+    border-color: #3a4859;
+  }
+
+  .dual-card.is-playing {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 1px #38bdf8, 0 0 18px rgba(56, 189, 248, 0.2);
+  }
+
+  .dual-card-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+
+  .dual-letter {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: #0284c7;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    border-radius: 6px;
+    box-shadow: inset 0 0 0 1px rgba(186, 230, 253, 0.45);
+  }
+
+  .dual-label {
+    margin: 0;
+    color: #f1f5f9;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .dual-track {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 1.25rem;
+    /* Doit correspondre à la taille réelle du pouce pour aligner le repère. */
+    --thumb-size: 14px;
+  }
+
+  .dual-rail,
+  .dual-fill {
+    position: absolute;
+    top: 50%;
+    height: 6px;
+    border-radius: 9999px;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .dual-rail {
+    left: calc(var(--thumb-size) / 2);
+    right: calc(var(--thumb-size) / 2);
+    background: #334155;
+  }
+
+  .dual-fill {
+    left: calc(var(--thumb-size) / 2);
+    width: 0;
+    background: #38bdf8;
+  }
+
+  .dual-range {
+    -webkit-appearance: none;
+    appearance: none;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 20px;
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+    outline: none;
+  }
+
+  .dual-range::-webkit-slider-runnable-track {
+    background: transparent;
+    border: 0;
+  }
+
+  .dual-range::-moz-range-track {
+    background: transparent;
+    border: 0;
+  }
+
+  .dual-range::-moz-range-progress {
+    height: 0;
+    background: transparent;
+  }
+
+  .dual-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    box-sizing: border-box;
+    width: var(--thumb-size);
+    height: var(--thumb-size);
+    border-radius: 50%;
+    background: #38bdf8;
+    border: 2px solid #0f172a;
+    cursor: pointer;
+  }
+
+  .dual-range::-moz-range-thumb {
+    box-sizing: border-box;
+    width: var(--thumb-size);
+    height: var(--thumb-size);
+    border-radius: 50%;
+    background: #38bdf8;
+    border: 2px solid #0f172a;
+    cursor: pointer;
+  }
+
+  .dual-range:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 4px;
+  }
+
+  .dual-marker {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    box-sizing: border-box;
+    width: var(--thumb-size);
+    height: var(--thumb-size);
+    padding: 0;
+    border: 2px solid #f8fafc;
+    border-radius: 50%;
+    background: #0284c7;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.45), 0 0 10px rgba(56, 189, 248, 0.6);
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+  }
+
+  .dual-marker:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 3px;
+  }
+
+  .dual-times {
+    display: flex;
+    justify-content: space-between;
+    color: #94a3b8;
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dual-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .dual-play {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #0284c7;
+    color: #ffffff;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+
+  .dual-play:hover {
+    background: #0ea5e9;
+  }
+
+  .dual-play:active {
+    transform: scale(0.94);
+  }
+
+  .dual-play:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 2px;
+  }
+
+  .dual-ghost {
+    min-height: 36px;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid #334155;
+    border-radius: 9999px;
+    background: transparent;
+    color: #94a3b8;
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+
+  .dual-ghost:hover:not(:disabled) {
+    border-color: #38bdf8;
+    color: #f1f5f9;
+  }
+
+  .dual-ghost:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .dual-ghost:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 2px;
+  }
+
+  .dual-cue-time {
+    color: #38bdf8;
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dual-actions {
+    display: flex;
+    justify-content: center;
+  }
+
+  .dual-all {
+    padding: 0.65rem 1.4rem;
+    border: 0;
+    border-radius: 9999px;
+    background: #0284c7;
+    color: #ffffff;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+
+  .dual-all:hover {
+    background: #0ea5e9;
+  }
+
+  .dual-all:active {
+    transform: scale(0.97);
+  }
+
+  .dual-all:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 560px) {
+    .dual-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
