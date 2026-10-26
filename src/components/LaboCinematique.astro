@@ -1,69 +1,8 @@
 ---
 import { relativeUrl } from '../utils/navigation';
 
-interface LaboGif {
-  id: 'triste' | 'joyeux' | 'neutre';
-  /** Texte alternatif neutre : ne doit pas révéler l'émotion du visuel. */
-  alt: string;
-  file: string;
-}
+import { gifs, musics, analyses } from '../data/laboCinematiqueData';
 
-interface LaboMusic {
-  id: 'triste' | 'joyeuse' | 'drole';
-  file: string;
-}
-
-interface LaboAnalysis {
-  id: 'empathique' | 'anempathique' | 'narrative';
-  label: string;
-  desc: string;
-  icon: string;
-}
-
-const gifs: LaboGif[] = [
-  {
-    id: 'triste',
-    alt: 'Visuel 1',
-    file: 'giftriste.gif',
-  },
-  {
-    id: 'joyeux',
-    alt: 'Visuel 2',
-    file: 'gifjoyeux.gif',
-  },
-  {
-    id: 'neutre',
-    alt: 'Visuel 3',
-    file: 'gifneutre.gif',
-  },
-];
-
-const musics: LaboMusic[] = [
-  { id: 'triste', file: 'musiquetriste.mp3' },
-  { id: 'joyeuse', file: 'musiquejoyeuse.mp3' },
-  { id: 'drole', file: 'musiquedrole.mp3' },
-];
-
-const analyses: LaboAnalysis[] = [
-  {
-    id: 'empathique',
-    label: 'Musique empathique',
-    desc: "La musique renforce l'émotion de la scène.",
-    icon: '💙',
-  },
-  {
-    id: 'anempathique',
-    label: 'Musique anempathique',
-    desc: "La musique contraste avec l'émotion du visuel.",
-    icon: '⚡',
-  },
-  {
-    id: 'narrative',
-    label: 'Musique narrative',
-    desc: "La musique sert à donner le ton et l'émotion d'une scène, y compris une scène neutre à la base.",
-    icon: '🏞️',
-  },
-];
 ---
 
 <section class="labo" id="cinemaLabo" aria-labelledby="laboTitle">
@@ -90,18 +29,37 @@ const analyses: LaboAnalysis[] = [
               type="button"
               class="labo-gif"
               data-gif={gif.id}
+              data-kind={gif.kind}
+              data-alt={gif.alt}
+              data-src={relativeUrl(`/cinema/${gif.file}`)}
               draggable="true"
               aria-pressed="false"
             >
-              <img
-                src={relativeUrl(`/cinema/${gif.file}`)}
-                alt={gif.alt}
-                width="320"
-                height="180"
-                loading="lazy"
-                decoding="async"
-                draggable="false"
-              />
+              {gif.kind === 'video' ? (
+                <video
+                  src={relativeUrl(`/cinema/${gif.file}`)}
+                  aria-label={gif.alt}
+                  width="320"
+                  height="180"
+                  muted
+                  loop
+                  autoplay
+                  playsinline
+                  preload="metadata"
+                  disablepictureinpicture
+                  draggable="false"
+                />
+              ) : (
+                <img
+                  src={relativeUrl(`/cinema/${gif.file}`)}
+                  alt={gif.alt}
+                  width="320"
+                  height="180"
+                  loading="lazy"
+                  decoding="async"
+                  draggable="false"
+                />
+              )}
               <span class="labo-gif-check" aria-hidden="true">✓</span>
             </button>
           ))}
@@ -150,6 +108,15 @@ const analyses: LaboAnalysis[] = [
           Glisse un GIF ici ou clique sur un visuel
         </p>
         <img class="labo-screen-img" id="laboScreenImg" alt="" hidden />
+        <video
+          class="labo-screen-img"
+          id="laboScreenVideo"
+          muted
+          loop
+          playsinline
+          disablepictureinpicture
+          hidden
+        ></video>
         <span class="labo-screen-rec" id="laboScreenRec" hidden>
           <span class="labo-rec-dot" aria-hidden="true"></span> Montage en cours
         </span>
@@ -229,10 +196,18 @@ const analyses: LaboAnalysis[] = [
 <script>
   import { onAudioEvent, playAudio, stopAudio } from '../utils/audioManager';
   import { shuffle } from '../utils/random';
-
-  type GifId = 'triste' | 'joyeux' | 'neutre';
-  type MusicId = 'triste' | 'joyeuse' | 'drole';
-  type AnalysisId = 'empathique' | 'anempathique' | 'narrative';
+  import {
+    analysisNames,
+    asAnalysisId,
+    asGifId,
+    asMusicId,
+    explanations,
+    getCorrectAnalysis,
+    pairNotes,
+    type AnalysisId,
+    type GifId,
+    type MusicId,
+  } from '../data/laboCinematiqueData';
 
   interface DraggedItem {
     type: 'gif' | 'music';
@@ -252,6 +227,8 @@ const analyses: LaboAnalysis[] = [
     const screen = $<HTMLDivElement>('laboScreen');
     const screenEmpty = $<HTMLParagraphElement>('laboScreenEmpty');
     const screenImg = $<HTMLImageElement>('laboScreenImg');
+    const screenVideo = $<HTMLVideoElement>('laboScreenVideo');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const screenRec = $<HTMLSpanElement>('laboScreenRec');
     const screenClear = $<HTMLButtonElement>('laboScreenClear');
     const audioSlot = $<HTMLDivElement>('laboAudio');
@@ -268,21 +245,6 @@ const analyses: LaboAnalysis[] = [
     const feedbackTitle = $<HTMLParagraphElement>('laboFeedbackTitle');
     const feedbackText = $<HTMLParagraphElement>('laboFeedbackText');
 
-    const analysisNames: Record<AnalysisId, string> = {
-      empathique: 'Musique empathique',
-      anempathique: 'Musique anempathique',
-      narrative: 'Musique narrative',
-    };
-
-    const explanations: Record<AnalysisId, string> = {
-      empathique:
-        "La musique et l'image expriment la même émotion : la musique renforce ce que l'on ressent devant la scène.",
-      anempathique:
-        "La musique contredit l'émotion du visuel : ce contraste crée une distance, un décalage ou un effet comique.",
-      narrative:
-        "La musique donne le ton et l'émotion de la scène, même quand rien dans le visuel ne l'indique. Elle raconte l'ambiance, le lieu ou l'action.",
-    };
-
     let selectedGif: GifId | null = null;
     let selectedMusic: MusicId | null = null;
     let selectedAnalysis: AnalysisId | null = null;
@@ -290,15 +252,6 @@ const analyses: LaboAnalysis[] = [
     let hasLaunched = false;
     let playToken = 0;
     let draggedItem: DraggedItem | null = null;
-
-    const asGifId = (value: string | undefined): GifId | null =>
-      value === 'triste' || value === 'joyeux' || value === 'neutre' ? value : null;
-
-    const asMusicId = (value: string | undefined): MusicId | null =>
-      value === 'triste' || value === 'joyeuse' || value === 'drole' ? value : null;
-
-    const asAnalysisId = (value: string | undefined): AnalysisId | null =>
-      value === 'empathique' || value === 'anempathique' || value === 'narrative' ? value : null;
 
     /**
      * Mélange l'ordre des extraits à chaque chargement de page.
@@ -319,41 +272,13 @@ const analyses: LaboAnalysis[] = [
 
     shuffleTracks();
 
+    if (reduceMotion) {
+      root.querySelectorAll<HTMLVideoElement>('video').forEach((video) => video.pause());
+    }
+
     const findGifButton = (id: GifId) => gifButtons.find((button) => button.dataset.gif === id);
     const findTrackButton = (id: MusicId) =>
       trackButtons.find((button) => button.dataset.music === id);
-    const pairNotes: Record<string, string> = {
-      'triste|triste':
-        "Ici, la musique et le visuel vont dans le même sens : l'émotion de la scène est renforcée.",
-      'joyeux|joyeuse':
-        "Ici, la musique et le visuel se renforcent : l'énergie de la scène est décuplée.",
-      'joyeux|drole':
-        "Ici, la musique et le visuel partagent le même registre comique : le comique est renforcé.",
-      'triste|joyeuse':
-        'Ici, la musique joyeuse sur ce visuel crée un net contraste : le spectateur ressent un décalage.',
-      'triste|drole':
-        'Ici, la musique drôle sur ce visuel produit un effet de contraste, parfois grinçant.',
-      'joyeux|triste':
-        'Ici, la musique triste sur ce visuel crée un contraste inattendu.',
-      'neutre|triste':
-        "Ici, rien dans le visuel n'impose une émotion : la musique triste donne à elle seule le ton de la scène.",
-      'neutre|joyeuse':
-        "Ici, rien dans le visuel n'impose une émotion : la musique joyeuse donne à elle seule le ton de la scène.",
-      'neutre|drole':
-        "Ici, rien dans le visuel n'impose une émotion : la musique drôle donne à elle seule le ton de la scène.",
-    };
-
-    /**
-     * Fonction de la musique attendue pour une association donnée.
-     * - GIF neutre : narrative, quelle que soit la musique ;
-     * - GIF triste + musique triste, ou GIF joyeux + musique joyeuse/drôle : empathique ;
-     * - toutes les autres combinaisons : anempathique (contraste).
-     */
-    const getCorrectAnalysis = (gif: GifId, music: MusicId): AnalysisId => {
-      if (gif === 'neutre') return 'narrative';
-      if (gif === 'triste') return music === 'triste' ? 'empathique' : 'anempathique';
-      return music === 'triste' ? 'anempathique' : 'empathique';
-    };
 
     const clearFeedback = () => {
       feedback.hidden = true;
@@ -389,21 +314,34 @@ const analyses: LaboAnalysis[] = [
       });
 
       const gifButton = selectedGif ? findGifButton(selectedGif) : undefined;
-      const gifImg = gifButton?.querySelector('img');
+      const gifSrc = gifButton?.dataset.src ?? '';
+      const isVideo = gifButton?.dataset.kind === 'video';
       screen.dataset.filled = selectedGif ? 'true' : 'false';
       screenEmpty.hidden = Boolean(selectedGif);
       screenClear.hidden = !selectedGif;
-      screenImg.hidden = !selectedGif;
+      screenImg.hidden = !gifSrc || isVideo;
+      screenVideo.hidden = !gifSrc || !isVideo;
 
-      if (selectedGif && gifImg) {
-        const nextSrc = gifImg.getAttribute('src') ?? '';
-        if (nextSrc && screenImg.getAttribute('src') !== nextSrc) {
-          screenImg.src = nextSrc;
-          screenImg.alt = gifImg.getAttribute('alt') ?? '';
+      if (gifSrc && !isVideo) {
+        if (screenImg.getAttribute('src') !== gifSrc) {
+          screenImg.src = gifSrc;
+          screenImg.alt = gifButton?.dataset.alt ?? '';
         }
       } else {
         screenImg.removeAttribute('src');
         screenImg.alt = '';
+      }
+
+      if (gifSrc && isVideo) {
+        if (screenVideo.getAttribute('src') !== gifSrc) {
+          screenVideo.src = gifSrc;
+          screenVideo.setAttribute('aria-label', gifButton?.dataset.alt ?? '');
+        }
+        if (!reduceMotion) void screenVideo.play().catch(() => {});
+      } else if (screenVideo.hasAttribute('src')) {
+        screenVideo.pause();
+        screenVideo.removeAttribute('src');
+        screenVideo.load();
       }
 
       const trackButton = selectedMusic ? findTrackButton(selectedMusic) : undefined;
@@ -878,7 +816,8 @@ const analyses: LaboAnalysis[] = [
     opacity: 0.55;
   }
 
-  .labo-gif img {
+  .labo-gif img,
+  .labo-gif video {
     display: block;
     width: 100%;
     aspect-ratio: 16 / 9;
@@ -1401,7 +1340,8 @@ const analyses: LaboAnalysis[] = [
       grid-column: 1 / -1;
     }
 
-    .labo-gif:last-child img {
+    .labo-gif:last-child img,
+    .labo-gif:last-child video {
       aspect-ratio: 21 / 9;
     }
 

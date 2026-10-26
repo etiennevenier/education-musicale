@@ -1,3 +1,4 @@
+import { QUIZ_LABELS } from './quizConfig';
 export type QuizResultTier = 'perfect' | 'great' | 'ok' | 'retry';
 
 /**
@@ -47,8 +48,8 @@ export function buildResultHtml({
   score,
   total,
   restartId,
-  title = 'Partie terminée !',
-  restartLabel = '🔄 Recommencer',
+  title = QUIZ_LABELS.resultTitle,
+  restartLabel = QUIZ_LABELS.restart,
 }: ResultHtmlOptions): string {
   return `
     <div class="result-emoji">${emoji}</div>

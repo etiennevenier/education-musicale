@@ -41,7 +41,7 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
 
 <script>
   import { shuffle } from '../utils/random';
-  import { getResultTier } from '../utils/quiz';
+  import { makeResultMessages, renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
   import {
     ostinatoQuestions,
     OSTINATO_QUESTIONS_PER_GAME,
@@ -70,7 +70,6 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
   };
 
   // Passage automatique à la question suivante après une bonne réponse.
-  const AUTO_NEXT_DELAY = 1400;
 
   const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -91,6 +90,7 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
   let isAnswered = false;
   let currentQuestion: OstinatoQuestion | null = null;
   let btnPlay: HTMLButtonElement | null = null;
+  let autoPlayEnabled = false;
   let autoNextTimer: ReturnType<typeof setTimeout> | null = null;
 
   function clearAutoNext() {
@@ -141,17 +141,14 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
   }
 
   function updateProgress() {
-    const total = queue.length;
-    progressLabel.textContent = `Question ${questionIndex + 1} / ${total}`;
-    scoreLabel.textContent = `Score : ${score} / ${total}`;
-    const done = questionIndex + (isAnswered ? 1 : 0);
-    progressFill.style.width = `${total ? (done / total) * 100 : 0}%`;
+    renderProgress(
+      { progressLabel, scoreLabel, progressFill },
+      { unit: 'question', index: questionIndex, total: queue.length, score, answered: isAnswered },
+    );
   }
 
   function updateNextButton() {
-    const isLast = questionIndex >= queue.length - 1;
-    btnNext.textContent = isLast ? '🏁 Voir mon score' : 'Question Suivante ➔';
-    btnNext.disabled = !isAnswered;
+    renderNextButton(btnNext, { unit: 'question', isLast: questionIndex >= queue.length - 1, answered: isAnswered });
   }
 
   function formatAnswer(question: OstinatoQuestion): string {
@@ -175,7 +172,7 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
       score += 1;
       quizFeedback.textContent = successMessage(currentQuestion);
       quizFeedback.className = 'feedback-msg success';
-      autoNextTimer = setTimeout(goToNext, AUTO_NEXT_DELAY);
+      autoNextTimer = scheduleAutoNext(goToNext, quizFeedback.textContent ?? '');
     } else {
       quizFeedback.textContent = `❌ Dommage ! La bonne réponse était : ${formatAnswer(currentQuestion)}.`;
       quizFeedback.className = 'feedback-msg error';
@@ -294,6 +291,7 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
     `;
     btnPlay = $<HTMLButtonElement>('ostinatoBtnPlay');
     btnPlay.addEventListener('click', togglePlay);
+    if (autoPlayEnabled) togglePlay();
 
     optionsContainer.innerHTML = '';
 
@@ -335,46 +333,34 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
       showResult();
     } else {
       questionIndex += 1;
+      autoPlayEnabled = true;
       loadQuestion();
     }
   }
 
-  function getResultMessage(note: number, total: number) {
-    const tier = getResultTier(note, total);
-    switch (tier) {
-      case 'perfect':
-        return { emoji: '🏆', text: "Parfait ! Tu maîtrises l'ostinato sur le bout des doigts !" };
-      case 'great':
-        return { emoji: '🌟', text: 'Excellent ! Tu reconnais très bien les ostinatos et leurs répétitions.' };
-      case 'ok':
-        return { emoji: '👍', text: "Bien joué ! Continue à écouter pour compter les répétitions avec précision." };
-      default:
-        return { emoji: '💪', text: "Continue à t'entraîner : réécoute chaque extrait et repère bien le retour de l'ostinato." };
-    }
-  }
+  const RESULT_MESSAGES = makeResultMessages({
+      perfect: "Parfait ! Tu maîtrises l'ostinato sur le bout des doigts !",
+      great: "Excellent ! Tu reconnais très bien les ostinatos et leurs répétitions.",
+      ok: "Bien joué ! Continue à écouter pour compter les répétitions avec précision.",
+      retry: "Continue à t'entraîner : réécoute chaque extrait et repère bien le retour de l'ostinato.",
+    });
 
   function showResult() {
     clearAutoNext();
     stopAudio();
-
-    const total = queue.length;
-    const { emoji, text } = getResultMessage(score, total);
-
-    progressBox.classList.add('hidden');
-    questionContainer.classList.add('hidden');
-    optionsContainer.classList.add('hidden');
-    actionFooter.classList.add('hidden');
-    quizFeedback.className = 'feedback-msg hidden';
-
-    resultContainer.innerHTML = `
-      <div class="result-emoji">${emoji}</div>
-      <p class="result-title">Partie terminée !</p>
-      <p class="result-score"><span class="result-note">${score}</span> / ${total}</p>
-      <p class="result-text">${text}</p>
-      <button id="ostinatoBtnRestart" class="btn-restart">🔄 Recommencer</button>
-    `;
-    resultContainer.classList.remove('hidden');
-    $<HTMLButtonElement>('ostinatoBtnRestart').addEventListener('click', startGame);
+    showQuizResult({
+      hide: [progressBox, questionContainer, optionsContainer, actionFooter],
+      feedback: quizFeedback,
+      container: resultContainer,
+      score,
+      total: queue.length,
+      messages: RESULT_MESSAGES,
+      restartId: 'ostinatoBtnRestart',
+      onRestart: () => {
+        autoPlayEnabled = true;
+        startGame();
+      },
+    });
   }
 
   // --- Événements ---------------------------------------------------------
@@ -390,154 +376,50 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
   et ne reçoivent donc pas l'attribut de scope d'Astro.
 -->
 <style is:global>
-  .quiz-card .fuzeau-header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-  }
+  
 
-  .quiz-card .progress-text {
-    display: flex;
-    justify-content: space-between;
-    gap: 0.5rem;
-    color: #cbd5e1;
-    font-size: 0.85rem;
-    font-weight: 700;
-  }
+  
 
-  .quiz-card .question-container p:last-of-type {
-    margin-bottom: 0.9rem;
-  }
+  
 
-  .quiz-card .btn-play-sound {
-    background: #0284c7;
-    color: #fff;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 6px;
-    font-weight: 700;
-    font-size: 1rem;
-    cursor: pointer;
-  }
+  
 
-  .quiz-card .btn-play-sound:hover {
-    background: #0369a1;
-  }
+  
 
   /* --- Partie A : boutons de réponse --- */
-  .quiz-card .options-choice {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.75rem;
-    width: 100%;
-  }
+  
 
-  @container (min-width: 520px) {
-    .quiz-card .options-choice {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
+  
 
-  .quiz-card .btn-option {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 0;
-    min-height: 64px;
-    padding: 0.75rem 1rem;
-    background: #1e293b;
-    color: #f8fafc;
-    border: 2px solid #475569;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 700;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
+  
 
   /* --- Parties B et C : saisie du nombre de répétitions --- */
-  .quiz-card .options-number {
-    display: block;
-    width: 100%;
-  }
+  
 
-  .quiz-card .number-box {
-    width: 100%;
-  }
+  
 
-  .quiz-card .number-row {
-    display: flex;
-    gap: 0.5rem;
-    width: 100%;
-  }
+  
 
-  .quiz-card .number-input {
-    flex: 1;
-    min-width: 0;
-    background: #1e293b;
-    color: #f8fafc;
-    border: 2px solid #475569;
-    border-radius: 6px;
-    padding: 0.75rem 0.9rem;
-    font-size: 1rem;
-    font-weight: 700;
-    text-align: center;
-  }
+  
 
-  .quiz-card .number-input:focus {
-    outline: none;
-    border-color: #38bdf8;
-  }
+  
 
-  .quiz-card .number-input::placeholder {
-    color: #94a3b8;
-    font-weight: 400;
-  }
+  
 
-  .quiz-card .number-input:disabled {
-    opacity: 1;
-    cursor: default;
-  }
+  
 
-  .quiz-card .number-input.correct {
-    background: #064e3b;
-    border-color: #10b981;
-    color: #a7f3d0;
-  }
+  
 
-  .quiz-card .number-input.incorrect {
-    background: #881337;
-    border-color: #f43f5e;
-    color: #fecdd3;
-  }
+  
 
-  .quiz-card .btn-validate {
-    background: #0284c7;
-    color: #fff;
-    border: none;
-    padding: 0 1.25rem;
-    border-radius: 6px;
-    font-weight: 700;
-    font-size: 1rem;
-    cursor: pointer;
-  }
+  
 
-  .quiz-card .btn-validate:hover:not(:disabled) {
-    background: #0369a1;
-  }
+  
 
-  .quiz-card .btn-validate:disabled {
-    opacity: 0.5;
-    cursor: default;
-  }
+  
 
   /* --- Navigation et feedback --- */
-  .quiz-card .feedback-msg.warning {
-    background: #78350f;
-    color: #fde68a;
-  }
+  
 
   /* --- Écran de résultat --- */
   </style>

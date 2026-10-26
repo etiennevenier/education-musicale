@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fuzeauInstruments } from '../data/fuzeauInstruments';
 import { relativeUrl } from '../utils/navigation';
+import '../styles/quiz-card.css';
 
 const QUESTIONS_PER_GAME = 10;
 
@@ -72,7 +73,7 @@ const chorusGameData = {
 };
 ---
 
-<section class="jazz-chorus-card" id="jazz-chorus-quiz" aria-labelledby="jc-title">
+<section class="quiz-card jazz-chorus-card" id="jazz-chorus-quiz" aria-labelledby="jc-title">
   <div
     id="jcGameData"
     data-game={JSON.stringify(chorusGameData)}
@@ -80,12 +81,12 @@ const chorusGameData = {
     aria-hidden="true"
   ></div>
 
-  <div class="jc-header">
-    <span class="jc-badge">Jeu d'écoute</span>
+  <div class="fuzeau-header">
+    <span class="badge">Jeu d'écoute</span>
     <h4 id="jc-title">Quel instrument fait le chorus ?</h4>
   </div>
 
-  <p class="jc-instruction" id="jcInstruction">
+  <p class="quiz-intro" id="jcInstruction">
     Écoute 10 extraits de jazz et identifie l'instrument qui improvise le chorus. Tape les
     premières lettres du nom, puis choisis dans la liste.
   </p>
@@ -95,13 +96,13 @@ const chorusGameData = {
   </p>
 
   <div id="jcGame" class="jc-game hidden">
-    <div class="jc-progress-box">
-      <div class="jc-progress-text">
+    <div class="progress-box">
+      <div class="progress-text">
         <span id="jcProgressLabel">Extrait 1 / 10</span>
-        <span id="jcScoreLabel" class="jc-score-label">Score : 0 / 10</span>
+        <span id="jcScoreLabel" class="score-label">Score : 0 / 10</span>
       </div>
-      <div class="jc-progress-bar">
-        <div id="jcProgressFill" class="jc-progress-fill"></div>
+      <div class="progress-bar">
+        <div id="jcProgressFill" class="progress-fill"></div>
       </div>
     </div>
 
@@ -148,19 +149,20 @@ const chorusGameData = {
       </button>
     </div>
 
-    <div id="jcFeedback" class="jc-feedback hidden" aria-live="polite"></div>
+    <div id="jcFeedback" class="feedback-msg hidden" aria-live="polite"></div>
 
-    <div class="jc-action-footer">
-      <button id="jcNextBtn" class="jc-btn-next hidden" type="button">
+    <div class="action-footer">
+      <button id="jcNextBtn" class="btn-next hidden" type="button">
         Extrait suivant ➔
       </button>
     </div>
   </div>
 
-  <div id="jcResult" class="jc-result hidden" aria-live="polite"></div>
+  <div id="jcResult" class="result-container hidden" aria-live="polite"></div>
 </section>
 
 <script>
+  import { makeResultMessages, renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
   import { shuffle } from '../utils/random';
   import {
     getAudioState,
@@ -220,6 +222,14 @@ const chorusGameData = {
     let activeSuggestionIndex = -1;
     let visibleSuggestions: string[] = [];
     let hideSuggestionsTimer: number | null = null;
+    let autoNextTimer: ReturnType<typeof setTimeout> | null = null;
+
+    function clearAutoNext() {
+      if (autoNextTimer) {
+        clearTimeout(autoNextTimer);
+        autoNextTimer = null;
+      }
+    }
 
     function setHidden(element: HTMLElement, hidden: boolean) {
       element.classList.toggle('hidden', hidden);
@@ -242,11 +252,10 @@ const chorusGameData = {
     }
 
     function updateProgress() {
-      const total = queue.length;
-      progressLabel.textContent = `Extrait ${questionIndex + 1} / ${total}`;
-      scoreLabel.textContent = `Score : ${score} / ${total}`;
-      const done = questionIndex + (isAnswered ? 1 : 0);
-      progressFill.style.width = `${total > 0 ? (done / total) * 100 : 0}%`;
+      renderProgress(
+        { progressLabel, scoreLabel, progressFill },
+        { unit: 'extrait', index: questionIndex, total: queue.length, score, answered: isAnswered },
+      );
     }
 
     function hideSuggestions() {
@@ -329,6 +338,7 @@ const chorusGameData = {
 
     function loadQuestion(focusInput = false) {
       if (queue.length === 0) return;
+      clearAutoNext();
       isAnswered = false;
       selectedInstrument = '';
       input.disabled = false;
@@ -336,7 +346,7 @@ const chorusGameData = {
       hideSuggestions();
       validateButton.disabled = true;
       feedback.textContent = '';
-      feedback.className = 'jc-feedback hidden';
+      feedback.className = 'feedback-msg hidden';
       setHidden(nextButton, true);
       stopAudio();
       resetPlayButton();
@@ -384,48 +394,44 @@ const chorusGameData = {
       validateButton.disabled = true;
       hideSuggestions();
 
-      feedback.className = isCorrect ? 'jc-feedback correct' : 'jc-feedback incorrect';
+      feedback.className = isCorrect ? 'feedback-msg success' : 'feedback-msg error';
       feedback.textContent = isCorrect
-        ? `✅ Valide ! C'était bien : ${expected}.`
-        : `❌ Erreur. Le bon instrument était : ${expected}.`;
+        ? `✨ Bravo ! C'est bien : ${expected}.`
+        : `❌ Dommage ! La bonne réponse était : ${expected}.`;
       setHidden(feedback, false);
 
-      nextButton.textContent =
-        questionIndex + 1 >= queue.length ? 'Voir le bilan ➔' : 'Extrait suivant ➔';
+      renderNextButton(nextButton, { unit: 'extrait', isLast: questionIndex + 1 >= queue.length, answered: true });
       setHidden(nextButton, false);
       updateProgress();
       nextButton.focus();
+      if (isCorrect) {
+        autoNextTimer = scheduleAutoNext(() => nextButton.click(), feedback.textContent ?? '');
+      }
     }
 
+    const RESULT_MESSAGES = makeResultMessages({
+        perfect: "Parfait ! Tu reconnais tous les instruments du chorus.",
+        great: "Très bien ! Encore quelques écoutes pour viser le sans-faute.",
+        ok: "Pas mal ! Réécoute les extraits pour affiner ton oreille.",
+        retry: "Continue à écouter : le timbre des instruments va vite devenir familier.",
+      });
+    
     function showResult() {
+      clearAutoNext();
       stopAudio();
-      setHidden(gameContainer, true);
-      setHidden(resultContainer, false);
-
-      const total = queue.length;
-      const ratio = total > 0 ? score / total : 0;
-      const emoji = ratio === 1 ? '🏆' : ratio >= 0.7 ? '🎉' : ratio >= 0.5 ? '👍' : '🎧';
-      const message =
-        ratio === 1
-          ? 'Parfait ! Tu reconnais tous les instruments du chorus.'
-          : ratio >= 0.7
-            ? 'Très bien ! Encore quelques écoutes pour viser le sans-faute.'
-            : ratio >= 0.5
-              ? 'Pas mal ! Réécoute les extraits pour affiner ton oreille.'
-              : "Continue à écouter : le timbre des instruments va vite devenir familier.";
-
-      resultContainer.innerHTML = `
-        <div class="jc-result-emoji">${emoji}</div>
-        <p class="jc-result-title">Bilan du jeu d'écoute</p>
-        <p class="jc-result-score">Note : ${score} / ${total}</p>
-        <p class="jc-result-text">${message}</p>
-        <button id="jcRestartBtn" class="jc-btn-restart" type="button">Rejouer</button>
-      `;
-
-      const restartButton = document.getElementById('jcRestartBtn') as HTMLButtonElement | null;
-      restartButton?.addEventListener('click', () => {
-        startGame();
-        input.focus();
+      showQuizResult({
+        hide: [gameContainer],
+        feedback,
+        container: resultContainer,
+        score,
+        total: queue.length,
+        messages: RESULT_MESSAGES,
+        restartId: 'jcRestartBtn',
+        onRestart: () => {
+          startGame();
+          input.focus();
+          void playAudio(queue[0].audioUrl);
+        },
       });
     }
 
@@ -552,12 +558,14 @@ const chorusGameData = {
     validateButton.addEventListener('click', validateAnswer);
 
     nextButton.addEventListener('click', () => {
+      clearAutoNext();
       if (questionIndex + 1 >= queue.length) {
         showResult();
         return;
       }
       questionIndex += 1;
       loadQuestion(true);
+      void playAudio(queue[questionIndex].audioUrl);
     });
 
     document.addEventListener('click', (event) => {
@@ -575,57 +583,13 @@ const chorusGameData = {
     bouton « Rejouer » sont créés dynamiquement et ne recevraient pas les styles
     « scoped » d'Astro.
   */
-  .jazz-chorus-card {
+  .quiz-card.jazz-chorus-card {
     margin-top: 1.75rem;
-    background: #0f172a;
-    border: 1px solid #334155;
-    border-radius: 12px;
-    padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-    max-width: 100%;
-    box-sizing: border-box;
-    color: #f1f5f9;
+    /* La liste de suggestions déborde de la carte : pas de rognage. */
+    overflow: visible;
   }
 
-  .jazz-chorus-card * {
-    box-sizing: border-box;
-  }
-
-  .jazz-chorus-card .hidden {
-    display: none !important;
-  }
-
-  .jazz-chorus-card .jc-header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-  }
-
-  .jazz-chorus-card .jc-badge {
-    background: #0d9488;
-    color: #ffffff;
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
-  }
-
-  .jazz-chorus-card .jc-header h4 {
-    margin: 0;
-    color: #f1f5f9;
-    font-size: 1.1rem;
-  }
-
-  .jazz-chorus-card .jc-instruction {
-    margin: 0;
-    color: #94a3b8;
-    font-size: 0.9rem;
-    line-height: 1.5;
-  }
+  
 
   .jazz-chorus-card .jc-empty {
     margin: 0;
@@ -641,40 +605,6 @@ const chorusGameData = {
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
-  }
-
-  .jazz-chorus-card .jc-progress-box {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-  }
-
-  .jazz-chorus-card .jc-progress-text {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    color: #cbd5e1;
-    font-size: 0.85rem;
-    font-weight: 700;
-  }
-
-  .jazz-chorus-card .jc-score-label {
-    color: #38bdf8;
-  }
-
-  .jazz-chorus-card .jc-progress-bar {
-    height: 8px;
-    background: #1e293b;
-    border-radius: 999px;
-    overflow: hidden;
-  }
-
-  .jazz-chorus-card .jc-progress-fill {
-    height: 100%;
-    width: 0;
-    background: linear-gradient(90deg, #0284c7, #38bdf8);
-    border-radius: 999px;
-    transition: width 0.3s ease;
   }
 
   .jazz-chorus-card .jc-player {
@@ -827,93 +757,6 @@ const chorusGameData = {
     cursor: not-allowed;
   }
 
-  .jazz-chorus-card .jc-feedback {
-    padding: 0.75rem;
-    border-radius: 6px;
-    font-weight: 700;
-    text-align: center;
-    line-height: 1.45;
-  }
-
-  .jazz-chorus-card .jc-feedback.correct {
-    background: #064e3b;
-    color: #a7f3d0;
-  }
-
-  .jazz-chorus-card .jc-feedback.incorrect {
-    background: #881337;
-    color: #fecdd3;
-  }
-
-  .jazz-chorus-card .jc-action-footer {
-    display: flex;
-    justify-content: flex-end;
-  }
-
-  .jazz-chorus-card .jc-btn-next {
-    background: #334155;
-    color: #f1f5f9;
-    border: none;
-    padding: 0.6rem 1.2rem;
-    border-radius: 6px;
-    font: inherit;
-    font-weight: 700;
-    cursor: pointer;
-  }
-
-  .jazz-chorus-card .jc-btn-next:hover {
-    background: #475569;
-  }
-
-  .jazz-chorus-card .jc-result {
-    background: #1e293b;
-    border: 1px solid #334155;
-    border-radius: 8px;
-    padding: 2rem 1.25rem;
-    text-align: center;
-    color: #f1f5f9;
-  }
-
-  .jazz-chorus-card .jc-result-emoji {
-    font-size: 3rem;
-    line-height: 1;
-  }
-
-  .jazz-chorus-card .jc-result-title {
-    margin: 0.75rem 0 0.25rem;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #cbd5e1;
-  }
-
-  .jazz-chorus-card .jc-result-score {
-    margin: 0 0 0.5rem;
-    font-size: 1.6rem;
-    font-weight: 800;
-    color: #38bdf8;
-  }
-
-  .jazz-chorus-card .jc-result-text {
-    margin: 0 0 1.25rem;
-    color: #e2e8f0;
-  }
-
-  .jazz-chorus-card .jc-btn-restart {
-    background: #0284c7;
-    color: #ffffff;
-    border: none;
-    padding: 0.75rem 1.75rem;
-    border-radius: 6px;
-    font: inherit;
-    font-weight: 700;
-    font-size: 1rem;
-    cursor: pointer;
-  }
-
-  .jazz-chorus-card .jc-btn-restart:hover {
-    background: #0369a1;
-  }
-
   @media (max-width: 600px) {
     .jazz-chorus-card .jc-answer {
       flex-direction: column;
@@ -924,15 +767,7 @@ const chorusGameData = {
       width: 100%;
     }
 
-    .jazz-chorus-card .jc-progress-text {
-      flex-direction: column;
-      gap: 0.15rem;
-    }
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .jazz-chorus-card .jc-progress-fill {
-      transition: none;
-    }
-  }
+  
 </style>

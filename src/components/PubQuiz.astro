@@ -1,4 +1,5 @@
 ---
+import '../styles/quiz-card.css';
 import {
   PUB_CATEGORIES,
   PUB_QUIZ_LENGTH,
@@ -14,7 +15,7 @@ const categoryGroups = (
   sounds: PUB_SOUNDS.filter((sound) => sound.category === id),
 }));
 
-const choiceLetters = ['A', 'B', 'C', 'D'] as const;
+const choiceIndexes = [0, 1, 2, 3] as const;
 ---
 
 <div class="quiz-musique-pub" data-quiz-musique-pub>
@@ -35,7 +36,7 @@ const choiceLetters = ['A', 'B', 'C', 'D'] as const;
       aria-selected="true"
       aria-controls="pub-panel-soundboard"
       tabindex="0"
-      data-tab="soundboard"
+      data-main-tab="soundboard"
     >
       <span aria-hidden="true">🎚️</span>
       Écoute &amp; Catalogue
@@ -48,7 +49,7 @@ const choiceLetters = ['A', 'B', 'C', 'D'] as const;
       aria-selected="false"
       aria-controls="pub-panel-quiz"
       tabindex="-1"
-      data-tab="quiz"
+      data-main-tab="quiz"
     >
       <span aria-hidden="true">🎯</span>
       Blindtest ({PUB_QUIZ_LENGTH} questions)
@@ -118,76 +119,39 @@ const choiceLetters = ['A', 'B', 'C', 'D'] as const;
     aria-labelledby="pub-tab-quiz"
     data-panel="quiz"
   >
-    <div class="quiz-shell">
-      <div class="quiz-top">
-        <div class="quiz-hud">
-          <span class="quiz-counter" data-question-counter>
-            Question 1 / {PUB_QUIZ_LENGTH}
-          </span>
-          <span class="quiz-score" data-score>Score : 0</span>
+    <div class="quiz-card pub-quiz-card" data-quiz-card>
+      <div class="progress-box" data-quiz-progress-box>
+        <div class="progress-text">
+          <span data-question-counter>Question 1 / {PUB_QUIZ_LENGTH}</span>
+          <span class="score-label" data-score>Score : 0 / {PUB_QUIZ_LENGTH}</span>
         </div>
-        <div class="quiz-progress" aria-hidden="true">
-          <span data-quiz-progress></span>
+        <div class="progress-bar"><div class="progress-fill" data-quiz-progress></div></div>
+      </div>
+
+      <div class="question-container" data-quiz-question>
+        <p class="question-text">De quelle publicité s'agit-il ?</p>
+        <div class="audio-q-box">
+          <button type="button" class="btn-play-sound" data-quiz-play></button>
         </div>
       </div>
 
-      <div class="quiz-body" data-quiz-body>
-        <p class="quiz-prompt">De quelle publicité s'agit-il ?</p>
-
-        <button
-          type="button"
-          class="quiz-audio-button"
-          data-audio-trigger
-          data-quiz-play
-          data-audio-label="audio de la question"
-          aria-label="Écouter l'extrait audio de la question"
-          aria-pressed="false"
-        >
-          <span class="quiz-audio-icon" data-play-icon aria-hidden="true">▶</span>
-          <span data-play-label>Écouter l'extrait</span>
-        </button>
-
-        <div class="quiz-choices" data-quiz-choices>
-          {
-            choiceLetters.map((letter, index) => (
-              <button
-                type="button"
-                class="quiz-choice"
-                data-choice-index={index}
-                data-correct="false"
-                disabled
-              >
-                <span class="quiz-choice-letter" aria-hidden="true">
-                  {letter}
-                </span>
-                <span class="quiz-choice-label" data-choice-label>
-                  —
-                </span>
-              </button>
-            ))
-          }
-        </div>
-
-        <p
-          class="quiz-feedback"
-          data-quiz-feedback
-          aria-live="polite"
-          aria-atomic="true"
-        ></p>
+      <div class="options-grid" data-quiz-choices>
+        {
+          choiceIndexes.map((index) => (
+            <button type="button" class="btn-option" data-choice-index={index}>
+              <span data-choice-label>—</span>
+            </button>
+          ))
+        }
       </div>
 
-      <div class="quiz-result" data-quiz-result hidden>
-        <p class="quiz-result-kicker">Bilan du quiz</p>
-        <p class="quiz-result-score">
-          <span data-result-score>0 / {PUB_QUIZ_LENGTH}</span>
-        </p>
-        <p class="quiz-result-message" data-result-message></p>
-        <div class="quiz-result-actions">
-          <button type="button" class="quiz-action quiz-action-primary" data-quiz-replay>
-            Rejouer
-          </button>
-        </div>
+      <div class="feedback-msg hidden" data-quiz-feedback role="status" aria-live="polite"></div>
+
+      <div class="action-footer" data-quiz-footer>
+        <button type="button" class="btn-next" data-quiz-next disabled>Question suivante ➔</button>
       </div>
+
+      <div class="result-container hidden" data-quiz-result aria-live="polite"></div>
     </div>
   </section>
 
@@ -197,140 +161,62 @@ const choiceLetters = ['A', 'B', 'C', 'D'] as const;
 </div>
 
 <script>
-  import { shuffle } from '../utils/random';
-  import { audioManager } from '../utils/audioManager';
-  import {
-    PUB_QUIZ_LENGTH,
-    PUB_SOUNDS,
-    type PubSoundEntry,
-  } from '../data/pubSounds';
-
-  interface QuizChoice {
-    label: string;
-    correct: boolean;
-  }
-
-  interface QuizQuestion {
-    sound: PubSoundEntry;
-    choices: QuizChoice[];
-  }
-
-  /**
-   * Construit 10 questions. Les leurres viennent d'abord de la même catégorie
-   * que la bonne réponse, puis d'autres catégories si nécessaire.
-   */
-  function createQuiz(): QuizQuestion[] {
-    return shuffle(PUB_SOUNDS)
-      .slice(0, PUB_QUIZ_LENGTH)
-      .map((sound) => {
-        const sameCategory = shuffle(
-          PUB_SOUNDS.filter(
-            (candidate) => candidate.category === sound.category && candidate.id !== sound.id,
-          ),
-        );
-        const otherCategories = shuffle(
-          PUB_SOUNDS.filter((candidate) => candidate.category !== sound.category),
-        );
-
-        const distractors = sameCategory.slice(0, 3);
-        if (distractors.length < 3) {
-          distractors.push(...otherCategories.slice(0, 3 - distractors.length));
-        }
-
-        return {
-          sound,
-          choices: shuffle([sound, ...distractors]).map((candidate) => ({
-            label: candidate.label,
-            correct: candidate.id === sound.id,
-          })),
-        };
-      });
-  }
+  import { audioManager, stopAudio } from '../utils/audioManager';
+  import { PUB_QUIZ_LENGTH, PUB_SOUNDS } from '../data/pubSounds';
+  import { PUB_RESULT_MESSAGES, createQuiz, type QuizQuestion } from '../utils/pubQuizEngine';
+  import { renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
+  import { bindPlayButton } from '../utils/quizAudio';
+  import { setupMainTabs } from '../utils/tabs';
 
   function initPubQuiz(): void {
     const root = document.querySelector<HTMLElement>('[data-quiz-musique-pub]');
     if (!root) return;
 
-    const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-tab]'));
-    const panels = Array.from(root.querySelectorAll<HTMLElement>('[data-panel]'));
-    const soundboard = root.querySelector<HTMLElement>('[data-panel="soundboard"]');
-    const quizBody = root.querySelector<HTMLElement>('[data-quiz-body]');
-    const quizResult = root.querySelector<HTMLElement>('[data-quiz-result]');
-    const questionCounter = root.querySelector<HTMLElement>('[data-question-counter]');
-    const scoreLabel = root.querySelector<HTMLElement>('[data-score]');
-    const progressBar = root.querySelector<HTMLElement>('[data-quiz-progress]');
-    const quizPlay = root.querySelector<HTMLButtonElement>('[data-quiz-play]');
-    const quizFeedback = root.querySelector<HTMLElement>('[data-quiz-feedback]');
-    const replayButton = root.querySelector<HTMLButtonElement>('[data-quiz-replay]');
-    const audioStatus = root.querySelector<HTMLElement>('[data-audio-status]');
-    const resultScore = root.querySelector<HTMLElement>('[data-result-score]');
-    const resultMessage = root.querySelector<HTMLElement>('[data-result-message]');
-    const choiceButtons = Array.from(
-      root.querySelectorAll<HTMLButtonElement>('[data-choice-index]'),
-    );
-    const triggers = Array.from(
-      root.querySelectorAll<HTMLButtonElement>('[data-audio-trigger]'),
-    );
+    const q = <T extends HTMLElement>(selector: string) => root.querySelector<T>(selector);
+
+    const tabsController = setupMainTabs(root, { tabSelector: '.pub-tab' });
+    const soundboard = q<HTMLElement>('[data-panel="soundboard"]');
+    const progressBox = q<HTMLElement>('[data-quiz-progress-box]');
+    const progressLabel = q<HTMLElement>('[data-question-counter]');
+    const scoreLabel = q<HTMLElement>('[data-score]');
+    const progressFill = q<HTMLElement>('[data-quiz-progress]');
+    const questionBox = q<HTMLElement>('[data-quiz-question]');
+    const quizPlay = q<HTMLButtonElement>('[data-quiz-play]');
+    const choicesBox = q<HTMLElement>('[data-quiz-choices]');
+    const quizFeedback = q<HTMLElement>('[data-quiz-feedback]');
+    const actionFooter = q<HTMLElement>('[data-quiz-footer]');
+    const btnNext = q<HTMLButtonElement>('[data-quiz-next]');
+    const resultBox = q<HTMLElement>('[data-quiz-result]');
+    const audioStatus = q<HTMLElement>('[data-audio-status]');
+    const choiceButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-choice-index]'));
+    const triggers = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-audio-trigger]'));
 
     if (
-      !soundboard ||
-      !quizBody ||
-      !quizResult ||
-      !questionCounter ||
-      !scoreLabel ||
-      !progressBar ||
-      !quizPlay ||
-      !quizFeedback ||
-      !replayButton ||
-      !audioStatus ||
-      !resultScore ||
-      !resultMessage ||
-      choiceButtons.length !== 4 ||
-      tabs.length === 0
+      !soundboard || !progressBox || !progressLabel || !scoreLabel || !progressFill || !questionBox ||
+      !quizPlay || !choicesBox || !quizFeedback || !actionFooter || !btnNext || !resultBox ||
+      !audioStatus || choiceButtons.length !== 4 || !tabsController
     ) {
       return;
     }
+
+    const player = bindPlayButton(quizPlay);
 
     let quizQuestions: QuizQuestion[] = [];
     let questionIndex = 0;
     let score = 0;
     let isAnswered = false;
-    let advanceTimer: number | null = null;
+    let autoNextTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const activateTab = (name: string, focusTab = false): void => {
-      tabs.forEach((tab) => {
-        const selected = tab.dataset.tab === name;
-        tab.setAttribute('aria-selected', selected ? 'true' : 'false');
-        tab.tabIndex = selected ? 0 : -1;
-        if (selected && focusTab) tab.focus();
-      });
+    const setHidden = (el: HTMLElement, hidden: boolean) => el.classList.toggle('hidden', hidden);
 
-      panels.forEach((panel) => {
-        panel.hidden = panel.dataset.panel !== name;
-      });
+    const clearAutoNext = (): void => {
+      if (autoNextTimer) {
+        clearTimeout(autoNextTimer);
+        autoNextTimer = null;
+      }
     };
 
-    tabs.forEach((tab, index) => {
-      tab.addEventListener('click', () => {
-        const name = tab.dataset.tab;
-        if (name) activateTab(name);
-      });
-
-      tab.addEventListener('keydown', (event) => {
-        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-        event.preventDefault();
-
-        let nextIndex = index;
-        if (event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
-        if (event.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length;
-        if (event.key === 'Home') nextIndex = 0;
-        if (event.key === 'End') nextIndex = tabs.length - 1;
-
-        const nextTab = tabs[nextIndex];
-        const name = nextTab?.dataset.tab;
-        if (name) activateTab(name, true);
-      });
-    });
+    // --- Catalogue sonore (inchangé) -------------------------------------------
 
     const syncPlaybackUI = (): void => {
       const state = audioManager.getState();
@@ -352,24 +238,17 @@ const choiceLetters = ['A', 'B', 'C', 'D'] as const;
         const icon = button.querySelector<HTMLElement>('[data-play-icon]');
         if (icon) icon.textContent = isLoading ? '…' : isPlaying ? '⏸' : '▶';
 
-        const label = button.querySelector<HTMLElement>('[data-play-label]');
-        if (label) label.textContent = isPlaying ? 'Mettre en pause' : "Écouter l'extrait";
-
         const name = button.dataset.audioLabel;
         if (name) {
           button.setAttribute(
             'aria-label',
-            isPlaying
-              ? `Mettre en pause l'extrait ${name}`
-              : `Écouter l'extrait ${name}`,
+            isPlaying ? `Mettre en pause l'extrait ${name}` : `Écouter l'extrait ${name}`,
           );
         }
       });
 
       if (state === 'playing' && currentUrl) {
-        const activeTrigger = triggers.some(
-          (button) => button.dataset.audioUrl === currentUrl,
-        );
+        const activeTrigger = triggers.some((button) => button.dataset.audioUrl === currentUrl);
         if (!activeTrigger) audioStatus.textContent = '';
       }
     };
@@ -383,13 +262,11 @@ const choiceLetters = ['A', 'B', 'C', 'D'] as const;
         audioStatus.textContent = `En pause : ${label}`;
         return;
       }
-
       if (currentUrl === url && state === 'paused') {
         void audioManager.resumeAudio();
         audioStatus.textContent = `Lecture : ${label}`;
         return;
       }
-
       void audioManager.playAudio(url);
       audioStatus.textContent = `Lecture : ${label}`;
     };
@@ -397,150 +274,128 @@ const choiceLetters = ['A', 'B', 'C', 'D'] as const;
     soundboard.addEventListener('click', (event) => {
       const target = event.target;
       if (!(target instanceof Element)) return;
-
       const button = target.closest<HTMLButtonElement>('[data-audio-trigger]');
       if (!button || !soundboard.contains(button)) return;
-
       const url = button.dataset.audioUrl;
       if (!url) return;
-
       toggleAudio(url, button.dataset.audioLabel ?? 'cet extrait');
-    });
-
-    quizPlay.addEventListener('click', () => {
-      const question = quizQuestions[questionIndex];
-      if (!question) return;
-      toggleAudio(question.sound.audioUrl, "l'extrait de la question");
     });
 
     audioManager.on('statechange', ({ state }) => {
       syncPlaybackUI();
-      if (state === 'idle' || state === 'ended') {
-        audioStatus.textContent = '';
-      }
+      if (state === 'idle' || state === 'ended') audioStatus.textContent = '';
     });
 
     audioManager.on('error', () => {
       audioStatus.textContent = 'Impossible de lire cet extrait audio.';
     });
 
-    const getResultMessage = (points: number, total: number): string => {
-      if (points === total) {
-        return 'Sans faute ! Tu connais le catalogue sur le bout des oreilles.';
-      }
-      if (points >= Math.ceil(total * 0.7)) {
-        return 'Excellent ! Tu reconnais presque tous les jingles du catalogue.';
-      }
-      if (points >= Math.ceil(total * 0.4)) {
-        return 'Pas mal ! Encore quelques extraits à réécouter pour progresser.';
-      }
-      return "Continue à explorer le catalogue : ton oreille va vite s'affûter.";
+    // --- Quiz : même comportement que tous les autres quiz ---------------------
+
+    const updateProgress = (): void => {
+      renderProgress(
+        { progressLabel, scoreLabel, progressFill },
+        { unit: 'question', index: questionIndex, total: quizQuestions.length, score, answered: isAnswered },
+      );
+      renderNextButton(btnNext, {
+        unit: 'question',
+        isLast: questionIndex >= quizQuestions.length - 1,
+        answered: isAnswered,
+      });
     };
 
     const renderQuestion = (autoplay = false): void => {
       const question = quizQuestions[questionIndex];
       if (!question) return;
 
+      clearAutoNext();
       isAnswered = false;
       quizFeedback.textContent = '';
-      delete quizFeedback.dataset.state;
-      questionCounter.textContent = `Question ${questionIndex + 1} / ${quizQuestions.length}`;
-      scoreLabel.textContent = `Score : ${score}`;
-      progressBar.style.width = `${((questionIndex + 1) / quizQuestions.length) * 100}%`;
-
-      quizPlay.dataset.audioUrl = question.sound.audioUrl;
-      quizPlay.disabled = false;
+      quizFeedback.className = 'feedback-msg hidden';
 
       choiceButtons.forEach((button, index) => {
         const choice = question.choices[index];
         const label = button.querySelector<HTMLElement>('[data-choice-label]');
         if (label) label.textContent = choice?.label ?? '—';
-
         button.dataset.correct = choice?.correct ? 'true' : 'false';
-        button.classList.remove('is-correct', 'is-wrong');
+        button.classList.remove('correct', 'incorrect');
         button.disabled = !choice;
-        button.setAttribute('aria-disabled', choice ? 'false' : 'true');
       });
 
-      syncPlaybackUI();
-
-      if (autoplay) void audioManager.playAudio(question.sound.audioUrl);
+      player.setUrl(question.sound.audioUrl);
+      updateProgress();
+      if (autoplay) player.play();
     };
 
-    const finishQuiz = (): void => {
-      if (advanceTimer !== null) {
-        window.clearTimeout(advanceTimer);
-        advanceTimer = null;
-      }
+    const showResult = (): void => {
+      clearAutoNext();
+      stopAudio();
+      player.setUrl(null);
+      showQuizResult({
+        hide: [progressBox, questionBox, choicesBox, actionFooter],
+        feedback: quizFeedback,
+        container: resultBox,
+        score,
+        total: quizQuestions.length,
+        messages: PUB_RESULT_MESSAGES,
+        restartId: 'pubBtnRestart',
+        onRestart: () => startQuiz(true),
+      });
+      resultBox.querySelector<HTMLButtonElement>('#pubBtnRestart')?.focus();
+    };
 
-      audioManager.stopAudio();
-      questionCounter.textContent = `Question ${quizQuestions.length} / ${quizQuestions.length}`;
-      scoreLabel.textContent = `Score : ${score}`;
-      progressBar.style.width = '100%';
-      quizBody.hidden = true;
-      quizResult.hidden = false;
-      resultScore.textContent = `${score} / ${quizQuestions.length}`;
-      resultMessage.textContent = getResultMessage(score, quizQuestions.length);
-      replayButton.focus();
+    const goToNext = (): void => {
+      clearAutoNext();
+      if (!isAnswered) return;
+      if (questionIndex >= quizQuestions.length - 1) {
+        showResult();
+        return;
+      }
+      questionIndex += 1;
+      renderQuestion(true);
     };
 
     const handleAnswer = (choiceIndex: number): void => {
       if (isAnswered) return;
-
       const question = quizQuestions[questionIndex];
       const choice = question?.choices[choiceIndex];
       if (!question || !choice) return;
 
       isAnswered = true;
-      audioManager.stopAudio();
-      quizPlay.disabled = true;
-
+      stopAudio();
       if (choice.correct) score += 1;
-      scoreLabel.textContent = `Score : ${score}`;
 
       choiceButtons.forEach((button, index) => {
-        const currentChoice = question.choices[index];
+        const current = question.choices[index];
         button.disabled = true;
-        button.setAttribute('aria-disabled', 'true');
-        button.classList.toggle('is-correct', Boolean(currentChoice?.correct));
-        button.classList.toggle('is-wrong', index === choiceIndex && !choice.correct);
+        button.classList.toggle('correct', Boolean(current?.correct));
+        button.classList.toggle('incorrect', index === choiceIndex && !choice.correct);
       });
 
-      quizFeedback.dataset.state = choice.correct ? 'success' : 'danger';
+      const answer = question.sound.label;
       quizFeedback.textContent = choice.correct
-        ? '✅ Bonne réponse !'
-        : `❌ Raté ! C'était ${question.sound.label}.`;
+        ? `✨ Bravo ! C'est bien : ${answer}.`
+        : `❌ Dommage ! La bonne réponse était : ${answer}.`;
+      quizFeedback.className = `feedback-msg ${choice.correct ? 'success' : 'error'}`;
 
-      advanceTimer = window.setTimeout(
-        () => {
-          advanceTimer = null;
-          if (questionIndex + 1 >= quizQuestions.length) {
-            finishQuiz();
-            return;
-          }
-
-          questionIndex += 1;
-          renderQuestion(true);
-        },
-        choice.correct ? 1100 : 1800,
-      );
+      updateProgress();
+      // Bonne réponse : suite automatique. Mauvaise réponse : l'élève avance lui-même.
+      if (choice.correct) {
+        autoNextTimer = scheduleAutoNext(goToNext, quizFeedback.textContent ?? '');
+      }
     };
 
-    const startQuiz = (focusQuiz = false): void => {
-      if (advanceTimer !== null) {
-        window.clearTimeout(advanceTimer);
-        advanceTimer = null;
-      }
-
-      audioManager.stopAudio();
-      quizQuestions = createQuiz();
+    const startQuiz = (autoplay = false): void => {
+      clearAutoNext();
+      stopAudio();
+      quizQuestions = createQuiz(PUB_SOUNDS, PUB_QUIZ_LENGTH);
       questionIndex = 0;
       score = 0;
       isAnswered = false;
-      quizBody.hidden = false;
-      quizResult.hidden = true;
-      renderQuestion(focusQuiz);
-      if (focusQuiz) quizPlay.focus();
+      resultBox.innerHTML = '';
+      setHidden(resultBox, true);
+      [progressBox, questionBox, choicesBox, actionFooter].forEach((el) => setHidden(el, false));
+      renderQuestion(autoplay);
     };
 
     choiceButtons.forEach((button) => {
@@ -549,16 +404,14 @@ const choiceLetters = ['A', 'B', 'C', 'D'] as const;
         if (Number.isInteger(index)) handleAnswer(index);
       });
     });
-
-    replayButton.addEventListener('click', () => startQuiz(true));
+    btnNext.addEventListener('click', goToNext);
 
     syncPlaybackUI();
     startQuiz();
-    activateTab('quiz');
+    tabsController.select('quiz');
   }
 
   initPubQuiz();
-
 </script>
 
 <style>
@@ -840,310 +693,89 @@ const choiceLetters = ['A', 'B', 'C', 'D'] as const;
     color: #fcd34d;
   }
 
-  .quiz-shell {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
-    background: rgba(17, 28, 46, 0.82);
-    border: 1px solid var(--pub-border);
-    border-radius: 14px;
-  }
+  
 
-  .quiz-top {
-    display: grid;
-    gap: 0.55rem;
-  }
+  
 
-  .quiz-hud {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    color: var(--pub-muted);
-    font-size: 0.82rem;
-    font-weight: 800;
-  }
+  
 
-  .quiz-counter {
-    color: var(--pub-accent-strong);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
+  
 
-  .quiz-score {
-    color: #f8fafc;
-  }
+  
 
-  .quiz-progress {
-    height: 6px;
-    overflow: hidden;
-    background: #0b1220;
-    border-radius: 999px;
-  }
+  
 
-  .quiz-progress span {
-    display: block;
-    width: 0;
-    height: 100%;
-    background: linear-gradient(90deg, var(--pub-accent), var(--pub-accent-strong));
-    border-radius: inherit;
-    transition: width 0.25s ease;
-  }
+  
 
-  .quiz-body {
-    display: flex;
-    flex-direction: column;
-    gap: 0.9rem;
-  }
+  
 
-  .quiz-prompt {
-    margin: 0.15rem 0 0;
-    color: #f8fafc;
-    font-size: clamp(1.05rem, 2.2vw, 1.25rem);
-    font-weight: 800;
-    line-height: 1.25;
-  }
+  
 
-  .quiz-audio-button {
-    align-self: flex-start;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.55rem;
-    padding: 0.65rem 1rem;
-    border: 1px solid var(--pub-accent);
-    border-radius: 999px;
-    background: var(--pub-accent-soft);
-    color: #fef3c7;
-    font: inherit;
-    font-size: 0.84rem;
-    font-weight: 800;
-    cursor: pointer;
-    transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
-  }
+  
 
-  .quiz-audio-button:hover:not(:disabled) {
-    background: rgba(245, 158, 11, 0.24);
-    transform: translateY(-1px);
-  }
+  
 
-  .quiz-audio-button.is-playing {
-    background: var(--pub-accent);
-    color: #1c1917;
-  }
+  
 
-  .quiz-audio-button.is-paused {
-    border-color: var(--pub-accent-strong);
-  }
+  
 
-  .quiz-audio-button:disabled {
-    cursor: default;
-    opacity: 0.6;
-  }
+  
 
-  .quiz-audio-button:focus-visible {
-    outline: 2px solid var(--pub-accent-strong);
-    outline-offset: 2px;
-  }
+  
 
-  .quiz-audio-icon {
-    font-size: 0.72rem;
-    line-height: 1;
-  }
+  
 
-  .quiz-choices {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.6rem;
-  }
+  
 
-  .quiz-choice {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    min-width: 0;
-    padding: 0.75rem 0.8rem;
-    border: 1px solid var(--pub-border);
-    border-radius: 10px;
-    background: #0b1220;
-    color: #cbd5e1;
-    font: inherit;
-    font-size: 0.88rem;
-    font-weight: 600;
-    line-height: 1.35;
-    text-align: left;
-    cursor: pointer;
-    transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease,
-      opacity 0.18s ease;
-  }
+  
 
-  .quiz-choice:hover:not(:disabled) {
-    border-color: #64748b;
-    color: #f8fafc;
-  }
+  
 
-  .quiz-choice:focus-visible {
-    outline: 2px solid var(--pub-accent-strong);
-    outline-offset: 2px;
-  }
+  
 
-  .quiz-choice:disabled {
-    cursor: default;
-    opacity: 0.55;
-  }
+  
 
-  .quiz-choice-letter {
-    flex-shrink: 0;
-    display: grid;
-    place-items: center;
-    width: 1.55rem;
-    height: 1.55rem;
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    border-radius: 8px;
-    background: rgba(15, 23, 42, 0.75);
-    color: var(--pub-muted);
-    font-size: 0.74rem;
-    font-weight: 800;
-  }
+  
 
-  .quiz-choice-label {
-    min-width: 0;
-  }
+  
 
-  .quiz-choice.is-correct {
-    border-color: var(--pub-green);
-    background: rgba(74, 222, 128, 0.16);
-    color: #dcfce7;
-    opacity: 1;
-  }
+  
 
-  .quiz-choice.is-correct .quiz-choice-letter {
-    border-color: var(--pub-green);
-    color: #86efac;
-  }
+  
 
-  .quiz-choice.is-wrong {
-    border-color: var(--pub-red);
-    background: rgba(248, 113, 113, 0.16);
-    color: #fee2e2;
-    opacity: 1;
-  }
+  
 
-  .quiz-choice.is-wrong .quiz-choice-letter {
-    border-color: var(--pub-red);
-    color: #fca5a5;
-  }
+  
 
-  .quiz-choice.is-correct::after {
-    content: '✓';
-    margin-left: auto;
-    color: var(--pub-green);
-    font-weight: 900;
-  }
+  
 
-  .quiz-choice.is-wrong::after {
-    content: '✕';
-    margin-left: auto;
-    color: var(--pub-red);
-    font-weight: 900;
-  }
+  
 
-  .quiz-feedback {
-    min-height: 1.4em;
-    margin: 0;
-    color: var(--pub-muted);
-    font-size: 0.88rem;
-    font-weight: 700;
-    line-height: 1.45;
-  }
+  
 
-  .quiz-feedback[data-state='success'] {
-    color: #86efac;
-  }
+  
 
-  .quiz-feedback[data-state='danger'] {
-    color: #fca5a5;
-  }
+  
 
-  .quiz-result {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 1.25rem 0.75rem;
-    text-align: center;
-  }
+  
 
-  .quiz-result-kicker {
-    margin: 0;
-    color: var(--pub-accent-strong);
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
+  
 
-  .quiz-result-score {
-    margin: 0;
-    color: #f8fafc;
-    font-size: clamp(2rem, 7vw, 3rem);
-    font-weight: 900;
-    line-height: 1;
-  }
+  
 
-  .quiz-result-message {
-    margin: 0;
-    max-width: 46ch;
-    color: var(--pub-muted);
-    font-size: 0.92rem;
-    line-height: 1.55;
-  }
+  
 
-  .quiz-result-actions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.5rem;
-    margin-top: 0.35rem;
-  }
+  
 
-  .quiz-action {
-    padding: 0.65rem 1rem;
-    border: 1px solid var(--pub-border);
-    border-radius: 9px;
-    background: #0b1220;
-    color: #cbd5e1;
-    font: inherit;
-    font-size: 0.84rem;
-    font-weight: 800;
-    cursor: pointer;
-    transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease,
-      transform 0.18s ease;
-  }
+  
 
-  .quiz-action:hover {
-    border-color: #64748b;
-    background: #111c2e;
-    color: #f8fafc;
-    transform: translateY(-1px);
-  }
+  
 
-  .quiz-action-primary {
-    border-color: var(--pub-accent);
-    background: var(--pub-accent);
-    color: #1c1917;
-  }
+  
 
-  .quiz-action-primary:hover {
-    border-color: var(--pub-accent-strong);
-    background: var(--pub-accent-strong);
-    color: #1c1917;
-  }
+  
 
-  .quiz-action:focus-visible {
-    outline: 2px solid var(--pub-accent-strong);
-    outline-offset: 2px;
-  }
+  
 
   .sound-button.is-loading .sound-play,
   .quiz-audio-button.is-loading .quiz-audio-icon {
@@ -1173,11 +805,7 @@ const choiceLetters = ['A', 'B', 'C', 'D'] as const;
       grid-template-columns: 1fr;
     }
 
-    .quiz-hud {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.2rem;
-    }
+    
   }
 
   @media (prefers-reduced-motion: reduce) {

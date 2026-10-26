@@ -36,6 +36,7 @@ import '../styles/quiz-card.css';
 </div>
 
 <script>
+  import { renderNextButton, renderProgress } from '../utils/quizUi';
   import { shuffle } from '../utils/random';
   import type { ResultMessages } from '../utils/quiz';
   import { hymneQuizList } from '../data/hymnesData';
@@ -100,17 +101,14 @@ import '../styles/quiz-card.css';
   // --- Progression et score ----------------------------------------------
 
   function updateProgress() {
-    const total = queue.length;
-    progressLabel.textContent = `Question ${questionIndex + 1} / ${total}`;
-    scoreLabel.textContent = `Score : ${score}`;
-    const done = questionIndex + (isAnswered ? 1 : 0);
-    progressFill.style.width = `${(done / total) * 100}%`;
+    renderProgress(
+      { progressLabel, scoreLabel, progressFill },
+      { unit: 'question', index: questionIndex, total: queue.length, score, answered: isAnswered },
+    );
   }
 
   function updateNextButton() {
-    const isLast = questionIndex >= queue.length - 1;
-    btnNext.textContent = isLast ? '🏁 Voir mon score' : 'Question Suivante ➔';
-    btnNext.disabled = !isAnswered;
+    renderNextButton(btnNext, { unit: 'question', isLast: questionIndex >= queue.length - 1, answered: isAnswered });
   }
 
   // --- Boutons de réponse ------------------------------------------------
@@ -242,20 +240,9 @@ import '../styles/quiz-card.css';
   }
 
   /* --- Boutons de réponse (hymne) --- */
-  .quiz-card .options-binary {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.75rem;
-    width: 100%;
-  }
+  
 
-  @container (min-width: 700px) {
-    .quiz-card .options-binary {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
+  
 
-    .quiz-card .options-binary .btn-option {
-    min-height: 64px;
-  }
+    
 </style>
