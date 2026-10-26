@@ -39,7 +39,8 @@ export function scheduleAutoNext(callback: () => void, feedbackText: string) {
 export interface ShowResultOptions {
   /** Éléments de l'écran de jeu à masquer. */
   hide: HTMLElement[];
-  feedback: HTMLElement;
+  /** Panneau de feedback à vider (absent si le quiz n'en a pas). */
+  feedback?: HTMLElement;
   container: HTMLElement;
   score: number;
   total: number;
@@ -50,8 +51,10 @@ export interface ShowResultOptions {
 /** Écran de bilan standard : emoji, « Partie terminée ! », « X / N », « 🔄 Rejouer ». */
 export function showQuizResult(o: ShowResultOptions): void {
   o.hide.forEach((el) => el.classList.add('hidden'));
-  o.feedback.textContent = '';
-  o.feedback.className = 'feedback-msg hidden';
+  if (o.feedback) {
+    o.feedback.textContent = '';
+    o.feedback.className = 'feedback-msg hidden';
+  }
   o.container.innerHTML = buildResultHtml({
     score: o.score,
     total: o.total,

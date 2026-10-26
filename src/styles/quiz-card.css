@@ -375,3 +375,10 @@
   border-color: var(--qc-ko-border);
   color: var(--qc-ko-text);
 }
+
+/* ==========================================================================
+   Règle feedback (tous les quiz) : le panneau n'apparaît que s'il apporte une
+   information NON visible à l'écran (explication pédagogique, bonne réponse d'une
+   saisie libre). Jamais de « Bravo » / « Dommage » / décompte. Panneau vide = masqué.
+   ========================================================================== */
+.quiz-card .feedback-msg:empty { display: none; }

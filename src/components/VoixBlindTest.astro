@@ -40,8 +40,6 @@ const baseUrl = relativeUrl('/');
     <button type="button" class="btn-option" data-tessiture="basse">Basse</button>
   </div>
 
-  <div id="vxFeedback" class="feedback-msg hidden" role="status" aria-live="polite"></div>
-
   <div id="vxActionFooter" class="action-footer">
     <button type="button" id="vxBtnNext" class="btn-next" disabled>Question suivante ➔</button>
   </div>
@@ -107,7 +105,6 @@ const baseUrl = relativeUrl('/');
   const questionContainer = $<HTMLDivElement>('vxQuestionContainer');
   const playBtn = $<HTMLButtonElement>('vxBtnPlay');
   const optionsContainer = $<HTMLDivElement>('vxOptionsContainer');
-  const quizFeedback = $<HTMLDivElement>('vxFeedback');
   const actionFooter = $<HTMLDivElement>('vxActionFooter');
   const btnNext = $<HTMLButtonElement>('vxBtnNext');
   const resultContainer = $<HTMLDivElement>('vxResultContainer');
@@ -154,11 +151,6 @@ const baseUrl = relativeUrl('/');
     return shuffle(selected).slice(0, QUESTIONS_PER_GAME);
   }
 
-  function setFeedback(kind: 'success' | 'error' | null, text = '') {
-    quizFeedback.textContent = text;
-    quizFeedback.className = kind ? `feedback-msg ${kind}` : 'feedback-msg hidden';
-  }
-
   /** Bascule entre l'écran de jeu et l'écran de résultat. */
   function showQuizScreen(visible: boolean) {
     [progressBox, questionContainer, optionsContainer, actionFooter].forEach((el) =>
@@ -189,7 +181,6 @@ const baseUrl = relativeUrl('/');
 
     currentTrack = track;
     isAnswered = false;
-    setFeedback(null);
 
     stopAudio();
     player.setUrl(getTrackUrl(track));
@@ -213,15 +204,12 @@ const baseUrl = relativeUrl('/');
     if (isCorrect) {
       score++;
       button.classList.add('correct');
-      const message = `🎉 Bravo ! C'était bien la tessiture ${currentTrack.label}.`;
-      setFeedback('success', message);
-      autoNextTimer = scheduleAutoNext(goToNext, message);
+      autoNextTimer = scheduleAutoNext(goToNext, '');
     } else {
       button.classList.add('incorrect');
       choiceBtns
         .find((btn) => btn.dataset.tessiture === currentTrack.id)
         ?.classList.add('correct');
-      setFeedback('error', `❌ Dommage ! C'était la tessiture ${currentTrack.label}.`);
     }
 
     updateProgress();
@@ -234,7 +222,6 @@ const baseUrl = relativeUrl('/');
     player.setUrl(null);
     showQuizResult({
       hide: [progressBox, questionContainer, optionsContainer, actionFooter],
-      feedback: quizFeedback,
       container: resultContainer,
       score,
       total: gameTracks.length,

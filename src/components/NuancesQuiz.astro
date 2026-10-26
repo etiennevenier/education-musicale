@@ -63,10 +63,8 @@ const CHOICES = [
     }
   </div>
 
-  <div id="nqFeedback" class="feedback-msg hidden" role="status" aria-live="polite"></div>
-
   <div id="nqActionFooter" class="action-footer">
-    <button type="button" id="nqBtnValidate" class="btn-validate">Valider mes réponses</button>
+    <button type="button" id="nqBtnValidate" class="btn-validate" disabled>Valider mes réponses</button>
     <button type="button" id="nqBtnNext" class="btn-next" disabled>Manche suivante ➔</button>
   </div>
 
@@ -112,7 +110,6 @@ const CHOICES = [
   const subButtons = Array.from(card.querySelectorAll<HTMLButtonElement>('.btn-sub'));
   const answers = $<HTMLDivElement>('nqAnswers');
   const selects = Array.from(card.querySelectorAll<HTMLSelectElement>('.quiz-select'));
-  const quizFeedback = $<HTMLDivElement>('nqFeedback');
   const actionFooter = $<HTMLDivElement>('nqActionFooter');
   const btnValidate = $<HTMLButtonElement>('nqBtnValidate');
   const btnNext = $<HTMLButtonElement>('nqBtnNext');
@@ -213,11 +210,6 @@ const CHOICES = [
 
   // --- Affichage -----------------------------------------------------------
 
-  function setFeedback(kind: 'success' | 'error' | 'warning' | null, text = '') {
-    quizFeedback.textContent = text;
-    quizFeedback.className = kind ? `feedback-msg ${kind}` : 'feedback-msg hidden';
-  }
-
   /** Bascule entre l'écran de jeu et l'écran de résultat. */
   function showQuizScreen(visible: boolean) {
     [progressBox, questionContainer, answers, actionFooter].forEach((el) =>
@@ -231,6 +223,11 @@ const CHOICES = [
       { progressLabel, scoreLabel, progressFill },
       { unit: 'manche', index: roundIndex, total: ROUNDS, score, answered: isAnswered },
     );
+  }
+
+  /** « Valider » n'est disponible qu'une fois les 3 nuances choisies. */
+  function updateValidateButton() {
+    btnValidate.disabled = isAnswered || selects.some((select) => select.value === '');
   }
 
   function updateNextButton() {
@@ -255,19 +252,13 @@ const CHOICES = [
       select.disabled = false;
       select.className = 'quiz-select';
     });
-    btnValidate.disabled = false;
-    setFeedback(null);
+    updateValidateButton();
     updateProgress();
     updateNextButton();
   }
 
   function validateAnswers() {
-    if (isAnswered) return;
-
-    if (selects.some((select) => select.value === '')) {
-      setFeedback('warning', '⚠️ Choisis une nuance pour les 3 extraits avant de valider !');
-      return;
-    }
+    if (isAnswered || selects.some((select) => select.value === '')) return;
 
     isAnswered = true;
     cancelPlayback();
@@ -279,21 +270,12 @@ const CHOICES = [
       select.className = `quiz-select ${ok ? 'correct' : 'incorrect'}`;
       select.disabled = true;
     });
-    btnValidate.disabled = true;
+    updateValidateButton();
 
+    // Toutes les nuances justes : suite automatique. Sinon l'élève avance lui-même.
     if (correctCount === selects.length) {
       score++;
-      const message = '🎉 Bravo ! Tu as identifié parfaitement la suite des 3 nuances !';
-      setFeedback('success', message);
-      autoNextTimer = scheduleAutoNext(goToNext, message);
-    } else {
-      const solution = currentSequence
-        .map((nuance, idx) => `${idx + 1} → ${nuance.label}`)
-        .join(' · ');
-      setFeedback(
-        'error',
-        `💡 ${correctCount} bonne(s) réponse(s) sur ${selects.length}. Réponses : ${solution}`,
-      );
+      autoNextTimer = scheduleAutoNext(goToNext, '');
     }
 
     updateProgress();
@@ -305,7 +287,6 @@ const CHOICES = [
     cancelPlayback();
     showQuizResult({
       hide: [progressBox, questionContainer, answers, actionFooter],
-      feedback: quizFeedback,
       container: resultContainer,
       score,
       total: ROUNDS,
@@ -341,6 +322,7 @@ const CHOICES = [
     btn.addEventListener('click', () => playExcerpt(Number(btn.dataset.excerpt))),
   );
   btnValidate.addEventListener('click', validateAnswers);
+  selects.forEach((select) => select.addEventListener('change', updateValidateButton));
   btnNext.addEventListener('click', goToNext);
 
   startGame();
