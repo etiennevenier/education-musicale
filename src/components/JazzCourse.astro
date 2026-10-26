@@ -1,6 +1,7 @@
 ---
 import CourseTabs from './CourseTabs.astro';
 import VideoCard from './VideoCard.astro';
+import VideosHeading from './VideosHeading.astro';
 import JazzQuiz from './JazzQuiz.astro';
 import JazzChorusQuiz from './JazzChorusQuiz.astro';
 
@@ -91,7 +92,7 @@ const projectVideos = [
     <section class="tab-content" aria-labelledby="jazz-history-title">
       <h3 id="jazz-history-title">Le jazz : histoire et style</h3>
 
-      <h4 class="videos-title">L’essentiel du cours</h4>
+      <VideosHeading headingLevel={4} label="L’essentiel du cours" />
       <ul class="essentials-grid">
         <li class="essential-card">
           <span class="essential-icon" aria-hidden="true">📍</span>
@@ -143,7 +144,7 @@ const projectVideos = [
         </li>
       </ul>
 
-      <h4 class="videos-title">Ressources Vidéos</h4>
+      <VideosHeading headingLevel={4} />
       <div class="video-grid">
         {historyVideos.map((video) => (
           <VideoCard badge={video.badge} title={video.title} url={video.url} />
@@ -176,7 +177,7 @@ const projectVideos = [
         <span class="fact-chip"><strong>Clé</strong> Improviser sur la grille</span>
       </div>
 
-      <h4 class="videos-title">Ressources Vidéos</h4>
+      <VideosHeading headingLevel={4} />
       <div class="video-grid">
         {scatVideos.map((video) => (
           <VideoCard badge={video.badge} title={video.title} url={video.url} />
@@ -212,7 +213,7 @@ const projectVideos = [
         Entraîne-toi à chanter le projet musical, puis essaye d’improviser en scat sur la grille.
       </p>
 
-      <h4 class="videos-title">Ressources Vidéos</h4>
+      <VideosHeading headingLevel={4} />
       <div class="video-grid">
         {projectVideos.map((video) => (
           <VideoCard badge={video.badge} title={video.title} url={video.url} />
@@ -393,12 +394,6 @@ const projectVideos = [
     color: #cbd5e1;
     font-size: 0.8rem;
     line-height: 1.45;
-  }
-
-  .videos-title {
-    margin: 0 0 0.7rem;
-    color: #f8fafc;
-    font-size: 1rem;
   }
 
   .video-grid {

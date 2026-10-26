@@ -3,6 +3,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { readdirSync, statSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { settleAnimations } from './axeSettle';
+import { scanHeadings, type HeadingViolation } from './axeHeadings';
 
 const DIST = join(process.cwd(), 'dist');
 const BASE = '/education-musicale';
@@ -57,4 +58,23 @@ test('règle color-contrast sur toutes les pages', async ({ browser }) => {
   await context.close();
   console.log(`CONTRAST_DONE nodes=${results.length}`);
   expect(results, 'violations color-contrast (état initial, toutes les pages)').toEqual([]);
+});
+
+test('règle heading-order et page-has-heading-one sur toutes les pages', async ({ browser }) => {
+  test.setTimeout(300000);
+  const violations: HeadingViolation[] = [];
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  for (const p of pages) {
+    await page.goto(BASE + p, { waitUntil: 'load', timeout: 30000 }).catch(() => {});
+    await scanHeadings(page, p, 'initial', violations);
+  }
+  mkdirSync('lh', { recursive: true });
+  writeFileSync('lh/headings.json', JSON.stringify(violations, null, 2));
+  await context.close();
+  console.log(`HEADINGS_DONE pages=${pages.length} violations=${violations.length}`);
+  expect(
+    violations,
+    'violations heading-order / page-has-heading-one (état initial, toutes les pages)',
+  ).toEqual([]);
 });

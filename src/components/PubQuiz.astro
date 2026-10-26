@@ -68,10 +68,10 @@ const choiceIndexes = [0, 1, 2, 3] as const;
         categoryGroups.map((group) => (
           <section class="sound-group" aria-labelledby={`pub-group-${group.id}`}>
             <div class="sound-group-head">
-              <h4 id={`pub-group-${group.id}`}>
+              <h3 id={`pub-group-${group.id}`}>
                 <span aria-hidden="true">{group.icon}</span>
                 {group.label}
-              </h4>
+              </h3>
               <span class="sound-group-count">{group.sounds.length}</span>
             </div>
 
@@ -114,7 +114,7 @@ const choiceIndexes = [0, 1, 2, 3] as const;
     <div class="quiz-card pub-quiz-card" data-quiz-card>
       <div class="fuzeau-header">
         <span class="badge">Culture pub</span>
-        <h4>Musique &amp; Publicité</h4>
+        <h3>Musique &amp; Publicité</h3>
       </div>
       <p class="quiz-intro">Teste ton oreille avec un quiz de {PUB_QUIZ_LENGTH} extraits.</p>
 
@@ -489,7 +489,7 @@ const choiceIndexes = [0, 1, 2, 3] as const;
     margin-bottom: 0.65rem;
   }
 
-  .sound-group-head h4 {
+  .sound-group-head :is(h3, h4) {
     display: flex;
     align-items: center;
     gap: 0.4rem;

@@ -56,6 +56,9 @@ const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href :
     </header>
 
     <main class:list={['container', { wide }]}>
+      {/* En-tête masqué (outils plein écran en paysage) : le h1 du site est en
+          display:none, on garde donc un titre de page dans l'arbre d'accessibilité. */}
+      {mobileHeader === 'hidden' && <h1 class="visually-hidden">{title}</h1>}
       <slot />
     </main>
     <script>
@@ -136,6 +139,20 @@ const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href :
   .site-header {
     text-align: center;
     margin-bottom: 2.5rem;
+  }
+
+  /* Contenu réservé aux lecteurs d'écran (titre de page quand l'en-tête est masqué). */
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
   }
 
   .site-header h1 {

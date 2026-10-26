@@ -3,6 +3,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { readdirSync, statSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { settleAnimations } from './axeSettle';
+import { scanHeadings, type HeadingViolation } from './axeHeadings';
 
 const DIST = join(process.cwd(), 'dist');
 const BASE = '/education-musicale';
@@ -23,6 +24,7 @@ function collectPages(dir: string, out: string[] = []): string[] {
 
 const pages = collectPages(DIST);
 const results: Array<Record<string, unknown>> = [];
+const headingViolations: HeadingViolation[] = [];
 
 async function scan(page: Page, pagePath: string, state: string): Promise<void> {
   try {
@@ -79,6 +81,7 @@ test('color-contrast après interaction (quiz, résultat, hover/focus)', async (
     await page.goto(BASE + p, { waitUntil: 'load', timeout: 30000 }).catch(() => {});
     await page.waitForTimeout(150);
     await scan(page, p, 'initial');
+    await scanHeadings(page, p, 'initial', headingViolations);
 
     // Onglet « quiz » / « blindtest » : affiche le quiz s'il est dans un panneau.
     const quizTab = page.locator('[role="tab"][id*="quiz"], [role="tab"][id*="blindtest"]');
@@ -89,8 +92,12 @@ test('color-contrast après interaction (quiz, résultat, hover/focus)', async (
 
     if ((await page.locator('.quiz-card').count()) > 0) {
       await scan(page, p, 'quiz-affiche');
+      await scanHeadings(page, p, 'quiz-affiche', headingViolations);
       const reached = await playToResult(page);
-      if (reached) await scan(page, p, 'resultat-final');
+      if (reached) {
+        await scan(page, p, 'resultat-final');
+        await scanHeadings(page, p, 'resultat-final', headingViolations);
+      }
       // Repart d'une page propre pour les états hover/focus.
       await page.goto(BASE + p, { waitUntil: 'load', timeout: 30000 }).catch(() => {});
       await page.waitForTimeout(150);
@@ -110,11 +117,17 @@ test('color-contrast après interaction (quiz, résultat, hover/focus)', async (
 
   mkdirSync('lh', { recursive: true });
   writeFileSync('lh/contrast-interaction.json', JSON.stringify(results, null, 2));
+  writeFileSync('lh/headings-interaction.json', JSON.stringify(headingViolations, null, 2));
   const nodes = results.filter((r) => r.target !== 'ERREUR_AXE');
   const pagesTouched = new Set(nodes.map((r) => r.page));
   console.log(
     `CONTRAST_INTERACTION nodes=${nodes.length} pages=${pagesTouched.size} erreurs=${results.length - nodes.length}`,
   );
+  console.log(`HEADINGS_INTERACTION violations=${headingViolations.length}`);
   await context.close();
   expect(results, 'violations color-contrast après interaction (toutes les pages)').toEqual([]);
+  expect(
+    headingViolations,
+    'violations heading-order / page-has-heading-one après interaction (toutes les pages)',
+  ).toEqual([]);
 });

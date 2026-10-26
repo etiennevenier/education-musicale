@@ -45,7 +45,7 @@
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
 }
-.quiz-card .fuzeau-header h4 { margin: 0; color: var(--qc-text); font-size: 1.1rem; }
+.quiz-card .fuzeau-header :is(h3, h4) { margin: 0; color: var(--qc-text); font-size: 1.1rem; }
 
 .quiz-card .progress-box { display: flex; flex-direction: column; gap: 0.4rem; }
 .quiz-card .progress-text {
