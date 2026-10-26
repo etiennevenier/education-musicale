@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Astro check
+        run: npx astro check
+
+      - name: Vitest
+        run: npm test
+
+      - name: Build site
+        run: npm run build
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Playwright (e2e)
+        run: npx playwright test --grep-invert "color-contrast"
+
+      - name: Axe (color-contrast)
+        run: npx playwright test tests/e2e/contrast.spec.ts tests/e2e/contrast-interaction.spec.ts
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            lh/
+            test-results/
+          if-no-files-found: ignore

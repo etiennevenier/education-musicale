@@ -5,7 +5,8 @@ export default defineConfig({
   timeout: 30000,
   use: {
     baseURL: 'http://localhost:4323',
-    channel: 'chrome',
+    // En CI, Chromium est installé par le workflow ; en local on garde Chrome.
+    channel: process.env.CI ? undefined : 'chrome',
     headless: true,
   },
   webServer: {
