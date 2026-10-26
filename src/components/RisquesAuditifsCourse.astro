@@ -229,6 +229,7 @@ const tabs: RisquesTab[] = [
 <script>
   import { setupMainTabs } from '../utils/tabs';
   import { getAudioContext, getMasterBus } from '../utils/audioContext';
+  import { stopAudio } from '../utils/audioManager';
 
   // --- Gestion des Onglets ---
   const risquesRoot = document.querySelector<HTMLElement>('.risques-course');
@@ -345,6 +346,7 @@ const tabs: RisquesTab[] = [
         if (audioCtx?.state === 'suspended') audioCtx.resume();
 
         if (!isPlaying) {
+          stopAudio(); // exclusivité : coupe le lecteur partagé avant la simulation
           audioElement.play();
           isPlaying = true;
           btnPlayPause.querySelector('.icon')!.textContent = '⏸';
