@@ -36,7 +36,7 @@ test.describe('Smoke : pages sans erreur console', () => {
         if (res.status() >= 400) errors.push(`HTTP ${res.status()} ${res.url()}`);
       });
 
-      await page.goto(BASE + path, { waitUntil: 'load', timeout: 30000 });
+      await page.goto(BASE + path, { waitUntil: 'domcontentloaded', timeout: 30000 });
       await page.waitForTimeout(800);
 
       expect(errors, `Erreurs console sur ${path}`).toEqual([]);

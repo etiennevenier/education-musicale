@@ -4,14 +4,14 @@ export default defineConfig({
   testDir: './tests/e2e',
   timeout: 30000,
   use: {
-    baseURL: 'http://localhost:4321',
+    baseURL: 'http://localhost:4323',
     channel: 'chrome',
     headless: true,
   },
   webServer: {
-    command: 'npm run preview -- --port 4321',
-    url: 'http://localhost:4321/education-musicale/',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
+    command: 'npm run build && npx astro preview --port 4323',
+    url: 'http://localhost:4323/education-musicale/',
+    reuseExistingServer: false,
+    timeout: 180000,
   },
 });

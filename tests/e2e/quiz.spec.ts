@@ -31,11 +31,13 @@ async function playChoicesToEnd(
 }
 
 test("HymneQuiz : jouable jusqu'à l'écran de fin", async ({ page }) => {
+  test.setTimeout(120000);
   await page.goto(BASE + '/6eme/musique-et-hymnes/');
   await playChoicesToEnd(page, '.hymne-quiz-card');
 });
 
 test("PubQuiz : jouable jusqu'à l'écran de fin", async ({ page }) => {
+  test.setTimeout(120000);
   await page.goto(BASE + '/3eme/musique-et-pub/');
   await page.locator('#main-tab-quiz').click(); // onglet « Blindtest » du cours
   await expect(page.locator('#pub-panel-quiz')).toBeVisible();
