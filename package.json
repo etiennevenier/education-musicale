@@ -7,7 +7,8 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "start": "astro dev",
+    "build": "astro build && node generate-sitemap.mjs",
     "preview": "astro preview",
     "astro": "astro",
     "test": "vitest run",
