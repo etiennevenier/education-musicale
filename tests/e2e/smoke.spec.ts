@@ -33,7 +33,11 @@ test.describe('Smoke : pages sans erreur console', () => {
       });
       page.on('pageerror', (err) => errors.push(String(err)));
       page.on('response', (res) => {
-        if (res.status() >= 400) errors.push(`HTTP ${res.status()} ${res.url()}`);
+        // Les vignettes YouTube (i.ytimg.com) peuvent renvoyer 404 pour une vidéo
+        // supprimée : géré par la façade, ce n'est pas une erreur du site.
+        if (res.status() >= 400 && !res.url().includes('i.ytimg.com')) {
+          errors.push(`HTTP ${res.status()} ${res.url()}`);
+        }
       });
 
       await page.goto(BASE + path, { waitUntil: 'domcontentloaded', timeout: 30000 });

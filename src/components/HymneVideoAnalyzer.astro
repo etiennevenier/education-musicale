@@ -23,14 +23,22 @@ import '../styles/quiz-card.css';
     <!-- Colonne gauche : lecteur + titre -->
     <div class="hv-player-col">
       <div class="video-wrap">
-        <iframe
-          id="hvPlayer"
-          title="Vidéo à analyser"
-          allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          referrerpolicy="strict-origin-when-cross-origin"
-          allowfullscreen
-          loading="lazy"
-        ></iframe>
+        <button
+          type="button"
+          class="video-facade"
+          id="hvFacade"
+          data-video-facade
+          data-iframe-id="hvPlayer"
+          aria-label="Lire la vidéo"
+        >
+          <img id="hvThumb" alt="" loading="lazy" decoding="async" width="480" height="360" />
+          <span class="video-facade-play" aria-hidden="true"></span>
+        </button>
+        <noscript>
+          <a class="video-facade-noscript" href={hymneVideosList[0].url} target="_blank" rel="noopener noreferrer">
+            Ouvrir « {hymneVideosList[0].title} » sur YouTube
+          </a>
+        </noscript>
       </div>
       <p id="hvVideoTitle" class="video-title"></p>
       <a id="hvVideoLink" class="video-link" target="_blank" rel="noopener noreferrer">
@@ -107,7 +115,8 @@ import '../styles/quiz-card.css';
   const scoreLabel = $<HTMLSpanElement>('hvScoreLabel');
   const progressFill = $<HTMLDivElement>('hvProgressFill');
   const layout = $<HTMLDivElement>('hvLayout');
-  const player = $<HTMLIFrameElement>('hvPlayer');
+  const facade = $<HTMLButtonElement>('hvFacade');
+  const thumb = $<HTMLImageElement>('hvThumb');
   const videoTitle = $<HTMLParagraphElement>('hvVideoTitle');
   const videoLink = $<HTMLAnchorElement>('hvVideoLink');
   const btnValidate = $<HTMLButtonElement>('hvBtnValidate');
@@ -216,11 +225,26 @@ import '../styles/quiz-card.css';
     updateProgress();
     updateNextButton();
 
-    // Changer le src remplace (et donc arrête) la vidéo précédente
-    const embedUrl = toEmbedUrl(video.url);
-    if (embedUrl) player.src = embedUrl;
-    else player.removeAttribute('src');
-    player.title = video.title;
+    const id = getYouTubeId(video.url);
+    const playerEl = document.getElementById('hvPlayer') as HTMLIFrameElement | null;
+
+    if (playerEl) {
+      // Après le premier clic : l'iframe existe, on change simplement sa source.
+      const embedUrl = toEmbedUrl(video.url);
+      if (embedUrl) playerEl.src = embedUrl;
+      else playerEl.removeAttribute('src');
+      playerEl.title = video.title;
+    } else {
+      // Avant le premier clic : on met à jour la façade (vignette + titre).
+      facade.dataset.videoId = id ?? '';
+      facade.dataset.videoTitle = video.title;
+      facade.setAttribute('aria-label', `Lire la vidéo : ${video.title}`);
+      if (id) {
+        thumb.src = `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+        thumb.alt = video.title;
+      }
+    }
+
     videoTitle.textContent = video.title;
     videoLink.href = video.url;
   }
@@ -260,7 +284,7 @@ import '../styles/quiz-card.css';
 
 
   function showResult() {
-    player.removeAttribute('src');
+    document.getElementById('hvPlayer')?.removeAttribute('src');
     showQuizResult({
       hide: [progressBox, layout, actionFooter],
       feedback: quizFeedback,

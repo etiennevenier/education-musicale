@@ -58,6 +58,10 @@ const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href :
     <main class:list={['container', { wide }]}>
       <slot />
     </main>
+    <script>
+      import { initVideoFacades } from '../utils/videoFacade';
+      initVideoFacades();
+    </script>
   </body>
 </html>
 
@@ -369,5 +373,81 @@ const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href :
       border-radius: 0 !important;
       box-shadow: none !important;
     }
+  }
+
+  /* --- Façade de chargement différé des vidéos YouTube --- */
+  .video-facade {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    cursor: pointer;
+    background: #0f172a;
+    display: block;
+  }
+
+  .video-facade img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .video-facade-play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.75);
+    border: 2px solid #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .video-facade-play::after {
+    content: '';
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 11px 0 11px 18px;
+    border-color: transparent transparent transparent #ffffff;
+    margin-left: 4px;
+  }
+
+  .video-facade:hover .video-facade-play,
+  .video-facade:focus-visible .video-facade-play {
+    background: #cc0000;
+  }
+
+  .video-facade:focus-visible {
+    outline: 3px solid #38bdf8;
+    outline-offset: 2px;
+  }
+
+  .video-facade-iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  .video-facade-noscript {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    color: #38bdf8;
+    font-weight: 600;
+    text-align: center;
   }
 </style>
