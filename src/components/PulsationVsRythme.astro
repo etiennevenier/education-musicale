@@ -198,6 +198,18 @@
   };
   let drag: DragState | null = null;
 
+  // Coalesce les déplacements sur une frame : un seul rendu par frame au lieu d'un par événement.
+  let moveFrame = 0;
+  let pendingMove: PointerEvent | null = null;
+
+  function cancelPendingMove() {
+    if (moveFrame) {
+      window.cancelAnimationFrame(moveFrame);
+      moveFrame = 0;
+    }
+    pendingMove = null;
+  }
+
   function svgPoint(e: PointerEvent) {
     const pt = svg.createSVGPoint();
     pt.x = e.clientX;
@@ -223,6 +235,7 @@
     dropZone.setAttribute('visibility', 'hidden');
     originZone.setAttribute('visibility', 'hidden');
     drag = null;
+    cancelPendingMove();
 
     if (commit && target !== index) {
       const tmp = currentBeats[index];
@@ -250,19 +263,27 @@
 
   svg.addEventListener('pointermove', (e: PointerEvent) => {
     if (!drag || e.pointerId !== drag.pointerId) return;
-    const p = svgPoint(e);
-    const dx = p.x - drag.startX;
-    const dy = Math.max(-14, Math.min(14, p.y - drag.startY));
-    // Légère élévation + suit le doigt/souris
-    drag.group.setAttribute('transform', `translate(${slotX(drag.index) + dx} ${dy - 6})`);
+    pendingMove = e;
+    if (moveFrame) return;
+    moveFrame = window.requestAnimationFrame(() => {
+      moveFrame = 0;
+      const move = pendingMove;
+      pendingMove = null;
+      if (!move || !drag || move.pointerId !== drag.pointerId) return;
+      const p = svgPoint(move);
+      const dx = p.x - drag.startX;
+      const dy = Math.max(-14, Math.min(14, p.y - drag.startY));
+      // Légère élévation + suit le doigt/souris
+      drag.group.setAttribute('transform', `translate(${slotX(drag.index) + dx} ${dy - 6})`);
 
-    const target = slotFromX(p.x);
-    drag.target = target;
-    if (target !== drag.index) {
-      placeZone(dropZone, target);
-    } else {
-      dropZone.setAttribute('visibility', 'hidden');
-    }
+      const target = slotFromX(p.x);
+      drag.target = target;
+      if (target !== drag.index) {
+        placeZone(dropZone, target);
+      } else {
+        dropZone.setAttribute('visibility', 'hidden');
+      }
+    });
   });
 
   svg.addEventListener('pointerup', (e: PointerEvent) => {
@@ -271,6 +292,8 @@
   });
 
   svg.addEventListener('pointercancel', () => endDrag(false));
+
+  window.addEventListener('pagehide', cancelPendingMove, { once: true });
 
   // ---------- Encart explicatif ----------
   function triggerFeedback(mode: 'tempo' | 'rhythm') {

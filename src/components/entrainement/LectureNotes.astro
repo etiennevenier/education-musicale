@@ -1310,16 +1310,20 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
         window.addEventListener('pagehide', () => session?.cancel());
 
         // Le passage portrait/paysage change la géométrie de la portée (simple ou double) :
-        // on redessine la note en cours pour éviter tout viewBox périmé.
-        let staffResizeTimer: number | null = null;
+        // on redessine la note en cours, coalescé sur une frame et nettoyé à la sortie de page.
+        const staffResizeAbort = new AbortController();
+        let staffResizeFrame = 0;
         window.addEventListener('resize', () => {
-            if (!currentNoteObj) return;
-            if (staffResizeTimer !== null) window.clearTimeout(staffResizeTimer);
-            staffResizeTimer = window.setTimeout(() => {
-                staffResizeTimer = null;
+            if (!currentNoteObj || staffResizeFrame) return;
+            staffResizeFrame = window.requestAnimationFrame(() => {
+                staffResizeFrame = 0;
                 if (currentNoteObj) drawStaff(currentNoteObj);
-            }, 180);
-        });
+            });
+        }, { signal: staffResizeAbort.signal });
+        window.addEventListener('pagehide', () => {
+            if (staffResizeFrame) window.cancelAnimationFrame(staffResizeFrame);
+            staffResizeAbort.abort();
+        }, { once: true });
 
         const rotateHint = document.querySelector('#notes-rotate-hint');
         if (rotateHint instanceof HTMLElement) {

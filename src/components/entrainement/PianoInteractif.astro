@@ -711,15 +711,21 @@ import { relativeUrl } from '../../utils/navigation';
             window.setTimeout(() => updateStaff(lastStaffKey), 120);
         });
 
-        // Le redimensionnement (rotation, barre d'URL) change la géométrie : on redessine après stabilisation.
-        let staffResizeTimer: number | null = null;
+        // Le redimensionnement (rotation, barre d'URL) change la géométrie : on redessine,
+        // coalescé sur une frame (requestAnimationFrame) et nettoyé à la sortie de page.
+        const staffResizeAbort = new AbortController();
+        let staffResizeFrame = 0;
         window.addEventListener('resize', () => {
-            if (staffResizeTimer !== null) window.clearTimeout(staffResizeTimer);
-            staffResizeTimer = window.setTimeout(() => {
-                staffResizeTimer = null;
+            if (staffResizeFrame) return;
+            staffResizeFrame = window.requestAnimationFrame(() => {
+                staffResizeFrame = 0;
                 updateStaff(lastStaffKey);
-            }, 180);
-        });
+            });
+        }, { signal: staffResizeAbort.signal });
+        window.addEventListener('pagehide', () => {
+            if (staffResizeFrame) window.cancelAnimationFrame(staffResizeFrame);
+            staffResizeAbort.abort();
+        }, { once: true });
 
         updateStaff(null); // dessine la portée adaptée dès l'ouverture
     })();
