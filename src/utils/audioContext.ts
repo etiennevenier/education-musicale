@@ -86,3 +86,15 @@ export function getGlobalMuteState(): boolean {
 export async function suspendAudioContext(): Promise<void> {
   if (context && context.state === 'running') await context.suspend();
 }
+
+/**
+ * Coupe le contexte quand l'onglet passe en arrière-plan (économie CPU/batterie).
+ * La reprise est automatique au geste suivant : `getAudioContext()` appelle
+ * `resume()` si le contexte est suspendu (voir ligne 55).
+ */
+export function initAudioSuspendOnHidden(): void {
+  if (typeof document === 'undefined') return;
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) void suspendAudioContext();
+  });
+}

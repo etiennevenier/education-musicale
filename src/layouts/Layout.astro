@@ -60,7 +60,9 @@ const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href :
     </main>
     <script>
       import { initVideoFacades } from '../utils/videoFacade';
+      import { initAudioSuspendOnHidden } from '../utils/audioContext';
       initVideoFacades();
+      initAudioSuspendOnHidden();
     </script>
   </body>
 </html>
