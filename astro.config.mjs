@@ -6,4 +6,9 @@ export default defineConfig({
   build: {
     inlineStylesheets: 'always',
   },
+  // Préchargement des liens internes au survol : navigation plus fluide.
+  prefetch: {
+    prefetchAll: true,
+    defaultStrategy: 'hover',
+  },
 });

@@ -192,7 +192,7 @@ const pairTwo = {
 };
 ---
 
-<div class="metissage-course">
+<div class="metissage-course" data-voyages={JSON.stringify(voyages)}>
   <CourseTabs tabs={tabs} ariaLabel="Musique et Métissage" />
 
   {tabs.map((tab, index) => (
@@ -350,14 +350,20 @@ const pairTwo = {
   ))}
 </div>
 
-<script is:inline define:vars={{ voyages }}>
-  const metissageRoot = document.querySelector('.metissage-course');
+<script>
+  type MapPoint = { x: number; y: number };
+  type ViewBox = { x: number; y: number; w: number; h: number };
+  type VoyageStop = { label: string; artist: string; year: string; details: string; x: number; y: number };
+  type Voyage = { num: number; title: string; from: VoyageStop; to: VoyageStop[] };
+
+  const metissageRoot = document.querySelector<HTMLElement>('.metissage-course');
 
   if (metissageRoot) {
-    const tabs = Array.from(metissageRoot.querySelectorAll('.main-tab'));
-    const panels = Array.from(metissageRoot.querySelectorAll('.metissage-panel'));
+    const voyages = JSON.parse(metissageRoot.dataset.voyages || '[]') as Voyage[];
+    const tabs = Array.from(metissageRoot.querySelectorAll<HTMLElement>('.main-tab'));
+    const panels = Array.from(metissageRoot.querySelectorAll<HTMLElement>('.metissage-panel'));
 
-    const activateTab = (activeIndex, moveFocus = false) => {
+    const activateTab = (activeIndex: number, moveFocus = false) => {
       tabs.forEach((tab, index) => {
         const isActive = index === activeIndex;
         tab.setAttribute('aria-selected', String(isActive));
@@ -376,8 +382,8 @@ const pairTwo = {
     tabs.forEach((tab, index) => {
       tab.addEventListener('click', () => activateTab(index));
 
-      tab.addEventListener('keydown', (event) => {
-        let nextIndex = null;
+      tab.addEventListener('keydown', (event: KeyboardEvent) => {
+        let nextIndex: number | null = null;
 
         if (event.key === 'ArrowRight') {
           nextIndex = (index + 1) % tabs.length;
@@ -396,26 +402,26 @@ const pairTwo = {
       });
     });
 
-    const pillBtns = metissageRoot.querySelectorAll('.num-pill');
-    const svg = metissageRoot.querySelector('#world-map');
-    const layer = metissageRoot.querySelector('#map-dynamic-layer');
-    const songTitleEl = metissageRoot.querySelector('#map-song-title');
-    const titleBgEl = metissageRoot.querySelector('#map-title-bg');
-    const titleOverlayGroup = metissageRoot.querySelector('#map-title-overlay');
+    const pillBtns = metissageRoot.querySelectorAll<HTMLButtonElement>('.num-pill');
+    const svg = metissageRoot.querySelector<SVGSVGElement>('#world-map');
+    const layer = metissageRoot.querySelector<SVGGElement>('#map-dynamic-layer');
+    const songTitleEl = metissageRoot.querySelector<SVGTextElement>('#map-song-title');
+    const titleBgEl = metissageRoot.querySelector<SVGRectElement>('#map-title-bg');
+    const titleOverlayGroup = metissageRoot.querySelector<SVGGElement>('#map-title-overlay');
     const NS = 'http://www.w3.org/2000/svg';
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    let currentView = { x: 0, y: 0, w: 1000, h: 500 };
+    let currentView: ViewBox = { x: 0, y: 0, w: 1000, h: 500 };
     let rafId = 0;
-    let targetView = { x: 0, y: 0, w: 1000, h: 500 };
+    let targetView: ViewBox = { x: 0, y: 0, w: 1000, h: 500 };
 
-    const setView = (v) => {
+    const setView = (v: ViewBox) => {
       if (!svg) return;
       svg.setAttribute('viewBox', `${v.x} ${v.y} ${v.w} ${v.h}`);
       const k = v.w / 1000;
       
       if (layer) {
-        layer.querySelectorAll('.marker').forEach((m) => {
+        layer.querySelectorAll<SVGGElement>('.marker').forEach((m) => {
           m.setAttribute('transform', `translate(${m.dataset.x} ${m.dataset.y}) scale(${k})`);
         });
       }
@@ -425,7 +431,7 @@ const pairTwo = {
       }
     };
 
-    const animateTo = (target) => {
+    const animateTo = (target: ViewBox) => {
       cancelAnimationFrame(rafId);
       if (reduceMotion) {
         currentView = target;
@@ -435,8 +441,8 @@ const pairTwo = {
       const start = { ...currentView };
       const t0 = performance.now();
       const duration = 750;
-      const ease = (t) => 1 - Math.pow(1 - t, 3);
-      const step = (now) => {
+      const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+      const step = (now: number) => {
         const t = Math.min((now - t0) / duration, 1);
         const e = ease(t);
         currentView = {
@@ -451,7 +457,7 @@ const pairTwo = {
       rafId = requestAnimationFrame(step);
     };
 
-    const computeView = (points) => {
+    const computeView = (points: MapPoint[]): ViewBox => {
       const xs = points.map((p) => p.x);
       const ys = points.map((p) => p.y);
       const minX = Math.min(...xs), maxX = Math.max(...xs);
@@ -467,7 +473,7 @@ const pairTwo = {
       return { x, y, w, h };
     };
 
-    const arcPath = (a, b) => {
+    const arcPath = (a: MapPoint, b: MapPoint) => {
       const dx = b.x - a.x;
       const dy = b.y - a.y;
       const dist = Math.hypot(dx, dy) || 1;
@@ -480,9 +486,9 @@ const pairTwo = {
       return `M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`;
     };
 
-    const wrapText = (text, maxChars) => {
+    const wrapText = (text: string, maxChars: number): string[] => {
       const words = text.split(' ');
-      const lines = [];
+      const lines: string[] = [];
       let currentLine = '';
       words.forEach((word) => {
         if ((currentLine + ' ' + word).trim().length <= maxChars) {
@@ -496,14 +502,14 @@ const pairTwo = {
       return lines;
     };
 
-    const addMarker = (p, kind, refX) => {
+    const addMarker = (p: VoyageStop, kind: string, refX: number) => {
       if (!layer) return;
       const left = p.x > refX;
       const g = document.createElementNS(NS, 'g');
       g.setAttribute('class', `marker marker-${kind}`);
       g.setAttribute('tabindex', '0');
-      g.dataset.x = p.x;
-      g.dataset.y = p.y;
+      g.dataset.x = String(p.x);
+      g.dataset.y = String(p.y);
 
       const halo = document.createElementNS(NS, 'circle');
       halo.setAttribute('class', 'marker-halo');
@@ -527,7 +533,7 @@ const pairTwo = {
       const lines = wrapText(p.details, 44);
       const measureCtx = document.createElement('canvas').getContext('2d');
       const fontFamily = svg ? (getComputedStyle(svg).fontFamily || 'sans-serif') : 'sans-serif';
-      const measure = (str, weight, size) => {
+      const measure = (str: string, weight: number, size: number) => {
         if (!measureCtx) return str.length * size * 0.6;
         measureCtx.font = `${weight} ${size}px ${fontFamily}`;
         return measureCtx.measureText(str).width;
@@ -610,7 +616,7 @@ const pairTwo = {
       });
     }
 
-    const selectVoyage = (index) => {
+    const selectVoyage = (index: number) => {
       const data = voyages[index];
       if (!data || !layer) return;
 
@@ -619,7 +625,7 @@ const pairTwo = {
       if (songTitleEl && titleBgEl) {
         songTitleEl.textContent = data.title;
         const textLength = songTitleEl.getComputedTextLength ? songTitleEl.getComputedTextLength() : data.title.length * 9;
-        titleBgEl.setAttribute('width', Math.max(textLength + 30, 100));
+        titleBgEl.setAttribute('width', String(Math.max(textLength + 30, 100)));
       }
 
       layer.replaceChildren();
@@ -654,8 +660,8 @@ const pairTwo = {
 
     if (svg && layer) selectVoyage(0);
 
-    metissageRoot.querySelectorAll('[data-compare]').forEach((comparison) => {
-      const range = comparison.querySelector('.metissage-range');
+    metissageRoot.querySelectorAll<HTMLElement>('[data-compare]').forEach((comparison) => {
+      const range = comparison.querySelector<HTMLInputElement>('.metissage-range');
       if (!range) return;
 
       const figure = comparison.closest('.metissage-pair');
@@ -734,7 +740,7 @@ const pairTwo = {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
   }
 
   .num-pill:hover {
@@ -780,6 +786,7 @@ const pairTwo = {
     fill: rgba(15, 23, 42, 0.85);
     stroke: #f59e0b;
     stroke-width: 1.5px;
+    -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
   }
 

@@ -1,7 +1,6 @@
 ---
-import fs from 'node:fs';
-import path from 'node:path';
 import { fuzeauInstruments } from '../data/fuzeauInstruments';
+import { jazzChorusAudioFiles } from '../data/jazzChorusAudio';
 import { relativeUrl } from '../utils/navigation';
 import '../styles/quiz-card.css';
 
@@ -37,14 +36,7 @@ const canonicalNames = new Map<string, string>(
   )
 );
 
-let audioFiles: string[] = [];
-try {
-  audioFiles = fs
-    .readdirSync(path.join(process.cwd(), 'public', 'jazz'))
-    .filter((file) => /\.mp3$/i.test(file));
-} catch {
-  audioFiles = [];
-}
+const audioFiles: string[] = jazzChorusAudioFiles;
 
 const chorusItems = audioFiles
   .map((file) => {
