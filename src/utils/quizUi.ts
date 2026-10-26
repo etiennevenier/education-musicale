@@ -1,28 +1,5 @@
-import {
-  buildResultHtml,
-  getAutoNextDelay,
-  getResultMessage,
-  type QuizResultTier,
-  type ResultMessages,
-} from './quiz';
-import {
-  QUIZ_EMOJIS,
-  QUIZ_LABELS,
-  QUIZ_UNITS,
-  formatProgress,
-  formatScore,
-  type QuizUnit,
-} from './quizConfig';
-
-/** Associe les emoji communs aux textes propres à un quiz. */
-export function makeResultMessages(texts: Record<QuizResultTier, string>): ResultMessages {
-  return {
-    perfect: { emoji: QUIZ_EMOJIS.perfect, text: texts.perfect },
-    great: { emoji: QUIZ_EMOJIS.great, text: texts.great },
-    ok: { emoji: QUIZ_EMOJIS.ok, text: texts.ok },
-    retry: { emoji: QUIZ_EMOJIS.retry, text: texts.retry },
-  };
-}
+import { buildResultHtml, getAutoNextDelay } from './quiz';
+import { QUIZ_LABELS, QUIZ_UNITS, formatProgress, formatScore, type QuizUnit } from './quizConfig';
 
 export interface ProgressEls {
   progressLabel: HTMLElement;
@@ -66,20 +43,16 @@ export interface ShowResultOptions {
   container: HTMLElement;
   score: number;
   total: number;
-  messages: ResultMessages;
   restartId: string;
   onRestart: () => void;
 }
 
-/** Écran de bilan standard : emoji, « Partie terminée ! », « X / N », texte, « 🔄 Rejouer ». */
+/** Écran de bilan standard : emoji, « Partie terminée ! », « X / N », « 🔄 Rejouer ». */
 export function showQuizResult(o: ShowResultOptions): void {
-  const { emoji, text } = getResultMessage(o.score, o.total, o.messages);
   o.hide.forEach((el) => el.classList.add('hidden'));
   o.feedback.textContent = '';
   o.feedback.className = 'feedback-msg hidden';
   o.container.innerHTML = buildResultHtml({
-    emoji,
-    text,
     score: o.score,
     total: o.total,
     restartId: o.restartId,

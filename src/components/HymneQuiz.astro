@@ -38,21 +38,14 @@ import '../styles/quiz-card.css';
 <script>
   import { renderNextButton, renderProgress } from '../utils/quizUi';
   import { shuffle } from '../utils/random';
-  import type { ResultMessages } from '../utils/quiz';
   import { hymneQuizList } from '../data/hymnesData';
   import type { HymneQuizItem } from '../data/hymnesData';
-  import { buildResultHtml, getAutoNextDelay, getResultMessage } from '../utils/quiz';
+  import { buildResultHtml, getAutoNextDelay } from '../utils/quiz';
 
   const ANSWERS = [
     { value: true, label: "👥 C'est un Hymne (Collectif)" },
     { value: false, label: '👤 Pas un Hymne (Chanson personnelle)' },
   ];
-    const RESULT_MESSAGES: ResultMessages = {
-    perfect: { emoji: '🏆', text: '' },
-    great: { emoji: '🌟', text: '' },
-    ok: { emoji: '👍', text: '' },
-    retry: { emoji: '💪', text: '' },
-  };
 
   let currentQuestion: HymneQuizItem | null = null;
   let isAnswered = false;
@@ -192,13 +185,10 @@ import '../styles/quiz-card.css';
 
     function showResult() {
     const total = queue.length;
-    const { emoji, text } = getResultMessage(score, total, RESULT_MESSAGES);
 
     showQuizScreen(false);
     setFeedback(null);
     resultContainer.innerHTML = buildResultHtml({
-      emoji,
-      text,
       score,
       total,
       restartId: 'hqBtnRestart',

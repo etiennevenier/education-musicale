@@ -19,14 +19,6 @@ const choiceIndexes = [0, 1, 2, 3] as const;
 ---
 
 <div class="quiz-musique-pub" data-quiz-musique-pub>
-  <header class="pub-header">
-    <div class="pub-heading">
-      <p class="pub-kicker">📻 Culture pub</p>
-      <h3>Musique &amp; Publicité</h3>
-      <p class="pub-intro">Teste ton oreille avec un quiz de {PUB_QUIZ_LENGTH} extraits.</p>
-    </div>
-  </header>
-
   <div class="pub-tabs" role="tablist" aria-label="Sections du module" style="display: none;">
     <button
       type="button"
@@ -120,6 +112,12 @@ const choiceIndexes = [0, 1, 2, 3] as const;
     data-panel="quiz"
   >
     <div class="quiz-card pub-quiz-card" data-quiz-card>
+      <div class="fuzeau-header">
+        <span class="badge">Culture pub</span>
+        <h4>Musique &amp; Publicité</h4>
+      </div>
+      <p class="quiz-intro">Teste ton oreille avec un quiz de {PUB_QUIZ_LENGTH} extraits.</p>
+
       <div class="progress-box" data-quiz-progress-box>
         <div class="progress-text">
           <span data-question-counter>Question 1 / {PUB_QUIZ_LENGTH}</span>
@@ -163,7 +161,7 @@ const choiceIndexes = [0, 1, 2, 3] as const;
 <script>
   import { audioManager, stopAudio } from '../utils/audioManager';
   import { PUB_QUIZ_LENGTH, PUB_SOUNDS } from '../data/pubSounds';
-  import { PUB_RESULT_MESSAGES, createQuiz, type QuizQuestion } from '../utils/pubQuizEngine';
+  import { createQuiz, type QuizQuestion } from '../utils/pubQuizEngine';
   import { renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
   import { bindPlayButton } from '../utils/quizAudio';
   import { setupMainTabs } from '../utils/tabs';
@@ -337,7 +335,6 @@ const choiceIndexes = [0, 1, 2, 3] as const;
         container: resultBox,
         score,
         total: quizQuestions.length,
-        messages: PUB_RESULT_MESSAGES,
         restartId: 'pubBtnRestart',
         onRestart: () => startQuiz(true),
       });
@@ -372,7 +369,6 @@ const choiceIndexes = [0, 1, 2, 3] as const;
         button.classList.toggle('incorrect', index === choiceIndex && !choice.correct);
       });
 
-      const answer = question.sound.label;
       quizFeedback.textContent = '';
       quizFeedback.className = 'feedback-msg hidden';
 
@@ -426,12 +422,6 @@ const choiceIndexes = [0, 1, 2, 3] as const;
     display: flex;
     flex-direction: column;
     gap: 1.15rem;
-    padding: 1.25rem;
-    background:
-      radial-gradient(circle at top left, rgba(245, 158, 11, 0.09), transparent 32rem),
-      linear-gradient(180deg, rgba(30, 41, 59, 0.75), rgba(15, 23, 42, 0.96));
-    border: 1px solid var(--pub-border);
-    border-radius: 18px;
     color: var(--pub-text);
   }
 
@@ -448,42 +438,6 @@ const choiceIndexes = [0, 1, 2, 3] as const;
     color: var(--pub-muted);
     font-size: 0.85rem;
     line-height: 1.5;
-  }
-
-  .pub-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-
-  .pub-heading {
-    min-width: 0;
-  }
-
-  .pub-kicker {
-    margin: 0;
-    color: var(--pub-accent-strong);
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-
-  .pub-heading h3 {
-    margin: 0.25rem 0 0.35rem;
-    color: #f8fafc;
-    font-size: clamp(1.25rem, 2.6vw, 1.55rem);
-    line-height: 1.2;
-  }
-
-  .pub-intro {
-    margin: 0;
-    max-width: 62ch;
-    color: var(--pub-muted);
-    font-size: 0.9rem;
-    line-height: 1.55;
   }
 
   .pub-tabs {

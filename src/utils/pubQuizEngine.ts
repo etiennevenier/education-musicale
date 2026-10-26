@@ -1,6 +1,4 @@
 import { shuffle } from './random';
-import { makeResultMessages } from './quizUi';
-import { getResultTier, type QuizResultTier } from './quiz';
 import type { PubSoundEntry } from '../data/pubSounds';
 
 export interface QuizChoice {
@@ -45,15 +43,3 @@ export function createQuiz(sounds: readonly PubSoundEntry[], length: number): Qu
     });
 }
 
-/** Message de fin par palier (paliers communs à tous les quiz, voir quiz.ts). */
-const RESULT_TEXTS: Record<QuizResultTier, string> = {
-  perfect: 'Sans faute ! Tu connais le catalogue sur le bout des oreilles.',
-  great: 'Excellent ! Tu reconnais presque tous les jingles du catalogue.',
-  ok: 'Pas mal ! Encore quelques extraits à réécouter pour progresser.',
-  retry: "Continue à explorer le catalogue : ton oreille va vite s'affûter.",
-};
-
-export const getResultMessage = (points: number, total: number): string =>
-  RESULT_TEXTS[getResultTier(points, total)];
-
-export const PUB_RESULT_MESSAGES = makeResultMessages(RESULT_TEXTS);

@@ -1,94 +1,140 @@
 ---
+import '../styles/quiz-card.css';
+
+const ROUNDS = 5;
+const EXCERPTS = [1, 2, 3] as const;
+const CHOICES = [
+  { code: 'p', label: 'Piano' },
+  { code: 'mf', label: 'Mezzo Forte' },
+  { code: 'ff', label: 'Fortissimo' },
+] as const;
 ---
 
-<div class="nuances-card">
-  <div class="quiz-header">
+<div class="quiz-card nuances-quiz-card" data-rounds={ROUNDS}>
+  <div class="fuzeau-header">
     <span class="badge">Quiz Écoute</span>
     <h4>Devine la suite des 3 Nuances !</h4>
   </div>
 
-  <p class="quiz-instruction">
-    Écoute l'enchaînement des 3 extraits musicaux et indique la nuance correspondant à chaque extrait.
+  <p class="quiz-intro">
+    {ROUNDS} manches : écoute l'enchaînement des 3 extraits et indique la nuance de chacun.
   </p>
 
-  <!-- Lecteur global et individuel -->
-  <div class="playback-box">
-    <button id="btnPlayAll" class="btn-play-all">▶ Écouter les 3 extraits à la suite</button>
+  <!-- Progression -->
+  <div id="nqProgressBox" class="progress-box">
+    <div class="progress-text">
+      <span id="nqProgressLabel">Manche 1 / {ROUNDS}</span>
+      <span id="nqScoreLabel" class="score-label">Score : 0 / {ROUNDS}</span>
+    </div>
+    <div class="progress-bar"><div id="nqProgressFill" class="progress-fill"></div></div>
+  </div>
+
+  <!-- Écoute -->
+  <div id="nqQuestionContainer" class="question-container" tabindex="-1">
+    <p class="question-text">Quelle nuance pour chaque extrait ?</p>
+    <div class="audio-q-box">
+      <button type="button" id="nqBtnPlayAll" class="btn-play-sound"></button>
+    </div>
     <div class="sub-players">
-      <button id="btnPlay1" class="btn-sub">🎵 Extrait 1</button>
-      <button id="btnPlay2" class="btn-sub">🎵 Extrait 2</button>
-      <button id="btnPlay3" class="btn-sub">🎵 Extrait 3</button>
+      {
+        EXCERPTS.map((n) => (
+          <button type="button" class="btn-sub" data-excerpt={n - 1}>
+            🎵 Extrait {n}
+          </button>
+        ))
+      }
     </div>
   </div>
 
-  <!-- Formulaire de réponse pour l'élève -->
-  <div class="answers-grid">
-    <div class="answer-col">
-      <label for="select1">Extrait 1 :</label>
-      <select id="select1" class="quiz-select">
-        <option value="">-- Choisis --</option>
-        <option value="p">Piano</option>
-        <option value="mf">Mezzo Forte</option>
-        <option value="ff">Fortissimo</option>
-      </select>
-    </div>
-
-    <div class="answer-col">
-      <label for="select2">Extrait 2 :</label>
-      <select id="select2" class="quiz-select">
-        <option value="">-- Choisis --</option>
-        <option value="p">Piano</option>
-        <option value="mf">Mezzo Forte</option>
-        <option value="ff">Fortissimo</option>
-      </select>
-    </div>
-
-    <div class="answer-col">
-      <label for="select3">Extrait 3 :</label>
-      <select id="select3" class="quiz-select">
-        <option value="">-- Choisis --</option>
-        <option value="p">Piano</option>
-        <option value="mf">Mezzo Forte</option>
-        <option value="ff">Fortissimo</option>
-      </select>
-    </div>
+  <!-- Réponses -->
+  <div id="nqAnswers" class="filters-bar">
+    {
+      EXCERPTS.map((n) => (
+        <div class="filter-group">
+          <label for={`nqSelect${n}`}>Extrait {n}</label>
+          <select id={`nqSelect${n}`} class="quiz-select" data-excerpt={n - 1}>
+            <option value="">-- Choisis --</option>
+            {CHOICES.map((c) => (
+              <option value={c.code}>{c.label}</option>
+            ))}
+          </select>
+        </div>
+      ))
+    }
   </div>
 
-  <!-- Validation & Feedback -->
-  <div class="action-box">
-    <button id="btnVerify" class="btn-verify">Vérifier mes réponses</button>
-    <button id="btnNewGame" class="btn-secondary">🔄 Nouveau tirage</button>
+  <div id="nqFeedback" class="feedback-msg hidden" role="status" aria-live="polite"></div>
+
+  <div id="nqActionFooter" class="action-footer">
+    <button type="button" id="nqBtnValidate" class="btn-validate">Valider mes réponses</button>
+    <button type="button" id="nqBtnNext" class="btn-next" disabled>Manche suivante ➔</button>
   </div>
 
-  <div id="feedback" class="feedback-msg hidden"></div>
+  <!-- Bilan final -->
+  <div id="nqResultContainer" class="result-container hidden" aria-live="polite"></div>
 </div>
 
 <script>
   import { shuffle } from '../utils/random';
+  import { stopAudio } from '../utils/audioManager';
+  import {
+    renderNextButton,
+    renderProgress,
+    scheduleAutoNext,
+    showQuizResult,
+  } from '../utils/quizUi';
+
   // Nuances retenues avec des volumes (gains) bien tranchés pour éviter l'ambiguïté
   const NUANCE_OPTIONS = [
-    { code: 'p', label: 'Piano (Doux)', gain: 0.08 },
-    { code: 'mf', label: 'Mezzo Forte (Moyennement fort)', gain: 0.38 },
-    { code: 'ff', label: 'Fortissimo (Très fort)', gain: 0.90 }
+    { code: 'p', label: 'Piano', gain: 0.08 },
+    { code: 'mf', label: 'Mezzo Forte', gain: 0.38 },
+    { code: 'ff', label: 'Fortissimo', gain: 0.9 },
   ];
 
-  const PENTATONIC = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25];
+  const PENTATONIC = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25];
+  const EXCERPT_MS = 1100; // durée d'un extrait + pause
+  const PLAY_ALL_LABELS = {
+    idle: '▶ Écouter les 3 extraits à la suite',
+    playing: '🔊 Écoute en cours…',
+  };
+
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+  const card = document.querySelector<HTMLElement>('.nuances-quiz-card')!;
+  const ROUNDS = Number(card.dataset.rounds ?? 5);
+
+  const progressBox = $<HTMLDivElement>('nqProgressBox');
+  const progressLabel = $<HTMLSpanElement>('nqProgressLabel');
+  const scoreLabel = $<HTMLSpanElement>('nqScoreLabel');
+  const progressFill = $<HTMLDivElement>('nqProgressFill');
+  const questionContainer = $<HTMLDivElement>('nqQuestionContainer');
+  const btnPlayAll = $<HTMLButtonElement>('nqBtnPlayAll');
+  const subButtons = Array.from(card.querySelectorAll<HTMLButtonElement>('.btn-sub'));
+  const answers = $<HTMLDivElement>('nqAnswers');
+  const selects = Array.from(card.querySelectorAll<HTMLSelectElement>('.quiz-select'));
+  const quizFeedback = $<HTMLDivElement>('nqFeedback');
+  const actionFooter = $<HTMLDivElement>('nqActionFooter');
+  const btnValidate = $<HTMLButtonElement>('nqBtnValidate');
+  const btnNext = $<HTMLButtonElement>('nqBtnNext');
+  const resultContainer = $<HTMLDivElement>('nqResultContainer');
 
   let currentSequence: typeof NUANCE_OPTIONS = [];
+  let roundIndex = 0;
+  let score = 0;
+  let isAnswered = false;
   let audioCtx: AudioContext | null = null;
   let masterGain: GainNode | null = null;
+  let playToken = 0;
+  let autoNextTimer: ReturnType<typeof setTimeout> | null = null;
 
-  const btnPlayAll = document.getElementById('btnPlayAll') as HTMLButtonElement;
-  const btnPlay1 = document.getElementById('btnPlay1') as HTMLButtonElement;
-  const btnPlay2 = document.getElementById('btnPlay2') as HTMLButtonElement;
-  const btnPlay3 = document.getElementById('btnPlay3') as HTMLButtonElement;
-  const btnVerify = document.getElementById('btnVerify') as HTMLButtonElement;
-  const btnNewGame = document.getElementById('btnNewGame') as HTMLButtonElement;
+  function clearAutoNext() {
+    if (autoNextTimer) {
+      clearTimeout(autoNextTimer);
+      autoNextTimer = null;
+    }
+  }
 
-  const select1 = document.getElementById('select1') as HTMLSelectElement;
-  const select2 = document.getElementById('select2') as HTMLSelectElement;
-  const select3 = document.getElementById('select3') as HTMLSelectElement;
-  const feedback = document.getElementById('feedback')!;
+  // --- Audio ---------------------------------------------------------------
 
   function initAudio() {
     if (!audioCtx) {
@@ -101,27 +147,17 @@
     }
   }
 
-  // Génère un tirage aléatoire des 3 nuances (mélangées)
-  function generateNewSequence() {
-    // On prend les 3 nuances distinctes et on les mélange
-    currentSequence = shuffle(NUANCE_OPTIONS);
-    
-    // Réinitialiser le formulaire
-    select1.value = '';
-    select2.value = '';
-    select3.value = '';
-    select1.className = 'quiz-select';
-    select2.className = 'quiz-select';
-    select3.className = 'quiz-select';
-    
-    feedback.className = 'feedback-msg hidden';
-    feedback.textContent = '';
+  function setPlayAllState(playing: boolean) {
+    btnPlayAll.disabled = playing;
+    btnPlayAll.textContent = playing ? PLAY_ALL_LABELS.playing : PLAY_ALL_LABELS.idle;
+    subButtons.forEach((btn) => (btn.disabled = playing));
   }
 
   // Joue un extrait donné (index 0, 1 ou 2) avec un petit motif de 4 notes
   function playExcerpt(index: number, onComplete?: () => void) {
     initAudio();
     if (!audioCtx || !masterGain) return;
+    stopAudio(); // coupe un éventuel extrait d'un autre quiz
 
     const nuance = currentSequence[index];
     const now = audioCtx.currentTime;
@@ -131,7 +167,7 @@
 
     // Jouer 4 notes rapprochées
     for (let i = 0; i < 4; i++) {
-      const noteTime = now + (i * 0.22);
+      const noteTime = now + i * 0.22;
       const freq = PENTATONIC[(i * 2 + index) % PENTATONIC.length];
 
       const osc = audioCtx.createOscillator();
@@ -151,260 +187,197 @@
       osc.stop(noteTime + 0.22);
     }
 
-    if (onComplete) {
-      setTimeout(onComplete, 1100); // Durée totale de l'extrait + pause
-    }
+    if (onComplete) setTimeout(onComplete, EXCERPT_MS);
   }
 
-  // Joue la séquence complète des 3 extraits
+  // Joue la séquence complète des 3 extraits (annulable via playToken)
   function playFullSequence() {
-    btnPlayAll.disabled = true;
-    btnPlayAll.textContent = '🔊 Écoute en cours...';
+    const token = ++playToken;
+    setPlayAllState(true);
 
-    playExcerpt(0, () => {
-      playExcerpt(1, () => {
-        playExcerpt(2, () => {
-          btnPlayAll.disabled = false;
-          btnPlayAll.textContent = '▶ Écouter les 3 extraits à la suite';
-        });
-      });
+    const step = (i: number) => {
+      if (token !== playToken) return;
+      if (i >= currentSequence.length) {
+        setPlayAllState(false);
+        return;
+      }
+      playExcerpt(i, () => step(i + 1));
+    };
+    step(0);
+  }
+
+  function cancelPlayback() {
+    playToken++;
+    setPlayAllState(false);
+  }
+
+  // --- Affichage -----------------------------------------------------------
+
+  function setFeedback(kind: 'success' | 'error' | 'warning' | null, text = '') {
+    quizFeedback.textContent = text;
+    quizFeedback.className = kind ? `feedback-msg ${kind}` : 'feedback-msg hidden';
+  }
+
+  /** Bascule entre l'écran de jeu et l'écran de résultat. */
+  function showQuizScreen(visible: boolean) {
+    [progressBox, questionContainer, answers, actionFooter].forEach((el) =>
+      el.classList.toggle('hidden', !visible),
+    );
+    resultContainer.classList.toggle('hidden', visible);
+  }
+
+  function updateProgress() {
+    renderProgress(
+      { progressLabel, scoreLabel, progressFill },
+      { unit: 'manche', index: roundIndex, total: ROUNDS, score, answered: isAnswered },
+    );
+  }
+
+  function updateNextButton() {
+    renderNextButton(btnNext, {
+      unit: 'manche',
+      isLast: roundIndex >= ROUNDS - 1,
+      answered: isAnswered,
     });
   }
 
-  // Vérification des réponses de l'élève
-  function verifyAnswers() {
-    const userAnswers = [select1.value, select2.value, select3.value];
-    
-    if (userAnswers.includes('')) {
-      feedback.textContent = '⚠️ Merci de choisir une nuance pour les 3 extraits avant de vérifier !';
-      feedback.className = 'feedback-msg warning';
+  // --- Partie --------------------------------------------------------------
+
+  // Nouvelle manche : tirage aléatoire des 3 nuances (mélangées)
+  function loadRound() {
+    clearAutoNext();
+    cancelPlayback();
+    isAnswered = false;
+    currentSequence = shuffle(NUANCE_OPTIONS);
+
+    selects.forEach((select) => {
+      select.value = '';
+      select.disabled = false;
+      select.className = 'quiz-select';
+    });
+    btnValidate.disabled = false;
+    setFeedback(null);
+    updateProgress();
+    updateNextButton();
+  }
+
+  function validateAnswers() {
+    if (isAnswered) return;
+
+    if (selects.some((select) => select.value === '')) {
+      setFeedback('warning', '⚠️ Choisis une nuance pour les 3 extraits avant de valider !');
       return;
     }
 
+    isAnswered = true;
+    cancelPlayback();
+
     let correctCount = 0;
-    const selects = [select1, select2, select3];
-
-    selects.forEach((sel, idx) => {
-      if (sel.value === currentSequence[idx].code) {
-        correctCount++;
-        sel.className = 'quiz-select correct';
-      } else {
-        sel.className = 'quiz-select incorrect';
-      }
+    selects.forEach((select, idx) => {
+      const ok = select.value === currentSequence[idx].code;
+      if (ok) correctCount++;
+      select.className = `quiz-select ${ok ? 'correct' : 'incorrect'}`;
+      select.disabled = true;
     });
+    btnValidate.disabled = true;
 
-    if (correctCount === 3) {
-      feedback.textContent = '🎉 Bravo ! Tu as identifié parfaitement la suite des 3 nuances !';
-      feedback.className = 'feedback-msg success';
+    if (correctCount === selects.length) {
+      score++;
+      const message = '🎉 Bravo ! Tu as identifié parfaitement la suite des 3 nuances !';
+      setFeedback('success', message);
+      autoNextTimer = scheduleAutoNext(goToNext, message);
     } else {
-      feedback.textContent = `💡 Tu as ${correctCount} bonne(s) réponse(s) sur 3. Réécoute les extraits en rouge et réessaie !`;
-      feedback.className = 'feedback-msg error';
+      const solution = currentSequence
+        .map((nuance, idx) => `${idx + 1} → ${nuance.label}`)
+        .join(' · ');
+      setFeedback(
+        'error',
+        `💡 ${correctCount} bonne(s) réponse(s) sur ${selects.length}. Réponses : ${solution}`,
+      );
     }
+
+    updateProgress();
+    updateNextButton();
   }
 
-  // Événements
+  function showResult() {
+    clearAutoNext();
+    cancelPlayback();
+    showQuizResult({
+      hide: [progressBox, questionContainer, answers, actionFooter],
+      feedback: quizFeedback,
+      container: resultContainer,
+      score,
+      total: ROUNDS,
+      restartId: 'nqBtnRestart',
+      onRestart: startGame,
+    });
+  }
+
+  function startGame() {
+    clearAutoNext();
+    roundIndex = 0;
+    score = 0;
+    resultContainer.innerHTML = '';
+    showQuizScreen(true);
+    loadRound();
+  }
+
+  function goToNext() {
+    clearAutoNext();
+    if (!isAnswered) return;
+    if (roundIndex >= ROUNDS - 1) {
+      showResult();
+      return;
+    }
+    roundIndex++;
+    loadRound();
+  }
+
+  // --- Événements ----------------------------------------------------------
+
   btnPlayAll.addEventListener('click', playFullSequence);
-  btnPlay1.addEventListener('click', () => playExcerpt(0));
-  btnPlay2.addEventListener('click', () => playExcerpt(1));
-  btnPlay3.addEventListener('click', () => playExcerpt(2));
+  subButtons.forEach((btn) =>
+    btn.addEventListener('click', () => playExcerpt(Number(btn.dataset.excerpt))),
+  );
+  btnValidate.addEventListener('click', validateAnswers);
+  btnNext.addEventListener('click', goToNext);
 
-  btnVerify.addEventListener('click', verifyAnswers);
-  btnNewGame.addEventListener('click', generateNewSequence);
-
-  // Initialisation du premier tirage
-  generateNewSequence();
+  startGame();
 </script>
 
-<style>
-  .nuances-card {
-    background: #0f172a;
-    border: 1px solid #334155;
-    border-radius: 12px;
-    padding: 1.25rem;
+<style is:global>
+  .nuances-quiz-card .sub-players {
     display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-  }
-
-  .quiz-header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .badge {
-    background: #059669;
-    color: #ffffff;
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
-  }
-
-  .quiz-header h4 {
-    margin: 0;
-    color: #f1f5f9;
-    font-size: 1.1rem;
-  }
-
-  .quiz-instruction {
-    margin: 0;
-    color: #94a3b8;
-    font-size: 0.95rem;
-  }
-
-  .playback-box {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    background: #1e293b;
-    padding: 1rem;
-    border-radius: 8px;
-    border: 1px solid #334155;
-  }
-
-  .btn-play-all {
-    background: #0284c7;
-    color: #ffffff;
-    border: none;
-    padding: 0.75rem 1rem;
-    border-radius: 6px;
-    font-weight: 700;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-
-  .btn-play-all:hover:not(:disabled) {
-    background: #0369a1;
-  }
-
-  .btn-play-all:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .sub-players {
-    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 0.5rem;
+    margin-top: 0.75rem;
   }
 
-  .btn-sub {
-    flex: 1;
-    background: #334155;
-    color: #f1f5f9;
+  .nuances-quiz-card .btn-sub {
+    flex: 1 1 7rem;
+    background: var(--qc-border);
+    color: var(--qc-text);
     border: none;
     padding: 0.5rem;
     border-radius: 6px;
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s;
   }
 
-  .btn-sub:hover {
-    background: #475569;
+  .nuances-quiz-card .btn-sub:hover:not(:disabled) {
+    background: var(--qc-border-strong);
   }
 
-  .answers-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1rem;
+  .nuances-quiz-card .btn-sub:disabled {
+    opacity: 0.5;
+    cursor: default;
   }
 
-  .answer-col {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-  }
-
-  .answer-col label {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #cbd5e1;
-  }
-
-  .quiz-select {
-    background: #1e293b;
-    color: #f8fafc;
-    border: 1px solid #475569;
-    padding: 0.6rem;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-
-  .quiz-select.correct {
-    border-color: #10b981;
-    background: #064e3b;
-  }
-
-  .quiz-select.incorrect {
-    border-color: #f43f5e;
-    background: #881337;
-  }
-
-  .action-box {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-  }
-
-  .btn-verify {
-    background: #10b981;
-    color: #ffffff;
-    border: none;
-    padding: 0.65rem 1.25rem;
-    border-radius: 6px;
-    font-weight: 700;
-    font-size: 0.9rem;
-    cursor: pointer;
-  }
-
-  .btn-verify:hover {
-    background: #059669;
-  }
-
-  .btn-secondary {
-    background: #334155;
-    color: #f1f5f9;
-    border: none;
-    padding: 0.65rem 1rem;
-    border-radius: 6px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    cursor: pointer;
-  }
-
-  .btn-secondary:hover {
-    background: #475569;
-  }
-
-  .feedback-msg {
-    padding: 0.75rem 1rem;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    font-weight: 600;
-  }
-
-  .feedback-msg.hidden {
-    display: none;
-  }
-
-  .feedback-msg.warning {
-    background: #78350f;
-    color: #fde68a;
-  }
-
-  .feedback-msg.success {
-    background: #064e3b;
-    color: #a7f3d0;
-  }
-
-  .feedback-msg.error {
-    background: #881337;
-    color: #fecdd3;
+  .nuances-quiz-card .btn-sub:focus-visible {
+    outline: 2px solid var(--qc-accent);
+    outline-offset: 2px;
   }
 </style>

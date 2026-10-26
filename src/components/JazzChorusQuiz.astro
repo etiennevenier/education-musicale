@@ -162,7 +162,7 @@ const chorusGameData = {
 </section>
 
 <script>
-  import { makeResultMessages, renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
+  import { renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
   import { shuffle } from '../utils/random';
   import {
     getAudioState,
@@ -408,12 +408,6 @@ const chorusGameData = {
       }
     }
 
-    const RESULT_MESSAGES = makeResultMessages({
-        perfect: "",
-        great: "",
-        ok: "",
-        retry: "",
-      });
     
     function showResult() {
       clearAutoNext();
@@ -424,7 +418,6 @@ const chorusGameData = {
         container: resultContainer,
         score,
         total: queue.length,
-        messages: RESULT_MESSAGES,
         restartId: 'jcRestartBtn',
         onRestart: () => {
           startGame();

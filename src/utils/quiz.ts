@@ -1,4 +1,5 @@
-import { QUIZ_LABELS } from './quizConfig';
+import { QUIZ_EMOJIS, QUIZ_LABELS } from './quizConfig';
+
 export type QuizResultTier = 'perfect' | 'great' | 'ok' | 'retry';
 
 /**
@@ -16,24 +17,8 @@ export function getResultTier(note: number, total: number): QuizResultTier {
   if (ratio >= 0.5) return 'ok';
   return 'retry';
 }
-export interface ResultMessage {
-  emoji: string;
-  text: string;
-}
-export type ResultMessages = Record<QuizResultTier, ResultMessage>;
-
-/** Message de fin correspondant à la note, parmi les messages propres au quiz. */
-export function getResultMessage(
-  note: number,
-  total: number,
-  messages: ResultMessages,
-): ResultMessage {
-  return messages[getResultTier(note, total)];
-}
 
 export interface ResultHtmlOptions {
-  emoji: string;
-  text: string;
   score: number;
   total: number;
   restartId: string;
@@ -41,24 +26,27 @@ export interface ResultHtmlOptions {
   restartLabel?: string;
 }
 
-/** HTML de l'écran de fin (chaînes statiques de confiance uniquement). */
+/**
+ * HTML de l'écran de fin, identique pour tous les quiz :
+ * emoji (selon le palier), titre, score « X / N », bouton « Rejouer ». Aucun texte de bilan.
+ * (chaînes statiques de confiance uniquement)
+ */
 export function buildResultHtml({
-  emoji,
-  text,
   score,
   total,
   restartId,
   title = QUIZ_LABELS.resultTitle,
   restartLabel = QUIZ_LABELS.restart,
 }: ResultHtmlOptions): string {
+  const emoji = QUIZ_EMOJIS[getResultTier(score, total)];
   return `
     <div class="result-emoji">${emoji}</div>
     <p class="result-title">${title}</p>
     <p class="result-score"><span class="result-note">${score}</span> / ${total}</p>
-    
     <button type="button" id="${restartId}" class="btn-restart">${restartLabel}</button>
   `;
 }
+
 /** Délai minimum commun avant l'enchaînement automatique (ms). */
 export const AUTO_NEXT_MIN_MS = 1200;
 const AUTO_NEXT_MAX_MS = 6000;

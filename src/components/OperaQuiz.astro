@@ -64,7 +64,7 @@ import '../styles/quiz-card.css';
   import { shuffle } from '../utils/random';
   import { drawOperaQuestions, type OperaQuestion } from '../data/operaData';
   import { relativeUrl } from '../utils/navigation';
-  import { OPERA_RESULT_MESSAGES, isCorrectSelection, isMulti } from '../utils/operaQuizEngine';
+  import { isCorrectSelection, isMulti } from '../utils/operaQuizEngine';
   import { renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
   import { bindPlayButton } from '../utils/quizAudio';
   import { stopAudio } from '../utils/audioManager';
@@ -282,7 +282,6 @@ import '../styles/quiz-card.css';
       container: resultView,
       score,
       total: session.length,
-      messages: OPERA_RESULT_MESSAGES,
       restartId: 'qoBtnRestart',
       onRestart: () => {
         autoPlayEnabled = true;

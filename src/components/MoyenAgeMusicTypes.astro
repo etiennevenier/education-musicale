@@ -344,7 +344,7 @@ import { relativeUrl } from '../utils/navigation';
           const currentPlayer = players.find((player) =>
             sameTrack(getCurrentAudioUrl(), player.url),
           );
-           {
+          if (currentPlayer) {
             stopAudio();
           }
           return;

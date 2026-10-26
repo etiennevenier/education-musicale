@@ -76,7 +76,7 @@ import '../styles/quiz-card.css';
   import { shuffle } from '../utils/random';
   import { hymneVideosList } from '../data/hymnesData';
   import type { HymneVideoItem } from '../data/hymnesData';
-  import { makeResultMessages, renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
+  import { renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
 
   type Subject = HymneVideoItem['subject'];
   type Goal = HymneVideoItem['goal'];
@@ -257,12 +257,6 @@ import '../styles/quiz-card.css';
     updateNextButton();
   }
 
-  const RESULT_MESSAGES = makeResultMessages({
-      perfect: "Parfait ! Tu sais exactement reconnaître le pouvoir de rassemblement d'une musique !",
-      great: "Excellent travail, tu analyses très bien ce qui fait un hymne !",
-      ok: "Bien joué ! Encore un petit effort pour progresser.",
-      retry: "Continue à t'entraîner, tu vas y arriver !",
-    });
 
   function showResult() {
     player.removeAttribute('src');
@@ -272,7 +266,6 @@ import '../styles/quiz-card.css';
       container: resultContainer,
       score,
       total: queue.length,
-      messages: RESULT_MESSAGES,
       restartId: 'hvBtnRestart',
       onRestart: () => startGame(),
     });

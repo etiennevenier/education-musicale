@@ -41,7 +41,7 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
 
 <script>
   import { shuffle } from '../utils/random';
-  import { makeResultMessages, renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
+  import { renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
   import {
     ostinatoQuestions,
     OSTINATO_QUESTIONS_PER_GAME,
@@ -155,13 +155,6 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
     return question.kind === 'choice'
       ? question.correctAnswer.toLowerCase()
       : String(question.correctAnswer);
-  }
-
-  function successMessage(question: OstinatoQuestion): string {
-    if (question.kind === 'choice') {
-      return `✨ Bravo ! C'est un ostinato ${question.correctAnswer.toLowerCase()}.`;
-    }
-    return `✨ Bravo ! L'ostinato est bien répété ${question.correctAnswer} fois.`;
   }
 
   function finishAnswer(isCorrect: boolean) {
@@ -352,12 +345,6 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
     }
   }
 
-  const RESULT_MESSAGES = makeResultMessages({
-      perfect: "",
-      great: "",
-      ok: "",
-      retry: "",
-    });
 
   function showResult() {
     clearAutoNext();
@@ -368,7 +355,6 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
       container: resultContainer,
       score,
       total: queue.length,
-      messages: RESULT_MESSAGES,
       restartId: 'ostinatoBtnRestart',
       onRestart: () => {
         autoPlayEnabled = true;

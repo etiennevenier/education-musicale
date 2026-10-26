@@ -1,0 +1,644 @@
+<div class="quiz-card">
+  <div class="fuzeau-header">
+    <span class="badge">Atelier Fuzeau</span>
+    <h4>Jeu d'Identification des Timbres</h4>
+  </div>
+
+  <!-- Barre de filtres (Niveau & Type de question) -->
+  <div class="filters-bar">
+    <div class="filter-group">
+      <label for="levelSelect">Difficulté :</label>
+      <select id="levelSelect" class="quiz-select">
+        <option value="vert">🟢 Facile</option>
+        <option value="jaune">🟡 Moyen</option>
+        <option value="rouge">🔴 Difficile</option>
+        <option value="all">🌈 Tous les niveaux mélangés</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="modeSelect">Mode de jeu :</label>
+      <select id="modeSelect" class="quiz-select">
+        <option value="audio">1. Question Audio 🔊</option>
+        <option value="image">2. Question Visuelle 🖼️</option>
+        <option value="assoc">3. Association Son ↔️ Image</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Progression de la partie -->
+  <div id="progressBox" class="progress-box">
+    <div class="progress-text">
+      <span id="progressLabel">Question 1 / 12</span>
+      <span id="scoreLabel">Score : 0</span>
+    </div>
+    <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+  </div>
+
+  <!-- Zone de Question Dynamique -->
+  <div id="questionContainer" class="question-container"></div>
+
+  <!-- Zone de Choix / Réponses -->
+  <div id="optionsContainer" class="options-grid"></div>
+
+  <div id="quizFeedback" class="feedback-msg hidden"></div>
+
+  <!-- Validation & Suivant -->
+  <div id="actionFooter" class="action-footer">
+    <button id="btnNext" class="btn-next" disabled>Question Suivante ➔</button>
+  </div>
+
+  <!-- Écran de résultat final -->
+  <div id="resultContainer" class="result-container hidden"></div>
+</div>
+
+<script>
+  import { makeResultMessages, renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
+  import { shuffle } from '../utils/random';
+  import { fuzeauInstruments as instruments, type Instrument } from '../data/fuzeauInstruments';
+  import { relativeUrl } from '../utils/navigation';
+  import { playAudio, stopAudio } from '../utils/audioManager';
+  import '../styles/quiz-card.css';
+
+  type QuizMode = 'audio' | 'image' | 'assoc';
+  type QuizLevel = 'vert' | 'jaune' | 'rouge' | 'all';
+  type ResultMessage = { emoji: string; text: string };
+
+  // Les fichiers sont dans /public : on préfixe les URLs avec le BASE_URL d'Astro
+  // pour qu'elles restent valides en local et sur GitHub Pages (/education-musicale).
+  const fuzeauInstruments: Instrument[] = instruments.map((instrument) => ({
+    ...instrument,
+    audioUrl: relativeUrl(instrument.audioUrl),
+    imageUrl: relativeUrl(instrument.imageUrl),
+  }));
+
+  let currentInstrument: Instrument | null = null;
+  let currentMode: QuizMode = 'audio';
+  let currentLevel: QuizLevel = 'vert';
+  let isAnswered = false;
+
+  // État de la partie
+  let queue: Instrument[] = [];
+  let questionIndex = 0;
+  let score = 0;
+
+  // Passage automatique à la question suivante après une BONNE réponse uniquement
+  let autoNextTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function clearAutoNext(): void {
+    if (autoNextTimer !== null) {
+      clearTimeout(autoNextTimer);
+      autoNextTimer = null;
+    }
+  }
+
+  const levelSelect = document.getElementById('levelSelect') as HTMLSelectElement;
+  const modeSelect = document.getElementById('modeSelect') as HTMLSelectElement;
+  const progressBox = document.getElementById('progressBox') as HTMLDivElement;
+  const progressLabel = document.getElementById('progressLabel') as HTMLSpanElement;
+  const scoreLabel = document.getElementById('scoreLabel') as HTMLSpanElement;
+  const progressFill = document.getElementById('progressFill') as HTMLDivElement;
+  const questionContainer = document.getElementById('questionContainer') as HTMLDivElement;
+  const optionsContainer = document.getElementById('optionsContainer') as HTMLDivElement;
+  const quizFeedback = document.getElementById('quizFeedback') as HTMLDivElement;
+  const actionFooter = document.getElementById('actionFooter') as HTMLDivElement;
+  const resultContainer = document.getElementById('resultContainer') as HTMLDivElement;
+  const btnNext = document.getElementById('btnNext') as HTMLButtonElement;
+
+  // --- Utilitaires -------------------------------------------------------
+
+  // Minuscules + suppression des accents ("Flûte" -> "flute")
+  function normalize(str: string): string {
+    return str
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  // Normalisation pour la comparaison de réponses libres :
+  // sans accents, sans article, sans ponctuation ni espaces
+  function normalizeAnswer(str: string): string {
+    return normalize(str)
+      .trim()
+      .replace(/^(le|la|les|l'|un|une|des|du|de la|de l'|d')\s*/i, '')
+      .replace(/[^a-z0-9]/g, '');
+  }
+
+  function levenshtein(a: string, b: string): number {
+    const dp: number[][] = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+    for (let j = 1; j <= b.length; j++) dp[0][j] = j;
+    for (let i = 1; i <= a.length; i++) {
+      for (let j = 1; j <= b.length; j++) {
+        dp[i][j] = Math.min(
+          dp[i - 1][j] + 1,
+          dp[i][j - 1] + 1,
+          dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+        );
+      }
+    }
+    return dp[a.length][b.length];
+  }
+
+  // Réponse libre correcte ? (tolère 1 faute de frappe sur les noms de 5 lettres et +)
+  function isTypedAnswerCorrect(typed: string, expectedName: string): boolean {
+    const t = normalizeAnswer(typed);
+    const e = normalizeAnswer(expectedName);
+    if (!t) return false;
+    if (t === e) return true;
+    return e.length >= 5 && levenshtein(t, e) <= 1;
+  }
+
+  function getFilteredInstruments(): Instrument[] {
+    if (currentLevel === 'all') {
+      return fuzeauInstruments;
+    }
+    return fuzeauInstruments.filter(inst => inst.level === currentLevel);
+  }
+
+  // Mode 3 : 1 bonne réponse + 3 leurres piochés dans tout le catalogue
+  function getRandomOptions(correctItem: Instrument, count = 4): Instrument[] {
+    const otherItems = fuzeauInstruments.filter(i => i.id !== correctItem.id);
+    const options = [correctItem, ...shuffle(otherItems).slice(0, count - 1)];
+    return shuffle(options);
+  }
+
+  // --- Lecture audio -----------------------------------------------------
+  // Le gestionnaire centralisé coupe systématiquement l'extrait précédent,
+  // applique le volume master et évite tout chevauchement de sons.
+  function playSound(url: string): void {
+    void playAudio(url);
+  }
+
+  function stopSound(): void {
+    stopAudio();
+  }
+
+  // Si une image ne charge pas, on réessaie une fois avec l'autre encodage des accents
+  function attachImageFallback(root: ParentNode): void {
+    root.querySelectorAll('img').forEach((img) => {
+      img.addEventListener('error', () => {
+        if (img.dataset.retry) return;
+        img.dataset.retry = '1';
+        const original = img.getAttribute('src');
+        if (!original) return;
+        const alt = original.normalize('NFD');
+        if (alt !== original) img.src = alt;
+      });
+    });
+  }
+
+  // --- Progression et score ----------------------------------------------
+
+  function updateProgress() {
+    renderProgress(
+      { progressLabel, scoreLabel, progressFill },
+      { unit: 'question', index: questionIndex, total: queue.length, score, answered: isAnswered },
+    );
+  }
+
+  function updateNextButton() {
+    renderNextButton(btnNext, { unit: 'question', isLast: questionIndex >= queue.length - 1, answered: isAnswered });
+  }
+
+  // --- Saisie avec suggestions (modes 1 et 2) ----------------------------
+  // La liste n'apparaît que lorsque l'élève a tapé au moins une lettre.
+
+  function buildSearchBox(): HTMLDivElement {
+    const pool = [...getFilteredInstruments()].sort((a, b) =>
+      a.name.localeCompare(b.name, 'fr')
+    );
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'search-box';
+    wrapper.innerHTML = `
+      <div class="search-row">
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Écris le nom de l'instrument…"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+          aria-label="Nom de l'instrument"
+        />
+        <button type="button" class="btn-validate">Valider</button>
+      </div>
+      <ul class="search-list hidden" role="listbox"></ul>
+    `;
+
+    const input = wrapper.querySelector('.search-input') as HTMLInputElement;
+    const list = wrapper.querySelector('.search-list') as HTMLUListElement;
+    const btnValidate = wrapper.querySelector('.btn-validate') as HTMLButtonElement;
+    let matches: Instrument[] = [];
+    let activeIndex = -1; // -1 = aucune suggestion sélectionnée au clavier
+
+    function finish(isCorrect: boolean): void {
+      input.disabled = true;
+      btnValidate.disabled = true;
+      list.classList.add('hidden');
+      checkAnswer(isCorrect, input);
+    }
+
+    function computeMatches(): void {
+      const q = normalize(input.value.trim());
+      if (!q) {
+        matches = [];
+        return;
+      }
+      // Un mot du nom doit commencer par ce qui est tapé
+      // ("pan" trouve "Flûte de Pan", "vio" trouve Violon et Violoncelle)
+      matches = pool.filter(inst =>
+        normalize(inst.name)
+          .split(/[\s-]+/)
+          .some(word => word.startsWith(q))
+      );
+    }
+
+    function renderList(): void {
+      computeMatches();
+      list.innerHTML = '';
+
+      // Rien de tapé : aucune liste affichée
+      if (!input.value.trim()) {
+        list.classList.add('hidden');
+        return;
+      }
+
+      list.classList.remove('hidden');
+
+      if (matches.length === 0) {
+        const empty = document.createElement('li');
+        empty.className = 'search-empty';
+        empty.textContent = 'Aucun instrument ne correspond…';
+        list.appendChild(empty);
+        return;
+      }
+
+      if (activeIndex >= matches.length) activeIndex = -1;
+
+      matches.forEach((inst, idx) => {
+        const li = document.createElement('li');
+        li.className = 'search-item' + (idx === activeIndex ? ' active' : '');
+        li.setAttribute('role', 'option');
+        li.textContent = inst.name;
+        li.addEventListener('click', () => choose(inst));
+        list.appendChild(li);
+      });
+
+      const active = list.querySelector('.search-item.active');
+      if (active) active.scrollIntoView({ block: 'nearest' });
+    }
+
+    // Clic sur une suggestion : validation immédiate
+    function choose(inst: Instrument): void {
+      if (isAnswered) return;
+      const instrument = currentInstrument;
+      if (!instrument) return;
+      input.value = inst.name;
+      finish(inst.id === instrument.id);
+    }
+
+    // Validation du texte tel qu'il est écrit
+    function submitTyped(): void {
+      if (isAnswered) return;
+      const instrument = currentInstrument;
+      if (!instrument) return;
+      if (!input.value.trim()) return;
+      finish(isTypedAnswerCorrect(input.value, instrument.name));
+    }
+
+    input.addEventListener('input', () => {
+      activeIndex = -1;
+      renderList();
+    });
+
+    input.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (matches.length) activeIndex = (activeIndex + 1) % matches.length;
+        renderList();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (matches.length) activeIndex = activeIndex <= 0 ? matches.length - 1 : activeIndex - 1;
+        renderList();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (activeIndex >= 0 && matches[activeIndex]) {
+          choose(matches[activeIndex]);
+        } else {
+          submitTyped();
+        }
+      }
+    });
+
+    btnValidate.addEventListener('click', submitTyped);
+
+    return wrapper;
+  }
+
+  // --- Partie : démarrage, questions, résultat ---------------------------
+
+  // autoPlay = true : le son démarre tout de suite (modes 1 et 3 uniquement)
+  function startGame(autoPlay = false): void {
+    clearAutoNext();
+    stopSound();
+    score = 0;
+    questionIndex = 0;
+
+    // Tous les instruments du niveau choisi (12, ou 36 pour « Tous les niveaux »),
+    // chacun une seule fois, dans un ordre aléatoire
+    queue = shuffle(getFilteredInstruments());
+
+    resultContainer.classList.add('hidden');
+    resultContainer.innerHTML = '';
+    progressBox.classList.remove('hidden');
+    questionContainer.classList.remove('hidden');
+    optionsContainer.classList.remove('hidden');
+    actionFooter.classList.remove('hidden');
+
+    loadQuestion(autoPlay);
+  }
+
+  // autoPlay = false par défaut : à la toute première question (chargement de
+  // la page) le son ne se lance pas. Il se lance seulement après un clic
+  // « Question Suivante » ou « Recommencer ».
+  function loadQuestion(autoPlay = false): void {
+    clearAutoNext();
+    isAnswered = false;
+    quizFeedback.className = 'feedback-msg hidden';
+    stopSound();
+
+    const instrument = queue[questionIndex];
+    currentInstrument = instrument;
+    updateProgress();
+    updateNextButton();
+
+    questionContainer.innerHTML = '';
+    optionsContainer.innerHTML = '';
+
+    // 1. Question Audio : saisie libre, suggestions seulement pendant la frappe
+    if (currentMode === 'audio') {
+      questionContainer.innerHTML = `
+        <div class="audio-q-box">
+          <p>Écoute l'extrait audio et écris quel instrument joue :</p>
+          <button id="btnPlaySound" class="btn-play-sound">🔊 Écouter l'extrait</button>
+        </div>
+      `;
+      (document.getElementById('btnPlaySound') as HTMLButtonElement).addEventListener('click', () => playSound(instrument.audioUrl));
+      if (autoPlay) playSound(instrument.audioUrl);
+
+      optionsContainer.className = 'options-search';
+      optionsContainer.appendChild(buildSearchBox());
+    }
+
+    // 2. Question Visuelle : même principe
+    else if (currentMode === 'image') {
+      questionContainer.innerHTML = `
+        <div class="image-q-box">
+          <p>Quel est le nom de cet instrument ?</p>
+          <div class="q-img-wrap">
+            <img src="${instrument.imageUrl}" alt="Instrument à identifier" class="q-img" />
+          </div>
+        </div>
+      `;
+      attachImageFallback(questionContainer);
+
+      optionsContainer.className = 'options-search';
+      optionsContainer.appendChild(buildSearchBox());
+    }
+
+    // 3. Association Son ↔ Image (4 propositions : 1 bonne + 3 leurres)
+    else if (currentMode === 'assoc') {
+      const options = getRandomOptions(instrument, 4);
+
+      questionContainer.innerHTML = `
+        <div class="audio-q-box">
+          <p>Écoute le son et clique sur la bonne image :</p>
+          <button id="btnPlaySound" class="btn-play-sound">🔊 Écouter le son</button>
+        </div>
+      `;
+      (document.getElementById('btnPlaySound') as HTMLButtonElement).addEventListener('click', () => playSound(instrument.audioUrl));
+      if (autoPlay) playSound(instrument.audioUrl);
+
+      optionsContainer.className = 'options-grid-images';
+      options.forEach(opt => {
+        const card = document.createElement('div');
+        card.className = 'card-image-option';
+        card.innerHTML = `<img src="${opt.imageUrl}" alt="${opt.name}" />`;
+        card.addEventListener('click', () => checkAnswer(opt.id === instrument.id, card));
+        optionsContainer.appendChild(card);
+      });
+      attachImageFallback(optionsContainer);
+    }
+  }
+
+  function checkAnswer(isCorrect: boolean, element: HTMLElement): void {
+    if (isAnswered) return;
+    const instrument = currentInstrument;
+    if (!instrument) return;
+    isAnswered = true;
+
+    if (isCorrect) {
+      score++;
+      element.classList.add('correct');
+      quizFeedback.textContent = "";
+      quizFeedback.className = 'feedback-msg success';
+      autoNextTimer = scheduleAutoNext(goToNext, quizFeedback.textContent ?? '');
+    } else {
+      element.classList.add('incorrect');
+      quizFeedback.textContent = "";
+      quizFeedback.className = 'feedback-msg error';
+    }
+
+    updateProgress();
+    updateNextButton();
+  }
+
+const RESULT_MESSAGES = makeResultMessages({
+    perfect: "",
+    great: "",
+    ok: "",
+    retry: "",
+  });
+
+function showResult() {
+  stopSound();
+  showQuizResult({
+    hide: [progressBox, questionContainer, optionsContainer, actionFooter],
+    feedback: quizFeedback,
+    container: resultContainer,
+    score,
+    total: queue.length,
+    messages: RESULT_MESSAGES,
+    restartId: 'btnRestart',
+    onRestart: () => startGame(true),
+  });
+}
+
+  // --- Événements ---------------------------------------------------------
+
+  // Changer le niveau ou le mode relance une nouvelle partie
+  levelSelect.addEventListener('change', (): void => {
+    currentLevel = levelSelect.value as QuizLevel;
+    startGame();
+  });
+
+  modeSelect.addEventListener('change', (): void => {
+    currentMode = modeSelect.value as QuizMode;
+    startGame();
+  });
+
+  // Utilisé par le bouton « Suivant » ET par le minuteur après une bonne réponse
+  function goToNext(): void {
+    clearAutoNext();
+    if (!isAnswered) return;
+    if (questionIndex >= queue.length - 1) {
+      showResult();
+    } else {
+      questionIndex++;
+      loadQuestion(true);
+    }
+  }
+
+  btnNext.addEventListener('click', goToNext);
+
+  startGame();
+</script>
+
+<!--
+  IMPORTANT : is:global est indispensable ici. Astro "scope" les styles avec un
+  attribut data-astro-cid ajouté uniquement aux éléments du template. Les éléments
+  créés par le script (images, boutons, champ de saisie, liste, cartes) ne l'ont pas
+  et ne recevaient donc aucun style. Tous les sélecteurs sont préfixés par
+  .quiz-card pour ne pas affecter le reste du site.
+-->
+<style is:global>
+  
+
+  
+
+  
+
+  
+
+  /* --- Progression --- */
+  
+
+  
+
+  
+
+  /* --- Image de la question (mode 2) --- */
+  .quiz-card .q-img-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 100%;
+    max-height: 220px;
+    margin: 0.5rem auto 0;
+    overflow: hidden;
+  }
+
+  .quiz-card .q-img {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 220px;
+    object-fit: contain;
+    border-radius: 8px;
+    border: 2px solid #38bdf8;
+  }
+
+  /* --- Saisie / recherche (modes 1 et 2) --- */
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  /* --- Association Son ↔ Image (mode 3) --- */
+  .quiz-card .options-grid-images {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  @container (min-width: 700px) {
+    .quiz-card .options-grid-images {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  .quiz-card .card-image-option {
+    background: #1e293b;
+    border: 2px solid #475569;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s;
+    height: 180px;
+    min-width: 0;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .quiz-card .card-image-option img {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+
+  .quiz-card .card-image-option:hover {
+    border-color: #38bdf8;
+    transform: scale(1.02);
+  }
+
+  .quiz-card .card-image-option.correct {
+    border-color: #10b981;
+    box-shadow: 0 0 10px #10b981;
+  }
+
+  .quiz-card .card-image-option.incorrect {
+    border-color: #f43f5e;
+    box-shadow: 0 0 10px #f43f5e;
+  }
+
+  /* --- Écran de résultat --- */
+  </style>

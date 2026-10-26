@@ -1,0 +1,502 @@
+---
+import { relativeUrl } from '../utils/navigation';
+const baseUrl = relativeUrl('/');
+---
+
+<div class="blindtest-card" data-base-url={baseUrl}>
+  <div class="header-zone">
+    <h3>👂 Blind Test : Quelle est cette tessiture ?</h3>
+    <p>Écoute 10 extraits vocaux et devine à chaque fois quelle tessiture chante. Ton score s'affiche à la fin !</p>
+  </div>
+
+  <div id="progress-box" class="progress-box">
+    <div class="progress-text">
+      <span id="progress-label">Question 1 / 10</span>
+      <span id="score-label" class="score-label">Score : 0 / 10</span>
+    </div>
+    <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+  </div>
+
+  <div class="player-zone">
+    <button id="play-btn" class="play-btn">
+      ▶️ Écouter l'extrait vocal
+    </button>
+    <span id="audio-status" class="status-indicator">Extrait prêt à être écouté</span>
+  </div>
+
+  <div class="options-grid">
+    <button class="choice-btn" data-tessiture="soprano">Soprano</button>
+    <button class="choice-btn" data-tessiture="alto">Alto</button>
+    <button class="choice-btn" data-tessiture="tenor">Ténor</button>
+    <button class="choice-btn" data-tessiture="basse">Basse</button>
+  </div>
+
+  <div id="feedback" class="feedback-msg" aria-live="polite"></div>
+
+  <button id="next-btn" class="next-btn is-hidden">
+    Question suivante ➔
+  </button>
+
+  <div id="result-container" class="result-container is-hidden" aria-live="polite">
+    <div id="result-emoji" class="result-emoji">🏆</div>
+    <p class="result-title">Partie terminée !</p>
+    <p class="result-score"><span id="result-note" class="result-note">0</span> / <span id="result-total">10</span></p>
+    <p id="result-text" class="result-text"></p>
+    <button id="restart-btn" class="btn-restart">🔄 Recommencer</button>
+  </div>
+</div>
+
+<script>
+  import { shuffle } from '../utils/random';
+  import { getResultTier } from '../utils/quiz';
+  import { loadAudio, onAudioEvent, playAudio, stopAudio } from '../utils/audioManager';
+
+  type TessitureId = 'soprano' | 'alto' | 'tenor' | 'basse';
+
+  interface TessitureProfile {
+    id: TessitureId;
+    label: string;
+    filePrefix: string;
+  }
+
+  interface AudioTrack {
+    id: TessitureId;
+    label: string;
+    file: string;
+  }
+
+  const TESSITURES: TessitureProfile[] = [
+    { id: 'soprano', label: 'Soprano', filePrefix: 'Soprano' },
+    { id: 'alto', label: 'Alto', filePrefix: 'Alto' },
+    { id: 'tenor', label: 'Ténor', filePrefix: 'Tenor' },
+    { id: 'basse', label: 'Basse', filePrefix: 'Basse' },
+  ];
+
+  const TRACKS_PER_TESSITURE = 6;
+  const QUESTIONS_PER_GAME = 10;
+  const MIN_QUESTIONS_PER_TESSITURE = 2;
+
+  // 24 fichiers MP3 réels, chacun associé à la tessiture attendue.
+  const AUDIO_TRACKS: AudioTrack[] = TESSITURES.flatMap((tessiture) =>
+    Array.from({ length: TRACKS_PER_TESSITURE }, (_, index) => ({
+      id: tessiture.id,
+      label: tessiture.label,
+      file: `/tessitures/${tessiture.filePrefix} ${index + 1}.mp3`,
+    }))
+  );
+
+  const card = document.querySelector('.blindtest-card') as HTMLElement | null;
+  const siteBaseUrl = (card?.dataset.baseUrl ?? '/').replace(/\/$/, '');
+
+  const playBtn = document.getElementById('play-btn') as HTMLButtonElement | null;
+  const statusSpan = document.getElementById('audio-status') as HTMLSpanElement | null;
+  const feedbackDiv = document.getElementById('feedback') as HTMLDivElement | null;
+  const nextBtn = document.getElementById('next-btn') as HTMLButtonElement | null;
+  const choiceBtns = document.querySelectorAll<HTMLButtonElement>('.choice-btn');
+  const progressBox = document.getElementById('progress-box') as HTMLDivElement | null;
+  const progressLabel = document.getElementById('progress-label') as HTMLSpanElement | null;
+  const scoreLabel = document.getElementById('score-label') as HTMLSpanElement | null;
+  const progressFill = document.getElementById('progress-fill') as HTMLDivElement | null;
+  const playerZone = document.querySelector('.player-zone') as HTMLDivElement | null;
+  const optionsGrid = document.querySelector('.options-grid') as HTMLDivElement | null;
+  const resultContainer = document.getElementById('result-container') as HTMLDivElement | null;
+  const resultEmoji = document.getElementById('result-emoji') as HTMLDivElement | null;
+  const resultNote = document.getElementById('result-note') as HTMLSpanElement | null;
+  const resultTotal = document.getElementById('result-total') as HTMLSpanElement | null;
+  const resultText = document.getElementById('result-text') as HTMLParagraphElement | null;
+  const restartBtn = document.getElementById('restart-btn') as HTMLButtonElement | null;
+
+  // La lecture est gérée par le gestionnaire audio partagé : une seule piste
+  // à la fois, volume master homogène et aucun chevauchement de sons.
+  let currentTrack: AudioTrack = AUDIO_TRACKS[0];
+  let gameTracks: AudioTrack[] = [];
+  let questionIndex = 0;
+  let score = 0;
+  let isAnswered = false;
+  let isPlaying = false;
+  let playbackToken = 0;
+
+  function getTrackUrl(track: AudioTrack): string {
+    // Le préfixe de base est nécessaire sur GitHub Pages (/education-musicale/).
+    return `${siteBaseUrl}${encodeURI(track.file)}`;
+  }
+
+  function buildGameTracks(): AudioTrack[] {
+    // 2 extraits par tessiture (8) + 2 extraits parmi les restants = 10 questions.
+    const pools = TESSITURES.map((tessiture) =>
+      shuffle(AUDIO_TRACKS.filter((track) => track.id === tessiture.id))
+    );
+    const selected: AudioTrack[] = [];
+
+    pools.forEach((pool) => {
+      selected.push(...pool.splice(0, MIN_QUESTIONS_PER_TESSITURE));
+    });
+
+    const remaining = shuffle(pools.flat());
+    selected.push(...remaining.slice(0, QUESTIONS_PER_GAME - selected.length));
+
+    return shuffle(selected).slice(0, QUESTIONS_PER_GAME);
+  }
+
+  function updateProgress() {
+    const total = gameTracks.length || QUESTIONS_PER_GAME;
+    if (progressLabel) progressLabel.textContent = `Question ${questionIndex + 1} / ${total}`;
+    if (scoreLabel) scoreLabel.textContent = `Score : ${score} / ${total}`;
+    const done = questionIndex + (isAnswered ? 1 : 0);
+    if (progressFill) progressFill.style.width = `${(done / total) * 100}%`;
+  }
+
+  function updateNextButton() {
+    if (!nextBtn) return;
+    const isLast = questionIndex >= gameTracks.length - 1;
+    nextBtn.textContent = isLast ? '🏁 Voir mon score' : 'Question suivante ➔';
+  }
+
+  function resetChoices() {
+    choiceBtns.forEach((button) => {
+      button.disabled = false;
+      button.classList.remove('correct', 'wrong');
+    });
+  }
+
+  function loadQuestion() {
+    const track = gameTracks[questionIndex];
+    if (!track) return;
+
+    currentTrack = track;
+    isAnswered = false;
+
+    playbackToken += 1;
+    isPlaying = false;
+
+    // Précharge l'extrait de la question sans le lire.
+    loadAudio(getTrackUrl(track));
+
+    if (playBtn) playBtn.disabled = false;
+    if (statusSpan) statusSpan.textContent = 'Extrait prêt à être écouté';
+    if (feedbackDiv) {
+      feedbackDiv.textContent = '';
+      feedbackDiv.className = 'feedback-msg';
+    }
+    nextBtn?.classList.add('is-hidden');
+
+    resetChoices();
+    updateProgress();
+    updateNextButton();
+  }
+
+  async function playCurrentTrack() {
+    if (isPlaying) return;
+
+    const token = ++playbackToken;
+    isPlaying = true;
+    if (playBtn) playBtn.disabled = true;
+    if (statusSpan) statusSpan.textContent = "🔊 Lecture de l'extrait...";
+
+    const started = await playAudio();
+
+    // Si une nouvelle question a été chargée entre-temps, on ignore le résultat.
+    if (token !== playbackToken) return;
+
+    if (!started) {
+      isPlaying = false;
+      if (playBtn) playBtn.disabled = false;
+      if (statusSpan) statusSpan.textContent = 'Impossible de lire cet extrait. Réessaie.';
+    }
+  }
+
+  // Fin de lecture et erreurs signalées par le gestionnaire partagé.
+  onAudioEvent('ended', ({ url }) => {
+    if (url !== getTrackUrl(currentTrack)) return;
+    isPlaying = false;
+    if (playBtn) playBtn.disabled = false;
+    if (statusSpan) statusSpan.textContent = '🎵 Écoute terminée. Choisis ta réponse !';
+  });
+
+  onAudioEvent('error', ({ url }) => {
+    if (url !== getTrackUrl(currentTrack)) return;
+    isPlaying = false;
+    if (playBtn) playBtn.disabled = false;
+    if (statusSpan) statusSpan.textContent = 'Impossible de lire cet extrait. Réessaie.';
+  });
+
+  function getResultMessage(note: number, total: number) {
+    const tier = getResultTier(note, total);
+    switch (tier) {
+      case 'perfect':
+        return { emoji: '🏆', text: "Parfait ! Tu reconnais toutes les tessitures à l'oreille !" };
+      case 'great':
+        return { emoji: '🌟', text: 'Excellent ! Tu as une très bonne oreille musicale.' };
+      case 'ok':
+        return { emoji: '👍', text: "Bien joué ! Encore un peu d'entraînement pour progresser." };
+      default:
+        return { emoji: '💪', text: "Continue à écouter et à t'entraîner, tu vas y arriver !" };
+    }
+  }
+
+  function showResult() {
+    playbackToken += 1;
+    stopAudio();
+    isPlaying = false;
+
+    progressBox?.classList.add('is-hidden');
+    playerZone?.classList.add('is-hidden');
+    optionsGrid?.classList.add('is-hidden');
+    feedbackDiv?.classList.add('is-hidden');
+    nextBtn?.classList.add('is-hidden');
+    resultContainer?.classList.remove('is-hidden');
+
+    const total = gameTracks.length || QUESTIONS_PER_GAME;
+    const { emoji, text } = getResultMessage(score, total);
+    if (resultEmoji) resultEmoji.textContent = emoji;
+    if (resultNote) resultNote.textContent = String(score);
+    if (resultTotal) resultTotal.textContent = String(total);
+    if (resultText) resultText.textContent = text;
+  }
+
+  function startGame() {
+    gameTracks = buildGameTracks();
+    questionIndex = 0;
+    score = 0;
+    isAnswered = false;
+
+    progressBox?.classList.remove('is-hidden');
+    playerZone?.classList.remove('is-hidden');
+    optionsGrid?.classList.remove('is-hidden');
+    feedbackDiv?.classList.remove('is-hidden');
+    resultContainer?.classList.add('is-hidden');
+
+    loadQuestion();
+  }
+
+  function goToNext() {
+    if (!isAnswered) return;
+    if (questionIndex >= gameTracks.length - 1) {
+      showResult();
+      return;
+    }
+    questionIndex += 1;
+    loadQuestion();
+  }
+
+  playBtn?.addEventListener('click', playCurrentTrack);
+
+  choiceBtns.forEach((button) => {
+    button.addEventListener('click', () => {
+      if (isAnswered || button.disabled || !feedbackDiv) return;
+
+      isAnswered = true;
+      const selected = button.dataset.tessiture;
+      const isCorrect = selected === currentTrack.id;
+
+      if (isCorrect) {
+        score += 1;
+        button.classList.add('correct');
+        feedbackDiv.className = 'feedback-msg success';
+        feedbackDiv.innerHTML = `🎉 <strong>Bravo !</strong> C'était bien la tessiture <strong>${currentTrack.label}</strong>.`;
+      } else {
+        button.classList.add('wrong');
+        choiceBtns.forEach((choice) => {
+          if (choice.dataset.tessiture === currentTrack.id) {
+            choice.classList.add('correct');
+          }
+        });
+        feedbackDiv.className = 'feedback-msg error';
+        feedbackDiv.innerHTML = `❌ <strong>Dommage !</strong> C'était la tessiture <strong>${currentTrack.label}</strong>.`;
+      }
+
+      choiceBtns.forEach((choice) => {
+        choice.disabled = true;
+      });
+
+      updateProgress();
+      updateNextButton();
+      nextBtn?.classList.remove('is-hidden');
+    });
+  });
+
+  nextBtn?.addEventListener('click', goToNext);
+  restartBtn?.addEventListener('click', startGame);
+
+  startGame();
+
+</script>
+
+<style>
+  .blindtest-card {
+    background: var(--card-bg, #1e1e2e);
+    border: 1px solid var(--border, #313244);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    text-align: center;
+  }
+  .is-hidden {
+    display: none !important;
+  }
+  .progress-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin: 1.25rem 0 0.25rem;
+  }
+  .progress-text {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    color: var(--text-muted, #a6adc8);
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+  .score-label {
+    color: #89b4fa;
+  }
+  .progress-bar {
+    height: 8px;
+    background: #313244;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, #89b4fa, #b4befe);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+  }
+  .player-zone {
+    margin: 1.5rem 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .play-btn {
+    background: #fab387;
+    color: #11111b;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 20px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+  }
+  .play-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .play-btn:active:not(:disabled) {
+    transform: scale(0.95);
+  }
+  .status-indicator {
+    font-size: 0.9rem;
+    color: var(--text-muted, #a6adc8);
+  }
+  .options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  .choice-btn {
+    background: #313244;
+    color: #cdd6f4;
+    border: 2px solid transparent;
+    padding: 1rem 0.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.05rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+  .choice-btn:hover:not(:disabled) {
+    border-color: var(--primary, #89b4fa);
+    background: #45475a;
+  }
+  .choice-btn.correct {
+    background: rgba(166, 227, 161, 0.2);
+    border-color: #a6e3a1;
+    color: #a6e3a1;
+  }
+  .choice-btn.wrong {
+    background: rgba(243, 139, 168, 0.2);
+    border-color: #f38ba8;
+    color: #f38ba8;
+  }
+  .feedback-msg {
+    min-height: 2rem;
+    font-size: 1.05rem;
+    margin: 1rem 0;
+  }
+  .feedback-msg.success {
+    color: #a6e3a1;
+  }
+  .feedback-msg.error {
+    color: #f38ba8;
+  }
+  .next-btn {
+    background: var(--primary, #89b4fa);
+    color: #11111b;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  /* --- Écran de résultat (identique au quiz Fuzeau / Musique et Timbre) --- */
+  .result-container {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 2rem 1.25rem;
+    text-align: center;
+    color: #f1f5f9;
+  }
+
+  .result-emoji {
+    font-size: 3rem;
+    line-height: 1;
+  }
+
+  .result-title {
+    margin: 0.75rem 0 0.25rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #cbd5e1;
+  }
+
+  .result-score {
+    margin: 0 0 0.5rem;
+    font-size: 1.6rem;
+    font-weight: 800;
+  }
+
+  .result-note {
+    font-size: 3rem;
+    color: #38bdf8;
+  }
+
+  .result-text {
+    margin: 0 0 1.25rem;
+    color: #e2e8f0;
+  }
+
+  .btn-restart {
+    background: #0284c7;
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.75rem;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+
+  .btn-restart:hover {
+    background: #0369a1;
+  }
+</style>

@@ -1,0 +1,772 @@
+---
+import fs from 'node:fs';
+import path from 'node:path';
+import { fuzeauInstruments } from '../data/fuzeauInstruments';
+import { relativeUrl } from '../utils/navigation';
+import '../styles/quiz-card.css';
+
+const QUESTIONS_PER_GAME = 10;
+
+const baseUrl = relativeUrl('/');
+
+function normalizeInstrumentName(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[’']/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// "01-Trompette-2.mp3" -> "Trompette" ; "Piano1.mp3" -> "Piano".
+function extractInstrument(fileName: string): string {
+  return fileName
+    .replace(/\.mp3$/i, '')
+    .replace(/^\s*\d+[\s._-]*/, '')
+    .replace(/[\s._-]*\d+\s*$/, '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Les 36 instruments du jeu de timbres servent de noms canoniques.
+const canonicalNames = new Map<string, string>(
+  fuzeauInstruments.map(
+    (instrument) => [normalizeInstrumentName(instrument.name), instrument.name] as const
+  )
+);
+
+let audioFiles: string[] = [];
+try {
+  audioFiles = fs
+    .readdirSync(path.join(process.cwd(), 'public', 'jazz'))
+    .filter((file) => /\.mp3$/i.test(file));
+} catch {
+  audioFiles = [];
+}
+
+const chorusItems = audioFiles
+  .map((file) => {
+    const rawInstrument = extractInstrument(file);
+    return {
+      file,
+      instrument: canonicalNames.get(normalizeInstrumentName(rawInstrument)) ?? rawInstrument,
+      audioUrl: `${baseUrl}jazz/${encodeURIComponent(file)}`,
+    };
+  })
+  .filter((item) => item.instrument.length > 0)
+  .sort((a, b) => a.file.localeCompare(b.file, 'fr'));
+
+// On garde les 36 instruments + ceux réellement présents dans /public/jazz/.
+const instrumentSuggestions = Array.from(
+  new Set([
+    ...fuzeauInstruments.map((instrument) => instrument.name),
+    ...chorusItems.map((item) => item.instrument),
+  ])
+).sort((a, b) => a.localeCompare(b, 'fr'));
+
+const chorusGameData = {
+  items: chorusItems,
+  instruments: instrumentSuggestions,
+  questionsPerGame: QUESTIONS_PER_GAME,
+};
+---
+
+<section class="quiz-card jazz-chorus-card" id="jazz-chorus-quiz" aria-labelledby="jc-title">
+  <div
+    id="jcGameData"
+    data-game={JSON.stringify(chorusGameData)}
+    class="hidden"
+    aria-hidden="true"
+  ></div>
+
+  <div class="fuzeau-header">
+    <span class="badge">Jeu d'écoute</span>
+    <h4 id="jc-title">Quel instrument fait le chorus ?</h4>
+  </div>
+
+  <p class="quiz-intro" id="jcInstruction">
+    Écoute 10 extraits de jazz et identifie l'instrument qui improvise le chorus. Tape les
+    premières lettres du nom, puis choisis dans la liste.
+  </p>
+
+  <p id="jcEmpty" class="jc-empty hidden">
+    Aucun extrait audio n'est disponible pour le moment.
+  </p>
+
+  <div id="jcGame" class="jc-game hidden">
+    <div class="progress-box">
+      <div class="progress-text">
+        <span id="jcProgressLabel">Extrait 1 / 10</span>
+        <span id="jcScoreLabel" class="score-label">Score : 0 / 10</span>
+      </div>
+      <div class="progress-bar">
+        <div id="jcProgressFill" class="progress-fill"></div>
+      </div>
+    </div>
+
+    <div class="jc-player">
+      <button id="jcPlayBtn" class="jc-play-btn" type="button" aria-label="Écouter l'extrait">
+        <span id="jcPlayIcon" class="jc-play-icon" aria-hidden="true">▶</span>
+        <span id="jcPlayLabel">Écouter l'extrait</span>
+      </button>
+      <span id="jcAudioStatus" class="jc-audio-status" aria-live="polite"></span>
+    </div>
+
+    <div class="jc-answer">
+      <div class="jc-field">
+        <label for="jcInput" class="jc-label">Ta réponse</label>
+        <div class="jc-combobox">
+          <input
+            id="jcInput"
+            class="jc-input"
+            type="text"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded="false"
+            aria-controls="jcSuggestions"
+            aria-describedby="jcInputHint"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+            maxlength="40"
+            placeholder="Tape le nom d'un instrument…"
+          />
+          <ul
+            id="jcSuggestions"
+            class="jc-suggestions hidden"
+            role="listbox"
+            aria-label="Instruments proposés"
+          ></ul>
+        </div>
+        <p class="jc-hint" id="jcInputHint">
+          Utilise les flèches ↑ ↓ puis Entrée pour choisir.
+        </p>
+      </div>
+      <button id="jcValidateBtn" class="jc-btn-validate" type="button" disabled>
+        Valider
+      </button>
+    </div>
+
+    <div id="jcFeedback" class="feedback-msg hidden" aria-live="polite"></div>
+
+    <div class="action-footer">
+      <button id="jcNextBtn" class="btn-next hidden" type="button">
+        Extrait suivant ➔
+      </button>
+    </div>
+  </div>
+
+  <div id="jcResult" class="result-container hidden" aria-live="polite"></div>
+</section>
+
+<script>
+  import { makeResultMessages, renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
+  import { shuffle } from '../utils/random';
+  import {
+    getAudioState,
+    getCurrentAudioUrl,
+    onAudioEvent,
+    pauseAudio,
+    playAudio,
+    resumeAudio,
+    stopAudio,
+  } from '../utils/audioManager';
+
+  interface ChorusItem {
+    file: string;
+    instrument: string;
+    audioUrl: string;
+  }
+
+  interface ChorusGameData {
+    items: ChorusItem[];
+    instruments: string[];
+    questionsPerGame: number;
+  }
+
+  const root = document.getElementById('jazz-chorus-quiz');
+
+  if (root) {
+    const dataElement = document.getElementById('jcGameData');
+    const serializedGameData = dataElement?.dataset.game;
+    const gameData: ChorusGameData = serializedGameData
+      ? JSON.parse(serializedGameData)
+      : { items: [], instruments: [], questionsPerGame: 10 };
+
+    const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+    const instruction = $<HTMLParagraphElement>('jcInstruction');
+    const emptyMessage = $<HTMLParagraphElement>('jcEmpty');
+    const gameContainer = $<HTMLDivElement>('jcGame');
+    const progressLabel = $<HTMLSpanElement>('jcProgressLabel');
+    const scoreLabel = $<HTMLSpanElement>('jcScoreLabel');
+    const progressFill = $<HTMLDivElement>('jcProgressFill');
+    const playButton = $<HTMLButtonElement>('jcPlayBtn');
+    const playIcon = $<HTMLSpanElement>('jcPlayIcon');
+    const playLabel = $<HTMLSpanElement>('jcPlayLabel');
+    const audioStatus = $<HTMLSpanElement>('jcAudioStatus');
+    const input = $<HTMLInputElement>('jcInput');
+    const suggestionsList = $<HTMLUListElement>('jcSuggestions');
+    const validateButton = $<HTMLButtonElement>('jcValidateBtn');
+    const feedback = $<HTMLDivElement>('jcFeedback');
+    const nextButton = $<HTMLButtonElement>('jcNextBtn');
+    const resultContainer = $<HTMLDivElement>('jcResult');
+
+    let queue: ChorusItem[] = [];
+    let questionIndex = 0;
+    let score = 0;
+    let isAnswered = false;
+    let selectedInstrument = '';
+    let activeSuggestionIndex = -1;
+    let visibleSuggestions: string[] = [];
+    let hideSuggestionsTimer: number | null = null;
+    let autoNextTimer: ReturnType<typeof setTimeout> | null = null;
+
+    function clearAutoNext() {
+      if (autoNextTimer) {
+        clearTimeout(autoNextTimer);
+        autoNextTimer = null;
+      }
+    }
+
+    function setHidden(element: HTMLElement, hidden: boolean) {
+      element.classList.toggle('hidden', hidden);
+    }
+
+    function normalize(value: string): string {
+      return value
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[’']/g, "'")
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function resetPlayButton() {
+      playIcon.textContent = '▶';
+      playLabel.textContent = "Écouter l'extrait";
+      playButton.setAttribute('aria-label', "Écouter l'extrait");
+    }
+
+    function updateProgress() {
+      renderProgress(
+        { progressLabel, scoreLabel, progressFill },
+        { unit: 'extrait', index: questionIndex, total: queue.length, score, answered: isAnswered },
+      );
+    }
+
+    function hideSuggestions() {
+      visibleSuggestions = [];
+      activeSuggestionIndex = -1;
+      suggestionsList.replaceChildren();
+      setHidden(suggestionsList, true);
+      input.setAttribute('aria-expanded', 'false');
+      input.removeAttribute('aria-activedescendant');
+    }
+
+    function highlightSuggestion(index: number) {
+      activeSuggestionIndex = index;
+      const options = Array.from(
+        suggestionsList.querySelectorAll<HTMLElement>('[role="option"]')
+      );
+      options.forEach((option, optionIndex) => {
+        const isActive = optionIndex === index;
+        option.classList.toggle('is-active', isActive);
+        option.setAttribute('aria-selected', String(isActive));
+      });
+      if (index >= 0 && options[index]) {
+        input.setAttribute('aria-activedescendant', options[index].id);
+        options[index].scrollIntoView({ block: 'nearest' });
+      } else {
+        input.removeAttribute('aria-activedescendant');
+      }
+    }
+
+    function selectSuggestion(instrument: string) {
+      selectedInstrument = instrument;
+      input.value = instrument;
+      hideSuggestions();
+      if (!isAnswered) validateButton.disabled = false;
+    }
+
+    function renderSuggestions() {
+      if (isAnswered) return;
+      const query = normalize(input.value);
+      if (!query) {
+        hideSuggestions();
+        return;
+      }
+
+      const startsWith: string[] = [];
+      const includes: string[] = [];
+      for (const instrument of gameData.instruments) {
+        const normalized = normalize(instrument);
+        if (normalized.startsWith(query)) startsWith.push(instrument);
+        else if (normalized.includes(query)) includes.push(instrument);
+      }
+
+      visibleSuggestions = [...startsWith, ...includes];
+      suggestionsList.replaceChildren();
+
+      if (visibleSuggestions.length === 0) {
+        hideSuggestions();
+        return;
+      }
+
+      visibleSuggestions.forEach((instrument, index) => {
+        const option = document.createElement('li');
+        option.id = `jc-option-${index}`;
+        option.className = 'jc-suggestion';
+        option.setAttribute('role', 'option');
+        option.setAttribute('aria-selected', 'false');
+        option.textContent = instrument;
+        option.addEventListener('pointerdown', (event) => {
+          event.preventDefault();
+          selectSuggestion(instrument);
+        });
+        suggestionsList.append(option);
+      });
+
+      activeSuggestionIndex = -1;
+      setHidden(suggestionsList, false);
+      input.setAttribute('aria-expanded', 'true');
+      input.removeAttribute('aria-activedescendant');
+    }
+
+    function loadQuestion(focusInput = false) {
+      if (queue.length === 0) return;
+      clearAutoNext();
+      isAnswered = false;
+      selectedInstrument = '';
+      input.disabled = false;
+      input.value = '';
+      hideSuggestions();
+      validateButton.disabled = true;
+      feedback.textContent = '';
+      feedback.className = 'feedback-msg hidden';
+      setHidden(nextButton, true);
+      stopAudio();
+      resetPlayButton();
+      audioStatus.textContent = '';
+      updateProgress();
+      if (focusInput) input.focus();
+    }
+
+    function startGame() {
+      const total = Math.min(gameData.questionsPerGame, gameData.items.length);
+      if (total === 0) {
+        setHidden(gameContainer, true);
+        setHidden(resultContainer, true);
+        setHidden(emptyMessage, false);
+        return;
+      }
+
+      setHidden(emptyMessage, true);
+      setHidden(resultContainer, true);
+      setHidden(gameContainer, false);
+      instruction.textContent = `Écoute ${total} extraits de jazz et identifie l'instrument qui improvise le chorus. Tape les premières lettres du nom, puis choisis dans la liste.`;
+
+      queue = shuffle(gameData.items).slice(0, total);
+      questionIndex = 0;
+      score = 0;
+      loadQuestion();
+    }
+
+    function validateAnswer() {
+      if (isAnswered || queue.length === 0) return;
+      const answer = (selectedInstrument || input.value).trim();
+      if (!answer) {
+        input.focus();
+        return;
+      }
+
+      isAnswered = true;
+      selectedInstrument = answer;
+      const expected = queue[questionIndex].instrument;
+      const isCorrect = normalize(answer) === normalize(expected);
+      if (isCorrect) score += 1;
+
+      input.value = answer;
+      input.disabled = true;
+      validateButton.disabled = true;
+      hideSuggestions();
+
+      feedback.className = isCorrect ? 'feedback-msg success' : 'feedback-msg error';
+      feedback.textContent = isCorrect ? '' : `La bonne réponse était : ${expected}.`;
+      if (!isCorrect) setHidden(feedback, false); else setHidden(feedback, true);
+      setHidden(feedback, false);
+
+      renderNextButton(nextButton, { unit: 'extrait', isLast: questionIndex + 1 >= queue.length, answered: true });
+      setHidden(nextButton, false);
+      updateProgress();
+      nextButton.focus();
+      if (isCorrect) {
+        autoNextTimer = scheduleAutoNext(() => nextButton.click(), feedback.textContent ?? '');
+      }
+    }
+
+    const RESULT_MESSAGES = makeResultMessages({
+        perfect: "",
+        great: "",
+        ok: "",
+        retry: "",
+      });
+    
+    function showResult() {
+      clearAutoNext();
+      stopAudio();
+      showQuizResult({
+        hide: [gameContainer],
+        feedback,
+        container: resultContainer,
+        score,
+        total: queue.length,
+        messages: RESULT_MESSAGES,
+        restartId: 'jcRestartBtn',
+        onRestart: () => {
+          startGame();
+          input.focus();
+          void playAudio(queue[0].audioUrl);
+        },
+      });
+    }
+
+    // --- Lecture audio : le lecteur partagé du site pilote tout ------------
+    // On ne réagit qu'aux événements de SON extrait : les autres composants
+    // (vidéos, autres quiz, audioManager) peuvent jouer sans interférer.
+
+    const isCurrentTrack = (url: string | null): boolean => {
+      const cur = getCurrentAudioUrl();
+      if (!url || !cur) return false;
+      return url.normalize('NFC') === cur.normalize('NFC');
+    };
+
+    onAudioEvent('statechange', ({ state }) => {
+      const trackUrl = queue[questionIndex]?.audioUrl ?? null;
+
+      if (!isCurrentTrack(trackUrl)) {
+        // Un autre lecteur du site joue : bouton remis à son état par défaut.
+        resetPlayButton();
+        audioStatus.textContent = '';
+        return;
+      }
+
+      if (state === 'playing') {
+        playIcon.textContent = '⏸';
+        playLabel.textContent = 'Pause';
+        playButton.setAttribute('aria-label', "Mettre l'extrait en pause");
+        audioStatus.textContent = 'Lecture en cours…';
+      } else if (state === 'paused') {
+        playIcon.textContent = '▶';
+        playLabel.textContent = "Reprendre l'écoute";
+        playButton.setAttribute('aria-label', "Reprendre l'écoute de l'extrait");
+        audioStatus.textContent = '';
+      } else if (state === 'ended') {
+        playIcon.textContent = '↻';
+        playLabel.textContent = "Réécouter l'extrait";
+        playButton.setAttribute('aria-label', "Réécouter l'extrait");
+        audioStatus.textContent = '';
+      } else if (state === 'error') {
+        resetPlayButton();
+        audioStatus.textContent = 'Extrait audio indisponible.';
+      } else {
+        resetPlayButton();
+        audioStatus.textContent = '';
+      }
+    });
+
+    playButton.addEventListener('click', () => {
+      const track = queue[questionIndex];
+      if (!track) return;
+
+      const url = track.audioUrl;
+      const state = getAudioState();
+
+      if (isCurrentTrack(url) && state === 'playing') {
+        pauseAudio();
+        return;
+      }
+      if (isCurrentTrack(url) && state === 'paused') {
+        void resumeAudio();
+        return;
+      }
+      void playAudio(url);
+    });
+
+    // --- Interactions formulaire -------------------------------------------
+
+    input.addEventListener('input', () => {
+      if (isAnswered) return;
+      selectedInstrument = '';
+      validateButton.disabled = true;
+      renderSuggestions();
+    });
+
+    input.addEventListener('focus', () => {
+      if (hideSuggestionsTimer) {
+        clearTimeout(hideSuggestionsTimer);
+        hideSuggestionsTimer = null;
+      }
+      if (!isAnswered && input.value.trim()) renderSuggestions();
+    });
+
+    input.addEventListener('blur', () => {
+      hideSuggestionsTimer = window.setTimeout(() => {
+        hideSuggestions();
+      }, 120);
+    });
+
+    input.addEventListener('keydown', (event) => {
+      if (isAnswered) return;
+
+      if (event.key === 'ArrowDown') {
+        if (suggestionsList.classList.contains('hidden')) renderSuggestions();
+        if (visibleSuggestions.length === 0) return;
+        event.preventDefault();
+        const nextIndex =
+          activeSuggestionIndex + 1 >= visibleSuggestions.length
+            ? 0
+            : activeSuggestionIndex + 1;
+        highlightSuggestion(nextIndex);
+      } else if (event.key === 'ArrowUp') {
+        if (suggestionsList.classList.contains('hidden') || visibleSuggestions.length === 0) {
+          return;
+        }
+        event.preventDefault();
+        const previousIndex =
+          activeSuggestionIndex - 1 < 0
+            ? visibleSuggestions.length - 1
+            : activeSuggestionIndex - 1;
+        highlightSuggestion(previousIndex);
+      } else if (event.key === 'Enter') {
+        if (visibleSuggestions.length > 0 && activeSuggestionIndex >= 0) {
+          event.preventDefault();
+          selectSuggestion(visibleSuggestions[activeSuggestionIndex]);
+        } else if (input.value.trim()) {
+          event.preventDefault();
+          validateAnswer();
+        }
+      } else if (event.key === 'Escape' || event.key === 'Tab') {
+        hideSuggestions();
+      }
+    });
+
+    validateButton.addEventListener('click', validateAnswer);
+
+    nextButton.addEventListener('click', () => {
+      clearAutoNext();
+      if (questionIndex + 1 >= queue.length) {
+        showResult();
+        return;
+      }
+      questionIndex += 1;
+      loadQuestion(true);
+      void playAudio(queue[questionIndex].audioUrl);
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!(event.target instanceof Node)) return;
+      if (!root.contains(event.target)) hideSuggestions();
+    });
+
+    startGame();
+  }
+</script>
+
+<style is:global>
+  /*
+    Styles globaux limités au préfixe .jazz-chorus-card : les suggestions et le
+    bouton « Rejouer » sont créés dynamiquement et ne recevraient pas les styles
+    « scoped » d'Astro.
+  */
+  .quiz-card.jazz-chorus-card {
+    margin-top: 1.75rem;
+    /* La liste de suggestions déborde de la carte : pas de rognage. */
+    overflow: visible;
+  }
+
+  
+
+  .jazz-chorus-card .jc-empty {
+    margin: 0;
+    padding: 1rem;
+    background: #1e293b;
+    border: 1px dashed #334155;
+    border-radius: 8px;
+    color: #94a3b8;
+    text-align: center;
+  }
+
+  .jazz-chorus-card .jc-game {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .jazz-chorus-card .jc-player {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    flex-wrap: wrap;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 0.9rem;
+  }
+
+  .jazz-chorus-card .jc-play-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: #0284c7;
+    color: #ffffff;
+    border: none;
+    border-radius: 999px;
+    padding: 0.7rem 1.2rem;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .jazz-chorus-card .jc-play-btn:hover {
+    background: #0369a1;
+  }
+
+  .jazz-chorus-card .jc-play-btn:focus-visible {
+    outline: 2px solid #7dd3fc;
+    outline-offset: 2px;
+  }
+
+  .jazz-chorus-card .jc-play-icon {
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  .jazz-chorus-card .jc-audio-status {
+    color: #94a3b8;
+    font-size: 0.8rem;
+  }
+
+  .jazz-chorus-card .jc-answer {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+  }
+
+  .jazz-chorus-card .jc-field {
+    flex: 1 1 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  .jazz-chorus-card .jc-label {
+    color: #cbd5e1;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .jazz-chorus-card .jc-combobox {
+    position: relative;
+  }
+
+  .jazz-chorus-card .jc-input {
+    width: 100%;
+    background: #1e293b;
+    border: 2px solid #334155;
+    border-radius: 8px;
+    padding: 0.7rem 0.85rem;
+    color: #f1f5f9;
+    font: inherit;
+  }
+
+  .jazz-chorus-card .jc-input::placeholder {
+    color: #64748b;
+  }
+
+  .jazz-chorus-card .jc-input:focus {
+    outline: none;
+    border-color: #38bdf8;
+  }
+
+  .jazz-chorus-card .jc-input:disabled {
+    opacity: 0.85;
+    cursor: default;
+  }
+
+  .jazz-chorus-card .jc-hint {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.75rem;
+  }
+
+  .jazz-chorus-card .jc-suggestions {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 0.25rem);
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 0.3rem;
+    list-style: none;
+    background: #0f172a;
+    border: 1px solid #38bdf8;
+    border-radius: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+    box-shadow: 0 12px 30px rgba(2, 6, 23, 0.45);
+  }
+
+  .jazz-chorus-card .jc-suggestion {
+    padding: 0.55rem 0.65rem;
+    border-radius: 6px;
+    color: #e2e8f0;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  .jazz-chorus-card .jc-suggestion:hover,
+  .jazz-chorus-card .jc-suggestion.is-active {
+    background: #1e293b;
+    color: #38bdf8;
+  }
+
+  .jazz-chorus-card .jc-btn-validate {
+    background: #0284c7;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.72rem 1.25rem;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .jazz-chorus-card .jc-btn-validate:hover:not(:disabled) {
+    background: #0369a1;
+  }
+
+  .jazz-chorus-card .jc-btn-validate:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  @media (max-width: 600px) {
+    .jazz-chorus-card .jc-answer {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .jazz-chorus-card .jc-btn-validate {
+      width: 100%;
+    }
+
+  }
+
+  
+</style>

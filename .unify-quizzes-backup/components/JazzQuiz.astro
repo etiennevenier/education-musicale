@@ -1,0 +1,212 @@
+---
+import { jazzQuizQuestions, JAZZ_QUESTIONS_PER_GAME } from '../data/jazzQuizData';
+import '../styles/quiz-card.css';
+
+const questionsPerGame = Math.min(JAZZ_QUESTIONS_PER_GAME, jazzQuizQuestions.length);
+---
+
+<div class="quiz-card jazz-quiz-card">
+  <div class="fuzeau-header">
+    <span class="badge">Quiz de connaissances</span>
+    <h4>Connais-tu bien le jazz ?</h4>
+  </div>
+
+  <p class="quiz-intro">
+    {questionsPerGame} questions pour vérifier ce que tu as retenu du cours. Une seule bonne réponse
+    par question.
+  </p>
+
+  <div id="jqProgressBox" class="progress-box">
+    <div class="progress-text">
+      <span id="jqProgressLabel">Question 1 / {questionsPerGame}</span>
+      <span id="jqScoreLabel" class="score-label">Score : 0 / {questionsPerGame}</span>
+    </div>
+    <div class="progress-bar"><div id="jqProgressFill" class="progress-fill"></div></div>
+  </div>
+
+  <div id="jqQuestionContainer" class="question-container"></div>
+
+  <div id="jqOptionsContainer" class="options-grid"></div>
+
+  <div id="jqFeedback" class="feedback-msg hidden" aria-live="polite"></div>
+
+  <div id="jqActionFooter" class="action-footer">
+    <button id="jqBtnNext" class="btn-next" type="button" disabled>
+      Question suivante ➔
+    </button>
+  </div>
+
+  <div id="jqResultContainer" class="result-container hidden" aria-live="polite"></div>
+</div>
+
+<script>
+  import { shuffle } from '../utils/random';
+  import { makeResultMessages, renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
+  import {
+    jazzQuizQuestions,
+    JAZZ_QUESTIONS_PER_GAME,
+    type JazzQuizQuestion,
+  } from '../data/jazzQuizData';
+
+  interface QuizEntry {
+    question: JazzQuizQuestion;
+    options: string[];
+  }
+
+  const QUESTIONS_PER_GAME = Math.min(JAZZ_QUESTIONS_PER_GAME, jazzQuizQuestions.length);
+
+  // Passage automatique à la question suivante après une bonne réponse.
+
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+  const progressBox = $<HTMLDivElement>('jqProgressBox');
+  const progressLabel = $<HTMLSpanElement>('jqProgressLabel');
+  const scoreLabel = $<HTMLSpanElement>('jqScoreLabel');
+  const progressFill = $<HTMLDivElement>('jqProgressFill');
+  const questionContainer = $<HTMLDivElement>('jqQuestionContainer');
+  const optionsContainer = $<HTMLDivElement>('jqOptionsContainer');
+  const quizFeedback = $<HTMLDivElement>('jqFeedback');
+  const actionFooter = $<HTMLDivElement>('jqActionFooter');
+  const btnNext = $<HTMLButtonElement>('jqBtnNext');
+  const resultContainer = $<HTMLDivElement>('jqResultContainer');
+
+  let queue: QuizEntry[] = [];
+  let questionIndex = 0;
+  let score = 0;
+  let isAnswered = false;
+  let currentEntry: QuizEntry | null = null;
+  let autoNextTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function clearAutoNext() {
+    if (autoNextTimer) {
+      clearTimeout(autoNextTimer);
+      autoNextTimer = null;
+    }
+  }
+
+  function updateProgress() {
+    renderProgress(
+      { progressLabel, scoreLabel, progressFill },
+      { unit: 'question', index: questionIndex, total: queue.length, score, answered: isAnswered },
+    );
+  }
+
+  function updateNextButton() {
+    renderNextButton(btnNext, { unit: 'question', isLast: questionIndex >= queue.length - 1, answered: isAnswered });
+  }
+
+  function startGame() {
+    clearAutoNext();
+    score = 0;
+    questionIndex = 0;
+
+    queue = shuffle(jazzQuizQuestions)
+      .slice(0, QUESTIONS_PER_GAME)
+      .map((question) => ({ question, options: shuffle(question.options) }));
+
+    resultContainer.classList.add('hidden');
+    resultContainer.innerHTML = '';
+    progressBox.classList.remove('hidden');
+    questionContainer.classList.remove('hidden');
+    optionsContainer.classList.remove('hidden');
+    actionFooter.classList.remove('hidden');
+
+    loadQuestion();
+  }
+
+  function loadQuestion() {
+    clearAutoNext();
+    isAnswered = false;
+    quizFeedback.className = 'feedback-msg hidden';
+    quizFeedback.textContent = '';
+
+    const entry = queue[questionIndex];
+    currentEntry = entry;
+    updateProgress();
+    updateNextButton();
+
+    questionContainer.innerHTML = `
+      <span class="question-kind">Question ${questionIndex + 1}</span>
+      <p class="question-text"></p>
+    `;
+    // textContent : le texte de la question est affiché tel quel.
+    questionContainer.querySelector('.question-text')!.textContent = entry.question.question;
+
+    optionsContainer.innerHTML = '';
+    entry.options.forEach((option, index) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn-option';
+      btn.dataset.option = option;
+      btn.textContent = option;
+      btn.addEventListener('click', () => checkAnswer(option, btn));
+      optionsContainer.appendChild(btn);
+    });
+  }
+
+  function checkAnswer(option: string, button: HTMLButtonElement) {
+    if (isAnswered || !currentEntry) return;
+    isAnswered = true;
+
+    optionsContainer
+      .querySelectorAll<HTMLButtonElement>('.btn-option')
+      .forEach((btn) => (btn.disabled = true));
+
+    const isCorrect = option === currentEntry.question.correctAnswer;
+
+    if (isCorrect) {
+      score++;
+      button.classList.add('correct');
+      quizFeedback.textContent = currentEntry.question.explanation;
+      quizFeedback.className = 'feedback-msg success';
+      autoNextTimer = scheduleAutoNext(goToNext, quizFeedback.textContent ?? '');
+    } else {
+      button.classList.add('incorrect');
+      const goodAnswer = Array.from(
+        optionsContainer.querySelectorAll<HTMLButtonElement>('.btn-option')
+      ).find((btn) => btn.dataset.option === currentEntry?.question.correctAnswer);
+      goodAnswer?.classList.add('correct');
+      quizFeedback.textContent = currentEntry.question.explanation;
+      quizFeedback.className = 'feedback-msg error';
+    }
+
+    updateProgress();
+    updateNextButton();
+  }
+
+  const RESULT_MESSAGES = makeResultMessages({
+      perfect: "",
+      great: "",
+      ok: "",
+      retry: "",
+    });
+
+  function showResult() {
+    showQuizResult({
+      hide: [progressBox, questionContainer, optionsContainer, actionFooter],
+      feedback: quizFeedback,
+      container: resultContainer,
+      score,
+      total: queue.length,
+      messages: RESULT_MESSAGES,
+      restartId: 'jqBtnRestart',
+      onRestart: () => startGame(),
+    });
+  }
+
+  // Utilisé par le bouton « suivante » ET par le minuteur après une bonne réponse.
+  function goToNext() {
+    clearAutoNext();
+    if (!isAnswered) return;
+    if (questionIndex >= queue.length - 1) {
+      showResult();
+    } else {
+      questionIndex++;
+      loadQuestion();
+    }
+  }
+
+  btnNext.addEventListener('click', goToNext);
+
+  startGame();
+</script>

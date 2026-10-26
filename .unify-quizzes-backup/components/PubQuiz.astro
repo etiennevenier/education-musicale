@@ -1,0 +1,819 @@
+---
+import '../styles/quiz-card.css';
+import {
+  PUB_CATEGORIES,
+  PUB_QUIZ_LENGTH,
+  PUB_SOUNDS,
+  type PubCategory,
+} from '../data/pubSounds';
+
+const categoryGroups = (
+  Object.entries(PUB_CATEGORIES) as [PubCategory, { label: string; icon: string }][]
+).map(([id, meta]) => ({
+  id,
+  ...meta,
+  sounds: PUB_SOUNDS.filter((sound) => sound.category === id),
+}));
+
+const choiceIndexes = [0, 1, 2, 3] as const;
+---
+
+<div class="quiz-musique-pub" data-quiz-musique-pub>
+  <header class="pub-header">
+    <div class="pub-heading">
+      <p class="pub-kicker">📻 Culture pub</p>
+      <h3>Musique &amp; Publicité</h3>
+      <p class="pub-intro">Teste ton oreille avec un quiz de {PUB_QUIZ_LENGTH} extraits.</p>
+    </div>
+  </header>
+
+  <div class="pub-tabs" role="tablist" aria-label="Sections du module" style="display: none;">
+    <button
+      type="button"
+      class="pub-tab"
+      id="pub-tab-soundboard"
+      role="tab"
+      aria-selected="true"
+      aria-controls="pub-panel-soundboard"
+      tabindex="0"
+      data-main-tab="soundboard"
+    >
+      <span aria-hidden="true">🎚️</span>
+      Écoute &amp; Catalogue
+    </button>
+    <button
+      type="button"
+      class="pub-tab"
+      id="pub-tab-quiz"
+      role="tab"
+      aria-selected="false"
+      aria-controls="pub-panel-quiz"
+      tabindex="-1"
+      data-main-tab="quiz"
+    >
+      <span aria-hidden="true">🎯</span>
+      Blindtest ({PUB_QUIZ_LENGTH} questions)
+    </button>
+  </div>
+
+  <section
+    class="pub-panel"
+    id="pub-panel-soundboard"
+    role="tabpanel"
+    aria-labelledby="pub-tab-soundboard"
+    data-panel="soundboard"
+  >
+    <div class="soundboard-intro">
+      <p>
+        Clique sur un extrait pour l'écouter. Un nouveau son coupe automatiquement le
+        précédent.
+      </p>
+      <p class="soundboard-status" data-audio-status aria-live="polite" aria-atomic="true"></p>
+    </div>
+
+    <div class="sound-groups">
+      {
+        categoryGroups.map((group) => (
+          <section class="sound-group" aria-labelledby={`pub-group-${group.id}`}>
+            <div class="sound-group-head">
+              <h4 id={`pub-group-${group.id}`}>
+                <span aria-hidden="true">{group.icon}</span>
+                {group.label}
+              </h4>
+              <span class="sound-group-count">{group.sounds.length}</span>
+            </div>
+
+            <div class="sound-grid">
+              {group.sounds.map((sound) => (
+                <button
+                  type="button"
+                  class="sound-button"
+                  data-audio-trigger
+                  data-audio-url={sound.audioUrl}
+                  data-audio-label={sound.label}
+                  aria-label={`Écouter l'extrait ${sound.label}`}
+                  aria-pressed="false"
+                >
+                  <span class="sound-play" data-play-icon aria-hidden="true">
+                    ▶
+                  </span>
+                  <span class="sound-text">
+                    <span class="sound-name">{sound.label}</span>
+                    <span class="sound-file" title={sound.file}>
+                      {sound.file}
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </section>
+        ))
+      }
+    </div>
+  </section>
+
+  <section
+    class="pub-panel"
+    id="pub-panel-quiz"
+    role="tabpanel"
+    aria-labelledby="pub-tab-quiz"
+    data-panel="quiz"
+  >
+    <div class="quiz-card pub-quiz-card" data-quiz-card>
+      <div class="progress-box" data-quiz-progress-box>
+        <div class="progress-text">
+          <span data-question-counter>Question 1 / {PUB_QUIZ_LENGTH}</span>
+          <span class="score-label" data-score>Score : 0 / {PUB_QUIZ_LENGTH}</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" data-quiz-progress></div></div>
+      </div>
+
+      <div class="question-container" data-quiz-question>
+        <p class="question-text">De quelle publicité s'agit-il ?</p>
+        <div class="audio-q-box">
+          <button type="button" class="btn-play-sound" data-quiz-play></button>
+        </div>
+      </div>
+
+      <div class="options-grid" data-quiz-choices>
+        {
+          choiceIndexes.map((index) => (
+            <button type="button" class="btn-option" data-choice-index={index}>
+              <span data-choice-label>—</span>
+            </button>
+          ))
+        }
+      </div>
+
+      <div class="feedback-msg hidden" data-quiz-feedback role="status" aria-live="polite"></div>
+
+      <div class="action-footer" data-quiz-footer>
+        <button type="button" class="btn-next" data-quiz-next disabled>Question suivante ➔</button>
+      </div>
+
+      <div class="result-container hidden" data-quiz-result aria-live="polite"></div>
+    </div>
+  </section>
+
+  <noscript>
+    <p class="pub-noscript">Ce module interactif nécessite JavaScript.</p>
+  </noscript>
+</div>
+
+<script>
+  import { audioManager, stopAudio } from '../utils/audioManager';
+  import { PUB_QUIZ_LENGTH, PUB_SOUNDS } from '../data/pubSounds';
+  import { PUB_RESULT_MESSAGES, createQuiz, type QuizQuestion } from '../utils/pubQuizEngine';
+  import { renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
+  import { bindPlayButton } from '../utils/quizAudio';
+  import { setupMainTabs } from '../utils/tabs';
+
+  function initPubQuiz(): void {
+    const root = document.querySelector<HTMLElement>('[data-quiz-musique-pub]');
+    if (!root) return;
+
+    const q = <T extends HTMLElement>(selector: string) => root.querySelector<T>(selector);
+
+    const tabsController = setupMainTabs(root, { tabSelector: '.pub-tab' });
+    const soundboard = q<HTMLElement>('[data-panel="soundboard"]');
+    const progressBox = q<HTMLElement>('[data-quiz-progress-box]');
+    const progressLabel = q<HTMLElement>('[data-question-counter]');
+    const scoreLabel = q<HTMLElement>('[data-score]');
+    const progressFill = q<HTMLElement>('[data-quiz-progress]');
+    const questionBox = q<HTMLElement>('[data-quiz-question]');
+    const quizPlay = q<HTMLButtonElement>('[data-quiz-play]');
+    const choicesBox = q<HTMLElement>('[data-quiz-choices]');
+    const quizFeedback = q<HTMLElement>('[data-quiz-feedback]');
+    const actionFooter = q<HTMLElement>('[data-quiz-footer]');
+    const btnNext = q<HTMLButtonElement>('[data-quiz-next]');
+    const resultBox = q<HTMLElement>('[data-quiz-result]');
+    const audioStatus = q<HTMLElement>('[data-audio-status]');
+    const choiceButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-choice-index]'));
+    const triggers = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-audio-trigger]'));
+
+    if (
+      !soundboard || !progressBox || !progressLabel || !scoreLabel || !progressFill || !questionBox ||
+      !quizPlay || !choicesBox || !quizFeedback || !actionFooter || !btnNext || !resultBox ||
+      !audioStatus || choiceButtons.length !== 4 || !tabsController
+    ) {
+      return;
+    }
+
+    const player = bindPlayButton(quizPlay);
+
+    let quizQuestions: QuizQuestion[] = [];
+    let questionIndex = 0;
+    let score = 0;
+    let isAnswered = false;
+    let autoNextTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const setHidden = (el: HTMLElement, hidden: boolean) => el.classList.toggle('hidden', hidden);
+
+    const clearAutoNext = (): void => {
+      if (autoNextTimer) {
+        clearTimeout(autoNextTimer);
+        autoNextTimer = null;
+      }
+    };
+
+    // --- Catalogue sonore (inchangé) -------------------------------------------
+
+    const syncPlaybackUI = (): void => {
+      const state = audioManager.getState();
+      const currentUrl = audioManager.getCurrentUrl();
+
+      triggers.forEach((button) => {
+        const url = button.dataset.audioUrl;
+        const active = Boolean(url && currentUrl && url === currentUrl);
+        const isPlaying = active && state === 'playing';
+        const isLoading = active && state === 'loading';
+        const isPaused = active && state === 'paused';
+
+        button.classList.toggle('is-playing', isPlaying);
+        button.classList.toggle('is-loading', isLoading);
+        button.classList.toggle('is-paused', isPaused);
+        button.setAttribute('aria-pressed', isPlaying ? 'true' : 'false');
+        button.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+
+        const icon = button.querySelector<HTMLElement>('[data-play-icon]');
+        if (icon) icon.textContent = isLoading ? '…' : isPlaying ? '⏸' : '▶';
+
+        const name = button.dataset.audioLabel;
+        if (name) {
+          button.setAttribute(
+            'aria-label',
+            isPlaying ? `Mettre en pause l'extrait ${name}` : `Écouter l'extrait ${name}`,
+          );
+        }
+      });
+
+      if (state === 'playing' && currentUrl) {
+        const activeTrigger = triggers.some((button) => button.dataset.audioUrl === currentUrl);
+        if (!activeTrigger) audioStatus.textContent = '';
+      }
+    };
+
+    const toggleAudio = (url: string, label: string): void => {
+      const state = audioManager.getState();
+      const currentUrl = audioManager.getCurrentUrl();
+
+      if (currentUrl === url && state === 'playing') {
+        audioManager.pauseAudio();
+        audioStatus.textContent = `En pause : ${label}`;
+        return;
+      }
+      if (currentUrl === url && state === 'paused') {
+        void audioManager.resumeAudio();
+        audioStatus.textContent = `Lecture : ${label}`;
+        return;
+      }
+      void audioManager.playAudio(url);
+      audioStatus.textContent = `Lecture : ${label}`;
+    };
+
+    soundboard.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const button = target.closest<HTMLButtonElement>('[data-audio-trigger]');
+      if (!button || !soundboard.contains(button)) return;
+      const url = button.dataset.audioUrl;
+      if (!url) return;
+      toggleAudio(url, button.dataset.audioLabel ?? 'cet extrait');
+    });
+
+    audioManager.on('statechange', ({ state }) => {
+      syncPlaybackUI();
+      if (state === 'idle' || state === 'ended') audioStatus.textContent = '';
+    });
+
+    audioManager.on('error', () => {
+      audioStatus.textContent = 'Impossible de lire cet extrait audio.';
+    });
+
+    // --- Quiz : même comportement que tous les autres quiz ---------------------
+
+    const updateProgress = (): void => {
+      renderProgress(
+        { progressLabel, scoreLabel, progressFill },
+        { unit: 'question', index: questionIndex, total: quizQuestions.length, score, answered: isAnswered },
+      );
+      renderNextButton(btnNext, {
+        unit: 'question',
+        isLast: questionIndex >= quizQuestions.length - 1,
+        answered: isAnswered,
+      });
+    };
+
+    const renderQuestion = (autoplay = false): void => {
+      const question = quizQuestions[questionIndex];
+      if (!question) return;
+
+      clearAutoNext();
+      isAnswered = false;
+      quizFeedback.textContent = '';
+      quizFeedback.className = 'feedback-msg hidden';
+
+      choiceButtons.forEach((button, index) => {
+        const choice = question.choices[index];
+        const label = button.querySelector<HTMLElement>('[data-choice-label]');
+        if (label) label.textContent = choice?.label ?? '—';
+        button.dataset.correct = choice?.correct ? 'true' : 'false';
+        button.classList.remove('correct', 'incorrect');
+        button.disabled = !choice;
+      });
+
+      player.setUrl(question.sound.audioUrl);
+      updateProgress();
+      if (autoplay) player.play();
+    };
+
+    const showResult = (): void => {
+      clearAutoNext();
+      stopAudio();
+      player.setUrl(null);
+      showQuizResult({
+        hide: [progressBox, questionBox, choicesBox, actionFooter],
+        feedback: quizFeedback,
+        container: resultBox,
+        score,
+        total: quizQuestions.length,
+        messages: PUB_RESULT_MESSAGES,
+        restartId: 'pubBtnRestart',
+        onRestart: () => startQuiz(true),
+      });
+      resultBox.querySelector<HTMLButtonElement>('#pubBtnRestart')?.focus();
+    };
+
+    const goToNext = (): void => {
+      clearAutoNext();
+      if (!isAnswered) return;
+      if (questionIndex >= quizQuestions.length - 1) {
+        showResult();
+        return;
+      }
+      questionIndex += 1;
+      renderQuestion(true);
+    };
+
+    const handleAnswer = (choiceIndex: number): void => {
+      if (isAnswered) return;
+      const question = quizQuestions[questionIndex];
+      const choice = question?.choices[choiceIndex];
+      if (!question || !choice) return;
+
+      isAnswered = true;
+      stopAudio();
+      if (choice.correct) score += 1;
+
+      choiceButtons.forEach((button, index) => {
+        const current = question.choices[index];
+        button.disabled = true;
+        button.classList.toggle('correct', Boolean(current?.correct));
+        button.classList.toggle('incorrect', index === choiceIndex && !choice.correct);
+      });
+
+      const answer = question.sound.label;
+      quizFeedback.textContent = '';
+      quizFeedback.className = 'feedback-msg hidden';
+
+      updateProgress();
+      // Bonne réponse : suite automatique. Mauvaise réponse : l'élève avance lui-même.
+      if (choice.correct) {
+        autoNextTimer = scheduleAutoNext(goToNext, quizFeedback.textContent ?? '');
+      }
+    };
+
+    const startQuiz = (autoplay = false): void => {
+      clearAutoNext();
+      stopAudio();
+      quizQuestions = createQuiz(PUB_SOUNDS, PUB_QUIZ_LENGTH);
+      questionIndex = 0;
+      score = 0;
+      isAnswered = false;
+      resultBox.innerHTML = '';
+      setHidden(resultBox, true);
+      [progressBox, questionBox, choicesBox, actionFooter].forEach((el) => setHidden(el, false));
+      renderQuestion(autoplay);
+    };
+
+    choiceButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const index = Number(button.dataset.choiceIndex);
+        if (Number.isInteger(index)) handleAnswer(index);
+      });
+    });
+    btnNext.addEventListener('click', goToNext);
+
+    syncPlaybackUI();
+    startQuiz();
+    tabsController.select('quiz');
+  }
+
+  initPubQuiz();
+</script>
+
+<style>
+  .quiz-musique-pub {
+    --pub-accent: #f59e0b;
+    --pub-accent-strong: #fbbf24;
+    --pub-accent-soft: rgba(245, 158, 11, 0.14);
+    --pub-green: #4ade80;
+    --pub-red: #f87171;
+    --pub-border: #334155;
+    --pub-text: #e2e8f0;
+    --pub-muted: #94a3b8;
+
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+    padding: 1.25rem;
+    background:
+      radial-gradient(circle at top left, rgba(245, 158, 11, 0.09), transparent 32rem),
+      linear-gradient(180deg, rgba(30, 41, 59, 0.75), rgba(15, 23, 42, 0.96));
+    border: 1px solid var(--pub-border);
+    border-radius: 18px;
+    color: var(--pub-text);
+  }
+
+  .quiz-musique-pub [hidden] {
+    display: none !important;
+  }
+
+  .pub-noscript {
+    margin: 0;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid var(--pub-border);
+    border-radius: 9px;
+    background: #0b1220;
+    color: var(--pub-muted);
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  .pub-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .pub-heading {
+    min-width: 0;
+  }
+
+  .pub-kicker {
+    margin: 0;
+    color: var(--pub-accent-strong);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .pub-heading h3 {
+    margin: 0.25rem 0 0.35rem;
+    color: #f8fafc;
+    font-size: clamp(1.25rem, 2.6vw, 1.55rem);
+    line-height: 1.2;
+  }
+
+  .pub-intro {
+    margin: 0;
+    max-width: 62ch;
+    color: var(--pub-muted);
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+
+  .pub-tabs {
+    display: flex;
+    gap: 0.35rem;
+    padding: 0.3rem;
+    overflow-x: auto;
+    background: #0b1220;
+    border: 1px solid var(--pub-border);
+    border-radius: 999px;
+    scrollbar-width: thin;
+  }
+
+  .pub-tab {
+    flex: 1 1 0;
+    min-width: max-content;
+    padding: 0.65rem 0.9rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--pub-muted);
+    font: inherit;
+    font-size: 0.84rem;
+    font-weight: 800;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .pub-tab:hover {
+    background: rgba(51, 65, 85, 0.4);
+    color: #f8fafc;
+  }
+
+  .pub-tab[aria-selected='true'] {
+    background: var(--pub-accent);
+    color: #1c1917;
+    box-shadow: 0 6px 16px rgba(245, 158, 11, 0.22);
+  }
+
+  .pub-tab:focus-visible {
+    outline: 2px solid var(--pub-accent-strong);
+    outline-offset: 2px;
+  }
+
+  .pub-panel {
+    min-width: 0;
+  }
+
+  .soundboard-intro {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .soundboard-intro p {
+    margin: 0;
+    max-width: 68ch;
+    color: var(--pub-muted);
+    font-size: 0.86rem;
+    line-height: 1.5;
+  }
+
+  .soundboard-status {
+    min-height: 1.25em;
+    color: var(--pub-accent-strong);
+    font-weight: 700;
+  }
+
+  .sound-groups {
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  .sound-group {
+    padding: 0.9rem;
+    background: rgba(15, 23, 42, 0.52);
+    border: 1px solid var(--pub-border);
+    border-radius: 12px;
+  }
+
+  .sound-group-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.65rem;
+  }
+
+  .sound-group-head h4 {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    color: #f1f5f9;
+    font-size: 0.9rem;
+    font-weight: 800;
+    line-height: 1.3;
+  }
+
+  .sound-group-count {
+    flex-shrink: 0;
+    min-width: 1.65rem;
+    padding: 0.15rem 0.45rem;
+    border: 1px solid var(--pub-border);
+    border-radius: 999px;
+    color: var(--pub-muted);
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-align: center;
+  }
+
+  .sound-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .sound-button {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+    padding: 0.55rem 0.6rem;
+    border: 1px solid var(--pub-border);
+    border-radius: 9px;
+    background: #0b1220;
+    color: #cbd5e1;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  .sound-button:hover {
+    border-color: #64748b;
+    color: #f8fafc;
+  }
+
+  .sound-button.is-playing {
+    border-color: var(--pub-accent);
+    background: var(--pub-accent-soft);
+    color: #fef3c7;
+    box-shadow: 0 0 0 1px var(--pub-accent) inset;
+  }
+
+  .sound-button.is-paused {
+    border-color: var(--pub-accent);
+  }
+
+  .sound-button:focus-visible {
+    outline: 2px solid var(--pub-accent-strong);
+    outline-offset: 2px;
+  }
+
+  .sound-play {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.75);
+    color: #cbd5e1;
+    font-size: 0.68rem;
+    line-height: 1;
+  }
+
+  .sound-button.is-playing .sound-play {
+    border-color: var(--pub-accent);
+    color: #fef3c7;
+  }
+
+  .sound-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .sound-name,
+  .sound-file {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sound-name {
+    font-size: 0.84rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .sound-file {
+    color: var(--pub-muted);
+    font-size: 0.7rem;
+    line-height: 1.3;
+  }
+
+  .sound-button.is-playing .sound-file {
+    color: #fcd34d;
+  }
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  .sound-button.is-loading .sound-play,
+  .quiz-audio-button.is-loading .quiz-audio-icon {
+    animation: pub-pulse 0.8s ease-in-out infinite;
+  }
+
+  @keyframes pub-pulse {
+    50% {
+      opacity: 0.35;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .quiz-musique-pub {
+      padding: 1rem;
+      border-radius: 14px;
+    }
+
+    .pub-tab {
+      flex: 1 1 auto;
+      padding: 0.6rem 0.7rem;
+      font-size: 0.78rem;
+    }
+
+    .sound-grid,
+    .quiz-choices {
+      grid-template-columns: 1fr;
+    }
+
+    
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .quiz-musique-pub *,
+    .quiz-musique-pub *::before,
+    .quiz-musique-pub *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+

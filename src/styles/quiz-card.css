@@ -355,3 +355,23 @@
 .quiz-card .search-item.active,
 .quiz-card .search-item.is-active { background: var(--qc-border); color: var(--qc-accent); }
 .quiz-card .search-empty { padding: 0.6rem 0.9rem; color: #94a3b8; font-style: italic; }
+
+/* ==========================================================================
+   Ajouts v3 — zone d'écoute et listes déroulantes de réponse
+   ========================================================================== */
+.quiz-card .audio-q-box {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.75rem;
+}
+.quiz-card .quiz-select:disabled { opacity: 1; cursor: default; }
+.quiz-card .quiz-select.correct {
+  background: var(--qc-ok-bg);
+  border-color: var(--qc-ok-border);
+  color: var(--qc-ok-text);
+}
+.quiz-card .quiz-select.incorrect {
+  background: var(--qc-ko-bg);
+  border-color: var(--qc-ko-border);
+  color: var(--qc-ko-text);
+}

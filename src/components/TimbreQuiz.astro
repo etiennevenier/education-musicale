@@ -53,7 +53,7 @@
 </div>
 
 <script>
-  import { makeResultMessages, renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
+  import { renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
   import { shuffle } from '../utils/random';
   import { fuzeauInstruments as instruments, type Instrument } from '../data/fuzeauInstruments';
   import { relativeUrl } from '../utils/navigation';
@@ -62,7 +62,6 @@
 
   type QuizMode = 'audio' | 'image' | 'assoc';
   type QuizLevel = 'vert' | 'jaune' | 'rouge' | 'all';
-  type ResultMessage = { emoji: string; text: string };
 
   // Les fichiers sont dans /public : on préfixe les URLs avec le BASE_URL d'Astro
   // pour qu'elles restent valides en local et sur GitHub Pages (/education-musicale).
@@ -455,12 +454,6 @@
     updateNextButton();
   }
 
-const RESULT_MESSAGES = makeResultMessages({
-    perfect: "",
-    great: "",
-    ok: "",
-    retry: "",
-  });
 
 function showResult() {
   stopSound();
@@ -470,7 +463,6 @@ function showResult() {
     container: resultContainer,
     score,
     total: queue.length,
-    messages: RESULT_MESSAGES,
     restartId: 'btnRestart',
     onRestart: () => startGame(true),
   });

@@ -49,7 +49,7 @@ import '../styles/quiz-card.css';
 
 <script>
   import { shuffle } from '../utils/random';
-  import { makeResultMessages, renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
+  import { renderNextButton, renderProgress, scheduleAutoNext, showQuizResult } from '../utils/quizUi';
   import { plansSonoresList, allInstrumentsList } from '../data/plansSonoresData';
   import type { PlansSonoresItem } from '../data/plansSonoresData';
   import { relativeUrl } from '../utils/navigation';
@@ -154,36 +154,6 @@ import '../styles/quiz-card.css';
   function getFilteredQuestions(): PlansSonoresItem[] {
     if (currentFilter === 'all') return plansSonoresList;
     return plansSonoresList.filter(q => q.type === currentFilter);
-  }
-
-  // --- Article devant le nom d'un instrument -----------------------------
-  // Voyelle ou « h » muet  -> l'   (l'accordéon, l'alto, l'orgue)
-  // Nom féminin            -> la   (la flûte, la clarinette, la batterie)
-  // Sinon                  -> le   (le violon, le saxophone, le trombone)
-  // Attention : « harpe » et « hautbois » ont un « h » aspiré (la harpe, le hautbois),
-  // ils ne font donc PAS d'élision. Seuls les « h » muets sont listés ci-dessous.
-
-  const SILENT_H_WORDS = new Set(['harmonica', 'harmonium']);
-
-  // Premier mot (sans accent) des instruments féminins
-  const FEMININE_WORDS = new Set([
-    'flute', 'clarinette', 'guitare', 'batterie', 'harpe', 'basse',
-    'contrebasse', 'trompette', 'timbale', 'viole', 'mandoline',
-    'cornemuse', 'lyre', 'cithare', 'vielle',
-  ]);
-
-  function withArticle(instrumentName: string): string {
-    const lower = instrumentName.trim().toLowerCase();
-    const firstWord = normalize(lower).split(/[\s-]+/)[0];
-
-    if (/^[aeiou]/.test(firstWord) || SILENT_H_WORDS.has(firstWord)) return `l'${lower}`;
-    if (FEMININE_WORDS.has(firstWord)) return `la ${lower}`;
-    return `le ${lower}`;
-  }
-
-  // « Un thème seul » -> « un thème seul » (pour l'inclure dans une phrase)
-  function lowerFirst(text: string): string {
-    return text.charAt(0).toLowerCase() + text.slice(1);
   }
 
   // --- Lecture audio -----------------------------------------------------
@@ -466,12 +436,6 @@ import '../styles/quiz-card.css';
     if (isAnswered || !currentQuestion) return;
     isAnswered = true;
 
-    // Instrument -> « la clarinette », « l'accordéon », « le violon »
-    // Plan sonore -> « un thème seul »
-    const answer = currentQuestion.type === 'theme-instrument'
-      ? withArticle(currentQuestion.correctAnswer)
-      : lowerFirst(currentQuestion.correctAnswer);
-
     if (isCorrect) {
       score++;
       element.classList.add('correct');
@@ -488,12 +452,6 @@ import '../styles/quiz-card.css';
     updateNextButton();
   }
 
-  const RESULT_MESSAGES = makeResultMessages({
-      perfect: "",
-      great: "",
-      ok: "",
-      retry: "",
-    });
 
   function showResult() {
     stopSound();
@@ -503,7 +461,6 @@ import '../styles/quiz-card.css';
       container: resultContainer,
       score,
       total: queue.length,
-      messages: RESULT_MESSAGES,
       restartId: 'psBtnRestart',
       onRestart: () => startGame(true),
     });

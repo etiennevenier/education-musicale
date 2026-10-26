@@ -19,6 +19,7 @@ export const QUIZ_UNITS = {
   question: { noun: 'Question', next: 'Question suivante ➔' },
   video: { noun: 'Vidéo', next: 'Vidéo suivante ➔' },
   extrait: { noun: 'Extrait', next: 'Extrait suivant ➔' },
+  manche: { noun: 'Manche', next: 'Manche suivante ➔' },
 } as const;
 
 export type QuizUnit = keyof typeof QUIZ_UNITS;

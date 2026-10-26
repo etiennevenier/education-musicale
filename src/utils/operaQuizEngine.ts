@@ -1,5 +1,4 @@
 import type { OperaQuestion } from '../data/operaData';
-import type { ResultMessages } from './quiz';
 
 /** Une question à choix multiples a plusieurs bonnes réponses. */
 export function isMulti(question: OperaQuestion): boolean {
@@ -18,29 +17,6 @@ export function isCorrectSelection(
 ): boolean {
   return selected.size === correct.size && [...selected].every((option) => correct.has(option));
 }
-
-/**
- * Messages de fin sur les 4 paliers standards (voir getResultTier dans quiz.ts) :
- * perfect = 100 %, great ≥ 80 %, ok ≥ 50 %, retry < 50 %.
- */
-export const OPERA_RESULT_MESSAGES: ResultMessages = {
-  perfect: {
-    emoji: '🏆',
-    text: "Sans faute ! Tu maîtrises l'opéra sur le bout des doigts.",
-  },
-  great: {
-    emoji: '🌟',
-    text: 'Excellent ! Ton oreille et ta culture lyrique sont déjà très solides.',
-  },
-  ok: {
-    emoji: '👍',
-    text: "Bien joué ! Encore quelques écoutes et tu vises le sans-faute : réécoute les extraits et repère bien la différence entre air et récitatif.",
-  },
-  retry: {
-    emoji: '💪',
-    text: 'Courage ! Relis les questions de théorie, puis réécoute les airs et les récitatifs.',
-  },
-};
 
 export function formatNote(noteValue: number, total: number): string {
   if (!total) return '0';
