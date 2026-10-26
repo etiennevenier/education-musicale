@@ -170,12 +170,12 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
 
     if (isCorrect) {
       score += 1;
-      quizFeedback.textContent = successMessage(currentQuestion);
-      quizFeedback.className = 'feedback-msg success';
+      quizFeedback.textContent = '';
+      quizFeedback.className = 'feedback-msg hidden';
       autoNextTimer = scheduleAutoNext(goToNext, quizFeedback.textContent ?? '');
     } else {
-      quizFeedback.textContent = `❌ Dommage ! La bonne réponse était : ${formatAnswer(currentQuestion)}.`;
-      quizFeedback.className = 'feedback-msg error';
+      quizFeedback.textContent = '';
+      quizFeedback.className = 'feedback-msg hidden';
     }
 
     updateProgress();
@@ -208,6 +208,13 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
           });
         }
 
+        if (currentQuestion && currentQuestion.kind === 'number' && !isCorrect) {
+          quizFeedback.textContent = `La bonne réponse était : ${formatAnswer(currentQuestion)}.`;
+          quizFeedback.className = 'feedback-msg error';
+        } else {
+          quizFeedback.textContent = '';
+          quizFeedback.className = 'feedback-msg hidden';
+        }
         finishAnswer(isCorrect);
       });
 
@@ -253,8 +260,15 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
 
       const isCorrect = value === question.correctAnswer;
       input.classList.add(isCorrect ? 'correct' : 'incorrect');
-      finishAnswer(isCorrect);
-    }
+      if (currentQuestion && currentQuestion.kind === 'number' && !isCorrect) {
+          quizFeedback.textContent = `La bonne réponse était : ${formatAnswer(currentQuestion)}.`;
+          quizFeedback.className = 'feedback-msg error';
+        } else {
+          quizFeedback.textContent = '';
+          quizFeedback.className = 'feedback-msg hidden';
+        }
+        finishAnswer(isCorrect);
+      }
 
     validate.addEventListener('click', submit);
     input.addEventListener('keydown', (event) => {
@@ -339,10 +353,10 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
   }
 
   const RESULT_MESSAGES = makeResultMessages({
-      perfect: "Parfait ! Tu maîtrises l'ostinato sur le bout des doigts !",
-      great: "Excellent ! Tu reconnais très bien les ostinatos et leurs répétitions.",
-      ok: "Bien joué ! Continue à écouter pour compter les répétitions avec précision.",
-      retry: "Continue à t'entraîner : réécoute chaque extrait et repère bien le retour de l'ostinato.",
+      perfect: "",
+      great: "",
+      ok: "",
+      retry: "",
     });
 
   function showResult() {

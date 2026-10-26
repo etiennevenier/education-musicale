@@ -22,7 +22,7 @@ import '../styles/quiz-card.css';
   <div id="hqQuestionContainer" class="question-container"></div>
 
   <!-- Zone de Choix / Réponses -->
-  <div id="hqOptionsContainer" class="options-binary"></div>
+  <div id="hqOptionsContainer" class="options-grid"></div>
 
   <div id="hqQuizFeedback" class="feedback-msg hidden" role="status" aria-live="polite"></div>
 
@@ -48,10 +48,10 @@ import '../styles/quiz-card.css';
     { value: false, label: '👤 Pas un Hymne (Chanson personnelle)' },
   ];
     const RESULT_MESSAGES: ResultMessages = {
-    perfect: { emoji: '🏆', text: 'Parfait ! Tu sais exactement ce qui fait un hymne !' },
-    great: { emoji: '🌟', text: 'Excellent travail, tu distingues très bien les hymnes des chansons personnelles !' },
-    ok: { emoji: '👍', text: 'Bien joué ! Encore un petit effort pour progresser.' },
-    retry: { emoji: '💪', text: "Continue à t'entraîner, tu vas y arriver !" },
+    perfect: { emoji: '🏆', text: '' },
+    great: { emoji: '🌟', text: '' },
+    ok: { emoji: '👍', text: '' },
+    retry: { emoji: '💪', text: '' },
   };
 
   let currentQuestion: HymneQuizItem | null = null;
@@ -163,7 +163,7 @@ import '../styles/quiz-card.css';
     questionContainer.querySelector('.situation-text')!.textContent = q.text;
 
     optionsContainer.innerHTML = '';
-    optionsContainer.className = 'options-binary';
+    optionsContainer.className = 'options-grid';
     buildOptions();
   }
 
@@ -174,7 +174,7 @@ import '../styles/quiz-card.css';
     if (isCorrect) {
       score++;
       element.classList.add('correct');
-      const message = `✨ Bravo ! ${currentQuestion.explanation}`;
+      const message = currentQuestion.explanation;
       setFeedback('success', message);
       autoNextTimer = setTimeout(goToNext, getAutoNextDelay(message));
     } else {
@@ -183,7 +183,7 @@ import '../styles/quiz-card.css';
         `.btn-option[data-value="${String(currentQuestion.isHymn)}"]`
       );
       if (good) good.classList.add('correct');
-      setFeedback('error', `❌ Dommage ! ${currentQuestion.explanation}`);
+      setFeedback('error', currentQuestion.explanation);
     }
 
     updateProgress();

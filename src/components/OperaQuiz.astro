@@ -184,24 +184,7 @@ import '../styles/quiz-card.css';
 
   function showFeedback(question: OperaQuestion, isCorrect: boolean): void {
     feedbackBox.innerHTML = '';
-    feedbackBox.className = `feedback-msg ${isCorrect ? 'success' : 'error'}`;
-
-    const title = document.createElement('strong');
-    if (isCorrect) {
-      title.textContent = '✨ Bravo !';
-    } else if (isMulti(question)) {
-      const letters = question.correctAnswers
-        .map((answer) => {
-          const position = currentOptions.indexOf(answer);
-          return position >= 0 ? String.fromCharCode(65 + position) : '';
-        })
-        .filter(Boolean)
-        .join(', ');
-      title.textContent = `❌ Dommage ! Il fallait cocher : ${letters}.`;
-    } else {
-      title.textContent = `❌ Dommage ! La bonne réponse était : ${question.correctAnswers[0]}.`;
-    }
-    feedbackBox.appendChild(title);
+    feedbackBox.className = isCorrect ? 'feedback-msg success' : 'feedback-msg error';
 
     const detail = document.createElement('span');
     detail.className = 'fb-detail';

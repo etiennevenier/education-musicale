@@ -157,7 +157,7 @@ const questionsPerGame = Math.min(JAZZ_QUESTIONS_PER_GAME, jazzQuizQuestions.len
     if (isCorrect) {
       score++;
       button.classList.add('correct');
-      quizFeedback.textContent = `✨ Bravo ! ${currentEntry.question.explanation}`;
+      quizFeedback.textContent = currentEntry.question.explanation;
       quizFeedback.className = 'feedback-msg success';
       autoNextTimer = scheduleAutoNext(goToNext, quizFeedback.textContent ?? '');
     } else {
@@ -166,7 +166,7 @@ const questionsPerGame = Math.min(JAZZ_QUESTIONS_PER_GAME, jazzQuizQuestions.len
         optionsContainer.querySelectorAll<HTMLButtonElement>('.btn-option')
       ).find((btn) => btn.dataset.option === currentEntry?.question.correctAnswer);
       goodAnswer?.classList.add('correct');
-      quizFeedback.textContent = `❌ Dommage ! La bonne réponse était : ${currentEntry.question.correctAnswer}. ${currentEntry.question.explanation}`;
+      quizFeedback.textContent = currentEntry.question.explanation;
       quizFeedback.className = 'feedback-msg error';
     }
 
@@ -175,10 +175,10 @@ const questionsPerGame = Math.min(JAZZ_QUESTIONS_PER_GAME, jazzQuizQuestions.len
   }
 
   const RESULT_MESSAGES = makeResultMessages({
-      perfect: "Parfait ! Tu maîtrises le cours sur le jazz.",
-      great: "Excellent ! Encore une petite révision pour viser le sans-faute.",
-      ok: "Bien joué ! Relis la fiche de cours et retente ta chance.",
-      retry: "Continue à réviser la fiche de cours, tu vas y arriver !",
+      perfect: "",
+      great: "",
+      ok: "",
+      retry: "",
     });
 
   function showResult() {

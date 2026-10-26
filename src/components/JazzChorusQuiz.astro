@@ -395,9 +395,8 @@ const chorusGameData = {
       hideSuggestions();
 
       feedback.className = isCorrect ? 'feedback-msg success' : 'feedback-msg error';
-      feedback.textContent = isCorrect
-        ? `✨ Bravo ! C'est bien : ${expected}.`
-        : `❌ Dommage ! La bonne réponse était : ${expected}.`;
+      feedback.textContent = isCorrect ? '' : `La bonne réponse était : ${expected}.`;
+      if (!isCorrect) setHidden(feedback, false); else setHidden(feedback, true);
       setHidden(feedback, false);
 
       renderNextButton(nextButton, { unit: 'extrait', isLast: questionIndex + 1 >= queue.length, answered: true });
@@ -410,10 +409,10 @@ const chorusGameData = {
     }
 
     const RESULT_MESSAGES = makeResultMessages({
-        perfect: "Parfait ! Tu reconnais tous les instruments du chorus.",
-        great: "Très bien ! Encore quelques écoutes pour viser le sans-faute.",
-        ok: "Pas mal ! Réécoute les extraits pour affiner ton oreille.",
-        retry: "Continue à écouter : le timbre des instruments va vite devenir familier.",
+        perfect: "",
+        great: "",
+        ok: "",
+        retry: "",
       });
     
     function showResult() {

@@ -442,12 +442,12 @@
     if (isCorrect) {
       score++;
       element.classList.add('correct');
-      quizFeedback.textContent = `✨ Bravo ! C'est bien : ${instrument.name}`;
+      quizFeedback.textContent = "";
       quizFeedback.className = 'feedback-msg success';
       autoNextTimer = scheduleAutoNext(goToNext, quizFeedback.textContent ?? '');
     } else {
       element.classList.add('incorrect');
-      quizFeedback.textContent = `❌ Dommage ! La bonne réponse était : ${instrument.name}`;
+      quizFeedback.textContent = "";
       quizFeedback.className = 'feedback-msg error';
     }
 
@@ -456,10 +456,10 @@
   }
 
 const RESULT_MESSAGES = makeResultMessages({
-    perfect: "Parfait ! Tu as l'oreille d'un musicien d'orchestre !",
-    great: "Excellent travail, tu reconnais très bien les timbres !",
-    ok: "Bien joué ! Encore un petit effort pour progresser.",
-    retry: "Continue à t'entraîner, tu vas y arriver !",
+    perfect: "",
+    great: "",
+    ok: "",
+    retry: "",
   });
 
 function showResult() {

@@ -55,7 +55,7 @@ export function buildResultHtml({
     <div class="result-emoji">${emoji}</div>
     <p class="result-title">${title}</p>
     <p class="result-score"><span class="result-note">${score}</span> / ${total}</p>
-    <p class="result-text">${text}</p>
+    
     <button type="button" id="${restartId}" class="btn-restart">${restartLabel}</button>
   `;
 }

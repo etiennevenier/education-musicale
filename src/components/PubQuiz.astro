@@ -373,10 +373,8 @@ const choiceIndexes = [0, 1, 2, 3] as const;
       });
 
       const answer = question.sound.label;
-      quizFeedback.textContent = choice.correct
-        ? `✨ Bravo ! C'est bien : ${answer}.`
-        : `❌ Dommage ! La bonne réponse était : ${answer}.`;
-      quizFeedback.className = `feedback-msg ${choice.correct ? 'success' : 'error'}`;
+      quizFeedback.textContent = '';
+      quizFeedback.className = 'feedback-msg hidden';
 
       updateProgress();
       // Bonne réponse : suite automatique. Mauvaise réponse : l'élève avance lui-même.

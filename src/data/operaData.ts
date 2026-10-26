@@ -74,8 +74,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
       'En préludes et en épisodes',
     ],
     correctAnswers: ['En actes et en scènes'],
-    explanation:
-      "Un opéra est une pièce de théâtre en musique : il se découpe en actes, eux-mêmes divisés en scènes. Airs et récitatifs sont des formes musicales jouées à l'intérieur de ces scènes.",
+    explanation: "L'opéra est un spectacle scénique complet (musique, chant, théâtre, décors).",
   },
   {
     number: 2,
@@ -90,8 +89,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     correctAnswers: [
       'Une partie chantée solo où le personnage exprime ses émotions',
     ],
-    explanation:
-      "L'air est une page lyrique chantée en solo : le personnage s'arrête pour exprimer ses émotions. Le récitatif, lui, fait avancer l'action.",
+    explanation: "Un air d'opéra privilégie la virtuosité et l'expression des sentiments.",
   },
   {
     number: 3,
@@ -128,8 +126,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
       'Une œuvre dramatique avec des passages chantés et orchestraux, souvent accompagnée de danse',
       'Un spectacle où tous les dialogues sont chantés',
     ],
-    explanation:
-      "Les quatre premières propositions décrivent l'opéra. L'intrus est : « Une œuvre musicale qui se joue uniquement dans des salles de concert » — un opéra est un spectacle scénique (costumes, décors, mise en scène), pas un simple concert.",
+    explanation: "L'opéra est un spectacle scénique complet (musique, chant, théâtre, décors).",
   },
   {
     number: 5,
@@ -186,8 +183,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     correctAnswers: [
       "Le récitatif est proche du langage parlé, tandis que l'air est purement chanté",
     ],
-    explanation:
-      "Le récitatif suit le rythme de la parole : il fait avancer l'action. L'air est une mélodie plus développée où le personnage exprime ses sentiments.",
+    explanation: "Un air d'opéra privilégie la virtuosité et l'expression des sentiments.",
   },
   {
     number: 9,
@@ -219,8 +215,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     correctAnswers: [
       "L'opéra utilise des voix lyriques travaillées, tandis que la comédie musicale utilise des voix amplifiées par un micro",
     ],
-    explanation:
-      "À l'opéra, les chanteurs projettent leur voix sans micro, grâce à une technique travaillée. Dans la comédie musicale, les voix sont amplifiées et le spectacle intègre souvent danse et esthétique plus populaire.",
+    explanation: "À l'opéra, la voix lyrique est puissante et projetée sans aucun micro.",
   },
   {
     number: 11,
@@ -338,7 +333,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
       'Elle est capable de maintenir une grande intensité sur des notes tenues',
     ],
     explanation:
-      "La voix lyrique est puissante, projetée sans micro, et repose sur un travail technique poussé (souffle, résonances) qui permet de tenir de longues notes. Les deux dernières propositions sont fausses : on ne chante pas avec un micro à l'opéra et la voix n'y est pas douce.",
+      "La voix lyrique est puissante, projetée sans micro, et repose sur un travail technique poussé (souffle, résonances) qui permet de tenir de longues notes. À l'opéra, la voix est projetée sans micro et se doit d'être puissante, pas faible ni douce.",
   },
   // --- 18 à 25 : air ou récitatif (les airs) -------------------------------
   {
@@ -348,7 +343,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: AIR_OU_RECIT_OPTIONS,
     correctAnswers: ['Air'],
     explanation:
-      "La voix déploie une mélodie continue, avec des notes tenues, sur un accompagnement orchestral régulier : c'est un air.",
+      "La voix déploie une mélodie continue sur un accompagnement orchestral régulier : c'est un air.",
     audioUrl: audio('09 Aria lascia chio pianga.mp3'),
     clipTitle: 'Rinaldo — Haendel',
   },
@@ -359,7 +354,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: AIR_OU_RECIT_OPTIONS,
     correctAnswers: ['Air'],
     explanation:
-      "La voix chante une mélodie suivie et expressive, soutenue par l'orchestre : c'est un air, et non une déclamation proche de la parole.",
+      "La voix déploie une mélodie continue sur un accompagnement orchestral régulier : c'est un air.",
     audioUrl: audio('10 Aria et blind puccini la boheme quando soletto.mp3'),
     clipTitle: 'La Bohème — Puccini',
   },
@@ -370,7 +365,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: AIR_OU_RECIT_OPTIONS,
     correctAnswers: ['Air'],
     explanation:
-      "Courte aria à la mélodie régulière, accompagnée par l'orchestre : c'est un air.",
+      "La voix déploie une mélodie continue sur un accompagnement orchestral régulier : c'est un air.",
     audioUrl: audio('11 Aria et blind voi che sapete.mp3'),
     clipTitle: 'Les Noces de Figaro — Mozart',
   },
@@ -381,7 +376,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: AIR_OU_RECIT_OPTIONS,
     correctAnswers: ['Air'],
     explanation:
-      "Grand air virtuose de la scène de la folie : longues phrases chantées et vocalises, sans déclamation parlée.",
+      "La voix déploie une mélodie continue sur un accompagnement orchestral régulier : c'est un air.",
     audioUrl: audio('12 Aria et blind lucia di lamermoor air de la folie.mp3'),
     clipTitle: 'Lucia di Lammermoor — Donizetti',
   },
@@ -392,7 +387,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: AIR_OU_RECIT_OPTIONS,
     correctAnswers: ['Air'],
     explanation:
-      "Mélodie chantée et mesurée, avec un accompagnement orchestral continu : c'est un air (un numéro chanté).",
+      "La voix déploie une mélodie continue sur un accompagnement orchestral régulier : c'est un air.",
     audioUrl: audio('13 Aria et blind libiamo ne lieti calici.mp3'),
     clipTitle: 'La traviata — Verdi',
   },
@@ -403,7 +398,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: AIR_OU_RECIT_OPTIONS,
     correctAnswers: ['Air'],
     explanation:
-      "Duo lyrique aux mélodies suspendues : c'est un air, par opposition au récitatif qui fait avancer l'action.",
+      "La voix déploie une mélodie continue sur un accompagnement orchestral régulier : c'est un air.",
     audioUrl: audio('14 Aria et blind duo des fleurs.mp3'),
     clipTitle: 'Lakmé — Delibes',
   },
@@ -414,7 +409,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: AIR_OU_RECIT_OPTIONS,
     correctAnswers: ['Air'],
     explanation:
-      "Mélodie légère et mémorable chantée par le ténor : c'est un air.",
+      "La voix déploie une mélodie continue sur un accompagnement orchestral régulier : c'est un air.",
     audioUrl: audio('15 Aria et blind la donna e mobile.mp3'),
     clipTitle: 'Rigoletto — Verdi',
   },
@@ -425,7 +420,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: AIR_OU_RECIT_OPTIONS,
     correctAnswers: ['Air'],
     explanation:
-      "Air chanté, avec une mélodie construite et un accompagnement orchestral : ce n'est pas un récitatif.",
+      "La voix déploie une mélodie continue sur un accompagnement orchestral régulier : c'est un air.",
     audioUrl: audio('16 Aria et blind flute enchantee.mp3'),
     clipTitle: 'La Flûte enchantée — Mozart',
   },
@@ -437,7 +432,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: AIR_OU_RECIT_OPTIONS,
     correctAnswers: ['Récitatif'],
     explanation:
-      "La voix suit le rythme de la parole, presque comme au théâtre, sur un accompagnement discret : c'est un récitatif.",
+      "Le texte est déclamé, très peu d'instruments l'accompagnent : c'est un récitatif.",
     audioUrl: audio('01 recitatif Cosi Fan Tutte.mp3'),
     clipTitle: 'Così fan tutte — Mozart',
   },
@@ -448,7 +443,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: AIR_OU_RECIT_OPTIONS,
     correctAnswers: ['Récitatif'],
     explanation:
-      "Le texte est déclamé et l'action progresse : c'est un récitatif.",
+      "Le texte est déclamé, très peu d'instruments l'accompagnent : c'est un récitatif.",
     audioUrl: audio('02 recitatif Le barbier de Seville.mp3'),
     clipTitle: 'Le Barbier de Séville — Rossini',
   },
@@ -459,7 +454,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: AIR_OU_RECIT_OPTIONS,
     correctAnswers: ['Récitatif'],
     explanation:
-      "La déclamation sert le drame, sans mélodie régulière : c'est un récitatif.",
+      "Le texte est déclamé, très peu d'instruments l'accompagnent : c'est un récitatif.",
     audioUrl: audio('03 recitatif Orphee.mp3'),
     clipTitle: 'Orfeo ed Euridice — Gluck',
   },
@@ -470,7 +465,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: AIR_OU_RECIT_OPTIONS,
     correctAnswers: ['Récitatif'],
     explanation:
-      "La voix parle presque, sur une basse continue discrète : c'est un récitatif.",
+      "Le texte est déclamé, très peu d'instruments l'accompagnent : c'est un récitatif.",
     audioUrl: audio('04 recitatif Giulio Cesare.mp3'),
     clipTitle: 'Giulio Cesare — Haendel',
   },
@@ -481,7 +476,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: AIR_OU_RECIT_OPTIONS,
     correctAnswers: ['Récitatif'],
     explanation:
-      "Le texte est déclamé pour faire avancer l'intrigue : c'est un récitatif.",
+      "Le texte est déclamé, très peu d'instruments l'accompagnent : c'est un récitatif.",
     audioUrl: audio('05 recitatif La clemenza di Tito.mp3'),
     clipTitle: 'La clemenza di Tito — Mozart',
   },
@@ -492,7 +487,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: AIR_OU_RECIT_OPTIONS,
     correctAnswers: ['Récitatif'],
     explanation:
-      "Ce passage parlé-chanté amène le duo « Là ci darem la mano » : c'est un récitatif.",
+      "Le texte est déclamé, très peu d'instruments l'accompagnent : c'est un récitatif.",
     audioUrl: audio('06 recitatif La ci darem la mano.mp3'),
     clipTitle: 'Don Giovanni — Mozart',
   },
@@ -503,7 +498,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: AIR_OU_RECIT_OPTIONS,
     correctAnswers: ['Récitatif'],
     explanation:
-      "Les personnages se parlent en chantant et l'action avance : c'est un récitatif.",
+      "Le texte est déclamé, très peu d'instruments l'accompagnent : c'est un récitatif.",
     audioUrl: audio('07 recitatif Le nozze di Figaro.mp3'),
     clipTitle: 'Les Noces de Figaro — Mozart',
   },
@@ -514,7 +509,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: AIR_OU_RECIT_OPTIONS,
     correctAnswers: ['Récitatif'],
     explanation:
-      "Déclamation continue, proche de la parole : c'est un récitatif.",
+      "Le texte est déclamé, très peu d'instruments l'accompagnent : c'est un récitatif.",
     audioUrl: audio('08 recitatif Orlando.mp3'),
     clipTitle: 'Orlando — Haendel',
   },
@@ -525,8 +520,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     prompt: BLINDTEST_PROMPT,
     options: BLINDTEST_OPTIONS,
     correctAnswers: ["L'air de la reine de la nuit (Opera : La flûte enchantée)"],
-    explanation:
-      "L'air de la Reine de la Nuit (« Der Hölle Rache ») est célèbre pour ses vocalises très aiguës.",
+    explanation: "",
     audioUrl: audio('17 Blind Flute enchantee.mp3'),
   },
   {
@@ -536,7 +530,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: BLINDTEST_OPTIONS,
     correctAnswers: ["Barcarolle (Opera : Les contes d'Hoffmann)"],
     explanation:
-      "La Barcarolle « Belle nuit, ô nuit d'amour » est un duo de sopranos.",
+      "",
     audioUrl: audio('18 Blind Barcarolle.mp3'),
   },
   {
@@ -546,7 +540,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: BLINDTEST_OPTIONS,
     correctAnswers: ['Habanera (Opera : Carmen)'],
     explanation:
-      "L'Habanera « L'amour est un oiseau rebelle » est chantée par Carmen, mezzo-soprano.",
+      "",
     audioUrl: audio('19 Blind Carmen Habanera.mp3'),
   },
   {
@@ -556,7 +550,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: BLINDTEST_OPTIONS,
     correctAnswers: ['Libiamo ne lieti calici (Opera : La traviata)'],
     explanation:
-      "« Libiamo ne' lieti calici » est le brindisi (chant à boire) de La traviata.",
+      "",
     audioUrl: audio('20 Blind La traviata libiamo.mp3'),
   },
   {
@@ -566,7 +560,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: BLINDTEST_OPTIONS,
     correctAnswers: ['La donna è mobile (Opera : Rigoletto)'],
     explanation:
-      "« La donna è mobile » est l'air du Duc de Mantoue, au début du dernier acte.",
+      "",
     audioUrl: audio('21 Blind rigoletto la donna.mp3'),
   },
   {
@@ -576,7 +570,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: BLINDTEST_OPTIONS,
     correctAnswers: ['Nessun Dorma (Opera : Turandot)'],
     explanation:
-      "« Nessun dorma » est l'air de Calaf, au troisième acte de Turandot.",
+      "",
     audioUrl: audio('22 Blind nessun dorma turandot.mp3'),
   },
   // --- 40 à 45 : blindtest « aria et blind » -------------------------------
@@ -587,7 +581,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: ARIA_BLIND_OPTIONS,
     correctAnswers: ['Voi che sapete (Les Noces de Figaro - Mozart)'],
     explanation:
-      "« Voi che sapete » est l'air de Chérubin, page de la comtesse, dans Les Noces de Figaro.",
+      "",
     audioUrl: audio('11 Aria et blind voi che sapete.mp3'),
     clipTitle: 'Voi che sapete — Les Noces de Figaro (Mozart)',
   },
@@ -597,8 +591,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     prompt: BLINDTEST_PROMPT,
     options: ARIA_BLIND_OPTIONS,
     correctAnswers: ['Air de la folie (Lucia di Lammermoor - Donizetti)'],
-    explanation:
-      "L'air de la folie (« Il dolce suono ») clôt le deuxième acte de Lucia di Lammermoor : vocalises et notes très aiguës.",
+    explanation: "",
     audioUrl: audio('12 Aria et blind lucia di lamermoor air de la folie.mp3'),
     clipTitle: 'Air de la folie — Lucia di Lammermoor (Donizetti)',
   },
@@ -609,7 +602,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: ARIA_BLIND_OPTIONS,
     correctAnswers: ["Libiamo ne' lieti calici (La Traviata - Verdi)"],
     explanation:
-      "« Libiamo ne' lieti calici » est le brindisi (chant à boire) qui ouvre La Traviata.",
+      "",
     audioUrl: audio('13 Aria et blind libiamo ne lieti calici.mp3'),
     clipTitle: "Libiamo ne' lieti calici — La Traviata (Verdi)",
   },
@@ -620,7 +613,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: ARIA_BLIND_OPTIONS,
     correctAnswers: ['Duo des fleurs (Lakmé - Delibes)'],
     explanation:
-      "Le Duo des fleurs (« Sous le dôme épais ») réunit Lakmé et Mallika au premier acte.",
+      "",
     audioUrl: audio('14 Aria et blind duo des fleurs.mp3'),
     clipTitle: 'Duo des fleurs — Lakmé (Delibes)',
   },
@@ -631,7 +624,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: ARIA_BLIND_OPTIONS,
     correctAnswers: ['La donna è mobile (Rigoletto - Verdi)'],
     explanation:
-      "« La donna è mobile » est l'air du Duc de Mantoue, au début du dernier acte de Rigoletto.",
+      "",
     audioUrl: audio('15 Aria et blind la donna e mobile.mp3'),
     clipTitle: 'La donna è mobile — Rigoletto (Verdi)',
   },
@@ -642,7 +635,7 @@ export const operaQuestions: readonly OperaQuestion[] = [
     options: LA_BOHEME_OPTIONS,
     correctAnswers: ["Quando me'n vo' (La Bohème - Puccini)"],
     explanation:
-      "« Quando me'n vo' », souvent appelé la valse de Musette, est l'air que Musetta chante au deuxième acte de La Bohème.",
+      "",
     audioUrl: audio('10 Aria et blind puccini la boheme quando soletto.mp3'),
     clipTitle: "Quando me'n vo' — La Bohème (Puccini)",
   },
