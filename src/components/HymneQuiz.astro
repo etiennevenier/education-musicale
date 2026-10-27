@@ -39,7 +39,6 @@ import '../styles/quiz-card.css';
   import { shuffle } from '../utils/random';
   const { hymneQuizList } = await import('../data/hymnesData');
   import type { HymneQuizItem } from '../data/hymnesData';
-  import { buildResultHtml } from '../utils/quiz';
   import { QuizSession } from '../utils/quizSession';
 
   const ANSWERS = [
@@ -62,13 +61,6 @@ import '../styles/quiz-card.css';
   const actionFooter = $<HTMLDivElement>('hqActionFooter');
   const resultContainer = $<HTMLDivElement>('hqResultContainer');
   const btnNext = $<HTMLButtonElement>('hqBtnNext');
-
-  function showQuizScreen(visible: boolean) {
-    [progressBox, questionContainer, optionsContainer, actionFooter].forEach((el) =>
-      el.classList.toggle('hidden', !visible),
-    );
-    resultContainer.classList.toggle('hidden', visible);
-  }
 
   function buildOptions() {
     ANSWERS.forEach((answer) => {
@@ -128,13 +120,6 @@ import '../styles/quiz-card.css';
       optionsContainer.replaceChildren();
       optionsContainer.className = 'options-grid';
       buildOptions();
-    },
-    showResult: (score, total) => {
-      showQuizScreen(false);
-      quizFeedback.textContent = '';
-      quizFeedback.className = 'feedback-msg hidden';
-      resultContainer.innerHTML = buildResultHtml({ score, total, restartId: 'hqBtnRestart' });
-      $<HTMLButtonElement>('hqBtnRestart').addEventListener('click', startGame);
     },
     onRestart: () => startGame(),
   });

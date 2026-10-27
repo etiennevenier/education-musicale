@@ -1,5 +1,3 @@
-import { QUIZ_EMOJIS, QUIZ_LABELS } from './quizConfig';
-
 export type QuizResultTier = 'perfect' | 'great' | 'ok' | 'retry';
 
 /**
@@ -16,35 +14,6 @@ export function getResultTier(note: number, total: number): QuizResultTier {
   if (ratio >= 0.8) return 'great';
   if (ratio >= 0.5) return 'ok';
   return 'retry';
-}
-
-export interface ResultHtmlOptions {
-  score: number;
-  total: number;
-  restartId: string;
-  title?: string;
-  restartLabel?: string;
-}
-
-/**
- * HTML de l'écran de fin, identique pour tous les quiz :
- * emoji (selon le palier), titre, score « X / N », bouton « Rejouer ». Aucun texte de bilan.
- * (chaînes statiques de confiance uniquement)
- */
-export function buildResultHtml({
-  score,
-  total,
-  restartId,
-  title = QUIZ_LABELS.resultTitle,
-  restartLabel = QUIZ_LABELS.restart,
-}: ResultHtmlOptions): string {
-  const emoji = QUIZ_EMOJIS[getResultTier(score, total)];
-  return `
-    <div class="result-emoji">${emoji}</div>
-    <p class="result-title">${title}</p>
-    <p class="result-score"><span class="result-note">${score}</span> / ${total}</p>
-    <button type="button" id="${restartId}" class="btn-restart">${restartLabel}</button>
-  `;
 }
 
 /** Délai minimum commun avant l'enchaînement automatique (ms). */
