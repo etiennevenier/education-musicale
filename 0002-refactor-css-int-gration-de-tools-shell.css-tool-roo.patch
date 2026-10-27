@@ -1,0 +1,2348 @@
+From 4ee523b3f27e073e3faa54a1e93ea062302e9a9e Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 27 Oct 2026 21:32:47 +0100
+Subject: [PATCH 2/2] =?UTF-8?q?refactor(css):=20int=C3=A9gration=20de=20to?=
+ =?UTF-8?q?ols-shell.css=20(tool-root=20/=20tool-fit=20/=20container--tool?=
+ =?UTF-8?q?)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- ajoute src/styles/tools-shell.css (coque unique) importée avant tools-landscape.css
+  sur les 7 pages d'outils ; correctifs vs. la version fournie : hauteur de body
+  bornée (défilement interne réel), chaîne flex jusqu'à .tool-fit, width: 100%
+- tool-root sur les 7 racines, tool-fit sur .piano-staff-container, .notes-staff, .sheet
+  (clefs, rythme) ; container--tool posé par Layout.astro quand mobileHeader="hidden"
+- tools-landscape.css : retrait du verrou 100dvh, du retour, des titres, du bloc
+  « plein écran » (876 -> 707 lignes)
+- composants + tools-shared.css : retrait des déclarations de squelette (carte,
+  hauteurs, zone de dessin) qui battaient le shell par spécificité
+- suppression de fitBoardToViewport, fitStaffToViewport et du calage de hauteur de
+  fitKeyboard (styles inline) ; la largeur des touches du piano reste calculée en JS
+- purge palier 2 ; scripts/audit-important.mjs ajouté ; plafond check:important 122 -> 22
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01EcVrri91rR7w9rbWkvJUCQ
+---
+ package-lock.json                             | 144 +++--------
+ package.json                                  |   5 +-
+ scripts/audit-important.mjs                   | 129 ++++++++++
+ scripts/check-important.mjs                   |   2 +-
+ .../entrainement/ClavierNotes.astro           |   2 +-
+ .../entrainement/DessinerClefs.astro          | 212 +---------------
+ .../entrainement/LectureNotes.astro           | 139 +----------
+ .../entrainement/LectureRythmique.astro       |  30 +--
+ .../entrainement/OreilleClavier.astro         |   2 +-
+ src/components/entrainement/OreilleNom.astro  |  35 +--
+ .../entrainement/PianoInteractif.astro        | 115 +--------
+ src/layouts/Layout.astro                      |   8 +-
+ src/pages/entrainement/clavier-notes.astro    |   1 +
+ src/pages/entrainement/dessiner-clefs.astro   |   1 +
+ src/pages/entrainement/lecture-notes.astro    |   1 +
+ .../entrainement/lecture-rythmique.astro      |   1 +
+ src/pages/entrainement/oreille-clavier.astro  |   1 +
+ src/pages/entrainement/oreille-nom.astro      |   1 +
+ src/pages/entrainement/piano-interactif.astro |   1 +
+ src/styles/tools-landscape.css                | 227 +-----------------
+ src/styles/tools-shared.css                   |  48 ----
+ src/styles/tools-shell.css                    | 201 ++++++++++++++++
+ 22 files changed, 420 insertions(+), 886 deletions(-)
+ create mode 100644 scripts/audit-important.mjs
+ create mode 100644 src/styles/tools-shell.css
+
+diff --git a/package-lock.json b/package-lock.json
+index af7a3a8..66e5fc2 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -21,6 +21,8 @@
+         "@types/node": "^22.20.5",
+         "@types/topojson-client": "^3.1.5",
+         "jsdom": "^30.1.3",
++        "postcss": "^8.5.32",
++        "postcss-selector-parser": "^7.1.7",
+         "typescript": "^6.0.3",
+         "vitest": "^5.0.5"
+       },
+@@ -191,9 +193,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -210,9 +209,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -229,9 +225,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -248,9 +241,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -536,9 +526,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -552,9 +539,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -568,9 +552,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -584,9 +565,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1071,9 +1049,6 @@
+       "cpu": [
+         "arm"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -1090,9 +1065,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -1109,9 +1081,6 @@
+       "cpu": [
+         "ppc64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -1128,9 +1097,6 @@
+       "cpu": [
+         "riscv64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -1147,9 +1113,6 @@
+       "cpu": [
+         "s390x"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -1166,9 +1129,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -1185,9 +1145,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -1204,9 +1161,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "LGPL-3.0-or-later",
+       "optional": true,
+       "os": [
+@@ -1223,9 +1177,6 @@
+       "cpu": [
+         "arm"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -1248,9 +1199,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -1273,9 +1221,6 @@
+       "cpu": [
+         "ppc64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -1298,9 +1243,6 @@
+       "cpu": [
+         "riscv64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -1323,9 +1265,6 @@
+       "cpu": [
+         "s390x"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -1348,9 +1287,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -1373,9 +1309,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -1398,9 +1331,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "Apache-2.0",
+       "optional": true,
+       "os": [
+@@ -1690,9 +1620,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1709,9 +1636,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1728,9 +1652,6 @@
+       "cpu": [
+         "ppc64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1747,9 +1668,6 @@
+       "cpu": [
+         "s390x"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1766,9 +1684,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -1785,9 +1700,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -2685,6 +2597,19 @@
+         "url": "https://github.com/sponsors/fb55"
+       }
+     },
++    "node_modules/cssesc": {
++      "version": "3.0.0",
++      "resolved": "https://registry.npmjs.org/cssesc/-/cssesc-3.0.0.tgz",
++      "integrity": "sha512-/Tb/JcjK111nNScGob5MNtsntNM1aCNUDipB/TkwZFhyDrrE47SOx/18wF2bbjgc3ZzCSKW1T5nt5EbFoAz/Vg==",
++      "dev": true,
++      "license": "MIT",
++      "bin": {
++        "cssesc": "bin/cssesc"
++      },
++      "engines": {
++        "node": ">=4"
++      }
++    },
+     "node_modules/csso": {
+       "version": "5.0.5",
+       "resolved": "https://registry.npmjs.org/csso/-/csso-5.0.5.tgz",
+@@ -3470,9 +3395,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MPL-2.0",
+       "optional": true,
+       "os": [
+@@ -3493,9 +3415,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MPL-2.0",
+       "optional": true,
+       "os": [
+@@ -3516,9 +3435,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MPL-2.0",
+       "optional": true,
+       "os": [
+@@ -3539,9 +3455,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MPL-2.0",
+       "optional": true,
+       "os": [
+@@ -4006,9 +3919,9 @@
+       }
+     },
+     "node_modules/postcss": {
+-      "version": "8.5.30",
+-      "resolved": "https://registry.npmjs.org/postcss/-/postcss-8.5.30.tgz",
+-      "integrity": "sha512-zkd+e9S1AQHhmaBKye9zlFHWjOwVgqXl1q3ECYy8561K7qxR2cREf/STLskulBFd78k6AOFeA+ff1TtEzk9bAA==",
++      "version": "8.5.32",
++      "resolved": "https://registry.npmjs.org/postcss/-/postcss-8.5.32.tgz",
++      "integrity": "sha512-LJlKCCAUFKOuZxipUdYw1NzIITEsPcgyOG9LkvRJvuKj/bRzbuRY0ARXvL0pWGpsZvn8jku+LMep2eU0seHp8g==",
+       "funding": [
+         {
+           "type": "opencollective",
+@@ -4033,6 +3946,20 @@
+         "node": "^10 || ^12 || >=14"
+       }
+     },
++    "node_modules/postcss-selector-parser": {
++      "version": "7.1.7",
++      "resolved": "https://registry.npmjs.org/postcss-selector-parser/-/postcss-selector-parser-7.1.7.tgz",
++      "integrity": "sha512-wWBro/7hJ40ye6TPiXkUQoXKCw23xSsjriUvqd7Uls9Sso3oLiON1flc18cCdnjgCRXw4fBVqUJJeOdDTh3P3g==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "cssesc": "^3.0.0",
++        "util-deprecate": "^1.0.2"
++      },
++      "engines": {
++        "node": ">=4"
++      }
++    },
+     "node_modules/prettier": {
+       "version": "3.9.10",
+       "resolved": "https://registry.npmjs.org/prettier/-/prettier-3.9.10.tgz",
+@@ -4855,6 +4782,13 @@
+         }
+       }
+     },
++    "node_modules/util-deprecate": {
++      "version": "1.0.2",
++      "resolved": "https://registry.npmjs.org/util-deprecate/-/util-deprecate-1.0.2.tgz",
++      "integrity": "sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==",
++      "dev": true,
++      "license": "MIT"
++    },
+     "node_modules/verkit": {
+       "version": "0.5.0",
+       "resolved": "https://registry.npmjs.org/verkit/-/verkit-0.5.0.tgz",
+diff --git a/package.json b/package.json
+index 271fcd7..d6aea83 100644
+--- a/package.json
++++ b/package.json
+@@ -14,7 +14,8 @@
+     "test": "vitest run",
+     "test:e2e": "playwright test",
+     "check:videos": "node scripts/check-videos.mjs",
+-    "check:important": "node scripts/check-important.mjs"
++    "check:important": "node scripts/check-important.mjs",
++    "audit:important": "node scripts/audit-important.mjs --extra src/styles/tools-shared.css --extra src/layouts/Layout.astro --max 3"
+   },
+   "dependencies": {
+     "astro": "^7.4.0",
+@@ -30,6 +31,8 @@
+     "@types/node": "^22.20.5",
+     "@types/topojson-client": "^3.1.5",
+     "jsdom": "^30.1.3",
++    "postcss": "^8.5.32",
++    "postcss-selector-parser": "^7.1.7",
+     "typescript": "^6.0.3",
+     "vitest": "^5.0.5"
+   }
+diff --git a/scripts/audit-important.mjs b/scripts/audit-important.mjs
+new file mode 100644
+index 0000000..7df163f
+--- /dev/null
++++ b/scripts/audit-important.mjs
+@@ -0,0 +1,129 @@
++#!/usr/bin/env node
++/**
++ * audit-important.mjs — inventaire reproductible des `!important`.
++ *
++ * Pour chaque déclaration `!important` (CSS + <style> des .astro audités) :
++ *   - fichier:ligne, sélecteur, spécificité (a,b,c), media query ;
++ *   - règles NON-important concurrentes sur la même propriété et le même
++ *     dernier compartiment de sélecteur, de spécificité >= la sienne.
++ * Aucune concurrente  → candidat à la suppression immédiate.
++ * Des concurrentes    → la bataille de cascade à résoudre à la source.
++ *
++ * Limites assumées : l'analyse est statique. Elle ne voit ni les styles
++ * inline écrits par les scripts (listés à part), ni les fichiers hors
++ * périmètre (tools-shared.css, Layout.astro) : à passer en argument.
++ *
++ * Usage :
++ *   node scripts/audit-important.mjs
++ *   node scripts/audit-important.mjs --extra src/styles/tools-shared.css --extra src/layouts/Layout.astro
++ *   node scripts/audit-important.mjs --max 0        # CI : échoue s'il reste plus de N !important
++ *
++ * Dépendances (dev) : postcss, postcss-selector-parser
++ */
++import fs from 'node:fs';
++import path from 'node:path';
++import postcss from 'postcss';
++import parser from 'postcss-selector-parser';
++
++const argv = process.argv.slice(2);
++const opt = (name) => argv.flatMap((a, i) => (a === name ? [argv[i + 1]] : []));
++const max = opt('--max')[0] !== undefined ? Number(opt('--max')[0]) : null;
++const ROOT = process.cwd();
++const TOOLS_DIR = 'src/components/entrainement';
++const files = [
++  'src/styles/tools-shell.css',
++  'src/styles/tools-landscape.css',
++  ...fs.readdirSync(path.join(ROOT, TOOLS_DIR)).filter((f) => f.endsWith('.astro')).map((f) => `${TOOLS_DIR}/${f}`),
++];
++const extra = opt('--extra');
++
++const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
++const cmp = (a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
++
++/** Spécificité (a,b,c) ; :is/:not/:has = la plus forte de leurs branches ; :where = 0. */
++function specificity(selector) {
++  let total = [0, 0, 0];
++  parser((root) => {
++    root.each((sel) => {
++      sel.each((n) => {
++        if (n.type === 'id') total[0]++;
++        else if (n.type === 'class' || n.type === 'attribute') total[1]++;
++        else if (n.type === 'tag') total[2]++;
++        else if (n.type === 'pseudo') {
++          const name = n.value.toLowerCase();
++          if (name === ':where') return;
++          if (name === ':is' || name === ':not' || name === ':has') {
++            let best = [0, 0, 0];
++            n.each((arg) => { const s = specificity(arg.toString()); if (cmp(s, best) > 0) best = s; });
++            total = add(total, best);
++          } else if (name.startsWith('::') || name === ':before' || name === ':after') total[2]++;
++          else total[1]++;
++        }
++      });
++    });
++  }).processSync(selector);
++  return total;
++}
++const lastCompound = (s) => s.replace(/\s*>\s*/g, ' > ').trim().split(/\s+/).pop();
++
++function load(file) {
++  const abs = path.join(ROOT, file);
++  const text = fs.readFileSync(abs, 'utf8');
++  if (file.endsWith('.css')) return { file, css: text, offset: 0 };
++  const m = text.match(/<style[^>]*>([\s\S]*?)<\/style>/);
++  if (!m) return null;
++  const head = text.slice(0, m.index + m[0].indexOf('>') + 1);
++  return { file, css: m[1], offset: head.split('\n').length - 1 };
++}
++
++const decls = [];
++for (const src of [...files, ...extra].map(load).filter(Boolean)) {
++  postcss.parse(src.css).walkDecls((d) => {
++    const rule = d.parent;
++    if (rule.type !== 'rule') return;
++    const media = [];
++    for (let p = rule.parent; p && p.type !== 'root'; p = p.parent) if (p.type === 'atrule') media.push(p.params.replace(/\s+/g, ' '));
++    for (const raw of rule.selectors) {
++      const sel = raw.replace(/\s+/g, ' ').trim();
++      decls.push({ file: src.file, line: d.source.start.line + src.offset, sel, prop: d.prop, imp: d.important, media: media.join(' | '), spec: specificity(sel), tail: lastCompound(sel) });
++    }
++  });
++}
++
++const seen = new Set();
++const rows = [];
++for (const d of decls.filter((x) => x.imp)) {
++  const key = `${d.file}:${d.line}:${d.prop}`;
++  if (seen.has(key)) continue;
++  seen.add(key);
++  const rivals = decls.filter((e) => !e.imp && e.prop === d.prop && e.tail === d.tail && !(e.file === d.file && e.line === d.line) && cmp(e.spec, d.spec) >= 0);
++  rows.push({ ...d, rivals });
++}
++
++console.log(`${rows.length} déclarations !important\n`);
++const byFile = new Map();
++for (const r of rows) byFile.set(r.file, [...(byFile.get(r.file) ?? []), r]);
++for (const [file, list] of byFile) {
++  const free = list.filter((r) => r.rivals.length === 0).length;
++  console.log(`${file}  —  ${list.length} (dont ${free} sans concurrente ≥ spécificité)`);
++  for (const r of list) {
++    const rival = r.rivals[0] ? `  ⇠ ${r.rivals[0].file}:${r.rivals[0].line} [${r.rivals[0].spec}]` : '';
++    console.log(`  L${String(r.line).padEnd(4)} ${r.prop.padEnd(20)} [${r.spec}] ${r.sel.slice(0, 64)}${rival}`);
++  }
++  console.log();
++}
++
++// Styles inline écrits par les scripts : ce sont eux que les !important de tools-landscape.css combattent.
++console.log('Styles inline écrits par les scripts :');
++for (const f of files.filter((x) => x.endsWith('.astro'))) {
++  const text = fs.readFileSync(path.join(ROOT, f), 'utf8');
++  const hits = new Set();
++  for (const m of text.matchAll(/(\w+)\.style\.(\w+)\s*=/g)) hits.add(`${m[1]}.${m[2]}`);
++  for (const m of text.matchAll(/(\w+)\.style\.setProperty\('([^']+)'/g)) hits.add(`${m[1]}.setProperty(${m[2]})`);
++  if (hits.size) console.log(`  ${path.basename(f).padEnd(24)} ${[...hits].join(', ')}`);
++}
++
++if (max !== null && rows.length > max) {
++  console.error(`\n✗ ${rows.length} !important > seuil ${max}`);
++  process.exit(1);
++}
+diff --git a/scripts/check-important.mjs b/scripts/check-important.mjs
+index c006019..33a375c 100644
+--- a/scripts/check-important.mjs
++++ b/scripts/check-important.mjs
+@@ -12,7 +12,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
+ import { join, relative } from 'node:path';
+ 
+ /** Plafond courant (à baisser à chaque retrait). */
+-const MAX = 122;
++const MAX = 22;
+ 
+ const SRC = join(process.cwd(), 'src');
+ const EXT = /\.(css|astro)$/;
+diff --git a/src/components/entrainement/ClavierNotes.astro b/src/components/entrainement/ClavierNotes.astro
+index a941d6a..670a9fe 100644
+--- a/src/components/entrainement/ClavierNotes.astro
++++ b/src/components/entrainement/ClavierNotes.astro
+@@ -9,7 +9,7 @@ const keyboard = buildKeyboard(60, 72);
+ const whiteKeyCount = keyboard.filter((key) => key.type === 'white').length;
+ ---
+ 
+-<section id="tool-clavier-notes">
++<section id="tool-clavier-notes" class="tool-root">
+   <a id="cn-back" class="hub-back tool-back" href={relativeUrl('/entrainement')} aria-label="Retour à l'entraînement">
+     <span aria-hidden="true">←</span>
+     <span class="hub-back-text">Retour à l'entraînement</span>
+diff --git a/src/components/entrainement/DessinerClefs.astro b/src/components/entrainement/DessinerClefs.astro
+index 26c6e00..ce728f1 100644
+--- a/src/components/entrainement/DessinerClefs.astro
++++ b/src/components/entrainement/DessinerClefs.astro
+@@ -3,7 +3,7 @@
+ import { relativeUrl } from '../../utils/navigation';
+ ---
+ 
+-<div id="tool-clefs">
++<div id="tool-clefs" class="tool-root">
+   <div class="app">
+     <!-- Retour standard : une seule position, en haut à gauche de l'outil. -->
+     <a class="hub-back tool-back" href={relativeUrl('/entrainement')} aria-label="Retour à l'entraînement">
+@@ -21,7 +21,7 @@ import { relativeUrl } from '../../utils/navigation';
+         <p class="ghost-hint">💡 Tapote la portée pour afficher le modèle • Maintiens l'appui pour lire le tracé.</p>
+     </div>
+ 
+-    <div class="sheet">
++    <div class="sheet tool-fit">
+         <svg id="cl-board" viewBox="0 48 360 252" role="button" tabindex="0"
+              aria-pressed="false" aria-label="Afficher le modèle en pointillés">
+             <defs>
+@@ -52,21 +52,9 @@ import { relativeUrl } from '../../utils/navigation';
+ 
+ <style is:global>
+ #tool-clefs {
+-  width: 100%;
+-  max-width: 1024px;
+-  margin: 0 auto;
+-  padding: 12px;
+-  background: #ffffff;
+-  border-radius: 24px;
+-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+-  position: relative;
+-  box-sizing: border-box;
+-  overflow-x: hidden;
+   color: #1f2a44;
+ }
+-@media (min-width: 640px) {
+-  #tool-clefs { padding: 32px; }
+-}
++
+ #tool-clefs {
+         --paper: #ffffff;
+         --grid: #eef2f7;
+@@ -90,14 +78,6 @@ import { relativeUrl } from '../../utils/navigation';
+         flex-direction: column;
+         gap: 18px;
+     }
+-/* Mode resserré : quand la zone de dessin ne peut plus descendre sous son
+-   plancher de lisibilité (iPad paysage 1194×834 avec des polices plus hautes,
+-   cas de la CI Linux), on récupère 32 px sur les quatre espacements verticaux
+-   de l'outil plutôt que de laisser défiler la page. La classe est posée par
+-   fitBoardToViewport(), uniquement dans ce cas précis. */
+-#tool-clefs.is-dense .app {
+-        gap: 10px;
+-    }
+ #tool-clefs .app > .tool-back {
+         margin-bottom: 0;
+     }
+@@ -156,14 +136,9 @@ import { relativeUrl } from '../../utils/navigation';
+         background: #ffffff;
+         border: 2px solid #e2e8f0;
+         border-radius: 16px;
+-        overflow: hidden;
+-        max-width: 100%;
+         box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+     }
+ #tool-clefs #cl-board {
+-        display: block;
+-        width: 100%;
+-        height: auto;
+         touch-action: none;
+         -webkit-user-select: none;
+         user-select: none;
+@@ -303,7 +278,6 @@ import { relativeUrl } from '../../utils/navigation';
+         }
+         /* Mobile/paysage bas : retour compact sur la ligne des onglets, titre masqué */
+         @media (max-width: 640px), (max-width: 900px) and (orientation: landscape), (max-height: 500px) {
+-            #tool-clefs { padding: 10px; border-radius: 16px; }
+             #tool-clefs .top { gap: 8px; }
+             #tool-clefs .top h1 { display: none; }
+             #tool-clefs .tabs { flex: 1 1 auto; min-width: 0; }
+@@ -354,13 +328,8 @@ import { relativeUrl } from '../../utils/navigation';
+                 min-height: 0;
+             }
+             #tool-clefs {
+-                flex: 1 1 auto;
+-                min-height: 100dvh;
+-                display: flex;
+-                flex-direction: column;
+                 justify-content: center;
+                 align-items: center;
+-                border-radius: 0;
+             }
+             #tool-clefs .app { margin-block: auto; }
+         }
+@@ -371,15 +340,6 @@ import { relativeUrl } from '../../utils/navigation';
+            défilement. Seule la portée absorbe la place restante.
+         ------------------------------------------------------------------ */
+         @media (orientation: landscape) and (max-height: 500px) {
+-            #tool-clefs {
+-                height: calc(100dvh - 0.75rem);
+-                min-height: 0;
+-                padding: 8px;
+-                border-radius: 14px;
+-                display: flex;
+-                flex-direction: column;
+-                overflow: hidden;
+-            }
+             #tool-clefs .app {
+                 flex: 1 1 auto;
+                 min-height: 0;
+@@ -395,20 +355,6 @@ import { relativeUrl } from '../../utils/navigation';
+             #tool-clefs .slider { flex: 1 1 220px; height: 28px; }
+             #tool-clefs .pct { font-size: 15px; }
+             #tool-clefs .ghost-hint { font-size: 11px; margin-top: -3px; }
+-            #tool-clefs .sheet {
+-                flex: 1 1 auto;
+-                min-height: 0;
+-                width: fit-content;
+-                max-width: 100%;
+-                margin-inline: auto;
+-                display: flex;
+-                align-items: center;
+-                justify-content: center;
+-            }
+-            #tool-clefs #cl-board {
+-                width: min(calc(100vw - 60px), max(240px, calc((100dvh - 138px) * 360 / 252)));
+-                height: auto;
+-            }
+         }
+ 
+         /* ----- Tablette en paysage : tout tient sur 100dvh, sans scroll vertical -----
+@@ -422,16 +368,6 @@ import { relativeUrl } from '../../utils/navigation';
+                 overflow: hidden;
+             }
+ 
+-            #tool-clefs {
+-                display: flex;
+-                flex-direction: column;
+-                height: 100dvh;
+-                min-height: 0 !important;
+-                max-height: 100dvh;
+-                padding: 8px;
+-                overflow: hidden;
+-            }
+-
+             #tool-clefs .app {
+                 flex: 1 1 auto;
+                 min-height: 0;
+@@ -462,28 +398,6 @@ import { relativeUrl } from '../../utils/navigation';
+                 font-size: 15px;
+             }
+ 
+-            #tool-clefs .sheet {
+-                flex: 1 1 0;
+-                height: 0;
+-                min-height: 120px;
+-                max-height: 60dvh;
+-                width: 100%;
+-                max-width: 100%;
+-                margin-inline: auto;
+-                display: flex;
+-                align-items: center;
+-                justify-content: center;
+-                overflow: hidden;
+-            }
+-
+-            #tool-clefs #cl-board {
+-                display: block;
+-                width: auto;
+-                height: 100%;
+-                max-width: 100%;
+-                max-height: 100%;
+-            }
+-
+             #tool-clefs .slider-row {
+                 flex: 0 0 auto;
+                 gap: 6px 12px;
+@@ -680,7 +594,6 @@ import { relativeUrl } from '../../utils/navigation';
+     const stepTextEl = mustElement('#cl-stepText');
+     const slider = mustInput('#cl-slider');
+     const pctEl = mustElement('#cl-pct');
+-    const sheet = mustElement('#tool-clefs .sheet');
+     let ghostVisible = false;
+     let holdTimer: number | null = null;
+     let holding = false;
+@@ -699,124 +612,6 @@ import { relativeUrl } from '../../utils/navigation';
+         return e;
+     }
+ 
+-    /* ------------------------------------------------------------------
+-       Hauteur de la zone de dessin.
+-
+-       La portée est en `width: 100%; height: auto` (viewBox 360 × 252) : sa
+-       hauteur découle de la largeur de la carte (876 × 613 à 1440 px de large)
+-       et, au-delà de 768 px de haut, aucune règle CSS ne la contraint — les
+-       blocs `100dvh` ne couvrent que les écrans bas et le portrait téléphone.
+-       D'où 389 px de débordement à 1440×900 et 257 à 455 px sur iPad paysage.
+-
+-       On mesure le dépassement réel et on retire ce surplus à la zone de
+-       dessin (deux passes), en conservant le ratio du viewBox (aucune
+-       déformation : le tracé est exprimé en unités du viewBox, il suit
+-       l'échelle). Le cadre épouse alors le dessin (`width: fit-content`).
+-       Plancher de lisibilité : 150 px de haut, soit l'échelle 0,60 (trait de
+-       6,5 → 3,9 px, lignes de portée espacées de 15,6 px). En dessous, on
+-       garde le plancher et le défilement est accepté.
+-       Téléphone, portrait et modes compacts existants : rien n'est modifié.
+-       ------------------------------------------------------------------ */
+-    const MIN_BOARD_HEIGHT = 150;
+-    const BOARD_RATIO = 360 / 252;
+-    const MAX_FIT_PASSES = 3;   // normal, resserrement, ajustement du reliquat
+-    let denseApplied = false;
+-
+-    /** Zones où la zone de dessin garde sa mise en page actuelle. */
+-    function keepsDefaultBoardLayout(): boolean {
+-        if (window.innerHeight > window.innerWidth) return true;   // portrait
+-        return (
+-            window.matchMedia('(max-width: 640px), (max-width: 900px) and (orientation: landscape), (max-height: 500px)').matches ||
+-            window.matchMedia('(orientation: landscape) and (max-height: 500px)').matches ||
+-            window.matchMedia('(min-width: 768px) and (max-height: 768px) and (orientation: landscape)').matches
+-        );
+-    }
+-
+-    function resetBoardFit(): void {
+-        board.style.removeProperty('width');
+-        board.style.removeProperty('max-width');
+-        board.style.removeProperty('max-height');
+-        sheet.style.removeProperty('width');
+-        sheet.style.removeProperty('margin-inline');
+-        if (denseApplied) {
+-            root.classList.remove('is-dense');
+-            denseApplied = false;
+-        }
+-    }
+-
+-    /** Applique une hauteur de dessin (largeur explicite : `height: auto` la déduit du ratio). */
+-    function applyBoardHeight(height: number): void {
+-        board.style.width = Math.round(height * BOARD_RATIO) + 'px';
+-        board.style.maxWidth = '100%';
+-        sheet.style.width = 'fit-content';
+-        sheet.style.marginInline = 'auto';
+-    }
+-
+-    /* Mesure le dépassement réel du document et retire ce surplus à la zone de
+-       dessin, en trois passes bornées :
+-       1) réduction normale ;
+-       2) si la zone devrait descendre sous son plancher de lisibilité, on resserre
+-          les espacements verticaux de l'outil (classe `is-dense`, -32 px) et on
+-          remesure — c'est ce qui rend la CI Linux déterministe : ses polices plus
+-          hautes ajoutent ~15 px au chrome, ce qui faisait buter sur le plancher et
+-          laissait 7 px de défilement ;
+-       3) ajustement du reliquat d'arrondi.
+-       La boucle est bornée à 3 itérations : aucun risque de boucle infinie. */
+-    function fitBoardToViewport(): void {
+-        resetBoardFit();
+-        if (keepsDefaultBoardLayout()) return;
+-
+-        for (let pass = 0; pass < MAX_FIT_PASSES; pass += 1) {
+-            const overflow = document.documentElement.scrollHeight - window.innerHeight;
+-            if (overflow <= 0) return;
+-            const current = board.getBoundingClientRect().height;
+-            const target = Math.round(current - overflow);
+-            if (target >= current) return;
+-            if (target < MIN_BOARD_HEIGHT) {
+-                if (!denseApplied) {
+-                    // On resserre l'espacement de l'outil et on remesure.
+-                    denseApplied = true;
+-                    root.classList.add('is-dense');
+-                    continue;
+-                }
+-                applyBoardHeight(MIN_BOARD_HEIGHT);
+-                return;   // plancher atteint : défilement accepté
+-            }
+-            applyBoardHeight(target);
+-        }
+-    }
+-
+-    // Le redimensionnement (rotation, barres d'onglets Safari) change la hauteur
+-    // disponible : on réadapte, coalescé sur une frame et nettoyé à la sortie de
+-    // page. `visualViewport` complète `window.resize`. Aucune boucle : la fonction
+-    // ne modifie que des styles de la carte, jamais la taille de la fenêtre.
+-    const boardResizeAbort = new AbortController();
+-    let boardResizeFrame = 0;
+-    const handleBoardViewportChange = (): void => {
+-        if (boardResizeFrame) return;
+-        boardResizeFrame = window.requestAnimationFrame(() => {
+-            boardResizeFrame = 0;
+-            fitBoardToViewport();
+-        });
+-    };
+-    window.addEventListener('resize', handleBoardViewportChange, { signal: boardResizeAbort.signal });
+-    window.visualViewport?.addEventListener('resize', handleBoardViewportChange, {
+-        signal: boardResizeAbort.signal,
+-    });
+-    window.addEventListener('pagehide', () => {
+-        if (boardResizeFrame) window.cancelAnimationFrame(boardResizeFrame);
+-        boardResizeAbort.abort();
+-    }, { once: true });
+-
+-    // Filet de sécurité : si les métriques de police évoluaient après le premier
+-    // calcul (police système chargée tardivement, future police web), on réadapte
+-    // une fois les polices prêtes. Aucun impact quand elles le sont déjà.
+-    document.fonts?.ready
+-        .then(() => {
+-            if (!boardResizeAbort.signal.aborted) fitBoardToViewport();
+-        })
+-        .catch(() => {});
+-
+     /* ---------- Portée, numéros de lignes, nom de la note ---------- */
+     function buildStaff() {
+         const clef = CLEFS[clefKey];
+@@ -1100,7 +895,6 @@ import { relativeUrl } from '../../utils/navigation';
+     measurePaths();
+     selectClef('sol');
+     syncGhostVisibility();
+-    fitBoardToViewport();   // la zone de dessin tient dans la hauteur disponible
+ 
+ })();
+ </script>
+\ No newline at end of file
+diff --git a/src/components/entrainement/LectureNotes.astro b/src/components/entrainement/LectureNotes.astro
+index 08691e1..00d86bb 100644
+--- a/src/components/entrainement/LectureNotes.astro
++++ b/src/components/entrainement/LectureNotes.astro
+@@ -4,7 +4,7 @@ import '../../styles/tools-shared.css';
+ import { relativeUrl } from '../../utils/navigation';
+ ---
+ 
+-<section id="tool-notes">
++<section id="tool-notes" class="tool-root">
+   <!-- Sprite SVG local : clés de sol et de fa pour les cartes de niveaux -->
+   <svg class="clef-sprite" width="0" height="0" aria-hidden="true" focusable="false">
+     <defs>
+@@ -139,7 +139,7 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
+       </div>
+ 
+       <!-- Portée musicale SVG grand format -->
+-      <div class="notes-staff">
++      <div class="notes-staff tool-fit">
+         <svg id="staff-svg" viewBox="120 20 360 210" preserveAspectRatio="xMidYMid meet"></svg>
+       </div>
+ 
+@@ -203,17 +203,7 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
+   --accent-strong: #a855f7;
+   --accent-soft: #faf5ff;
+   --accent-border: #e9d5ff;
+-  width: 100%;
+-  max-width: 1024px;
+-  margin: 0 auto;
+-  padding: 12px;
+-  background: #ffffff;
+-  border-radius: 24px;
+-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+   color: #0f172a;
+-  position: relative;
+-  box-sizing: border-box;
+-  overflow-x: hidden;
+   font-family: system-ui, -apple-system, sans-serif;
+ }
+ 
+@@ -274,13 +264,13 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
+ }
+ 
+ #tool-notes .level-clef--sol {
+-  width: 1.35rem !important;
+-  height: 2.7rem !important;
++  width: 1.35rem;
++  height: 2.7rem;
+ }
+ 
+ #tool-notes .level-clef--fa {
+-  width: 1.35rem !important;
+-  height: 1.5rem !important;
++  width: 1.35rem;
++  height: 1.5rem;
+ }
+ 
+ #tool-notes .level-btn:hover,
+@@ -328,25 +318,13 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
+ }
+ 
+ #tool-notes .notes-staff {
+-  display: flex;
+-  align-items: center;
+-  justify-content: center;
+   padding: 0.25rem;
+-  max-width: 100%;
+   background: #ffffff;
+   border: 2px solid #e2e8f0;
+   border-radius: 24px;
+-  overflow-x: auto;
+   box-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.04);
+ }
+ 
+-#tool-notes #staff-svg {
+-  display: block;
+-  width: 100%;
+-  height: auto;
+-  max-width: 100%;
+-}
+-
+ #tool-notes .feedback-msg {
+   height: 2.25rem;
+   line-height: 2.25rem;
+@@ -464,20 +442,17 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
+ #tool-notes #restart-btn:active { transform: scale(0.98); }
+ 
+ @media (min-width: 640px) {
+-  #tool-notes { padding: 32px; }
+   #tool-notes .notes-card { padding: 16px; }
+   #tool-notes .notes-levels { grid-template-columns: 1fr 1fr; }
+   #tool-notes .level-btn { padding: 1.5rem; }
+   #tool-notes .level-btn.is-eval { grid-column: span 2; }
+   #tool-notes .notes-staff { padding: 0.5rem; }
+-  #tool-notes #staff-svg { max-height: none; }
+   #tool-notes .notes-answers { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.75rem; }
+   #tool-notes .note-btn[data-note="Si"] { grid-column: span 1; }
+ }
+ 
+ /* Mode exercice compact sur smartphone et en paysage bas */
+ @media (max-width: 640px), (max-width: 768px) and (orientation: landscape), (max-height: 500px) {
+-  #tool-notes { padding: 8px; border-radius: 16px; }
+   #tool-notes .notes-card { padding: 4px; }
+   #tool-notes .notes-header { display: none; }
+   #tool-notes .notes-levels { gap: 0.75rem; }
+@@ -495,7 +470,6 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
+ 
+ /* ----- Paysage bas : portée simple panoramique et interface sans débordement ----- */
+ @media (orientation: landscape) and (max-height: 550px) {
+-  #tool-notes { padding: 6px; }
+   #tool-notes .notes-card { padding: 3px; }
+ 
+   #tool-notes .notes-exercise { gap: 6px; }
+@@ -522,8 +496,8 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
+ 
+   #tool-notes .level-btn .level-title { font-size: 0.95rem; line-height: 1.1; }
+   #tool-notes .level-btn .level-desc { font-size: 0.75rem; line-height: 1.15; }
+-  #tool-notes .level-clef--sol { height: 2rem !important; }
+-  #tool-notes .level-clef--fa { height: 1.3rem !important; }
++  #tool-notes .level-clef--sol { height: 2rem; }
++  #tool-notes .level-clef--fa { height: 1.3rem; }
+ 
+   #tool-notes .notes-hud {
+     gap: 0.15rem 0.7rem;
+@@ -534,14 +508,10 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
+ 
+   #tool-notes .notes-staff {
+     box-sizing: border-box;
+-    flex: 0 0 auto;
+-    height: clamp(148px, 46dvh, 210px);
+     padding: 3px;
+     border-radius: 14px;
+   }
+ 
+-  #tool-notes #staff-svg { width: 100%; height: 100%; max-height: 100%; }
+-
+   #tool-notes .feedback-msg {
+     height: 1.6rem;
+     line-height: 1.6rem;
+@@ -572,15 +542,6 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
+     max-height: 100dvh;
+   }
+ 
+-  #tool-notes {
+-    flex: 1 1 auto;
+-    display: flex;
+-    flex-direction: column;
+-    height: 100%;
+-    min-height: 0;
+-    padding: 6px;
+-  }
+-
+   #tool-notes .notes-card {
+     flex: 1 1 auto;
+     display: flex;
+@@ -627,14 +588,9 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
+ 
+   /* La portée absorbe l'espace libre et reste centrée */
+   #tool-notes .notes-staff {
+-    flex: 1 1 auto;
+-    min-height: 0;
+-    max-height: 58dvh;
+     padding: 2px;
+   }
+ 
+-  #tool-notes #staff-svg { max-height: 100%; }
+-
+   #tool-notes .notes-hud {
+     flex: 0 0 auto;
+     gap: 0.2rem 0.6rem;
+@@ -740,16 +696,6 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
+     overflow: hidden;
+   }
+ 
+-  #tool-notes {
+-    display: flex;
+-    flex-direction: column;
+-    height: 100dvh;
+-    min-height: 0 !important;
+-    max-height: 100dvh;
+-    overflow: hidden;
+-    padding: 8px;
+-  }
+-
+   /* Sur tablette, le conseil de rotation ne doit jamais masquer l'outil. */
+   #tool-notes .notes-rotate-hint { display: none; }
+ 
+@@ -813,21 +759,11 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
+   }
+ 
+   #tool-notes .notes-staff {
+-    flex: 1 1 0;
+     box-sizing: border-box;
+-    height: 0;
+-    min-height: 120px;
+-    max-height: 60dvh;
+     padding: 2px;
+     border-radius: 14px;
+   }
+ 
+-  #tool-notes #staff-svg {
+-    width: 100%;
+-    height: 100%;
+-    max-height: 100%;
+-  }
+-
+   #tool-notes .feedback-msg {
+     flex: 0 0 auto;
+     margin-top: 0;
+@@ -961,63 +897,6 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
+         return definition ?? { displayLevel: level, clefLabel: '', title: `Niveau ${level}` };
+     }
+ 
+-    /* ------------------------------------------------------------------
+-       Planchers de lisibilité (hauteur du SVG en px). En dessous, on garde le
+-       plancher et on accepte un défilement : mieux vaut défiler que rendre les
+-       notes illisibles.
+-       Échelles minimales correspondantes (hauteur / hauteur du viewBox) :
+-         portée simple  160 / 210 = 0,76  (écart entre lignes 22 → 16,8 px)
+-         double portée  190 / 400 = 0,48  (écart entre lignes 22 → 10,5 px)
+-       Référence déjà acceptée en production (mode paysage mobile 844×390 :
+-       0,34, lignes espacées de 7,5 px) : les deux planchers restent au-dessus.
+-       ------------------------------------------------------------------ */
+-    const MIN_STAFF_HEIGHT = { simple: 160, double: 190 } as const;
+-
+-    /* ------------------------------------------------------------------
+-       Toutes les portées (niveaux 1 à 4) : la partition se dimensionne sur la
+-       hauteur réellement disponible. Le SVG est en `width: 100%; height: auto` :
+-       sa hauteur découle de la largeur de la carte (jusqu'à 1024 px), soit
+-       530 px pour une portée simple (viewBox 360 × 210) et 757 px pour une
+-       double (480 × 400). Au-delà de 768 px de haut, aucune règle CSS ne la
+-       contraint : les blocs `100dvh` de tools-landscape.css ne couvrent que les
+-       écrans bas (max-height 768 px) et le portrait smartphone. D'où 268 px de
+-       débordement à 1440×900 (niveau 1) et 136 à 334 px sur iPad paysage.
+-
+-       Méthode : on mesure le dépassement réel du document et on retire ce
+-       surplus au SVG en deux passes (la seconde absorbe l'arrondi), en fixant
+-       `max-width` au prorata du viewBox — le ratio est donc conservé et la
+-       portée n'est jamais déformée (`preserveAspectRatio="xMidYMid meet"`).
+-       Aucune constante liée au header : la mesure se fait sur le document réel,
+-       ce qui suit le header, la largeur de carte et les deux géométries.
+-       Quand il reste de la place (aucun dépassement), on ne touche à rien : le
+-       SVG garde sa taille naturelle, qui occupe déjà toute la largeur
+-       disponible — la partition ne rétrécit donc jamais plus que nécessaire.
+-       ------------------------------------------------------------------ */
+-    function fitStaffToViewport(svg: SVGSVGElement, isDouble: boolean): void {
+-        svg.style.removeProperty('max-height');
+-        svg.style.removeProperty('max-width');
+-
+-        const box = (svg.getAttribute('viewBox') ?? '').trim().split(/\s+/).map(Number);
+-        const vbWidth = box[2];
+-        const vbHeight = box[3];
+-        if (!vbWidth || !vbHeight) return;
+-        const ratio = vbWidth / vbHeight;
+-        const floor = isDouble ? MIN_STAFF_HEIGHT.double : MIN_STAFF_HEIGHT.simple;
+-
+-        for (let pass = 0; pass < 2; pass += 1) {
+-            const overflow = document.documentElement.scrollHeight - window.innerHeight;
+-            if (overflow <= 0) return;
+-            const current = svg.getBoundingClientRect().height;
+-            const target = Math.round(current - overflow);
+-            if (target >= current) return;
+-            // Jamais sous le plancher : au-delà, le défilement est accepté.
+-            const height = Math.max(target, floor);
+-            svg.style.maxHeight = `${height}px`;
+-            svg.style.maxWidth = `${Math.round(height * ratio)}px`;
+-            if (target <= floor) return;
+-        }
+-    }
+-
+     function getLevelPool(level: number): NoteObj[] {
+         let pool: NoteObj[] = [];
+         if (level === 1) { // Clé de Sol - Do3 au Do4
+@@ -1304,8 +1183,6 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
+             : { x1: noteX - stemOffset, y1: noteY, x2: noteX - stemOffset, y2: noteY + stemLength };
+         svg.appendChild(el('line', { ...stem, stroke: '#0f172a', 'stroke-width': inkWidth }));
+ 
+-        // Dernière étape : contenir la portée dans la hauteur de la fenêtre.
+-        fitStaffToViewport(svg, isDouble);
+     }
+ 
+     function checkAnswer(selectedNote: string | null): void {
+diff --git a/src/components/entrainement/LectureRythmique.astro b/src/components/entrainement/LectureRythmique.astro
+index 49f4722..cc2b95b 100644
+--- a/src/components/entrainement/LectureRythmique.astro
++++ b/src/components/entrainement/LectureRythmique.astro
+@@ -3,7 +3,7 @@
+ import { relativeUrl } from '../../utils/navigation';
+ ---
+ 
+-<div id="tool-rhythm">
++<div id="tool-rhythm" class="tool-root">
+   <div class="app">
+     <div class="rhythm-top">
+         <a class="hub-back tool-back" href={relativeUrl('/entrainement')} aria-label="Retour à l'entraînement">
+@@ -55,7 +55,7 @@ import { relativeUrl } from '../../utils/navigation';
+         <div class="beats" id="rt-beats" aria-hidden="true"></div>
+     </section>
+ 
+-    <div class="sheet">
++    <div class="sheet tool-fit">
+         <svg id="rt-board" viewBox="0 0 1060 275" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Rythme à reproduire">
+             <rect id="rt-hl" visibility="hidden" rx="12" ry="12" fill="#1f9d62" fill-opacity="0.10" stroke="#1f9d62" stroke-width="2.5"/>
+             <g id="rt-gStatic"></g>
+@@ -97,21 +97,7 @@ import { relativeUrl } from '../../utils/navigation';
+ </div>
+ 
+ <style is:global>
+-#tool-rhythm {
+-  width: 100%;
+-  max-width: 1024px;
+-  margin: 0 auto;
+-  padding: 12px;
+-  background: #ffffff;
+-  border-radius: 24px;
+-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+-  position: relative;
+-  box-sizing: border-box;
+-  overflow-x: hidden;
+-}
+-@media (min-width: 640px) {
+-  #tool-rhythm { padding: 32px; }
+-}
++
+ #tool-rhythm {
+         --desk: #faf5ff;
+         --paper: #ffffff;
+@@ -389,12 +375,12 @@ import { relativeUrl } from '../../utils/navigation';
+ 
+             /* Le retour et les réglages s'alignent côte à côte sur une seule ligne. */
+             #tool-rhythm .rhythm-top {
+-                display: flex !important;
++                display: flex;
+                 flex: 0 0 auto;
+-                flex-direction: row !important;
+-                flex-wrap: nowrap !important;
+-                align-items: center !important;
+-                justify-content: space-between !important;
++                flex-direction: row;
++                flex-wrap: nowrap;
++                align-items: center;
++                justify-content: space-between;
+                 gap: 8px;
+                 margin: 0 0 4px;
+             }
+diff --git a/src/components/entrainement/OreilleClavier.astro b/src/components/entrainement/OreilleClavier.astro
+index 46e2569..05e9bff 100644
+--- a/src/components/entrainement/OreilleClavier.astro
++++ b/src/components/entrainement/OreilleClavier.astro
+@@ -11,7 +11,7 @@ const WHITE_KEY_COUNT = FULL_KEYBOARD.filter((key) => key.type === 'white').leng
+ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
+ ---
+ 
+-<section id="tool-oreille-clavier">
++<section id="tool-oreille-clavier" class="tool-root">
+   <a id="oc-back" class="hub-back tool-back" href={relativeUrl('/entrainement')} aria-label="Retour à l'entraînement">
+     <span aria-hidden="true">←</span>
+     <span class="hub-back-text">Retour à l'entraînement</span>
+diff --git a/src/components/entrainement/OreilleNom.astro b/src/components/entrainement/OreilleNom.astro
+index dd06a72..99e6e8a 100644
+--- a/src/components/entrainement/OreilleNom.astro
++++ b/src/components/entrainement/OreilleNom.astro
+@@ -5,7 +5,7 @@ import '../../styles/tools-shared.css';
+ import { relativeUrl } from '../../utils/navigation';
+ ---
+ 
+-<section id="tool-oreille-nom">
++<section id="tool-oreille-nom" class="tool-root">
+   <a id="on-back" class="hub-back tool-back" href={relativeUrl('/entrainement')} aria-label="Retour à l'entraînement">
+     <span aria-hidden="true">←</span>
+     <span class="hub-back-text">Retour à l'entraînement</span>
+@@ -91,23 +91,10 @@ import { relativeUrl } from '../../utils/navigation';
+     --accent-strong: #a855f7;
+     --accent-soft: #faf5ff;
+     --accent-border: #e9d5ff;
+-    width: 100%;
+-    max-width: 900px;
+-    margin: 0 auto;
+-    padding: 12px;
+-    background: #ffffff;
+-    border-radius: 24px;
+-    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+     color: #0f172a;
+-    box-sizing: border-box;
+-    overflow-x: hidden;
+     font-family: system-ui, -apple-system, sans-serif;
+   }
+ 
+-  @media (min-width: 640px) {
+-    #tool-oreille-nom { padding: 28px 32px 32px; }
+-  }
+-
+   #tool-oreille-nom .on-levels {
+     display: grid;
+     grid-template-columns: 1fr;
+@@ -292,16 +279,6 @@ import { relativeUrl } from '../../utils/navigation';
+       min-height: 0;
+     }
+ 
+-    #tool-oreille-nom {
+-      flex: 1 1 auto;
+-      display: flex;
+-      flex-direction: column;
+-      height: 100%;
+-      min-height: 0;
+-      padding: 6px;
+-      border-radius: 16px;
+-    }
+-
+     #tool-oreille-nom .on-header { display: none; }
+ 
+     #tool-oreille-nom #on-menu,
+@@ -416,16 +393,6 @@ import { relativeUrl } from '../../utils/navigation';
+       min-height: 0;
+     }
+ 
+-    #tool-oreille-nom {
+-      flex: 1 1 auto;
+-      display: flex;
+-      flex-direction: column;
+-      height: 100%;
+-      min-height: 0;
+-      padding: 4px 6px;
+-      border-radius: 12px;
+-    }
+-
+     #tool-oreille-nom .on-header { display: none; }
+ 
+     #tool-oreille-nom #on-menu,
+diff --git a/src/components/entrainement/PianoInteractif.astro b/src/components/entrainement/PianoInteractif.astro
+index a92fc9c..0915e95 100644
+--- a/src/components/entrainement/PianoInteractif.astro
++++ b/src/components/entrainement/PianoInteractif.astro
+@@ -3,7 +3,7 @@
+ import { relativeUrl } from '../../utils/navigation';
+ ---
+ 
+-<div id="tool-piano">
++<div id="tool-piano" class="tool-root">
+   <div class="piano-body">
+             <a class="hub-back tool-back" href={relativeUrl('/entrainement')} aria-label="Retour à l'entraînement">
+                 <span aria-hidden="true">←</span>
+@@ -20,7 +20,7 @@ import { relativeUrl } from '../../utils/navigation';
+             </div>
+             <div id="piano-note-display" class="piano-info-note">Clique sur une touche 🎹</div>
+             <p class="piano-portrait-hint">📱 En mode paysage, le clavier 88 touches est bien plus confortable.</p>
+-            <div class="piano-staff-container">
++            <div class="piano-staff-container tool-fit">
+                 <svg id="piano-staff-svg" viewBox="0 0 480 400"></svg>
+             </div>
+             <div class="piano-wrapper">
+@@ -36,21 +36,9 @@ import { relativeUrl } from '../../utils/navigation';
+   --accent-strong: #a855f7;
+   --accent-soft: #faf5ff;
+   --accent-border: #e9d5ff;
+-  width: 100%;
+-  max-width: 1024px;
+-  margin: 0 auto;
+-  padding: 12px;
+-  background: #ffffff;
+-  border-radius: 24px;
+-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+   color: #0f172a;
+-  position: relative;
+-  box-sizing: border-box;
+-  overflow-x: hidden;
+-}
+-@media (min-width: 640px) {
+-  #tool-piano { padding: 32px; }
+ }
++
+         #tool-piano .piano-title {
+             margin: 0;
+             color: var(--accent);
+@@ -62,8 +50,7 @@ import { relativeUrl } from '../../utils/navigation';
+         #tool-piano .piano-body > .hub-back { margin: 0; }
+         #tool-piano .piano-body { width:100%; max-width:800px; margin:0 auto; display:flex; flex-direction:column; gap:15px; align-items:center; }
+         #tool-piano .piano-info-note { font-size:14px; font-weight:700; color:#4c1d95; background:var(--accent-soft); border:1px solid var(--accent-border); padding:6px 16px; border-radius:999px; min-width:150px; text-align:center; }
+-        #tool-piano .piano-staff-container { background:#ffffff; border:2px solid #e2e8f0; border-radius:14px; width:100%; height:260px; display:flex; justify-content:center; align-items:center; box-sizing:border-box; }
+-        #tool-piano #piano-staff-svg { width:100%; max-width:560px; height:250px; }
++        #tool-piano .piano-staff-container { background:#ffffff; border:2px solid #e2e8f0; border-radius:14px; box-sizing:border-box; }
+         #tool-piano .piano-wrapper { background:#1e293b; padding:10px; border-radius:14px 14px 10px 10px; box-shadow:0 8px 18px -8px rgba(15,23,42,0.5); width:100%; overflow-x:auto; display:flex; justify-content:center; box-sizing:border-box; }
+         #tool-piano .piano { display:flex; position:relative; height:110px; width:max-content; }
+         #tool-piano .white-key { width:28px; height:110px; background:linear-gradient(#ffffff, #f1f5f9); border:1px solid #cbd5e1; border-top:0; border-radius:0 0 8px 8px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:6px; font-size:9px; font-weight:700; color:#64748b; cursor:pointer; box-sizing:border-box; z-index:1; user-select:none; touch-action:manipulation; transition:background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease; }
+@@ -77,8 +64,7 @@ import { relativeUrl } from '../../utils/navigation';
+             #tool-piano { --wk: 28px; --bk: 18px; --kh: 110px; --bkh: 65px; }   /* clavier d'origine pour souris */
+         }
+         #tool-piano .piano-body { min-width: 0; }
+-        #tool-piano .piano-staff-container { height: auto; padding: 6px; overflow-x: auto; }
+-        #tool-piano #piano-staff-svg { width: 100%; height: auto; max-width: 560px; display: block; }
++        #tool-piano .piano-staff-container { padding: 6px; }
+         /* flex-start + marges auto sur .piano : le début du clavier reste accessible quand il déborde */
+         #tool-piano .piano-wrapper { max-width: 100%; justify-content: flex-start; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
+         #tool-piano .piano { height: var(--kh); margin: 0 auto; flex: 0 0 auto; }
+@@ -94,7 +80,6 @@ import { relativeUrl } from '../../utils/navigation';
+         #tool-piano .piano-portrait-hint { display: none; margin: -4px 0 0; text-align: center; font-size: 12px; line-height: 1.35; color: #64748b; font-weight: 600; }
+         /* Mobile/paysage bas : retour compact en tête d'outil, titre et sous-titre masqués */
+         @media (max-width: 640px), (max-width: 900px) and (orientation: landscape), (max-height: 500px) {
+-            #tool-piano { padding: 10px; border-radius: 16px; }
+             #tool-piano .piano-body { gap: 8px; }
+             #tool-piano .piano-head { display: none; }
+             #tool-piano .piano-body > .hub-back { align-self: flex-start; margin: 0; }
+@@ -126,13 +111,6 @@ import { relativeUrl } from '../../utils/navigation';
+             }
+ 
+             #tool-piano {
+-                flex: 1 1 auto;
+-                display: flex;
+-                flex-direction: column;
+-                height: 100%;
+-                min-height: 0;
+-                padding: 8px;
+-                border-radius: 16px;
+                 --kh: clamp(108px, 18dvh, 150px);
+                 --bkh: clamp(66px, 11dvh, 92px);
+             }
+@@ -162,20 +140,9 @@ import { relativeUrl } from '../../utils/navigation';
+             #tool-piano .piano-portrait-hint { display: block; }
+ 
+             #tool-piano .piano-staff-container {
+-                flex: 1 1 auto;
+-                /* Légèrement réduit pour compenser la marge de sécurité du clavier
+-                   et garder l'ensemble visuellement centré. */
+-                min-height: 90px;
+-                height: auto;
+                 padding: 2px;
+             }
+ 
+-            #tool-piano #piano-staff-svg {
+-                width: 100%;
+-                height: 100%;
+-                max-height: 100%;
+-            }
+-
+             #tool-piano .piano-wrapper {
+                 flex: 0 0 auto;
+                 width: 100%;
+@@ -218,18 +185,6 @@ import { relativeUrl } from '../../utils/navigation';
+             }
+ 
+             #tool-piano {
+-                flex: 1 1 auto;
+-                display: flex;
+-                flex-direction: column;
+-                height: 100dvh;
+-                max-height: 100dvh;
+-                width: 100%;
+-                max-width: none;
+-                min-height: 0;
+-                margin: 0;
+-                padding: 0;
+-                border-radius: 0;
+-                overflow: hidden;
+                 --kh: clamp(90px, 38dvh, 160px);
+                 --bkh: clamp(55px, 24dvh, 100px);
+             }
+@@ -263,21 +218,10 @@ import { relativeUrl } from '../../utils/navigation';
+             }
+ 
+             #tool-piano .piano-staff-container {
+-                flex: 1 1 auto;
+-                min-height: 0;
+-                height: auto;
+                 padding: 0;
+                 border: 0;
+                 border-radius: 0;
+                 background: #ffffff;
+-                overflow: hidden;
+-            }
+-
+-            #tool-piano #piano-staff-svg {
+-                width: 100%;
+-                height: 100%;
+-                max-width: none;
+-                max-height: none;
+             }
+ 
+             #tool-piano .piano-wrapper {
+@@ -420,13 +364,6 @@ import { relativeUrl } from '../../utils/navigation';
+             }
+ 
+             #tool-piano {
+-                display: flex;
+-                flex-direction: column;
+-                height: 100dvh;
+-                min-height: 0 !important;
+-                max-height: 100dvh;
+-                padding: 8px;
+-                overflow: hidden;
+                 --kh: clamp(96px, 22dvh, 150px);
+                 --bkh: clamp(62px, 14dvh, 96px);
+             }
+@@ -460,22 +397,10 @@ import { relativeUrl } from '../../utils/navigation';
+             }
+ 
+             #tool-piano .piano-staff-container {
+-                flex: 1 1 0;
+-                height: 0;
+-                min-height: 120px;
+-                max-height: 60dvh;
+                 padding: 0;
+                 border: 0;
+                 border-radius: 0;
+                 background: #ffffff;
+-                overflow: hidden;
+-            }
+-
+-            #tool-piano #piano-staff-svg {
+-                width: 100%;
+-                height: 100%;
+-                max-width: none;
+-                max-height: 100%;
+             }
+ 
+             #tool-piano .piano-wrapper {
+@@ -825,11 +750,8 @@ import { relativeUrl } from '../../utils/navigation';
+            touches. Sous le minimum, on garde MIN et le clavier défile
+            horizontalement comme avant (centré sur le Do central).
+ 
+-           Hauteur : la portée est en `width:100%; height:auto` (viewBox 480 × 400),
+-           elle mesurait donc 466 px de haut quel que soit l'écran et la page
+-           débordait (186 px à 1440×900, 94 px à 1376×1032). On retire exactement
+-           le dépassement mesuré à la hauteur de la portée, avec un plancher de
+-           120 px (celui des modes compacts).
++           Hauteur : plus de calage ici. La portée (.tool-fit) se partage la hauteur
++           par flexbox (voir tools-shell.css).
+ 
+            Le mode compact (hauteur <= 768 px), le téléphone et le portrait ne sont
+            pas concernés : la fonction ne touche à rien et retire ses styles inline.
+@@ -837,7 +759,6 @@ import { relativeUrl } from '../../utils/navigation';
+         const WHITE_KEY_COUNT = 52;
+         const MIN_WHITE_KEY_WIDTH = 24;
+         const MAX_WHITE_KEY_WIDTH = 48;
+-        const MIN_STAFF_HEIGHT = 120;
+ 
+         /* ------------------------------------------------------------------
+            Niveaux de zoom du clavier. La largeur d'une touche blanche commande
+@@ -952,8 +873,6 @@ import { relativeUrl } from '../../utils/navigation';
+             centerKeyInWrapper(anchor);
+         }
+ 
+-        const staffContainer = mustElement('#tool-piano .piano-staff-container');
+-        const staffSvgEl = mustSvg('#piano-staff-svg');
+         const scrollHint = document.querySelector<HTMLElement>('#tool-piano .piano-scroll-hint');
+ 
+         /** Zones où le clavier garde sa mise en page actuelle (compact, téléphone, portrait). */
+@@ -969,9 +888,6 @@ import { relativeUrl } from '../../utils/navigation';
+         function resetKeyboardFit(): void {
+             pianoEl.style.removeProperty('--wk');
+             pianoEl.style.removeProperty('--bk');
+-            staffContainer.style.removeProperty('height');
+-            staffSvgEl.style.removeProperty('height');
+-            staffSvgEl.style.removeProperty('max-height');
+             scrollHint?.classList.remove('is-hidden');
+             keyboardNeedsScroll = true;   // en mode compact le clavier déborde toujours
+             pianoWrapper.removeAttribute('tabindex');
+@@ -1014,23 +930,6 @@ import { relativeUrl } from '../../utils/navigation';
+                 pianoWrapper.removeAttribute('tabindex');
+                 pianoWrapper.removeAttribute('aria-label');
+             }
+-
+-            // 3. Hauteur : la portée absorbe le dépassement, en deux passes.
+-            staffContainer.style.removeProperty('height');
+-            staffSvgEl.style.removeProperty('height');
+-            staffSvgEl.style.removeProperty('max-height');
+-            for (let pass = 0; pass < 2; pass += 1) {
+-                const overflow = document.documentElement.scrollHeight - window.innerHeight;
+-                if (overflow <= 0) return;
+-                const current = staffContainer.getBoundingClientRect().height;
+-                const target = Math.round(current - overflow);
+-                if (target >= current) return;
+-                const height = Math.max(target, MIN_STAFF_HEIGHT);
+-                staffContainer.style.height = height + 'px';
+-                staffSvgEl.style.height = '100%';
+-                staffSvgEl.style.maxHeight = '100%';
+-                if (target <= MIN_STAFF_HEIGHT) return;
+-            }
+         }
+ 
+ 
+diff --git a/src/layouts/Layout.astro b/src/layouts/Layout.astro
+index 2e3803c..d99d659 100644
+--- a/src/layouts/Layout.astro
++++ b/src/layouts/Layout.astro
+@@ -56,7 +56,7 @@ const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href :
+       )}
+     </header>
+ 
+-    <main class:list={['container', { wide }]}>
++    <main class:list={['container', { wide, 'container--tool': mobileHeader === 'hidden' }]}>
+       {/* En-tête masqué (outils plein écran en paysage) : le h1 du site est en
+           display:none, on garde donc un titre de page dans l'arbre d'accessibilité. */}
+       {mobileHeader === 'hidden' && <h1 class="visually-hidden">{title}</h1>}
+@@ -278,7 +278,7 @@ const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href :
+     }
+ 
+     /* Pages d'outils : en-tête global supprimé (règles déplacées dans
+-       src/styles/tools-landscape.css, seul fichier qui pilote le plein écran). */
++       src/styles/tools-shell.css, seul fichier qui pilote le plein écran). */
+   }
+ 
+   /* Paysage sur téléphone (≤ 900 px de large) ou fenêtre basse (≤ 500 px de haut) :
+@@ -316,7 +316,7 @@ const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href :
+     }
+ 
+     /* Pages d'outils d'entraînement : en-tête masqué (règle déplacée dans
+-       src/styles/tools-landscape.css). */
++       src/styles/tools-shell.css). */
+   }
+ 
+   /* ------------------------------------------------------------------
+@@ -351,7 +351,7 @@ const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href :
+      Pages d'outils sur mobile et tablette : plein écran, sans en-tête
+      global ni carte blanche flottante. Le hub (mobile-header-minimal)
+      n'est pas concerné.
+-     Les règles correspondantes vivent dans src/styles/tools-landscape.css
++     Les règles correspondantes vivent dans src/styles/tools-shell.css
+      (seul fichier qui pilote le plein écran des outils).
+   ------------------------------------------------------------------ */
+ 
+diff --git a/src/pages/entrainement/clavier-notes.astro b/src/pages/entrainement/clavier-notes.astro
+index 4b687b5..a362949 100644
+--- a/src/pages/entrainement/clavier-notes.astro
++++ b/src/pages/entrainement/clavier-notes.astro
+@@ -1,5 +1,6 @@
+ ---
+ import Layout from '../../layouts/Layout.astro';
++import '../../styles/tools-shell.css';
+ import '../../styles/tools-landscape.css';
+ import ClavierNotes from '../../components/entrainement/ClavierNotes.astro';
+ ---
+diff --git a/src/pages/entrainement/dessiner-clefs.astro b/src/pages/entrainement/dessiner-clefs.astro
+index 9aaee53..c6db364 100644
+--- a/src/pages/entrainement/dessiner-clefs.astro
++++ b/src/pages/entrainement/dessiner-clefs.astro
+@@ -1,5 +1,6 @@
+ ---
+ import Layout from '../../layouts/Layout.astro';
++import '../../styles/tools-shell.css';
+ import '../../styles/tools-landscape.css';
+ import DessinerClefs from '../../components/entrainement/DessinerClefs.astro';
+ ---
+diff --git a/src/pages/entrainement/lecture-notes.astro b/src/pages/entrainement/lecture-notes.astro
+index 5de3db4..f168785 100644
+--- a/src/pages/entrainement/lecture-notes.astro
++++ b/src/pages/entrainement/lecture-notes.astro
+@@ -1,5 +1,6 @@
+ ---
+ import Layout from '../../layouts/Layout.astro';
++import '../../styles/tools-shell.css';
+ import '../../styles/tools-landscape.css';
+ import LectureNotes from '../../components/entrainement/LectureNotes.astro';
+ ---
+diff --git a/src/pages/entrainement/lecture-rythmique.astro b/src/pages/entrainement/lecture-rythmique.astro
+index cb51a53..260b212 100644
+--- a/src/pages/entrainement/lecture-rythmique.astro
++++ b/src/pages/entrainement/lecture-rythmique.astro
+@@ -1,5 +1,6 @@
+ ---
+ import Layout from '../../layouts/Layout.astro';
++import '../../styles/tools-shell.css';
+ import '../../styles/tools-landscape.css';
+ import LectureRythmique from '../../components/entrainement/LectureRythmique.astro';
+ ---
+diff --git a/src/pages/entrainement/oreille-clavier.astro b/src/pages/entrainement/oreille-clavier.astro
+index bc8062f..1cf196d 100644
+--- a/src/pages/entrainement/oreille-clavier.astro
++++ b/src/pages/entrainement/oreille-clavier.astro
+@@ -1,5 +1,6 @@
+ ---
+ import Layout from '../../layouts/Layout.astro';
++import '../../styles/tools-shell.css';
+ import '../../styles/tools-landscape.css';
+ import OreilleClavier from '../../components/entrainement/OreilleClavier.astro';
+ ---
+diff --git a/src/pages/entrainement/oreille-nom.astro b/src/pages/entrainement/oreille-nom.astro
+index 9ca2a86..9eaee97 100644
+--- a/src/pages/entrainement/oreille-nom.astro
++++ b/src/pages/entrainement/oreille-nom.astro
+@@ -1,5 +1,6 @@
+ ---
+ import Layout from '../../layouts/Layout.astro';
++import '../../styles/tools-shell.css';
+ import '../../styles/tools-landscape.css';
+ import OreilleNom from '../../components/entrainement/OreilleNom.astro';
+ ---
+diff --git a/src/pages/entrainement/piano-interactif.astro b/src/pages/entrainement/piano-interactif.astro
+index 743adca..eea46bf 100644
+--- a/src/pages/entrainement/piano-interactif.astro
++++ b/src/pages/entrainement/piano-interactif.astro
+@@ -1,5 +1,6 @@
+ ---
+ import Layout from '../../layouts/Layout.astro';
++import '../../styles/tools-shell.css';
+ import '../../styles/tools-landscape.css';
+ import PianoInteractif from '../../components/entrainement/PianoInteractif.astro';
+ ---
+diff --git a/src/styles/tools-landscape.css b/src/styles/tools-landscape.css
+index 53f7fb6..f921617 100644
+--- a/src/styles/tools-landscape.css
++++ b/src/styles/tools-landscape.css
+@@ -1,114 +1,13 @@
+ /* --------------------------------------------------------------------------
+-   Outils d'entraînement en paysage sur tablette ou fenêtre basse
++   Outils d'entraînement : règles propres à chaque outil en paysage bas
+    --------------------------------------------------------------------------
+-   Objectif : bloquer strictly l'outil dans 100dvh, sans défilement
+-   vertical, tout en gardant la zone de réponse (boutons, clavier, curseur)
+-   visible et cliquable. Le grand en-tête du site et le titre interne de
+-   l'outil sont masqués pour rendre la hauteur à la zone d'exercice.
+-
+-   La requête ne s'applique qu'aux écrans réellement bas :
+-   - tablettes tactiles en paysage dont la hauteur utile <= 768 px ;
+-   - tablettes hybrides type Surface Pro (any-pointer: coarse) ;
+-   - fenêtres de bureau volontairement réduites en hauteur.
+-
+-   Les grands iPad Pro (1024 px de haut), iPad Air (820 px) et tous les écrans
+-   dont la hauteur dépasse 768 px conservent la disposition desktop/tablette
+-   normale, avec des marges équilibrées et un défilement autorisé.
++   Le squelette (page, main, racine d'outil, zone élastique, bouton retour,
++   titres masqués, plein écran ≤ 1024 px) vit dans tools-shell.css : ne rien
++   y redéclarer ici. Ce fichier ne garde que les gabarits internes à chaque
++   outil pour les fenêtres basses (501–768 px) et les téléphones paysage.
+ -------------------------------------------------------------------------- */
+-/* --------------------------------------------------------------------------
+-   Position uniforme du bouton de retour dans tous les outils d'entraînement
+-   --------------------------------------------------------------------------
+-   Le bouton occupe toujours la première place, aligné en haut à gauche du
+-   conteneur de l'outil, quel que soit l'outil ou l'orientation. La classe
+-   `hub-back` continue de porter l'apparence, `tool-back` porte la position.
+--------------------------------------------------------------------------- */
+-#tool-piano .tool-back,
+-#tool-notes .tool-back,
+-#tool-clefs .tool-back,
+-#tool-rhythm .tool-back,
+-#tool-clavier-notes .tool-back,
+-#tool-oreille-nom .tool-back,
+-#tool-oreille-clavier .tool-back {
+-  order: -1;
+-  align-self: flex-start;
+-  flex: 0 0 auto;
+-  margin: 0 0 0.75rem;
+-}
+-
+ 
+ @media (orientation: landscape) and (min-height: 501px) and (max-height: 768px) {
+-  /* Verrouillage de la fenêtre : aucun scroll vertical possible. */
+-  html:has(body.mobile-header-hidden),
+-  body.mobile-header-hidden {
+-    /* Valeur de `gap` partagée par les gabarits paysage (9 usages).
+-       Surchargeable par outil si un besoin spécifique apparaît. */
+-    --tool-gap: 8px;
+-    /* Interligne des blocs de jeu (6 usages). */
+-    --tool-gap-lg: 1.25rem;
+-    height: 100dvh !important;
+-    max-height: 100dvh !important;
+-    min-height: 0 !important;
+-    margin: 0 !important;
+-    padding: 0 !important;
+-    overflow: hidden !important;
+-    overscroll-behavior: none;
+-  }
+-
+-  /* Le grand en-tête global « Éducation Musicale » libère toute sa hauteur. */
+-  body.mobile-header-hidden .site-header {
+-    display: none !important;
+-  }
+-
+-  body.mobile-header-hidden main.container {
+-    display: flex !important;
+-    flex-direction: column !important;
+-    width: 100% !important;
+-    max-width: none !important;
+-    height: 100dvh !important;
+-    min-height: 0 !important;
+-    margin: 0 !important;
+-    padding: 0 !important;
+-    overflow: hidden !important;
+-    background-color: #ffffff;
+-    border-radius: 0 !important;
+-    box-shadow: none !important;
+-  }
+-
+-  /* Chaque outil occupe exactement la hauteur visible. */
+-  body.mobile-header-hidden main.container > #tool-piano,
+-  body.mobile-header-hidden main.container > #tool-notes,
+-  body.mobile-header-hidden main.container > #tool-clefs,
+-  body.mobile-header-hidden main.container > #tool-rhythm,
+-  body.mobile-header-hidden main.container > #tool-clavier-notes,
+-  body.mobile-header-hidden main.container > #tool-oreille-nom,
+-  body.mobile-header-hidden main.container > #tool-oreille-clavier {
+-    flex: 1 1 auto !important;
+-    display: flex !important;
+-    flex-direction: column !important;
+-    width: 100% !important;
+-    max-width: none !important;
+-    height: 100dvh !important;
+-    max-height: 100dvh !important;
+-    min-height: 0 !important;
+-    margin: 0 !important;
+-    padding: 8px !important;
+-    overflow: hidden !important;
+-    background-color: #ffffff;
+-    border-radius: 0 !important;
+-    box-shadow: none !important;
+-    box-sizing: border-box !important;
+-  }
+-
+-  /* Titres internes des outils : masqués eux aussi. */
+-  body.mobile-header-hidden #tool-notes .notes-header,
+-  body.mobile-header-hidden #tool-piano .piano-head,
+-  body.mobile-header-hidden #tool-clefs .top h1,
+-  body.mobile-header-hidden #tool-rhythm .rhythm-top > header,
+-  body.mobile-header-hidden #tool-clavier-notes .cn-header,
+-  body.mobile-header-hidden #tool-oreille-nom .on-header,
+-  body.mobile-header-hidden #tool-oreille-clavier .oc-header {
+-    display: none;
+-  }
+ 
+   /* ------------------------------------------------------------------
+      Piano interactif : portée flexible, clavier 88 touches visible.
+@@ -146,22 +45,10 @@
+   }
+ 
+   body.mobile-header-hidden #tool-piano .piano-staff-container {
+-    flex: 1 1 0;
+-    height: 0 !important;
+-    min-height: 120px;
+-    max-height: 60dvh !important;
+     padding: 0;
+     border: 0;
+     border-radius: 0;
+     background: #ffffff;
+-    overflow: hidden;
+-  }
+-
+-  body.mobile-header-hidden #tool-piano #piano-staff-svg {
+-    width: 100% !important;
+-    height: 100% !important;
+-    max-width: none !important;
+-    max-height: 100% !important;
+   }
+ 
+   body.mobile-header-hidden #tool-piano .piano-wrapper {
+@@ -233,19 +120,8 @@
+   }
+ 
+   body.mobile-header-hidden #tool-notes .notes-staff {
+-    flex: 1 1 0;
+-    height: 0;
+-    min-height: 120px;
+-    max-height: 60dvh;
+     padding: 2px;
+     border-radius: 12px;
+-    overflow: hidden;
+-  }
+-
+-  body.mobile-header-hidden #tool-notes #staff-svg {
+-    width: 100% !important;
+-    height: 100% !important;
+-    max-height: 100% !important;
+   }
+ 
+   body.mobile-header-hidden #tool-notes .feedback-msg {
+@@ -279,9 +155,7 @@
+     min-height: 0;
+     grid-template-columns: repeat(2, minmax(0, 1fr));
+     grid-auto-rows: minmax(0, 1fr);
+-    /* keep: le composant redéfinit `gap` dans ses propres media queries avec la
+-       même spécificité (il est servi après) ; sans !important le menu déborde. */
+-    gap: 0.5rem !important;
++    gap: 0.5rem;
+     overflow: hidden;
+   }
+ 
+@@ -352,27 +226,6 @@
+     font-size: 15px;
+   }
+ 
+-  body.mobile-header-hidden #tool-clefs .sheet {
+-    flex: 1 1 0;
+-    height: 0 !important;
+-    min-height: 120px;
+-    max-height: 60dvh !important;
+-    width: 100% !important;
+-    max-width: 100% !important;
+-    margin-inline: auto !important;
+-    display: flex;
+-    align-items: center;
+-    justify-content: center;
+-    overflow: hidden;
+-  }
+-
+-  body.mobile-header-hidden #tool-clefs #cl-board {
+-    width: auto !important;
+-    height: 100% !important;
+-    max-width: 100% !important;
+-    max-height: 100% !important;
+-  }
+-
+   body.mobile-header-hidden #tool-clefs .slider-row {
+     flex: 0 0 auto;
+     gap: 6px 12px;
+@@ -805,71 +658,3 @@
+     flex-wrap: nowrap;
+   }
+ }
+-
+-/* --------------------------------------------------------------------------
+-   Plein écran des outils : source unique
+-   --------------------------------------------------------------------------
+-   Ces règles vivaient dans src/layouts/Layout.astro, en doublon de celles de
+-   ce fichier. Elles ne concernent que les pages qui passent
+-   `mobileHeader="hidden"`, soit les 7 outils d'entraînement, seuls
+-   importateurs de ce fichier. Conditions média et valeurs reprises à
+-   l'identique.
+--------------------------------------------------------------------------- */
+-@media (max-width: 640px) {
+-  body.mobile-header-hidden {
+-    padding-top: 0.75rem;
+-  }
+-
+-  body.mobile-header-hidden .site-header {
+-    display: none;
+-  }
+-}
+-
+-@media (max-width: 900px) and (orientation: landscape), (max-height: 500px) {
+-  body.mobile-header-hidden .site-header {
+-    display: none !important;
+-  }
+-}
+-
+-@media (max-height: 500px) and (orientation: landscape) {
+-  body.mobile-header-hidden {
+-    padding-top: 0.35rem;
+-    padding-bottom: 0.4rem;
+-  }
+-}
+-
+-@media (max-width: 1024px) {
+-  body.mobile-header-hidden {
+-    padding: 0 !important;
+-    background-color: #ffffff;
+-    color: #1f2a44;
+-  }
+-
+-  body.mobile-header-hidden .site-header {
+-    display: none !important;
+-  }
+-
+-  body.mobile-header-hidden main.container {
+-    width: 100% !important;
+-    max-width: 100% !important;
+-    min-height: 100vh !important;
+-    min-height: 100dvh !important;
+-    margin: 0 !important;
+-    padding: 0 !important;
+-    background-color: #ffffff;
+-    border-radius: 0 !important;
+-    box-shadow: none !important;
+-  }
+-
+-  body.mobile-header-hidden main.container > * {
+-    width: 100% !important;
+-    max-width: 100% !important;
+-    min-height: 100vh !important;
+-    min-height: 100dvh !important;
+-    margin: 0 !important;
+-    padding: 8px !important;
+-    background-color: #ffffff;
+-    border-radius: 0 !important;
+-    box-shadow: none !important;
+-  }
+-}
+diff --git a/src/styles/tools-shared.css b/src/styles/tools-shared.css
+index c4ab2b9..3a354a1 100644
+--- a/src/styles/tools-shared.css
++++ b/src/styles/tools-shared.css
+@@ -10,26 +10,10 @@
+   --accent-strong: #a855f7;
+   --accent-soft: #faf5ff;
+   --accent-border: #e9d5ff;
+-  width: 100%;
+-  max-width: 900px;
+-  margin: 0 auto;
+-  padding: 12px;
+-  background: #ffffff;
+-  border-radius: 24px;
+-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+   color: #0f172a;
+-  box-sizing: border-box;
+-  overflow-x: hidden;
+   font-family: system-ui, -apple-system, sans-serif;
+ }
+ 
+-@media (min-width: 640px) {
+-  #tool-clavier-notes,
+-  #tool-oreille-clavier {
+-    padding: 28px 32px 32px;
+-  }
+-}
+-
+ #tool-notes .notes-header,
+ #tool-clavier-notes .cn-header,
+ #tool-oreille-clavier .oc-header,
+@@ -336,17 +320,6 @@
+     min-height: 0;
+   }
+ 
+-  #tool-clavier-notes,
+-  #tool-oreille-clavier {
+-    flex: 1 1 auto;
+-    display: flex;
+-    flex-direction: column;
+-    height: 100%;
+-    min-height: 0;
+-    padding: 6px;
+-    border-radius: 16px;
+-  }
+-
+   #tool-clavier-notes .cn-header,
+   #tool-oreille-clavier .oc-header {
+     display: none;
+@@ -398,11 +371,6 @@
+ }
+ 
+ @media (max-height: 500px) and (orientation: landscape) {
+-  #tool-clavier-notes,
+-  #tool-oreille-clavier {
+-    padding: 6px 8px;
+-    border-radius: 14px;
+-  }
+ 
+   #tool-clavier-notes .cn-header,
+   #tool-oreille-clavier .oc-header {
+@@ -464,22 +432,6 @@
+     min-height: 0;
+   }
+ 
+-  #tool-clavier-notes,
+-  #tool-oreille-clavier {
+-    flex: 1 1 auto;
+-    display: flex;
+-    flex-direction: column;
+-    height: 100dvh;
+-    max-height: 100dvh;
+-    width: 100%;
+-    max-width: none;
+-    min-height: 0;
+-    margin: 0;
+-    padding: 4px 6px;
+-    border-radius: 0;
+-    overflow: hidden;
+-  }
+-
+   #tool-clavier-notes .cn-game,
+   #tool-oreille-clavier .oc-game {
+     flex: 1 1 auto;
+diff --git a/src/styles/tools-shell.css b/src/styles/tools-shell.css
+new file mode 100644
+index 0000000..9089032
+--- /dev/null
++++ b/src/styles/tools-shell.css
+@@ -0,0 +1,201 @@
++/* ==========================================================================
++   tools-shell.css — coque unique des 7 outils d'entraînement
++   ==========================================================================
++   REMPLACE : les lignes 1–106 de tools-landscape.css (verrou 100dvh, retour,
++   en-têtes) ET le bloc « Plein écran des outils » (≈ l. 805–881, migré de
++   Layout.astro), soit 51 des 70 `!important` de ce fichier.
++
++   PRINCIPE : on ne lutte plus contre la cascade, on supprime les doublons.
++   - Une propriété du squelette (page → main → racine d'outil → zone
++     élastique) n'est déclarée QU'ICI, jamais dans un composant.
++   - La hauteur se répartit par flexbox (flex: 1 1 0 + min-height: 0) pour
++     TOUTES les tailles d'écran : plus de verrou par plage de hauteur, plus de
++     fitBoardToViewport / fitStaffToViewport, plus de lecture de scrollHeight.
++   - Plancher de lisibilité (--tool-floor) : si l'écran est vraiment trop bas,
++     la racine d'outil défile en interne au lieu de couper le contenu
++     (aujourd'hui : overflow: hidden → boutons rognés sans issue).
++
++   PRÉREQUIS (3 retouches d'une ligne) :
++   1. Ajouter `class="tool-root"` sur les 7 racines (#tool-piano, #tool-notes,
++      #tool-clefs, #tool-rhythm, #tool-clavier-notes, #tool-oreille-nom,
++      #tool-oreille-clavier).
++   2. Ajouter `class="tool-fit"` sur la zone qui absorbe la hauteur :
++      .piano-staff-container, .notes-staff, .sheet (clefs et rythme).
++   3. Dans Layout.astro, les styles « carte » de main.container ne doivent pas
++      s'appliquer aux pages à `mobileHeader="hidden"` :
++          main.container:not(.container--tool) { …carte… }
++      et poser `container--tool` quand mobileHeader === 'hidden'. C'est ce qui
++      rend inutiles les 22 `!important` du bloc ≤ 1024 px.
++   ========================================================================== */
++
++:root {
++  --tool-gap: 8px;
++  --tool-gap-lg: clamp(0.5rem, 2.2dvh, 1.25rem);
++  --tool-pad: 8px;
++  --tool-radius: 0;
++  --tool-hit: 44px;      /* cible tactile minimale (Apple HIG / WCAG 2.5.5) */
++  --tool-floor: 120px;   /* hauteur plancher de la zone élastique */
++}
++
++/* ---- Page : colonne pleine hauteur, uniquement sur les pages d'outils ---- */
++body.mobile-header-hidden {
++  display: flex;
++  flex-direction: column;
++  /* Hauteur BORNÉE : c'est ce qui permet à .tool-root de défiler en interne
++     quand l'écran est trop bas (avec un simple min-height, la page grandirait). */
++  height: 100dvh;
++  margin: 0;
++  padding: 0;
++  background: #ffffff;
++  color: #1f2a44;
++  overscroll-behavior: none;
++}
++
++body.mobile-header-hidden .site-header { display: none; }
++
++body.mobile-header-hidden main.container {
++  display: flex;
++  flex: 1 1 auto;
++  flex-direction: column;
++  min-height: 0;
++  width: 100%;
++  max-width: none;
++  margin: 0;
++  padding: 0;
++}
++
++/* ---- Racine d'outil : remplit main, défile en interne en dernier recours ---- */
++.tool-root {
++  position: relative;
++  display: flex;
++  flex: 1 1 auto;
++  flex-direction: column;
++  box-sizing: border-box;
++  min-height: 0;
++  width: 100%;
++  max-width: none;
++  margin: 0;
++  padding: var(--tool-pad);
++  background: #ffffff;
++  border-radius: var(--tool-radius);
++  overflow-x: hidden;
++  overflow-y: auto;
++  overscroll-behavior: contain;
++}
++
++/* Grand écran : la carte flottante d'origine (largeur bornée, ombre, marges). */
++@media (min-width: 1025px) and (min-height: 769px) {
++  body.mobile-header-hidden {
++    height: auto;          /* carte flottante : la page peut grandir et défiler */
++    min-height: 100dvh;
++    background: var(--page-bg, #f1f5f9);
++  }
++  body.mobile-header-hidden .site-header { display: block; }
++  body.mobile-header-hidden main.container { padding: 1rem; }
++  .tool-root {
++    --tool-pad: 32px;
++    --tool-radius: 24px;
++    max-width: 1024px;
++    margin-inline: auto;
++    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
++  }
++}
++
++/* ---- Chaîne flex jusqu'à la zone élastique ----
++   Sans elle, .tool-fit (flex: 1 1 0) n'aurait rien à se partager : ses parents
++   auraient une hauteur « auto » et la portée tomberait à --tool-floor. */
++.tool-root > :where(.piano-body, .notes-card, .app) {
++  display: flex;
++  flex: 1 1 auto;
++  flex-direction: column;
++  min-height: 0;
++}
++
++.tool-root .notes-card > :where(#menu-section, #exercise-section, #score-section):not(.hidden) {
++  flex: 1 1 auto;
++  min-height: 0;
++}
++
++/* ---- Position uniforme du bouton retour (remplace la liste de 7 sélecteurs) ---- */
++.tool-root > .tool-back,
++.tool-root :where(.piano-body, .notes-card, .app, .rhythm-top) > .tool-back {
++  order: -1;
++  align-self: flex-start;
++  flex: 0 0 auto;
++  margin: 0 0 var(--tool-gap);
++}
++
++/* ---- Titres internes : masqués dès que la hauteur manque ---- */
++@media (max-height: 768px) {
++  .tool-root :where(.notes-header, .piano-head, .cn-header, .on-header, .oc-header) { display: none; }
++  .tool-root #tool-clefs-title,
++  #tool-clefs .top h1,
++  #tool-rhythm .rhythm-top > header { display: none; }
++}
++
++/* ---- Zone élastique : la SEULE règle qui dimensionne portée / planche / SVG ----
++   Remplace : .piano-staff-container, .notes-staff, .sheet (×2), #piano-staff-svg,
++   #staff-svg, #cl-board, #rt-board (≈ 40 déclarations dont 18 `!important`
++   qui n'existaient que pour battre les styles inline des fit*()). */
++.tool-fit {
++  display: flex;
++  flex: 1 1 0;
++  align-self: stretch;
++  align-items: center;
++  justify-content: center;
++  box-sizing: border-box;
++  width: 100%;
++  min-height: var(--tool-floor);
++  min-width: 0;
++  max-height: var(--tool-fit-max, 60dvh);
++  overflow: hidden;
++}
++
++.tool-fit > svg {
++  display: block;
++  width: 100%;
++  height: 100%;
++  max-width: 100%;
++  max-height: 100%;
++}
++
++/* La planche de la lecture rythmique garde son défilement horizontal. */
++#tool-rhythm .tool-fit { overflow-x: auto; max-height: none; }
++#tool-rhythm .tool-fit > svg { min-width: 780px; width: auto; }
++
++/* ---- Cibles tactiles : un seul plancher pour tous les boutons de réponse ---- */
++@media (pointer: coarse) {
++  .tool-root :where(
++    .note-btn, .cn-answer-btn, .on-answer-btn, .on-audio-btn, .oc-audio-btn,
++    .level-btn, .cn-level-btn, .on-level-btn, .oc-level-btn,
++    .tab, .btn, .tap-btn, .hub-back, .piano-zoom-btn
++  ) { min-block-size: var(--tool-hit); }
++}
++
++/* ---- Utilitaires partagés ---- */
++.sr-only {
++  position: absolute;
++  width: 1px;
++  height: 1px;
++  margin: -1px;
++  padding: 0;
++  overflow: hidden;
++  clip-path: inset(50%);
++  white-space: nowrap;
++  border: 0;
++}
++
++.tool-root :focus-visible {
++  outline: 3px solid var(--accent, #7e22ce);
++  outline-offset: 3px;
++}
++
++@media (prefers-reduced-motion: reduce) {
++  .tool-root *,
++  .tool-root *::before,
++  .tool-root *::after {
++    animation-duration: 0.001ms;
++    animation-iteration-count: 1;
++    transition-duration: 0.001ms;
++  }
++}
+-- 
+2.43.0
+
