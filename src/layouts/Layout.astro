@@ -32,6 +32,7 @@ const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href :
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
+    <style is:inline>@layer base, tool-components;</style>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <meta name="theme-color" content="#0f172a" />
