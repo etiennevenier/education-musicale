@@ -295,7 +295,7 @@ import { relativeUrl } from '../../utils/navigation';
 
         /* Une fois fermé (ou hors portrait), l'overlay disparaît totalement :
            aucun résidu visuel ni zone cliquable ne doit rester au-dessus de l'outil. */
-        #tool-rhythm .rt-rotate-hint[hidden] { display: none !important; }
+        #tool-rhythm .rt-rotate-hint[hidden] { display: none; }
 
         @media (max-width: 640px) and (orientation: portrait) {
             #tool-rhythm .rt-rotate-hint:not([hidden]) {
@@ -448,10 +448,10 @@ import { relativeUrl } from '../../utils/navigation';
             }
             #tool-rhythm label.field:has(#rt-ts),
             #tool-rhythm label.field:has(#rt-measures),
-            #tool-rhythm label.check { display: none !important; }
+            #tool-rhythm label.check { display: none; }
 
             /* Tempo masqué pour faire de la place */
-            #tool-rhythm .field.tempo { display: none !important; }
+            #tool-rhythm .field.tempo { display: none; }
 
             /* Niveau (1 à 4) réaffiché dans la barre du haut */
             #tool-rhythm label.field:has(#rt-level) {

@@ -36,9 +36,7 @@
 }
 
 
-@media (orientation: landscape) and (min-height: 501px) and (max-height: 768px) and (pointer: coarse),
-       (orientation: landscape) and (min-height: 501px) and (max-height: 768px) and (any-pointer: coarse),
-       (orientation: landscape) and (min-height: 501px) and (max-height: 768px) {
+@media (orientation: landscape) and (min-height: 501px) and (max-height: 768px) {
   /* Verrouillage de la fenêtre : aucun scroll vertical possible. */
   html:has(body.mobile-header-hidden),
   body.mobile-header-hidden {

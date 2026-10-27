@@ -68,10 +68,10 @@ import { relativeUrl } from '../../utils/navigation';
         #tool-piano .piano { display:flex; position:relative; height:110px; width:max-content; }
         #tool-piano .white-key { width:28px; height:110px; background:linear-gradient(#ffffff, #f1f5f9); border:1px solid #cbd5e1; border-top:0; border-radius:0 0 8px 8px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:6px; font-size:9px; font-weight:700; color:#64748b; cursor:pointer; box-sizing:border-box; z-index:1; user-select:none; touch-action:manipulation; transition:background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease; }
         #tool-piano .white-key:hover { background:linear-gradient(#f8fafc, #e2e8f0); }
-        #tool-piano .white-key.active { background:linear-gradient(135deg, var(--accent-strong), var(--accent)) !important; color:#fff; box-shadow:inset 0 0 0 2px rgba(255,255,255,0.35); }
+        #tool-piano .white-key.active { background:linear-gradient(135deg, var(--accent-strong), var(--accent)); color:#fff; box-shadow:inset 0 0 0 2px rgba(255,255,255,0.35); }
         #tool-piano .black-key { position:absolute; width:18px; height:65px; background:linear-gradient(#334155, #0f172a); border-radius:0 0 6px 6px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:4px; font-size:8px; color:#94a3b8; cursor:pointer; box-sizing:border-box; z-index:3; user-select:none; touch-action:manipulation; box-shadow:0 4px 8px rgba(15,23,42,0.45); transition:background 0.12s ease, color 0.12s ease; }
         #tool-piano .black-key:hover { background:linear-gradient(#475569, #1e293b); }
-        #tool-piano .black-key.active { background:linear-gradient(135deg, var(--accent-strong), var(--accent)) !important; color:#fff; }
+        #tool-piano .black-key.active { background:linear-gradient(135deg, var(--accent-strong), var(--accent)); color:#fff; }
         #tool-piano { --wk: 48px; --bk: 30px; --kh: 150px; --bkh: 92px; }
         @media (hover: hover) and (pointer: fine) and (min-width: 820px) {
             #tool-piano { --wk: 28px; --bk: 18px; --kh: 110px; --bkh: 65px; }   /* clavier d'origine pour souris */
