@@ -961,6 +961,52 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
         return definition ?? { displayLevel: level, clefLabel: '', title: `Niveau ${level}` };
     }
 
+    /** Hauteur plancher de la double portée : en dessous, on accepte un défilement. */
+    const MIN_DOUBLE_STAFF_HEIGHT = 220;
+
+    /* ------------------------------------------------------------------
+       Double portée (niveaux 3 et 4) : la partition se dimensionne sur la
+       hauteur réellement disponible. Son viewBox (480 × 400) est bien plus
+       haut que celui des portées simples (360 × 210) : à largeur de carte
+       égale, le SVG montait à 757 px et la page débordait de 95 à 495 px
+       selon la fenêtre (aucune contrainte de hauteur au-delà de 768 px de
+       haut, les blocs `100dvh` de tools-landscape.css ne couvrant que les
+       écrans bas). On mesure le dépassement du document et on retire
+       exactement ce surplus au SVG, en deux passes (la seconde absorbe le
+       reliquat) et en conservant le ratio du viewBox pour ne pas déformer
+       la portée. Aucune constante liée au header : on mesure le document réel.
+       Les portées simples (niveaux 1 et 2) ne sont pas touchées.
+       ------------------------------------------------------------------ */
+    function limitDoubleStaffHeight(svg: SVGSVGElement, isDouble: boolean): void {
+        svg.style.removeProperty('max-height');
+        svg.style.removeProperty('max-width');
+        if (!isDouble) return;
+
+        const box = (svg.getAttribute('viewBox') ?? '').trim().split(/\s+/).map(Number);
+        const vbWidth = box[2];
+        const vbHeight = box[3];
+        if (!vbWidth || !vbHeight) return;
+        const ratio = vbWidth / vbHeight;
+
+        for (let pass = 0; pass < 2; pass += 1) {
+            const overflow = document.documentElement.scrollHeight - window.innerHeight;
+            if (overflow <= 0) return;
+            const current = svg.getBoundingClientRect().height;
+            const target = Math.round(current - overflow);
+            if (target >= current) return;
+            if (target < MIN_DOUBLE_STAFF_HEIGHT) {
+                // Trop petit pour rester lisible : plancher + défilement accepté.
+                if (current > MIN_DOUBLE_STAFF_HEIGHT) {
+                    svg.style.maxHeight = `${MIN_DOUBLE_STAFF_HEIGHT}px`;
+                    svg.style.maxWidth = `${Math.round(MIN_DOUBLE_STAFF_HEIGHT * ratio)}px`;
+                }
+                return;
+            }
+            svg.style.maxHeight = `${target}px`;
+            svg.style.maxWidth = `${Math.round(target * ratio)}px`;
+        }
+    }
+
     function getLevelPool(level: number): NoteObj[] {
         let pool: NoteObj[] = [];
         if (level === 1) { // Clé de Sol - Do3 au Do4
@@ -1246,6 +1292,9 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
             ? { x1: noteX + stemOffset, y1: noteY, x2: noteX + stemOffset, y2: noteY - stemLength }
             : { x1: noteX - stemOffset, y1: noteY, x2: noteX - stemOffset, y2: noteY + stemLength };
         svg.appendChild(el('line', { ...stem, stroke: '#0f172a', 'stroke-width': inkWidth }));
+
+        // Dernière étape : contenir la double portée dans la hauteur de la fenêtre.
+        limitDoubleStaffHeight(svg, isDouble);
     }
 
     function checkAnswer(selectedNote: string | null): void {
