@@ -222,6 +222,7 @@ const slots = Array.from({ length: CARDS_PER_GAME }, (_, index) => index);
 <script>
   import type { Scenario } from '../data/recyclageData';
   const { estLegal, getBalancedDeck, SCENARIOS, TECHNIQUE_LABELS } = await import('../data/recyclageData');
+  import { plural } from '../utils/plural';
   import {
     buildNotes,
     CARDS_PER_GAME,
@@ -235,9 +236,6 @@ const slots = Array.from({ length: CARDS_PER_GAME }, (_, index) => index);
     type Answer,
     type Validation,
   } from '../utils/recyclageEvaluation';
-
-  const plural = (count: number, singular: string, pluralForm = `${singular}s`) =>
-    `${count} ${count > 1 ? pluralForm : singular}`;
 
   const root = document.querySelector<HTMLElement>('[data-nuancier]');
 
