@@ -10,6 +10,7 @@ import { relativeUrl } from '../../utils/navigation';
                 <span class="hub-back-text">Retour à l'entraînement</span>
                 <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
             </a>
+            <button type="button" id="piano-view-toggle" class="piano-view-toggle" aria-pressed="false">Zoom</button>
             <div class="piano-head">
                 <h1 class="piano-title">Piano Interactif</h1>
             </div>
@@ -321,6 +322,64 @@ import { relativeUrl } from '../../utils/navigation';
         /* L'aide au défilement n'a de sens que si le clavier déborde réellement. */
         #tool-piano .piano-scroll-hint.is-hidden {
             display: none;
+        }
+
+        /* ----- Bouton de bascule Vue complète / Zoom -----
+           Hors flux (position absolue dans la carte, qui est déjà `relative`) :
+           il ne décale aucun élément et ne crée donc aucun CLS, y compris au
+           basculement. Masqué hors de la zone grand écran du lot L : sur
+           téléphone, en portrait et en mode compact (hauteur <= 768), rien
+           n'apparaît et la mise en page reste identique. Aucun style global,
+           aucun !important. */
+        #tool-piano .piano-view-toggle {
+            display: none;
+        }
+
+        @media (min-width: 1025px) and (min-height: 769px) and (orientation: landscape) {
+            #tool-piano .piano-view-toggle {
+                position: absolute;
+                top: 12px;
+                right: 12px;
+                z-index: 2;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 150px;   /* place réservée : le libellé ne fait pas bouger le bouton */
+                height: 40px;
+                padding: 0 16px;
+                border: 2px solid var(--accent-border);
+                border-radius: 999px;
+                background: var(--accent-soft);
+                color: #4c1d95;
+                font-family: inherit;
+                font-size: 14px;
+                font-weight: 800;
+                line-height: 1;
+                cursor: pointer;
+                box-shadow: 0 6px 14px -10px rgba(126, 34, 206, 0.6);
+                transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+            }
+
+            #tool-piano .piano-view-toggle:hover {
+                background: #f3e8ff;
+            }
+
+            #tool-piano .piano-view-toggle[aria-pressed="true"] {
+                background: var(--accent);
+                border-color: var(--accent);
+                color: #ffffff;
+            }
+
+            #tool-piano .piano-view-toggle:focus-visible {
+                outline: 3px solid #7e22ce;
+                outline-offset: 2px;
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                #tool-piano .piano-view-toggle {
+                    transition: none;
+                }
+            }
         }
 
         @media (min-width: 768px) and (min-height: 551px) and (max-height: 768px) and (orientation: landscape) {
@@ -693,13 +752,16 @@ import { relativeUrl } from '../../utils/navigation';
                 updateStaff(k);
             };
             keyDiv.addEventListener('pointerdown', e => {
-                if (e.pointerType === 'touch') {
-                    // Tactile : le clavier est très large et se fait défiler au doigt.
-                    // On joue au relâchement, seulement si le doigt n'a pas glissé (sinon : simple défilement).
+                if (e.pointerType === 'touch' && keyboardNeedsScroll) {
+                    // Tactile avec clavier défilant (Zoom, iPad 11") : le glissement sert
+                    // à défiler, on joue donc au relâchement et seulement si le doigt n'a
+                    // pas glissé (sinon : simple défilement, aucune note).
                     touchPending.set(e.pointerId, { x: e.clientX, y: e.clientY });
                     return;
                 }
-                trigger();   // souris / stylet : réaction immédiate
+                // Souris / stylet, ou clavier entièrement visible (aucun défilement
+                // possible) : le son part à l'appui, sans attendre le relâchement.
+                trigger();
             });
             keyDiv.addEventListener('pointerup', e => {
                 if (e.pointerType !== 'touch') return;
@@ -748,6 +810,80 @@ import { relativeUrl } from '../../utils/navigation';
         const MAX_WHITE_KEY_WIDTH = 48;
         const MIN_STAFF_HEIGHT = 120;
 
+        /* ------------------------------------------------------------------
+           Mode d'affichage : « vue complète » (88 touches, taille adaptée à la
+           largeur, lot L) ou « Zoom » (touches plus grosses, défilement).
+           Le libellé du bouton suit l'état : il propose l'autre vue.
+           ------------------------------------------------------------------ */
+        const VIEW_STORAGE_KEY = 'piano-interactif-view';
+        const ZOOM_WHITE_KEY_WIDTH = 52;    // blanc 52 px, noir 33 px (0,64 x 52)
+        const viewToggle = mustElement('#piano-view-toggle');
+        let viewMode: 'full' | 'zoom' = 'full';
+        /** Vrai quand le clavier dépasse la zone visible (défilement nécessaire). */
+        let keyboardNeedsScroll = true;
+
+        /** Préférence lue une seule fois au chargement ; valeur inconnue ignorée. */
+        function readViewPreference(): 'full' | 'zoom' {
+            try {
+                return window.localStorage.getItem(VIEW_STORAGE_KEY) === 'zoom' ? 'zoom' : 'full';
+            } catch {
+                return 'full';
+            }
+        }
+
+        function saveViewPreference(mode: 'full' | 'zoom'): void {
+            try {
+                window.localStorage.setItem(VIEW_STORAGE_KEY, mode);
+            } catch {
+                /* stockage indisponible : la préférence n'est simplement pas retenue */
+            }
+        }
+
+        function syncViewToggle(): void {
+            const zoom = viewMode === 'zoom';
+            viewToggle.textContent = zoom ? 'Vue complète' : 'Zoom';
+            viewToggle.setAttribute('aria-pressed', String(zoom));
+        }
+
+        /** Touche blanche la plus proche du milieu de la zone visible. */
+        function keyAtViewportCenter(): HTMLElement | null {
+            if (pianoWrapper.clientWidth === 0) return null;
+            const wr = pianoWrapper.getBoundingClientRect();
+            const center = wr.left + pianoWrapper.clientWidth / 2;
+            const keys = Array.from(pianoEl.querySelectorAll<HTMLElement>('.white-key'));
+            let best: HTMLElement | null = null;
+            let bestDistance = Number.POSITIVE_INFINITY;
+            for (const key of keys) {
+                const r = key.getBoundingClientRect();
+                const distance = Math.abs(r.left + r.width / 2 - center);
+                if (distance < bestDistance) {
+                    bestDistance = distance;
+                    best = key;
+                }
+            }
+            return best;
+        }
+
+        /** Centre une touche dans la zone visible, sans animation (reduced-motion respecté). */
+        function centerKeyInWrapper(key: HTMLElement | null): void {
+            if (!key || pianoWrapper.clientWidth === 0) return;
+            const kr = key.getBoundingClientRect();
+            const wr = pianoWrapper.getBoundingClientRect();
+            pianoWrapper.scrollLeft += (kr.left + kr.width / 2) - (wr.left + pianoWrapper.clientWidth / 2);
+        }
+
+        /** Bascule de vue : en Zoom on centre sur le Do central ; en revenant à la
+            vue complète on garde la note qui était au centre (aucun saut). */
+        function setViewMode(mode: 'full' | 'zoom'): void {
+            if (viewMode === mode) return;
+            const anchor = mode === 'zoom' ? middleCKey : keyAtViewportCenter();
+            viewMode = mode;
+            syncViewToggle();
+            saveViewPreference(mode);
+            fitKeyboard();
+            centerKeyInWrapper(anchor);
+        }
+
         const staffContainer = mustElement('#tool-piano .piano-staff-container');
         const staffSvgEl = mustSvg('#piano-staff-svg');
         const scrollHint = document.querySelector<HTMLElement>('#tool-piano .piano-scroll-hint');
@@ -769,6 +905,9 @@ import { relativeUrl } from '../../utils/navigation';
             staffSvgEl.style.removeProperty('height');
             staffSvgEl.style.removeProperty('max-height');
             scrollHint?.classList.remove('is-hidden');
+            keyboardNeedsScroll = true;   // en mode compact le clavier déborde toujours
+            pianoWrapper.removeAttribute('tabindex');
+            pianoWrapper.removeAttribute('aria-label');
         }
 
         function fitKeyboard(): void {
@@ -777,21 +916,33 @@ import { relativeUrl } from '../../utils/navigation';
                 return;
             }
 
-            // 1. Largeur d'une touche blanche, continue entre MIN et MAX.
+            // 1. Largeur d'une touche blanche : Zoom = 52 px fixes ; vue complète =
+            //    largeur disponible / 52, continue entre MIN et MAX.
             const wrapperStyle = getComputedStyle(pianoWrapper);
             const available = Math.round(
                 pianoWrapper.clientWidth - parseFloat(wrapperStyle.paddingLeft) - parseFloat(wrapperStyle.paddingRight),
             );
-            const keyWidth = Math.max(
-                MIN_WHITE_KEY_WIDTH,
-                Math.min(MAX_WHITE_KEY_WIDTH, Math.floor(available / WHITE_KEY_COUNT)),
-            );
+            const computedWidth = Math.floor(available / WHITE_KEY_COUNT);
+            const keyWidth = viewMode === 'zoom'
+                ? ZOOM_WHITE_KEY_WIDTH
+                : Math.max(MIN_WHITE_KEY_WIDTH, Math.min(MAX_WHITE_KEY_WIDTH, computedWidth));
             pianoEl.style.setProperty('--wk', keyWidth + 'px');
             pianoEl.style.setProperty('--bk', Math.round(keyWidth * 0.64) + 'px');   // 18/28 = 0,64
 
-            // 2. L'aide au défilement ne s'affiche que si le clavier déborde.
+            // 2. L'aide au défilement ne s'affiche que si le clavier déborde, et le
+            //    déclenchement tactile en dépend (voir pointerdown plus bas). Un
+            //    conteneur qui défile doit être atteignable au clavier (axe :
+            //    scrollable-region-focusable) : on ne le rend focusable que dans ce cas.
             const keyboardWidth = WHITE_KEY_COUNT * keyWidth;
-            scrollHint?.classList.toggle('is-hidden', keyboardWidth <= available + 1);
+            keyboardNeedsScroll = keyboardWidth > available + 1;
+            scrollHint?.classList.toggle('is-hidden', !keyboardNeedsScroll);
+            if (keyboardNeedsScroll) {
+                pianoWrapper.tabIndex = 0;
+                pianoWrapper.setAttribute('aria-label', 'Clavier du piano, défilement horizontal');
+            } else {
+                pianoWrapper.removeAttribute('tabindex');
+                pianoWrapper.removeAttribute('aria-label');
+            }
 
             // 3. Hauteur : la portée absorbe le dépassement, en deux passes.
             staffContainer.style.removeProperty('height');
@@ -819,6 +970,45 @@ import { relativeUrl } from '../../utils/navigation';
         };
         document.addEventListener('pointerup', unlockPianoAudio, true);
         document.addEventListener('touchend', unlockPianoAudio, true);
+
+        // Première note instantanée : créer le contexte Web Audio coûte ~300 ms en
+        // Chromium (mesuré). Le faire pendant le premier appui bloquerait l'interface
+        // 300 ms ; on le crée donc pendant un temps mort après le chargement (il démarre
+        // « suspended ») et on le relance au premier geste, qui est le seul moment où
+        // les navigateurs autorisent la reprise. Résultat mesuré : 1re note 329 ms
+        // (création) -> 0 ms, sans gel de l'interface.
+        let audioPrimed = false;
+        const primePianoAudio = (): void => {
+            if (audioPrimed) return;
+            audioPrimed = true;
+            try {
+                if (!pianoAudioCtx) pianoAudioCtx = getPianoContext();
+            } catch {
+                /* Web Audio indisponible : playPianoNote signalera l'absence de son */
+            }
+        };
+        const resumePianoAudio = (): void => {
+            primePianoAudio();
+            try {
+                if (pianoAudioCtx && pianoAudioCtx.state === 'suspended') void pianoAudioCtx.resume();
+            } catch {
+                /* contexte indisponible : rien à relancer */
+            }
+        };
+        if (typeof window.requestIdleCallback === 'function') {
+            window.requestIdleCallback(() => primePianoAudio(), { timeout: 2000 });
+        } else {
+            window.setTimeout(primePianoAudio, 200);
+        }
+        document.addEventListener('pointerdown', resumePianoAudio, { capture: true });
+        document.addEventListener('keydown', resumePianoAudio, { capture: true });
+
+        // Bascule Vue complète / Zoom (bouton présent uniquement sur grand écran).
+        viewMode = readViewPreference();
+        syncViewToggle();
+        viewToggle.addEventListener('click', () => {
+            setViewMode(viewMode === 'zoom' ? 'full' : 'zoom');
+        });
 
         // Une rotation d'écran change le nombre de portées visibles : on redessine.
         const compactStaffQuery = window.matchMedia('(pointer: coarse) and (orientation: landscape) and (max-height: 550px)');
@@ -853,6 +1043,7 @@ import { relativeUrl } from '../../utils/navigation';
         }, { once: true });
 
         fitKeyboard();     // clavier adapté à la largeur réelle dès l'ouverture
+        centerKeyInWrapper(middleCKey ?? keyAtViewportCenter());   // Do4 au centre
         updateStaff(null); // dessine la portée adaptée dès l'ouverture
     })();
 </script>
