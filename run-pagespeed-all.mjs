@@ -1,4 +1,4 @@
-const API_KEY = 'AIzaSyApKGwGWLHvW31asl9256bnWDl53IY32Ew';
+const API_KEY = process.env.PSI_API_KEY;
 const SITEMAP_URL = 'https://etiennevenier.github.io/education-musicale/sitemap.xml';
 const STRATEGY = 'mobile'; // Ou 'desktop'
 const SITE_URL = 'https://etiennevenier.github.io/education-musicale';
@@ -7,6 +7,13 @@ const SITE_URL = 'https://etiennevenier.github.io/education-musicale';
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function run() {
+  if (!API_KEY) {
+    console.error(
+      "❌ PSI_API_KEY manquante : définir la variable d'environnement (export PSI_API_KEY=...) puis relancer.",
+    );
+    process.exit(1);
+  }
+
   console.log("🔍 Récupération du sitemap...");
   
   try {
