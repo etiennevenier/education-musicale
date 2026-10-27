@@ -156,10 +156,13 @@ import '../styles/quiz-card.css';
     feedbackBox.replaceChildren();
     feedbackBox.className = isCorrect ? 'feedback-msg success' : 'feedback-msg error';
 
-    const detail = document.createElement('span');
-    detail.className = 'fb-detail';
-    detail.textContent = question.explanation;
-    feedbackBox.appendChild(detail);
+    // Pas de span (ni de barre colorée vide) quand il n'y a rien à expliquer.
+    if (question.explanation) {
+      const detail = document.createElement('span');
+      detail.className = 'fb-detail';
+      detail.textContent = question.explanation;
+      feedbackBox.appendChild(detail);
+    }
 
     if (question.clipTitle) {
       const clip = document.createElement('span');
