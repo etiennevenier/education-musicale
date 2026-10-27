@@ -92,7 +92,7 @@ const questionsPerGame = Math.min(JAZZ_QUESTIONS_PER_GAME, jazzQuizQuestions.len
       // textContent : le texte de la question est affiché tel quel.
       questionContainer.querySelector('.question-text')!.textContent = entry.question.question;
 
-      optionsContainer.innerHTML = '';
+      optionsContainer.replaceChildren();
       entry.options.forEach((option) => {
         const btn = document.createElement('button');
         btn.type = 'button';

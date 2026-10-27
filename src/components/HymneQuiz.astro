@@ -125,7 +125,7 @@ import '../styles/quiz-card.css';
       `;
       questionContainer.querySelector('.situation-text')!.textContent = q.text;
 
-      optionsContainer.innerHTML = '';
+      optionsContainer.replaceChildren();
       optionsContainer.className = 'options-grid';
       buildOptions();
     },

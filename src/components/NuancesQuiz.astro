@@ -302,7 +302,7 @@ const CHOICES = [
     clearAutoNext();
     roundIndex = 0;
     score = 0;
-    resultContainer.innerHTML = '';
+    resultContainer.replaceChildren();
     showQuizScreen(true);
     loadRound();
   }

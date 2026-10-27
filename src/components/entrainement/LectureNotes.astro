@@ -1152,7 +1152,7 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
 
     function drawStaff(noteObj: NoteObj): void {
         const svg = mustSvg('#staff-svg');
-        svg.innerHTML = '';
+        svg.replaceChildren();
 
         const STEP = 11;                                   // demi-écart entre deux lignes (écart = 22)
         const isDouble = (currentLevel === 5 || currentLevel === 6);

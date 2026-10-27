@@ -601,7 +601,7 @@ import { relativeUrl } from '../../utils/navigation';
         function updateStaff(keyObj: PianoKey | null): void {
             lastStaffKey = keyObj;
             const svg = mustSvg('#piano-staff-svg');
-            svg.innerHTML = '';
+            svg.replaceChildren();
 
             const compact = isCompactLandscape();
             // En portrait, la double portée occupe toute la hauteur libre entre les indications et le clavier.

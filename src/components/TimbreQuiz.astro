@@ -232,7 +232,7 @@
 
     function renderList(): void {
       computeMatches();
-      list.innerHTML = '';
+      list.replaceChildren();
 
       // Rien de tapé : aucune liste affichée
       if (!input.value.trim()) {
@@ -345,8 +345,8 @@
       const instrument = queue[index];
       currentInstrument = instrument;
 
-      questionContainer.innerHTML = '';
-      optionsContainer.innerHTML = '';
+      questionContainer.replaceChildren();
+      optionsContainer.replaceChildren();
 
       // 1. Question Audio : saisie libre, suggestions seulement pendant la frappe
       if (currentMode === 'audio') {

@@ -515,7 +515,7 @@ const whiteKeyCount = keyboard.filter((key) => key.type === 'white').length;
     };
 
     const renderAnswers = (level: LevelConfig): void => {
-      answersEl.innerHTML = '';
+      answersEl.replaceChildren();
 
       level.rows.forEach((row) => {
         const rowEl = document.createElement('div');

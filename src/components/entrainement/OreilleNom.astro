@@ -612,7 +612,7 @@ import { relativeUrl } from '../../utils/navigation';
 
     const renderAnswers = (midis: number[]): void => {
       const names = Array.from(new Set(midis.map((midi) => noteName(midi, 'natural'))));
-      answersEl.innerHTML = '';
+      answersEl.replaceChildren();
 
       names.forEach((name) => {
         const button = document.createElement('button');

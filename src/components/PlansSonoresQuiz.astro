@@ -249,7 +249,7 @@ import '../styles/quiz-card.css';
 
     function renderList() {
       computeMatches();
-      list.innerHTML = '';
+      list.replaceChildren();
 
       // Rien de tapé : aucune liste affichée
       if (!input.value.trim()) {
@@ -373,8 +373,8 @@ import '../styles/quiz-card.css';
       const q = queue[index];
       currentQuestion = q;
 
-      questionContainer.innerHTML = '';
-      optionsContainer.innerHTML = '';
+      questionContainer.replaceChildren();
+      optionsContainer.replaceChildren();
 
       const isInstrumentQuestion = q.type === 'theme-instrument';
       const prompt = isInstrumentQuestion

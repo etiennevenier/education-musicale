@@ -257,7 +257,7 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
       btnPlay.addEventListener('click', togglePlay);
       if (autoplay) togglePlay();
 
-      optionsContainer.innerHTML = '';
+      optionsContainer.replaceChildren();
 
       if (question.kind === 'choice') {
         optionsContainer.className = 'options-choice';

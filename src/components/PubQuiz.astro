@@ -345,7 +345,7 @@ const choiceIndexes = [0, 1, 2, 3] as const;
     const startQuiz = (autoplay = false): void => {
       stopAudio();
       quizQuestions = createQuiz(PUB_SOUNDS, PUB_QUIZ_LENGTH);
-      resultBox.innerHTML = '';
+      resultBox.replaceChildren();
       setHidden(resultBox, true);
       [progressBox, questionBox, choicesBox, actionFooter].forEach((el) => setHidden(el, false));
       session.start(quizQuestions.length, autoplay);

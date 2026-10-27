@@ -124,7 +124,7 @@ export function initLectureRythmique(): void {
     const rowGroup = (parent: SVGElement, r: number): SVGElement => el('g', { transform: `translate(0 ${r * ROW_H})` }, parent);
 
     function resetResultRows() {
-        gResults.innerHTML = '';
+        gResults.replaceChildren();
         resultRows = [];
         for (let r = 0; r < geo.rows; r++) resultRows.push(rowGroup(gResults, r));
     }
@@ -182,7 +182,7 @@ export function initLectureRythmique(): void {
     function drawRhythm(): void {
         const ts = rhythm.ts;
         setGeometry(ts, rhythm.measures);
-        gStatic.innerHTML = ''; gNotes.innerHTML = '';
+        gStatic.replaceChildren(); gNotes.replaceChildren();
         noteParts = {};
         hideHighlight();
 
@@ -389,7 +389,7 @@ export function initLectureRythmique(): void {
     }
 
     function buildDots(n: number): void {
-        ui.beats.innerHTML = '';
+        ui.beats.replaceChildren();
         ui.dots = [];
         for (let i = 1; i <= n; i++) {
             const d = document.createElement('span');
@@ -709,7 +709,7 @@ export function initLectureRythmique(): void {
         ui.score.style.color = color;
         ui.verdict.textContent = getVerdict(p);
 
-        ui.chips.innerHTML = '';
+        ui.chips.replaceChildren();
         const chip = (cls: string, str: string): void => { const c = document.createElement('span'); c.className = 'chip ' + cls; c.textContent = str; ui.chips.appendChild(c); };
         chip('green', plural(res.perfect, 'parfaite', 'parfaites'));
         chip('orange', plural(res.good, 'correcte', 'correctes'));

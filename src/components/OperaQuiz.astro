@@ -130,7 +130,7 @@ import '../styles/quiz-card.css';
   }
 
   function buildOptions(question: OperaQuestion): void {
-    optionsBox.innerHTML = '';
+    optionsBox.replaceChildren();
     currentOptions.forEach((option) => {
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -153,7 +153,7 @@ import '../styles/quiz-card.css';
   }
 
   function showFeedback(question: OperaQuestion, isCorrect: boolean): void {
-    feedbackBox.innerHTML = '';
+    feedbackBox.replaceChildren();
     feedbackBox.className = isCorrect ? 'feedback-msg success' : 'feedback-msg error';
 
     const detail = document.createElement('span');
@@ -276,7 +276,7 @@ import '../styles/quiz-card.css';
     currentOptions = [];
     selected.clear();
 
-    resultView.innerHTML = '';
+    resultView.replaceChildren();
     setHidden(resultView, true);
     [progressBox, questionContainer, optionsBox, actionFooter].forEach((el) => setHidden(el, false));
     session.start(questions.length, autoPlayEnabled);

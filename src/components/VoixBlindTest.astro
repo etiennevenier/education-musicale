@@ -237,7 +237,7 @@ const baseUrl = relativeUrl('/');
     score = 0;
     isAnswered = false;
 
-    resultContainer.innerHTML = '';
+    resultContainer.replaceChildren();
     showQuizScreen(true);
     loadQuestion();
   }

@@ -206,7 +206,7 @@ import '../styles/quiz-card.css';
     queue = shuffle(hymneVideosList);
 
     resultContainer.classList.add('hidden');
-    resultContainer.innerHTML = '';
+    resultContainer.replaceChildren();
     progressBox.classList.remove('hidden');
     layout.classList.remove('hidden');
     actionFooter.classList.remove('hidden');

@@ -56,7 +56,7 @@ export class QuizSession {
     this.total = total;
 
     this.options.result.container.classList.add('hidden');
-    this.options.result.container.innerHTML = '';
+    this.options.result.container.replaceChildren();
     this.options.game.forEach((el) => el.classList.remove('hidden'));
     this.load(autoplayFirst);
   }

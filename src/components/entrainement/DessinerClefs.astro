@@ -820,7 +820,7 @@ import { relativeUrl } from '../../utils/navigation';
     /* ---------- Portée, numéros de lignes, nom de la note ---------- */
     function buildStaff() {
         const clef = CLEFS[clefKey];
-        staffG.innerHTML = '';
+        staffG.replaceChildren();
         LINES.forEach((y, i) => {
             staffG.appendChild(svgEl('line', { class: 'staff-line', x1: 60, y1: y, x2: 296, y2: y }));
             const n = 5 - i;                         // numéro de la ligne en comptant depuis le bas
@@ -852,7 +852,7 @@ import { relativeUrl } from '../../utils/navigation';
     }
 
     function buildGhost() {
-        ghostG.innerHTML = '';
+        ghostG.replaceChildren();
         CLEFS[clefKey].steps.forEach(s => s.items.forEach(it => {
             ghostG.appendChild(it.t === 'path'
                 ? svgEl('path', { class: 'ghost-stroke', d: it.d })
@@ -910,7 +910,7 @@ import { relativeUrl } from '../../utils/navigation';
     /** Crée tous les éléments du dessin et répartit les 0 → 100 % entre eux. */
     function buildSegments(): void {
         cancelAnimation();
-        drawG.innerHTML = '';
+        drawG.replaceChildren();
         segments = [];
 
         CLEFS[clefKey].steps.forEach((s, stepIndex) => {
