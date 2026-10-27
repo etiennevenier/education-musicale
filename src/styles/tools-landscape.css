@@ -79,21 +79,21 @@
   body.mobile-header-hidden main.container > #tool-clavier-notes,
   body.mobile-header-hidden main.container > #tool-oreille-nom,
   body.mobile-header-hidden main.container > #tool-oreille-clavier {
-    flex: 1 1 auto !important;
-    display: flex !important;
-    flex-direction: column !important;
-    width: 100% !important;
-    max-width: none !important;
-    height: 100dvh !important;
-    max-height: 100dvh !important;
-    min-height: 0 !important;
-    margin: 0 !important;
-    padding: 8px !important;
-    overflow: hidden !important;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    max-height: 100dvh;
+    min-height: 0;
+    margin: 0;
+    padding: 8px;
+    overflow: hidden;
     background-color: #ffffff;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    box-sizing: border-box !important;
+    border-radius: 0;
+    box-shadow: none;
+    box-sizing: border-box;
   }
 
   /* Titres internes des outils : masqués eux aussi. */
@@ -104,7 +104,7 @@
   body.mobile-header-hidden #tool-clavier-notes .cn-header,
   body.mobile-header-hidden #tool-oreille-nom .on-header,
   body.mobile-header-hidden #tool-oreille-clavier .oc-header {
-    display: none !important;
+    display: none;
   }
 
   /* ------------------------------------------------------------------
@@ -519,88 +519,88 @@
   ------------------------------------------------------------------ */
   body.mobile-header-hidden #tool-clavier-notes #cn-menu:not(.hidden),
   body.mobile-header-hidden #tool-clavier-notes #cn-result:not(.hidden) {
-    flex: 1 1 auto !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: center !important;
-    min-height: 0 !important;
-    gap: 8px !important;
-    overflow: hidden !important;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+    gap: 8px;
+    overflow: hidden;
   }
 
   body.mobile-header-hidden #tool-clavier-notes .cn-levels {
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 8px !important;
-    min-height: 0 !important;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    min-height: 0;
   }
 
   body.mobile-header-hidden #tool-clavier-notes .cn-level-btn {
-    min-height: 0 !important;
-    padding: 8px 12px !important;
+    min-height: 0;
+    padding: 8px 12px;
   }
 
   body.mobile-header-hidden #tool-clavier-notes #cn-game:not(.hidden) {
-    flex: 1 1 auto !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: center !important;
-    min-height: 0 !important;
-    gap: 1.25rem !important;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+    gap: 1.25rem;
   }
 
   body.mobile-header-hidden #tool-clavier-notes .cn-hud {
-    flex: 0 0 auto !important;
-    gap: 0.2rem 0.7rem !important;
-    padding: 4px 10px !important;
-    border-radius: 10px !important;
-    font-size: 0.88rem !important;
+    flex: 0 0 auto;
+    gap: 0.2rem 0.7rem;
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 0.88rem;
   }
 
   body.mobile-header-hidden #tool-clavier-notes .cn-piano {
-    flex: 0 0 auto !important;
-    width: 100% !important;
-    height: clamp(96px, 24dvh, 170px) !important;
-    min-height: 96px !important;
-    max-height: 170px !important;
-    margin-bottom: 4px !important;
+    flex: 0 0 auto;
+    width: 100%;
+    height: clamp(96px, 24dvh, 170px);
+    min-height: 96px;
+    max-height: 170px;
+    margin-bottom: 4px;
   }
 
   body.mobile-header-hidden #tool-clavier-notes .cn-caption {
-    flex: 0 0 auto !important;
-    margin: 0 !important;
-    font-size: 12px !important;
-    line-height: 1.3 !important;
+    flex: 0 0 auto;
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.3;
   }
 
   body.mobile-header-hidden #tool-clavier-notes .cn-feedback {
-    flex: 0 0 auto !important;
-    min-height: 1.5rem !important;
-    margin: 0 !important;
-    line-height: 1.5rem !important;
+    flex: 0 0 auto;
+    min-height: 1.5rem;
+    margin: 0;
+    line-height: 1.5rem;
   }
 
   body.mobile-header-hidden #tool-clavier-notes .cn-answers {
-    flex: 0 0 auto !important;
-    display: flex !important;
-    flex-wrap: wrap !important;
-    align-content: flex-end !important;
-    justify-content: center !important;
-    margin-top: 0 !important;
-    gap: 6px !important;
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-end;
+    justify-content: center;
+    margin-top: 0;
+    gap: 6px;
   }
 
   body.mobile-header-hidden #tool-clavier-notes .cn-answer-btn {
-    flex: 0 1 auto !important;
-    min-height: 44px !important;
-    padding: 6px 10px !important;
-    font-size: 1rem !important;
-    border-radius: 10px !important;
+    flex: 0 1 auto;
+    min-height: 44px;
+    padding: 6px 10px;
+    font-size: 1rem;
+    border-radius: 10px;
   }
 
   body.mobile-header-hidden #tool-clavier-notes #cn-result .cn-stats {
-    gap: 0.5rem !important;
-    margin: 0.5rem 0 !important;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
   }
 
   /* ------------------------------------------------------------------
@@ -693,82 +693,82 @@
   ------------------------------------------------------------------ */
   body.mobile-header-hidden #tool-oreille-clavier #oc-menu:not(.hidden),
   body.mobile-header-hidden #tool-oreille-clavier #oc-result:not(.hidden) {
-    flex: 1 1 auto !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: center !important;
-    min-height: 0 !important;
-    gap: 8px !important;
-    overflow: hidden !important;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+    gap: 8px;
+    overflow: hidden;
   }
 
   body.mobile-header-hidden #tool-oreille-clavier .oc-levels {
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 8px !important;
-    min-height: 0 !important;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    min-height: 0;
   }
 
   body.mobile-header-hidden #tool-oreille-clavier .oc-level-btn {
-    min-height: 0 !important;
-    padding: 8px 10px !important;
+    min-height: 0;
+    padding: 8px 10px;
   }
 
   body.mobile-header-hidden #tool-oreille-clavier #oc-game:not(.hidden) {
-    flex: 1 1 auto !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: center !important;
-    min-height: 0 !important;
-    gap: 1.25rem !important;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+    gap: 1.25rem;
   }
 
   body.mobile-header-hidden #tool-oreille-clavier .oc-hud {
     order: 1;
-    flex: 0 0 auto !important;
-    gap: 0.2rem 0.7rem !important;
-    padding: 4px 10px !important;
-    border-radius: 10px !important;
-    font-size: 0.88rem !important;
+    flex: 0 0 auto;
+    gap: 0.2rem 0.7rem;
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 0.88rem;
   }
 
   body.mobile-header-hidden #tool-oreille-clavier .oc-audio-btn {
     order: 2;
-    flex: 0 0 auto !important;
-    min-height: 44px !important;
-    padding: 6px 10px !important;
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 6px 10px;
   }
 
   body.mobile-header-hidden #tool-oreille-clavier .oc-caption {
     order: 3;
-    flex: 0 0 auto !important;
-    margin: 0 !important;
-    font-size: 12px !important;
-    line-height: 1.3 !important;
+    flex: 0 0 auto;
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.3;
   }
 
   body.mobile-header-hidden #tool-oreille-clavier .oc-feedback {
     order: 4;
-    flex: 0 0 auto !important;
-    min-height: 1.5rem !important;
-    margin: 0 !important;
-    line-height: 1.5rem !important;
+    flex: 0 0 auto;
+    min-height: 1.5rem;
+    margin: 0;
+    line-height: 1.5rem;
   }
 
   body.mobile-header-hidden #tool-oreille-clavier .oc-piano {
     order: 5;
-    flex: 0 0 auto !important;
-    width: 100% !important;
-    height: clamp(96px, 26dvh, 180px) !important;
-    min-height: 96px !important;
-    max-height: 180px !important;
-    margin-top: 0 !important;
-    margin-bottom: max(10px, env(safe-area-inset-bottom, 10px)) !important;
+    flex: 0 0 auto;
+    width: 100%;
+    height: clamp(96px, 26dvh, 180px);
+    min-height: 96px;
+    max-height: 180px;
+    margin-top: 0;
+    margin-bottom: max(10px, env(safe-area-inset-bottom, 10px));
   }
 
   body.mobile-header-hidden #tool-oreille-clavier #oc-result .oc-stats {
-    gap: 0.5rem !important;
-    margin: 0.5rem 0 !important;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
   }
 }
 

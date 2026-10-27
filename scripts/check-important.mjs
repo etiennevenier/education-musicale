@@ -12,7 +12,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 /** Plafond courant (à baisser à chaque retrait). */
-const MAX = 438;
+const MAX = 386;
 
 const SRC = join(process.cwd(), 'src');
 const EXT = /\.(css|astro)$/;
