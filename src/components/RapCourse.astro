@@ -393,6 +393,9 @@ const timelineSteps = [
     const selectTab = (targetId: string | undefined) => {
       if (!targetId) return;
 
+      // Quitter l'onglet FUN coupe le séquenceur : sinon la boucle continue en fond.
+      if (isPlayingSeq) stopSequencer();
+
       tabs.forEach((tab) => {
         const isActive = tab.dataset.mainTab === targetId;
         tab.setAttribute('aria-selected', String(isActive));
