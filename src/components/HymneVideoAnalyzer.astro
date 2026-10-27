@@ -374,6 +374,14 @@ import '../styles/quiz-card.css';
     line-height: 1.4;
   }
 
+  /* CLS : le titre est vide dans le HTML statique et rempli par le module JS
+     (+23,5 px mesurés à 390 px de viewport, soit une ligne de 1,4 × 1,05 rem).
+     On réserve cette ligne tant que le paragraphe est vide : la hauteur
+     naturelle reprend dès que le titre est écrit. */
+  .quiz-card .video-title:empty {
+    min-height: 1.4em;
+  }
+
   .quiz-card .video-link {
     color: #38bdf8;
     font-size: 0.8rem;
