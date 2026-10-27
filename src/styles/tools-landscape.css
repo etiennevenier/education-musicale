@@ -79,21 +79,21 @@
   body.mobile-header-hidden main.container > #tool-clavier-notes,
   body.mobile-header-hidden main.container > #tool-oreille-nom,
   body.mobile-header-hidden main.container > #tool-oreille-clavier {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    max-width: none;
-    height: 100dvh;
-    max-height: 100dvh;
-    min-height: 0;
-    margin: 0;
-    padding: 8px;
-    overflow: hidden;
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 8px !important;
+    overflow: hidden !important;
     background-color: #ffffff;
-    border-radius: 0;
-    box-shadow: none;
-    box-sizing: border-box;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
   }
 
   /* Titres internes des outils : masqués eux aussi. */
