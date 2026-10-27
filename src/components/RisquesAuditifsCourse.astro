@@ -235,7 +235,14 @@ const tabs: RisquesTab[] = [
   const risquesRoot = document.querySelector<HTMLElement>('.risques-course');
 
   if (risquesRoot) {
-    setupMainTabs(risquesRoot, { panelSelector: '.risques-panel' });
+    // Quitter l'onglet simulateur doit couper la simulation (son + acouphène).
+    // Le moteur audio est branché plus bas : on passe par un relais.
+    let pauseSimulation: (() => void) | null = null;
+
+    setupMainTabs(risquesRoot, {
+      panelSelector: '.risques-panel',
+      before: () => pauseSimulation?.(),
+    });
 
     // --- Moteur Web Audio du Simulateur ---
     const audioElement = document.querySelector<HTMLAudioElement>('#sim-audio');
@@ -363,6 +370,20 @@ const tabs: RisquesTab[] = [
           }
         }
       });
+
+      // Même remise à zéro que le bouton lecture/pause, réutilisée au changement d'onglet.
+      pauseSimulation = () => {
+        if (!isPlaying) return;
+
+        audioElement.pause();
+        isPlaying = false;
+        btnPlayPause.querySelector('.icon')!.textContent = '▶';
+        btnPlayPause.querySelector('.label')!.textContent = "Reprendre l'écoute";
+
+        if (currentMode === 'acouphene') {
+          fadeOutAcouphene(3);
+        }
+      };
 
       modeButtons.forEach((btn) => {
         btn.addEventListener('click', () => {
