@@ -3,7 +3,7 @@
 import { relativeUrl } from '../../utils/navigation';
 ---
 
-<div id="tool-rhythm">
+<div id="tool-rhythm" class="tool-root">
   <div class="app">
     <div class="rhythm-top">
         <a class="hub-back tool-back" href={relativeUrl('/entrainement')} aria-label="Retour à l'entraînement">
@@ -55,7 +55,7 @@ import { relativeUrl } from '../../utils/navigation';
         <div class="beats" id="rt-beats" aria-hidden="true"></div>
     </section>
 
-    <div class="sheet">
+    <div class="sheet tool-fit">
         <svg id="rt-board" viewBox="0 0 1060 275" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Rythme à reproduire">
             <rect id="rt-hl" visibility="hidden" rx="12" ry="12" fill="#1f9d62" fill-opacity="0.10" stroke="#1f9d62" stroke-width="2.5"/>
             <g id="rt-gStatic"></g>
@@ -97,21 +97,7 @@ import { relativeUrl } from '../../utils/navigation';
 </div>
 
 <style is:global>
-#tool-rhythm {
-  width: 100%;
-  max-width: 1024px;
-  margin: 0 auto;
-  padding: 12px;
-  background: #ffffff;
-  border-radius: 24px;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
-  position: relative;
-  box-sizing: border-box;
-  overflow-x: hidden;
-}
-@media (min-width: 640px) {
-  #tool-rhythm { padding: 32px; }
-}
+
 #tool-rhythm {
         --desk: #faf5ff;
         --paper: #ffffff;
@@ -389,12 +375,12 @@ import { relativeUrl } from '../../utils/navigation';
 
             /* Le retour et les réglages s'alignent côte à côte sur une seule ligne. */
             #tool-rhythm .rhythm-top {
-                display: flex !important;
+                display: flex;
                 flex: 0 0 auto;
-                flex-direction: row !important;
-                flex-wrap: nowrap !important;
-                align-items: center !important;
-                justify-content: space-between !important;
+                flex-direction: row;
+                flex-wrap: nowrap;
+                align-items: center;
+                justify-content: space-between;
                 gap: 8px;
                 margin: 0 0 4px;
             }

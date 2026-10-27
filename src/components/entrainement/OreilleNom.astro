@@ -5,7 +5,7 @@ import '../../styles/tools-shared.css';
 import { relativeUrl } from '../../utils/navigation';
 ---
 
-<section id="tool-oreille-nom">
+<section id="tool-oreille-nom" class="tool-root">
   <a id="on-back" class="hub-back tool-back" href={relativeUrl('/entrainement')} aria-label="Retour à l'entraînement">
     <span aria-hidden="true">←</span>
     <span class="hub-back-text">Retour à l'entraînement</span>
@@ -91,21 +91,8 @@ import { relativeUrl } from '../../utils/navigation';
     --accent-strong: #a855f7;
     --accent-soft: #faf5ff;
     --accent-border: #e9d5ff;
-    width: 100%;
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 12px;
-    background: #ffffff;
-    border-radius: 24px;
-    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
     color: #0f172a;
-    box-sizing: border-box;
-    overflow-x: hidden;
     font-family: system-ui, -apple-system, sans-serif;
-  }
-
-  @media (min-width: 640px) {
-    #tool-oreille-nom { padding: 28px 32px 32px; }
   }
 
   #tool-oreille-nom .on-levels {
@@ -292,16 +279,6 @@ import { relativeUrl } from '../../utils/navigation';
       min-height: 0;
     }
 
-    #tool-oreille-nom {
-      flex: 1 1 auto;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      min-height: 0;
-      padding: 6px;
-      border-radius: 16px;
-    }
-
     #tool-oreille-nom .on-header { display: none; }
 
     #tool-oreille-nom #on-menu,
@@ -414,16 +391,6 @@ import { relativeUrl } from '../../utils/navigation';
       flex-direction: column;
       width: 100%;
       min-height: 0;
-    }
-
-    #tool-oreille-nom {
-      flex: 1 1 auto;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      min-height: 0;
-      padding: 4px 6px;
-      border-radius: 12px;
     }
 
     #tool-oreille-nom .on-header { display: none; }

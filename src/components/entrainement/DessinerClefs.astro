@@ -3,7 +3,7 @@
 import { relativeUrl } from '../../utils/navigation';
 ---
 
-<div id="tool-clefs">
+<div id="tool-clefs" class="tool-root">
   <div class="app">
     <!-- Retour standard : une seule position, en haut à gauche de l'outil. -->
     <a class="hub-back tool-back" href={relativeUrl('/entrainement')} aria-label="Retour à l'entraînement">
@@ -21,7 +21,7 @@ import { relativeUrl } from '../../utils/navigation';
         <p class="ghost-hint">💡 Tapote la portée pour afficher le modèle • Maintiens l'appui pour lire le tracé.</p>
     </div>
 
-    <div class="sheet">
+    <div class="sheet tool-fit">
         <svg id="cl-board" viewBox="0 48 360 252" role="button" tabindex="0"
              aria-pressed="false" aria-label="Afficher le modèle en pointillés">
             <defs>
@@ -52,21 +52,9 @@ import { relativeUrl } from '../../utils/navigation';
 
 <style is:global>
 #tool-clefs {
-  width: 100%;
-  max-width: 1024px;
-  margin: 0 auto;
-  padding: 12px;
-  background: #ffffff;
-  border-radius: 24px;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
-  position: relative;
-  box-sizing: border-box;
-  overflow-x: hidden;
   color: #1f2a44;
 }
-@media (min-width: 640px) {
-  #tool-clefs { padding: 32px; }
-}
+
 #tool-clefs {
         --paper: #ffffff;
         --grid: #eef2f7;
@@ -89,14 +77,6 @@ import { relativeUrl } from '../../utils/navigation';
         display: flex;
         flex-direction: column;
         gap: 18px;
-    }
-/* Mode resserré : quand la zone de dessin ne peut plus descendre sous son
-   plancher de lisibilité (iPad paysage 1194×834 avec des polices plus hautes,
-   cas de la CI Linux), on récupère 32 px sur les quatre espacements verticaux
-   de l'outil plutôt que de laisser défiler la page. La classe est posée par
-   fitBoardToViewport(), uniquement dans ce cas précis. */
-#tool-clefs.is-dense .app {
-        gap: 10px;
     }
 #tool-clefs .app > .tool-back {
         margin-bottom: 0;
@@ -156,14 +136,9 @@ import { relativeUrl } from '../../utils/navigation';
         background: #ffffff;
         border: 2px solid #e2e8f0;
         border-radius: 16px;
-        overflow: hidden;
-        max-width: 100%;
         box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
     }
 #tool-clefs #cl-board {
-        display: block;
-        width: 100%;
-        height: auto;
         touch-action: none;
         -webkit-user-select: none;
         user-select: none;
@@ -303,7 +278,6 @@ import { relativeUrl } from '../../utils/navigation';
         }
         /* Mobile/paysage bas : retour compact sur la ligne des onglets, titre masqué */
         @media (max-width: 640px), (max-width: 900px) and (orientation: landscape), (max-height: 500px) {
-            #tool-clefs { padding: 10px; border-radius: 16px; }
             #tool-clefs .top { gap: 8px; }
             #tool-clefs .top h1 { display: none; }
             #tool-clefs .tabs { flex: 1 1 auto; min-width: 0; }
@@ -354,13 +328,8 @@ import { relativeUrl } from '../../utils/navigation';
                 min-height: 0;
             }
             #tool-clefs {
-                flex: 1 1 auto;
-                min-height: 100dvh;
-                display: flex;
-                flex-direction: column;
                 justify-content: center;
                 align-items: center;
-                border-radius: 0;
             }
             #tool-clefs .app { margin-block: auto; }
         }
@@ -371,15 +340,6 @@ import { relativeUrl } from '../../utils/navigation';
            défilement. Seule la portée absorbe la place restante.
         ------------------------------------------------------------------ */
         @media (orientation: landscape) and (max-height: 500px) {
-            #tool-clefs {
-                height: calc(100dvh - 0.75rem);
-                min-height: 0;
-                padding: 8px;
-                border-radius: 14px;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-            }
             #tool-clefs .app {
                 flex: 1 1 auto;
                 min-height: 0;
@@ -395,20 +355,6 @@ import { relativeUrl } from '../../utils/navigation';
             #tool-clefs .slider { flex: 1 1 220px; height: 28px; }
             #tool-clefs .pct { font-size: 15px; }
             #tool-clefs .ghost-hint { font-size: 11px; margin-top: -3px; }
-            #tool-clefs .sheet {
-                flex: 1 1 auto;
-                min-height: 0;
-                width: fit-content;
-                max-width: 100%;
-                margin-inline: auto;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            #tool-clefs #cl-board {
-                width: min(calc(100vw - 60px), max(240px, calc((100dvh - 138px) * 360 / 252)));
-                height: auto;
-            }
         }
 
         /* ----- Tablette en paysage : tout tient sur 100dvh, sans scroll vertical -----
@@ -419,16 +365,6 @@ import { relativeUrl } from '../../utils/navigation';
             body:has(#tool-clefs) {
                 height: 100dvh;
                 max-height: 100dvh;
-                overflow: hidden;
-            }
-
-            #tool-clefs {
-                display: flex;
-                flex-direction: column;
-                height: 100dvh;
-                min-height: 0 !important;
-                max-height: 100dvh;
-                padding: 8px;
                 overflow: hidden;
             }
 
@@ -460,28 +396,6 @@ import { relativeUrl } from '../../utils/navigation';
                 min-height: 36px;
                 padding: 6px 14px;
                 font-size: 15px;
-            }
-
-            #tool-clefs .sheet {
-                flex: 1 1 0;
-                height: 0;
-                min-height: 120px;
-                max-height: 60dvh;
-                width: 100%;
-                max-width: 100%;
-                margin-inline: auto;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                overflow: hidden;
-            }
-
-            #tool-clefs #cl-board {
-                display: block;
-                width: auto;
-                height: 100%;
-                max-width: 100%;
-                max-height: 100%;
             }
 
             #tool-clefs .slider-row {
@@ -680,7 +594,6 @@ import { relativeUrl } from '../../utils/navigation';
     const stepTextEl = mustElement('#cl-stepText');
     const slider = mustInput('#cl-slider');
     const pctEl = mustElement('#cl-pct');
-    const sheet = mustElement('#tool-clefs .sheet');
     let ghostVisible = false;
     let holdTimer: number | null = null;
     let holding = false;
@@ -698,124 +611,6 @@ import { relativeUrl } from '../../utils/navigation';
         for (const k in attrs) e.setAttribute(k, String(attrs[k]));
         return e;
     }
-
-    /* ------------------------------------------------------------------
-       Hauteur de la zone de dessin.
-
-       La portée est en `width: 100%; height: auto` (viewBox 360 × 252) : sa
-       hauteur découle de la largeur de la carte (876 × 613 à 1440 px de large)
-       et, au-delà de 768 px de haut, aucune règle CSS ne la contraint — les
-       blocs `100dvh` ne couvrent que les écrans bas et le portrait téléphone.
-       D'où 389 px de débordement à 1440×900 et 257 à 455 px sur iPad paysage.
-
-       On mesure le dépassement réel et on retire ce surplus à la zone de
-       dessin (deux passes), en conservant le ratio du viewBox (aucune
-       déformation : le tracé est exprimé en unités du viewBox, il suit
-       l'échelle). Le cadre épouse alors le dessin (`width: fit-content`).
-       Plancher de lisibilité : 150 px de haut, soit l'échelle 0,60 (trait de
-       6,5 → 3,9 px, lignes de portée espacées de 15,6 px). En dessous, on
-       garde le plancher et le défilement est accepté.
-       Téléphone, portrait et modes compacts existants : rien n'est modifié.
-       ------------------------------------------------------------------ */
-    const MIN_BOARD_HEIGHT = 150;
-    const BOARD_RATIO = 360 / 252;
-    const MAX_FIT_PASSES = 3;   // normal, resserrement, ajustement du reliquat
-    let denseApplied = false;
-
-    /** Zones où la zone de dessin garde sa mise en page actuelle. */
-    function keepsDefaultBoardLayout(): boolean {
-        if (window.innerHeight > window.innerWidth) return true;   // portrait
-        return (
-            window.matchMedia('(max-width: 640px), (max-width: 900px) and (orientation: landscape), (max-height: 500px)').matches ||
-            window.matchMedia('(orientation: landscape) and (max-height: 500px)').matches ||
-            window.matchMedia('(min-width: 768px) and (max-height: 768px) and (orientation: landscape)').matches
-        );
-    }
-
-    function resetBoardFit(): void {
-        board.style.removeProperty('width');
-        board.style.removeProperty('max-width');
-        board.style.removeProperty('max-height');
-        sheet.style.removeProperty('width');
-        sheet.style.removeProperty('margin-inline');
-        if (denseApplied) {
-            root.classList.remove('is-dense');
-            denseApplied = false;
-        }
-    }
-
-    /** Applique une hauteur de dessin (largeur explicite : `height: auto` la déduit du ratio). */
-    function applyBoardHeight(height: number): void {
-        board.style.width = Math.round(height * BOARD_RATIO) + 'px';
-        board.style.maxWidth = '100%';
-        sheet.style.width = 'fit-content';
-        sheet.style.marginInline = 'auto';
-    }
-
-    /* Mesure le dépassement réel du document et retire ce surplus à la zone de
-       dessin, en trois passes bornées :
-       1) réduction normale ;
-       2) si la zone devrait descendre sous son plancher de lisibilité, on resserre
-          les espacements verticaux de l'outil (classe `is-dense`, -32 px) et on
-          remesure — c'est ce qui rend la CI Linux déterministe : ses polices plus
-          hautes ajoutent ~15 px au chrome, ce qui faisait buter sur le plancher et
-          laissait 7 px de défilement ;
-       3) ajustement du reliquat d'arrondi.
-       La boucle est bornée à 3 itérations : aucun risque de boucle infinie. */
-    function fitBoardToViewport(): void {
-        resetBoardFit();
-        if (keepsDefaultBoardLayout()) return;
-
-        for (let pass = 0; pass < MAX_FIT_PASSES; pass += 1) {
-            const overflow = document.documentElement.scrollHeight - window.innerHeight;
-            if (overflow <= 0) return;
-            const current = board.getBoundingClientRect().height;
-            const target = Math.round(current - overflow);
-            if (target >= current) return;
-            if (target < MIN_BOARD_HEIGHT) {
-                if (!denseApplied) {
-                    // On resserre l'espacement de l'outil et on remesure.
-                    denseApplied = true;
-                    root.classList.add('is-dense');
-                    continue;
-                }
-                applyBoardHeight(MIN_BOARD_HEIGHT);
-                return;   // plancher atteint : défilement accepté
-            }
-            applyBoardHeight(target);
-        }
-    }
-
-    // Le redimensionnement (rotation, barres d'onglets Safari) change la hauteur
-    // disponible : on réadapte, coalescé sur une frame et nettoyé à la sortie de
-    // page. `visualViewport` complète `window.resize`. Aucune boucle : la fonction
-    // ne modifie que des styles de la carte, jamais la taille de la fenêtre.
-    const boardResizeAbort = new AbortController();
-    let boardResizeFrame = 0;
-    const handleBoardViewportChange = (): void => {
-        if (boardResizeFrame) return;
-        boardResizeFrame = window.requestAnimationFrame(() => {
-            boardResizeFrame = 0;
-            fitBoardToViewport();
-        });
-    };
-    window.addEventListener('resize', handleBoardViewportChange, { signal: boardResizeAbort.signal });
-    window.visualViewport?.addEventListener('resize', handleBoardViewportChange, {
-        signal: boardResizeAbort.signal,
-    });
-    window.addEventListener('pagehide', () => {
-        if (boardResizeFrame) window.cancelAnimationFrame(boardResizeFrame);
-        boardResizeAbort.abort();
-    }, { once: true });
-
-    // Filet de sécurité : si les métriques de police évoluaient après le premier
-    // calcul (police système chargée tardivement, future police web), on réadapte
-    // une fois les polices prêtes. Aucun impact quand elles le sont déjà.
-    document.fonts?.ready
-        .then(() => {
-            if (!boardResizeAbort.signal.aborted) fitBoardToViewport();
-        })
-        .catch(() => {});
 
     /* ---------- Portée, numéros de lignes, nom de la note ---------- */
     function buildStaff() {
@@ -1100,7 +895,6 @@ import { relativeUrl } from '../../utils/navigation';
     measurePaths();
     selectClef('sol');
     syncGhostVisibility();
-    fitBoardToViewport();   // la zone de dessin tient dans la hauteur disponible
 
 })();
 </script>

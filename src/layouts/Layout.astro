@@ -56,7 +56,7 @@ const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href :
       )}
     </header>
 
-    <main class:list={['container', { wide }]}>
+    <main class:list={['container', { wide, 'container--tool': mobileHeader === 'hidden' }]}>
       {/* En-tête masqué (outils plein écran en paysage) : le h1 du site est en
           display:none, on garde donc un titre de page dans l'arbre d'accessibilité. */}
       {mobileHeader === 'hidden' && <h1 class="visually-hidden">{title}</h1>}
@@ -278,7 +278,7 @@ const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href :
     }
 
     /* Pages d'outils : en-tête global supprimé (règles déplacées dans
-       src/styles/tools-landscape.css, seul fichier qui pilote le plein écran). */
+       src/styles/tools-shell.css, seul fichier qui pilote le plein écran). */
   }
 
   /* Paysage sur téléphone (≤ 900 px de large) ou fenêtre basse (≤ 500 px de haut) :
@@ -316,7 +316,7 @@ const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href :
     }
 
     /* Pages d'outils d'entraînement : en-tête masqué (règle déplacée dans
-       src/styles/tools-landscape.css). */
+       src/styles/tools-shell.css). */
   }
 
   /* ------------------------------------------------------------------
@@ -351,7 +351,7 @@ const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href :
      Pages d'outils sur mobile et tablette : plein écran, sans en-tête
      global ni carte blanche flottante. Le hub (mobile-header-minimal)
      n'est pas concerné.
-     Les règles correspondantes vivent dans src/styles/tools-landscape.css
+     Les règles correspondantes vivent dans src/styles/tools-shell.css
      (seul fichier qui pilote le plein écran des outils).
   ------------------------------------------------------------------ */
 

@@ -4,7 +4,7 @@ import '../../styles/tools-shared.css';
 import { relativeUrl } from '../../utils/navigation';
 ---
 
-<section id="tool-notes">
+<section id="tool-notes" class="tool-root">
   <!-- Sprite SVG local : clés de sol et de fa pour les cartes de niveaux -->
   <svg class="clef-sprite" width="0" height="0" aria-hidden="true" focusable="false">
     <defs>
@@ -139,7 +139,7 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
       </div>
 
       <!-- Portée musicale SVG grand format -->
-      <div class="notes-staff">
+      <div class="notes-staff tool-fit">
         <svg id="staff-svg" viewBox="120 20 360 210" preserveAspectRatio="xMidYMid meet"></svg>
       </div>
 
@@ -203,17 +203,7 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
   --accent-strong: #a855f7;
   --accent-soft: #faf5ff;
   --accent-border: #e9d5ff;
-  width: 100%;
-  max-width: 1024px;
-  margin: 0 auto;
-  padding: 12px;
-  background: #ffffff;
-  border-radius: 24px;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
   color: #0f172a;
-  position: relative;
-  box-sizing: border-box;
-  overflow-x: hidden;
   font-family: system-ui, -apple-system, sans-serif;
 }
 
@@ -274,13 +264,13 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
 }
 
 #tool-notes .level-clef--sol {
-  width: 1.35rem !important;
-  height: 2.7rem !important;
+  width: 1.35rem;
+  height: 2.7rem;
 }
 
 #tool-notes .level-clef--fa {
-  width: 1.35rem !important;
-  height: 1.5rem !important;
+  width: 1.35rem;
+  height: 1.5rem;
 }
 
 #tool-notes .level-btn:hover,
@@ -328,23 +318,11 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
 }
 
 #tool-notes .notes-staff {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   padding: 0.25rem;
-  max-width: 100%;
   background: #ffffff;
   border: 2px solid #e2e8f0;
   border-radius: 24px;
-  overflow-x: auto;
   box-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.04);
-}
-
-#tool-notes #staff-svg {
-  display: block;
-  width: 100%;
-  height: auto;
-  max-width: 100%;
 }
 
 #tool-notes .feedback-msg {
@@ -464,20 +442,17 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
 #tool-notes #restart-btn:active { transform: scale(0.98); }
 
 @media (min-width: 640px) {
-  #tool-notes { padding: 32px; }
   #tool-notes .notes-card { padding: 16px; }
   #tool-notes .notes-levels { grid-template-columns: 1fr 1fr; }
   #tool-notes .level-btn { padding: 1.5rem; }
   #tool-notes .level-btn.is-eval { grid-column: span 2; }
   #tool-notes .notes-staff { padding: 0.5rem; }
-  #tool-notes #staff-svg { max-height: none; }
   #tool-notes .notes-answers { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.75rem; }
   #tool-notes .note-btn[data-note="Si"] { grid-column: span 1; }
 }
 
 /* Mode exercice compact sur smartphone et en paysage bas */
 @media (max-width: 640px), (max-width: 768px) and (orientation: landscape), (max-height: 500px) {
-  #tool-notes { padding: 8px; border-radius: 16px; }
   #tool-notes .notes-card { padding: 4px; }
   #tool-notes .notes-header { display: none; }
   #tool-notes .notes-levels { gap: 0.75rem; }
@@ -495,7 +470,6 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
 
 /* ----- Paysage bas : portée simple panoramique et interface sans débordement ----- */
 @media (orientation: landscape) and (max-height: 550px) {
-  #tool-notes { padding: 6px; }
   #tool-notes .notes-card { padding: 3px; }
 
   #tool-notes .notes-exercise { gap: 6px; }
@@ -522,8 +496,8 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
 
   #tool-notes .level-btn .level-title { font-size: 0.95rem; line-height: 1.1; }
   #tool-notes .level-btn .level-desc { font-size: 0.75rem; line-height: 1.15; }
-  #tool-notes .level-clef--sol { height: 2rem !important; }
-  #tool-notes .level-clef--fa { height: 1.3rem !important; }
+  #tool-notes .level-clef--sol { height: 2rem; }
+  #tool-notes .level-clef--fa { height: 1.3rem; }
 
   #tool-notes .notes-hud {
     gap: 0.15rem 0.7rem;
@@ -534,13 +508,9 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
 
   #tool-notes .notes-staff {
     box-sizing: border-box;
-    flex: 0 0 auto;
-    height: clamp(148px, 46dvh, 210px);
     padding: 3px;
     border-radius: 14px;
   }
-
-  #tool-notes #staff-svg { width: 100%; height: 100%; max-height: 100%; }
 
   #tool-notes .feedback-msg {
     height: 1.6rem;
@@ -570,15 +540,6 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
   body:has(#tool-notes) {
     height: 100dvh;
     max-height: 100dvh;
-  }
-
-  #tool-notes {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-height: 0;
-    padding: 6px;
   }
 
   #tool-notes .notes-card {
@@ -627,13 +588,8 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
 
   /* La portée absorbe l'espace libre et reste centrée */
   #tool-notes .notes-staff {
-    flex: 1 1 auto;
-    min-height: 0;
-    max-height: 58dvh;
     padding: 2px;
   }
-
-  #tool-notes #staff-svg { max-height: 100%; }
 
   #tool-notes .notes-hud {
     flex: 0 0 auto;
@@ -740,16 +696,6 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
     overflow: hidden;
   }
 
-  #tool-notes {
-    display: flex;
-    flex-direction: column;
-    height: 100dvh;
-    min-height: 0 !important;
-    max-height: 100dvh;
-    overflow: hidden;
-    padding: 8px;
-  }
-
   /* Sur tablette, le conseil de rotation ne doit jamais masquer l'outil. */
   #tool-notes .notes-rotate-hint { display: none; }
 
@@ -813,19 +759,9 @@ m-818 -4167 c18 -88 68 -342 112 -564 81 -407 82 -420 46 -421 -5 0 -58 -25
   }
 
   #tool-notes .notes-staff {
-    flex: 1 1 0;
     box-sizing: border-box;
-    height: 0;
-    min-height: 120px;
-    max-height: 60dvh;
     padding: 2px;
     border-radius: 14px;
-  }
-
-  #tool-notes #staff-svg {
-    width: 100%;
-    height: 100%;
-    max-height: 100%;
   }
 
   #tool-notes .feedback-msg {
@@ -959,63 +895,6 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
     function getLevelDefinition(level: number): LevelDefinition {
         const definition = LEVEL_DEFINITIONS[level];
         return definition ?? { displayLevel: level, clefLabel: '', title: `Niveau ${level}` };
-    }
-
-    /* ------------------------------------------------------------------
-       Planchers de lisibilité (hauteur du SVG en px). En dessous, on garde le
-       plancher et on accepte un défilement : mieux vaut défiler que rendre les
-       notes illisibles.
-       Échelles minimales correspondantes (hauteur / hauteur du viewBox) :
-         portée simple  160 / 210 = 0,76  (écart entre lignes 22 → 16,8 px)
-         double portée  190 / 400 = 0,48  (écart entre lignes 22 → 10,5 px)
-       Référence déjà acceptée en production (mode paysage mobile 844×390 :
-       0,34, lignes espacées de 7,5 px) : les deux planchers restent au-dessus.
-       ------------------------------------------------------------------ */
-    const MIN_STAFF_HEIGHT = { simple: 160, double: 190 } as const;
-
-    /* ------------------------------------------------------------------
-       Toutes les portées (niveaux 1 à 4) : la partition se dimensionne sur la
-       hauteur réellement disponible. Le SVG est en `width: 100%; height: auto` :
-       sa hauteur découle de la largeur de la carte (jusqu'à 1024 px), soit
-       530 px pour une portée simple (viewBox 360 × 210) et 757 px pour une
-       double (480 × 400). Au-delà de 768 px de haut, aucune règle CSS ne la
-       contraint : les blocs `100dvh` de tools-landscape.css ne couvrent que les
-       écrans bas (max-height 768 px) et le portrait smartphone. D'où 268 px de
-       débordement à 1440×900 (niveau 1) et 136 à 334 px sur iPad paysage.
-
-       Méthode : on mesure le dépassement réel du document et on retire ce
-       surplus au SVG en deux passes (la seconde absorbe l'arrondi), en fixant
-       `max-width` au prorata du viewBox — le ratio est donc conservé et la
-       portée n'est jamais déformée (`preserveAspectRatio="xMidYMid meet"`).
-       Aucune constante liée au header : la mesure se fait sur le document réel,
-       ce qui suit le header, la largeur de carte et les deux géométries.
-       Quand il reste de la place (aucun dépassement), on ne touche à rien : le
-       SVG garde sa taille naturelle, qui occupe déjà toute la largeur
-       disponible — la partition ne rétrécit donc jamais plus que nécessaire.
-       ------------------------------------------------------------------ */
-    function fitStaffToViewport(svg: SVGSVGElement, isDouble: boolean): void {
-        svg.style.removeProperty('max-height');
-        svg.style.removeProperty('max-width');
-
-        const box = (svg.getAttribute('viewBox') ?? '').trim().split(/\s+/).map(Number);
-        const vbWidth = box[2];
-        const vbHeight = box[3];
-        if (!vbWidth || !vbHeight) return;
-        const ratio = vbWidth / vbHeight;
-        const floor = isDouble ? MIN_STAFF_HEIGHT.double : MIN_STAFF_HEIGHT.simple;
-
-        for (let pass = 0; pass < 2; pass += 1) {
-            const overflow = document.documentElement.scrollHeight - window.innerHeight;
-            if (overflow <= 0) return;
-            const current = svg.getBoundingClientRect().height;
-            const target = Math.round(current - overflow);
-            if (target >= current) return;
-            // Jamais sous le plancher : au-delà, le défilement est accepté.
-            const height = Math.max(target, floor);
-            svg.style.maxHeight = `${height}px`;
-            svg.style.maxWidth = `${Math.round(height * ratio)}px`;
-            if (target <= floor) return;
-        }
     }
 
     function getLevelPool(level: number): NoteObj[] {
@@ -1304,8 +1183,6 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
             : { x1: noteX - stemOffset, y1: noteY, x2: noteX - stemOffset, y2: noteY + stemLength };
         svg.appendChild(el('line', { ...stem, stroke: '#0f172a', 'stroke-width': inkWidth }));
 
-        // Dernière étape : contenir la portée dans la hauteur de la fenêtre.
-        fitStaffToViewport(svg, isDouble);
     }
 
     function checkAnswer(selectedNote: string | null): void {

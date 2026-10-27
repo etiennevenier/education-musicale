@@ -10,24 +10,8 @@
   --accent-strong: #a855f7;
   --accent-soft: #faf5ff;
   --accent-border: #e9d5ff;
-  width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 12px;
-  background: #ffffff;
-  border-radius: 24px;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
   color: #0f172a;
-  box-sizing: border-box;
-  overflow-x: hidden;
   font-family: system-ui, -apple-system, sans-serif;
-}
-
-@media (min-width: 640px) {
-  #tool-clavier-notes,
-  #tool-oreille-clavier {
-    padding: 28px 32px 32px;
-  }
 }
 
 #tool-notes .notes-header,
@@ -336,17 +320,6 @@
     min-height: 0;
   }
 
-  #tool-clavier-notes,
-  #tool-oreille-clavier {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-height: 0;
-    padding: 6px;
-    border-radius: 16px;
-  }
-
   #tool-clavier-notes .cn-header,
   #tool-oreille-clavier .oc-header {
     display: none;
@@ -398,11 +371,6 @@
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
-  #tool-clavier-notes,
-  #tool-oreille-clavier {
-    padding: 6px 8px;
-    border-radius: 14px;
-  }
 
   #tool-clavier-notes .cn-header,
   #tool-oreille-clavier .oc-header {
@@ -462,22 +430,6 @@
     width: 100%;
     max-width: none;
     min-height: 0;
-  }
-
-  #tool-clavier-notes,
-  #tool-oreille-clavier {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    height: 100dvh;
-    max-height: 100dvh;
-    width: 100%;
-    max-width: none;
-    min-height: 0;
-    margin: 0;
-    padding: 4px 6px;
-    border-radius: 0;
-    overflow: hidden;
   }
 
   #tool-clavier-notes .cn-game,

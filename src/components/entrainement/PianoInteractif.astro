@@ -3,7 +3,7 @@
 import { relativeUrl } from '../../utils/navigation';
 ---
 
-<div id="tool-piano">
+<div id="tool-piano" class="tool-root">
   <div class="piano-body">
             <a class="hub-back tool-back" href={relativeUrl('/entrainement')} aria-label="Retour à l'entraînement">
                 <span aria-hidden="true">←</span>
@@ -20,7 +20,7 @@ import { relativeUrl } from '../../utils/navigation';
             </div>
             <div id="piano-note-display" class="piano-info-note">Clique sur une touche 🎹</div>
             <p class="piano-portrait-hint">📱 En mode paysage, le clavier 88 touches est bien plus confortable.</p>
-            <div class="piano-staff-container">
+            <div class="piano-staff-container tool-fit">
                 <svg id="piano-staff-svg" viewBox="0 0 480 400"></svg>
             </div>
             <div class="piano-wrapper">
@@ -36,21 +36,9 @@ import { relativeUrl } from '../../utils/navigation';
   --accent-strong: #a855f7;
   --accent-soft: #faf5ff;
   --accent-border: #e9d5ff;
-  width: 100%;
-  max-width: 1024px;
-  margin: 0 auto;
-  padding: 12px;
-  background: #ffffff;
-  border-radius: 24px;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
   color: #0f172a;
-  position: relative;
-  box-sizing: border-box;
-  overflow-x: hidden;
 }
-@media (min-width: 640px) {
-  #tool-piano { padding: 32px; }
-}
+
         #tool-piano .piano-title {
             margin: 0;
             color: var(--accent);
@@ -62,8 +50,7 @@ import { relativeUrl } from '../../utils/navigation';
         #tool-piano .piano-body > .hub-back { margin: 0; }
         #tool-piano .piano-body { width:100%; max-width:800px; margin:0 auto; display:flex; flex-direction:column; gap:15px; align-items:center; }
         #tool-piano .piano-info-note { font-size:14px; font-weight:700; color:#4c1d95; background:var(--accent-soft); border:1px solid var(--accent-border); padding:6px 16px; border-radius:999px; min-width:150px; text-align:center; }
-        #tool-piano .piano-staff-container { background:#ffffff; border:2px solid #e2e8f0; border-radius:14px; width:100%; height:260px; display:flex; justify-content:center; align-items:center; box-sizing:border-box; }
-        #tool-piano #piano-staff-svg { width:100%; max-width:560px; height:250px; }
+        #tool-piano .piano-staff-container { background:#ffffff; border:2px solid #e2e8f0; border-radius:14px; box-sizing:border-box; }
         #tool-piano .piano-wrapper { background:#1e293b; padding:10px; border-radius:14px 14px 10px 10px; box-shadow:0 8px 18px -8px rgba(15,23,42,0.5); width:100%; overflow-x:auto; display:flex; justify-content:center; box-sizing:border-box; }
         #tool-piano .piano { display:flex; position:relative; height:110px; width:max-content; }
         #tool-piano .white-key { width:28px; height:110px; background:linear-gradient(#ffffff, #f1f5f9); border:1px solid #cbd5e1; border-top:0; border-radius:0 0 8px 8px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:6px; font-size:9px; font-weight:700; color:#64748b; cursor:pointer; box-sizing:border-box; z-index:1; user-select:none; touch-action:manipulation; transition:background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease; }
@@ -77,8 +64,7 @@ import { relativeUrl } from '../../utils/navigation';
             #tool-piano { --wk: 28px; --bk: 18px; --kh: 110px; --bkh: 65px; }   /* clavier d'origine pour souris */
         }
         #tool-piano .piano-body { min-width: 0; }
-        #tool-piano .piano-staff-container { height: auto; padding: 6px; overflow-x: auto; }
-        #tool-piano #piano-staff-svg { width: 100%; height: auto; max-width: 560px; display: block; }
+        #tool-piano .piano-staff-container { padding: 6px; }
         /* flex-start + marges auto sur .piano : le début du clavier reste accessible quand il déborde */
         #tool-piano .piano-wrapper { max-width: 100%; justify-content: flex-start; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
         #tool-piano .piano { height: var(--kh); margin: 0 auto; flex: 0 0 auto; }
@@ -94,7 +80,6 @@ import { relativeUrl } from '../../utils/navigation';
         #tool-piano .piano-portrait-hint { display: none; margin: -4px 0 0; text-align: center; font-size: 12px; line-height: 1.35; color: #64748b; font-weight: 600; }
         /* Mobile/paysage bas : retour compact en tête d'outil, titre et sous-titre masqués */
         @media (max-width: 640px), (max-width: 900px) and (orientation: landscape), (max-height: 500px) {
-            #tool-piano { padding: 10px; border-radius: 16px; }
             #tool-piano .piano-body { gap: 8px; }
             #tool-piano .piano-head { display: none; }
             #tool-piano .piano-body > .hub-back { align-self: flex-start; margin: 0; }
@@ -126,13 +111,6 @@ import { relativeUrl } from '../../utils/navigation';
             }
 
             #tool-piano {
-                flex: 1 1 auto;
-                display: flex;
-                flex-direction: column;
-                height: 100%;
-                min-height: 0;
-                padding: 8px;
-                border-radius: 16px;
                 --kh: clamp(108px, 18dvh, 150px);
                 --bkh: clamp(66px, 11dvh, 92px);
             }
@@ -162,18 +140,7 @@ import { relativeUrl } from '../../utils/navigation';
             #tool-piano .piano-portrait-hint { display: block; }
 
             #tool-piano .piano-staff-container {
-                flex: 1 1 auto;
-                /* Légèrement réduit pour compenser la marge de sécurité du clavier
-                   et garder l'ensemble visuellement centré. */
-                min-height: 90px;
-                height: auto;
                 padding: 2px;
-            }
-
-            #tool-piano #piano-staff-svg {
-                width: 100%;
-                height: 100%;
-                max-height: 100%;
             }
 
             #tool-piano .piano-wrapper {
@@ -218,18 +185,6 @@ import { relativeUrl } from '../../utils/navigation';
             }
 
             #tool-piano {
-                flex: 1 1 auto;
-                display: flex;
-                flex-direction: column;
-                height: 100dvh;
-                max-height: 100dvh;
-                width: 100%;
-                max-width: none;
-                min-height: 0;
-                margin: 0;
-                padding: 0;
-                border-radius: 0;
-                overflow: hidden;
                 --kh: clamp(90px, 38dvh, 160px);
                 --bkh: clamp(55px, 24dvh, 100px);
             }
@@ -263,21 +218,10 @@ import { relativeUrl } from '../../utils/navigation';
             }
 
             #tool-piano .piano-staff-container {
-                flex: 1 1 auto;
-                min-height: 0;
-                height: auto;
                 padding: 0;
                 border: 0;
                 border-radius: 0;
                 background: #ffffff;
-                overflow: hidden;
-            }
-
-            #tool-piano #piano-staff-svg {
-                width: 100%;
-                height: 100%;
-                max-width: none;
-                max-height: none;
             }
 
             #tool-piano .piano-wrapper {
@@ -420,13 +364,6 @@ import { relativeUrl } from '../../utils/navigation';
             }
 
             #tool-piano {
-                display: flex;
-                flex-direction: column;
-                height: 100dvh;
-                min-height: 0 !important;
-                max-height: 100dvh;
-                padding: 8px;
-                overflow: hidden;
                 --kh: clamp(96px, 22dvh, 150px);
                 --bkh: clamp(62px, 14dvh, 96px);
             }
@@ -460,22 +397,10 @@ import { relativeUrl } from '../../utils/navigation';
             }
 
             #tool-piano .piano-staff-container {
-                flex: 1 1 0;
-                height: 0;
-                min-height: 120px;
-                max-height: 60dvh;
                 padding: 0;
                 border: 0;
                 border-radius: 0;
                 background: #ffffff;
-                overflow: hidden;
-            }
-
-            #tool-piano #piano-staff-svg {
-                width: 100%;
-                height: 100%;
-                max-width: none;
-                max-height: 100%;
             }
 
             #tool-piano .piano-wrapper {
@@ -825,11 +750,8 @@ import { relativeUrl } from '../../utils/navigation';
            touches. Sous le minimum, on garde MIN et le clavier défile
            horizontalement comme avant (centré sur le Do central).
 
-           Hauteur : la portée est en `width:100%; height:auto` (viewBox 480 × 400),
-           elle mesurait donc 466 px de haut quel que soit l'écran et la page
-           débordait (186 px à 1440×900, 94 px à 1376×1032). On retire exactement
-           le dépassement mesuré à la hauteur de la portée, avec un plancher de
-           120 px (celui des modes compacts).
+           Hauteur : plus de calage ici. La portée (.tool-fit) se partage la hauteur
+           par flexbox (voir tools-shell.css).
 
            Le mode compact (hauteur <= 768 px), le téléphone et le portrait ne sont
            pas concernés : la fonction ne touche à rien et retire ses styles inline.
@@ -837,7 +759,6 @@ import { relativeUrl } from '../../utils/navigation';
         const WHITE_KEY_COUNT = 52;
         const MIN_WHITE_KEY_WIDTH = 24;
         const MAX_WHITE_KEY_WIDTH = 48;
-        const MIN_STAFF_HEIGHT = 120;
 
         /* ------------------------------------------------------------------
            Niveaux de zoom du clavier. La largeur d'une touche blanche commande
@@ -952,8 +873,6 @@ import { relativeUrl } from '../../utils/navigation';
             centerKeyInWrapper(anchor);
         }
 
-        const staffContainer = mustElement('#tool-piano .piano-staff-container');
-        const staffSvgEl = mustSvg('#piano-staff-svg');
         const scrollHint = document.querySelector<HTMLElement>('#tool-piano .piano-scroll-hint');
 
         /** Zones où le clavier garde sa mise en page actuelle (compact, téléphone, portrait). */
@@ -969,9 +888,6 @@ import { relativeUrl } from '../../utils/navigation';
         function resetKeyboardFit(): void {
             pianoEl.style.removeProperty('--wk');
             pianoEl.style.removeProperty('--bk');
-            staffContainer.style.removeProperty('height');
-            staffSvgEl.style.removeProperty('height');
-            staffSvgEl.style.removeProperty('max-height');
             scrollHint?.classList.remove('is-hidden');
             keyboardNeedsScroll = true;   // en mode compact le clavier déborde toujours
             pianoWrapper.removeAttribute('tabindex');
@@ -1013,23 +929,6 @@ import { relativeUrl } from '../../utils/navigation';
             } else {
                 pianoWrapper.removeAttribute('tabindex');
                 pianoWrapper.removeAttribute('aria-label');
-            }
-
-            // 3. Hauteur : la portée absorbe le dépassement, en deux passes.
-            staffContainer.style.removeProperty('height');
-            staffSvgEl.style.removeProperty('height');
-            staffSvgEl.style.removeProperty('max-height');
-            for (let pass = 0; pass < 2; pass += 1) {
-                const overflow = document.documentElement.scrollHeight - window.innerHeight;
-                if (overflow <= 0) return;
-                const current = staffContainer.getBoundingClientRect().height;
-                const target = Math.round(current - overflow);
-                if (target >= current) return;
-                const height = Math.max(target, MIN_STAFF_HEIGHT);
-                staffContainer.style.height = height + 'px';
-                staffSvgEl.style.height = '100%';
-                staffSvgEl.style.maxHeight = '100%';
-                if (target <= MIN_STAFF_HEIGHT) return;
             }
         }
 
