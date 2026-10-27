@@ -32,6 +32,7 @@ const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href :
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
+    <style is:inline>@layer base, tool-components;</style>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <meta name="theme-color" content="#0f172a" />
@@ -276,14 +277,8 @@ const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href :
       font-weight: 600;
     }
 
-    /* Pages d'outils : en-tête global supprimé (le bouton retour vit dans l'outil) */
-    body.mobile-header-hidden {
-      padding-top: 0.75rem;
-    }
-
-    body.mobile-header-hidden .site-header {
-      display: none;
-    }
+    /* Pages d'outils : en-tête global supprimé (règles déplacées dans
+       src/styles/tools-landscape.css, seul fichier qui pilote le plein écran). */
   }
 
   /* Paysage sur téléphone (≤ 900 px de large) ou fenêtre basse (≤ 500 px de haut) :
@@ -320,11 +315,8 @@ const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href :
       font-weight: 600;
     }
 
-    /* Pages d'outils d'entraînement : en-tête global totalement masqué
-       (le retour « ← Entraînement » se trouve dans l'outil lui-même). */
-    body.mobile-header-hidden .site-header {
-      display: none !important;
-    }
+    /* Pages d'outils d'entraînement : en-tête masqué (règle déplacée dans
+       src/styles/tools-landscape.css). */
   }
 
   /* ------------------------------------------------------------------
@@ -339,8 +331,7 @@ const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href :
       min-height: 100dvh;
     }
 
-    body,
-    body.mobile-header-hidden {
+    body {
       padding-top: 0.35rem;
       padding-bottom: 0.4rem;
     }
@@ -360,42 +351,9 @@ const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href :
      Pages d'outils sur mobile et tablette : plein écran, sans en-tête
      global ni carte blanche flottante. Le hub (mobile-header-minimal)
      n'est pas concerné.
+     Les règles correspondantes vivent dans src/styles/tools-landscape.css
+     (seul fichier qui pilote le plein écran des outils).
   ------------------------------------------------------------------ */
-  @media (max-width: 1024px) {
-    body.mobile-header-hidden {
-      padding: 0 !important;
-      background-color: #ffffff;
-      color: #1f2a44;
-    }
-
-    body.mobile-header-hidden .site-header {
-      display: none !important;
-    }
-
-    body.mobile-header-hidden main.container {
-      width: 100% !important;
-      max-width: 100% !important;
-      min-height: 100vh !important;
-      min-height: 100dvh !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      background-color: #ffffff;
-      border-radius: 0 !important;
-      box-shadow: none !important;
-    }
-
-    body.mobile-header-hidden main.container > * {
-      width: 100% !important;
-      max-width: 100% !important;
-      min-height: 100vh !important;
-      min-height: 100dvh !important;
-      margin: 0 !important;
-      padding: 8px !important;
-      background-color: #ffffff;
-      border-radius: 0 !important;
-      box-shadow: none !important;
-    }
-  }
 
   /* --- Façade de chargement différé des vidéos YouTube --- */
   .video-facade {

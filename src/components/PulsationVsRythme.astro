@@ -122,7 +122,11 @@
   const INK = '#0f172a';
 
   // ---------- Éléments ----------
-  const svg = document.getElementById('rhythm-svg') as unknown as SVGSVGElement;
+  const svgElement = document.getElementById('rhythm-svg');
+  if (!(svgElement instanceof SVGSVGElement)) {
+    throw new Error("PulsationVsRythme : #rhythm-svg absent ou n'est pas un <svg>.");
+  }
+  const svg = svgElement;
   const beatsLayer = document.getElementById('beats-layer')!;
   const dropZone = document.getElementById('drop-zone')!;
   const originZone = document.getElementById('origin-zone')!;

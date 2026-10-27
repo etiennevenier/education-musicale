@@ -35,6 +35,9 @@ jobs:
       - name: Vitest
         run: npm test
 
+      - name: Garde-fou !important
+        run: npm run check:important
+
       - name: Build site
         run: npm run build
 
