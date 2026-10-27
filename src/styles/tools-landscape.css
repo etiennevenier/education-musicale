@@ -276,7 +276,9 @@
     min-height: 0;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-auto-rows: minmax(0, 1fr);
-    gap: 0.5rem;
+    /* keep: le composant redéfinit `gap` dans ses propres media queries avec la
+       même spécificité (il est servi après) ; sans !important le menu déborde. */
+    gap: 0.5rem !important;
     overflow: hidden;
   }
 
