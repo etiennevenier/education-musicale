@@ -4,11 +4,17 @@ import VideoCard from './VideoCard.astro';
 import { relativeUrl } from '../utils/navigation';
 import { geoNaturalEarth1, geoPath } from 'd3-geo';
 import { feature } from 'topojson-client';
+import type { FeatureCollection, Geometry } from 'geojson';
+import type { GeometryCollection, Topology } from 'topojson-specification';
 import worldTopo from 'world-atlas/countries-110m.json';
 
-const world: any = worldTopo;
-const countries: any = feature(world, world.objects.countries);
-countries.features = countries.features.filter((f: any) => f.id !== '010');
+const world = worldTopo as unknown as Topology<{ countries: GeometryCollection }>;
+const allCountries = feature(world, world.objects.countries) as FeatureCollection<Geometry>;
+// Même filtre qu'avant (l'Antarctique, code « 010 ») sans muter l'objet d'origine.
+const countries: FeatureCollection<Geometry> = {
+  ...allCountries,
+  features: allCountries.features.filter((country) => country.id !== '010'),
+};
 const projection = geoNaturalEarth1().fitExtent([[10, 10], [990, 490]], countries);
 const countriesPath = geoPath(projection)(countries) ?? '';
 
