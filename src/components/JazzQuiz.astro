@@ -85,12 +85,13 @@ const questionsPerGame = Math.min(JAZZ_QUESTIONS_PER_GAME, jazzQuizQuestions.len
       const entry = queue[index];
       currentEntry = entry;
 
-      questionContainer.innerHTML = `
-        <span class="question-kind">Question ${index + 1}</span>
-        <p class="question-text"></p>
-      `;
-      // textContent : le texte de la question est affiché tel quel.
-      questionContainer.querySelector('.question-text')!.textContent = entry.question.question;
+      const kind = document.createElement('span');
+      kind.className = 'question-kind';
+      kind.textContent = `Question ${index + 1}`;
+      const text = document.createElement('p');
+      text.className = 'question-text';
+      text.textContent = entry.question.question;
+      questionContainer.replaceChildren(kind, text);
 
       optionsContainer.replaceChildren();
       entry.options.forEach((option) => {

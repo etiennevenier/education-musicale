@@ -246,14 +246,19 @@ const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions
       if (!question) return;
       currentQuestion = question;
 
-      questionContainer.innerHTML = `
-        <div class="audio-q-box">
-          <p class="question-prompt"></p>
-          <button type="button" id="ostinatoBtnPlay" class="btn-play-sound">${PLAY_LABELS.idle}</button>
-        </div>
-      `;
-      questionContainer.querySelector('.question-prompt')!.textContent = question.prompt;
-      btnPlay = $<HTMLButtonElement>('ostinatoBtnPlay');
+      const audioBox = document.createElement('div');
+      audioBox.className = 'audio-q-box';
+      const prompt = document.createElement('p');
+      prompt.className = 'question-prompt';
+      prompt.textContent = question.prompt;
+      const playButton = document.createElement('button');
+      playButton.type = 'button';
+      playButton.id = 'ostinatoBtnPlay';
+      playButton.className = 'btn-play-sound';
+      audioBox.append(prompt, playButton);
+      questionContainer.replaceChildren(audioBox);
+      btnPlay = playButton;
+      setPlayState('idle');   // libellé initial posé en textContent
       btnPlay.addEventListener('click', togglePlay);
       if (autoplay) togglePlay();
 

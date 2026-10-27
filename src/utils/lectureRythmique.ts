@@ -401,7 +401,13 @@ export function initLectureRythmique(): void {
     }
     function setPhase(mode: string, title: string, sub?: string): void {
         ui.status.className = 'status ' + mode;
-        ui.phase.innerHTML = title + (sub ? '<small>' + sub + '</small>' : '');
+        if (sub) {
+            const detail = document.createElement('small');
+            detail.textContent = sub;
+            ui.phase.replaceChildren(document.createTextNode(title), detail);
+        } else {
+            ui.phase.replaceChildren(document.createTextNode(title));
+        }
     }
     function lightDot(index: number): void {
         ui.dots.forEach((d, i) => d.classList.toggle('on', i === index));
@@ -705,7 +711,9 @@ export function initLectureRythmique(): void {
     function showScore(res: Evaluation): void {
         const p = res.percent;
         const color = p >= 85 ? GREEN : p >= 60 ? ORANGE : RED;
-        ui.score.innerHTML = '<small>Précision</small>' + p + ' %';
+        const precision = document.createElement('small');
+        precision.textContent = 'Précision';
+        ui.score.replaceChildren(precision, document.createTextNode(p + ' %'));
         ui.score.style.color = color;
         ui.verdict.textContent = getVerdict(p);
 
