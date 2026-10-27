@@ -10,7 +10,11 @@ import { relativeUrl } from '../../utils/navigation';
                 <span class="hub-back-text">Retour à l'entraînement</span>
                 <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
             </a>
-            <button type="button" id="piano-view-toggle" class="piano-view-toggle" aria-pressed="false">Zoom</button>
+            <div id="piano-zoom-controls" class="piano-zoom">
+                <button type="button" id="piano-zoom-out" class="piano-zoom-btn" aria-label="Réduire le zoom du clavier" aria-controls="piano">−</button>
+                <span id="piano-zoom-level" class="piano-zoom-level" aria-live="polite">Vue complète</span>
+                <button type="button" id="piano-zoom-in" class="piano-zoom-btn" aria-label="Agrandir le zoom du clavier" aria-controls="piano">+</button>
+            </div>
             <div class="piano-head">
                 <h1 class="piano-title">Piano Interactif</h1>
             </div>
@@ -324,59 +328,84 @@ import { relativeUrl } from '../../utils/navigation';
             display: none;
         }
 
-        /* ----- Bouton de bascule Vue complète / Zoom -----
-           Hors flux (position absolue dans la carte, qui est déjà `relative`) :
-           il ne décale aucun élément et ne crée donc aucun CLS, y compris au
-           basculement. Masqué hors de la zone grand écran du lot L : sur
-           téléphone, en portrait et en mode compact (hauteur <= 768), rien
-           n'apparaît et la mise en page reste identique. Aucun style global,
-           aucun !important. */
-        #tool-piano .piano-view-toggle {
+        /* ----- Réglage du zoom du clavier : « −  niveau  + » -----
+           Groupe hors flux (position absolue dans la carte, qui est déjà
+           `relative`) : il ne décale aucun élément et ne crée donc aucun CLS,
+           y compris au changement de niveau. Largeur réservée (boutons de
+           40 px + libellé de 108 px) : le libellé change sans faire bouger le
+           groupe. Masqué hors de la zone grand écran du lot L : sur téléphone,
+           en portrait et en mode compact (hauteur <= 768), rien n'apparaît et
+           la mise en page reste identique. Aucun style global, aucun !important. */
+        #tool-piano .piano-zoom {
             display: none;
         }
 
         @media (min-width: 1025px) and (min-height: 769px) and (orientation: landscape) {
-            #tool-piano .piano-view-toggle {
+            #tool-piano .piano-zoom {
                 position: absolute;
                 top: 12px;
                 right: 12px;
                 z-index: 2;
                 display: inline-flex;
                 align-items: center;
-                justify-content: center;
-                min-width: 150px;   /* place réservée : le libellé ne fait pas bouger le bouton */
-                height: 40px;
-                padding: 0 16px;
+                gap: 8px;
+                padding: 4px;
                 border: 2px solid var(--accent-border);
                 border-radius: 999px;
                 background: var(--accent-soft);
+                box-shadow: 0 6px 14px -10px rgba(126, 34, 206, 0.6);
+            }
+
+            #tool-piano .piano-zoom-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                padding: 0;
+                border: 2px solid var(--accent);
+                border-radius: 50%;
+                background: #ffffff;
+                color: #4c1d95;
+                font-family: inherit;
+                font-size: 22px;
+                font-weight: 900;
+                line-height: 1;
+                cursor: pointer;
+                transition: background 0.12s ease, color 0.12s ease;
+            }
+
+            #tool-piano .piano-zoom-btn:hover:not(:disabled) {
+                background: var(--accent);
+                color: #ffffff;
+            }
+
+            /* Bouton indisponible : contraste conservé (texte #475569 sur #f1f5f9). */
+            #tool-piano .piano-zoom-btn:disabled {
+                border-color: #cbd5e1;
+                background: #f1f5f9;
+                color: #475569;
+                cursor: default;
+            }
+
+            #tool-piano .piano-zoom-btn:focus-visible {
+                outline: 3px solid #7e22ce;
+                outline-offset: 2px;
+            }
+
+            #tool-piano .piano-zoom-level {
+                min-width: 108px;   /* place réservée : « Vue complète » tient sans bouger */
+                text-align: center;
                 color: #4c1d95;
                 font-family: inherit;
                 font-size: 14px;
                 font-weight: 800;
                 line-height: 1;
-                cursor: pointer;
-                box-shadow: 0 6px 14px -10px rgba(126, 34, 206, 0.6);
-                transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
-            }
-
-            #tool-piano .piano-view-toggle:hover {
-                background: #f3e8ff;
-            }
-
-            #tool-piano .piano-view-toggle[aria-pressed="true"] {
-                background: var(--accent);
-                border-color: var(--accent);
-                color: #ffffff;
-            }
-
-            #tool-piano .piano-view-toggle:focus-visible {
-                outline: 3px solid #7e22ce;
-                outline-offset: 2px;
+                white-space: nowrap;
             }
 
             @media (prefers-reduced-motion: reduce) {
-                #tool-piano .piano-view-toggle {
+                #tool-piano .piano-zoom-btn {
                     transition: none;
                 }
             }
@@ -811,38 +840,76 @@ import { relativeUrl } from '../../utils/navigation';
         const MIN_STAFF_HEIGHT = 120;
 
         /* ------------------------------------------------------------------
-           Mode d'affichage : « vue complète » (88 touches, taille adaptée à la
-           largeur, lot L) ou « Zoom » (touches plus grosses, défilement).
-           Le libellé du bouton suit l'état : il propose l'autre vue.
+           Niveaux de zoom du clavier. La largeur d'une touche blanche commande
+           tout le reste : .white-key (width / flex-basis), .black-key (largeur
+           = 0,64 × blanc) et la position des noires
+           (left: calc(var(--wk) * n - var(--bk) / 2)).
+             Vue complète : largeur calculée = disponible / 52, bornée 24-48 px ;
+             Zoom         : 52 px (noires 33 px) — lot M ;
+             Grand zoom   : 84 px (noires 54 px), soit au-dessus de la cible
+                            tactile de 44 px pour les noires.
+           Plancher : aucun niveau ne doit laisser moins de 8 touches blanches
+           visibles ; sinon il est indisponible (bouton « + » désactivé).
            ------------------------------------------------------------------ */
         const VIEW_STORAGE_KEY = 'piano-interactif-view';
-        const ZOOM_WHITE_KEY_WIDTH = 52;    // blanc 52 px, noir 33 px (0,64 x 52)
-        const viewToggle = mustElement('#piano-view-toggle');
-        let viewMode: 'full' | 'zoom' = 'full';
+        const MIN_WHITE_KEYS_VISIBLE = 8;
+
+        type ZoomLevel = { id: 'full' | 'zoom' | 'grand'; label: string; width: number | null };
+        const ZOOM_LEVELS: readonly ZoomLevel[] = [
+            { id: 'full', label: 'Vue complète', width: null },
+            { id: 'zoom', label: 'Zoom', width: 52 },
+            { id: 'grand', label: 'Grand zoom', width: 84 },
+        ];
+        let levelIndex = 0;
+        let lastAvailableWidth = 0;
+
+        const zoomOutBtn = mustElement('#piano-zoom-out') as HTMLButtonElement;
+        const zoomInBtn = mustElement('#piano-zoom-in') as HTMLButtonElement;
+        const zoomLevelLabel = mustElement('#piano-zoom-level');
+
         /** Vrai quand le clavier dépasse la zone visible (défilement nécessaire). */
         let keyboardNeedsScroll = true;
 
-        /** Préférence lue une seule fois au chargement ; valeur inconnue ignorée. */
-        function readViewPreference(): 'full' | 'zoom' {
+        /** Largeur d'une touche blanche pour un niveau donné. */
+        function levelWidth(level: ZoomLevel, available: number): number {
+            if (level.width !== null) return level.width;
+            return Math.max(MIN_WHITE_KEY_WIDTH, Math.min(MAX_WHITE_KEY_WIDTH, Math.floor(available / WHITE_KEY_COUNT)));
+        }
+
+        /** Un niveau laisse-t-il au moins MIN_WHITE_KEYS_VISIBLE blanches visibles ? */
+        function isLevelAvailable(index: number, available: number): boolean {
+            const level = ZOOM_LEVELS[index];
+            if (!level) return false;
+            if (available <= 0) return true;   // pas encore mesuré
+            return Math.floor(available / levelWidth(level, available)) >= MIN_WHITE_KEYS_VISIBLE;
+        }
+
+        /** Préférence lue une seule fois au chargement. Les valeurs du lot M
+            (« full », « zoom ») restent valides ; « grand » est le nouveau niveau. */
+        function readViewPreference(): number {
             try {
-                return window.localStorage.getItem(VIEW_STORAGE_KEY) === 'zoom' ? 'zoom' : 'full';
+                const value = window.localStorage.getItem(VIEW_STORAGE_KEY);
+                if (value === 'grand') return 2;
+                if (value === 'zoom') return 1;
+                return 0;   // 'full', valeur inconnue ou absente
             } catch {
-                return 'full';
+                return 0;
             }
         }
 
-        function saveViewPreference(mode: 'full' | 'zoom'): void {
+        function saveViewPreference(): void {
             try {
-                window.localStorage.setItem(VIEW_STORAGE_KEY, mode);
+                window.localStorage.setItem(VIEW_STORAGE_KEY, ZOOM_LEVELS[levelIndex].id);
             } catch {
                 /* stockage indisponible : la préférence n'est simplement pas retenue */
             }
         }
 
-        function syncViewToggle(): void {
-            const zoom = viewMode === 'zoom';
-            viewToggle.textContent = zoom ? 'Vue complète' : 'Zoom';
-            viewToggle.setAttribute('aria-pressed', String(zoom));
+        /** Libellé du niveau courant et état des deux boutons. */
+        function syncZoomUi(): void {
+            zoomLevelLabel.textContent = ZOOM_LEVELS[levelIndex].label;
+            zoomOutBtn.disabled = levelIndex === 0;
+            zoomInBtn.disabled = levelIndex >= ZOOM_LEVELS.length - 1 || !isLevelAvailable(levelIndex + 1, lastAvailableWidth);
         }
 
         /** Touche blanche la plus proche du milieu de la zone visible. */
@@ -872,14 +939,15 @@ import { relativeUrl } from '../../utils/navigation';
             pianoWrapper.scrollLeft += (kr.left + kr.width / 2) - (wr.left + pianoWrapper.clientWidth / 2);
         }
 
-        /** Bascule de vue : en Zoom on centre sur le Do central ; en revenant à la
-            vue complète on garde la note qui était au centre (aucun saut). */
-        function setViewMode(mode: 'full' | 'zoom'): void {
-            if (viewMode === mode) return;
-            const anchor = mode === 'zoom' ? middleCKey : keyAtViewportCenter();
-            viewMode = mode;
-            syncViewToggle();
-            saveViewPreference(mode);
+        /** Change de niveau en conservant la note au centre (aucun saut, aucune animation).
+            Quand le clavier tient entièrement (vue complète sans défilement), il n'existe
+            pas de « note au centre » : on repart du Do central, comme au lot M. */
+        function setZoomLevel(index: number): void {
+            const clamped = Math.max(0, Math.min(ZOOM_LEVELS.length - 1, index));
+            if (clamped === levelIndex) return;
+            const anchor = keyboardNeedsScroll ? (keyAtViewportCenter() ?? middleCKey) : middleCKey;
+            levelIndex = clamped;
+            saveViewPreference();
             fitKeyboard();
             centerKeyInWrapper(anchor);
         }
@@ -922,12 +990,15 @@ import { relativeUrl } from '../../utils/navigation';
             const available = Math.round(
                 pianoWrapper.clientWidth - parseFloat(wrapperStyle.paddingLeft) - parseFloat(wrapperStyle.paddingRight),
             );
-            const computedWidth = Math.floor(available / WHITE_KEY_COUNT);
-            const keyWidth = viewMode === 'zoom'
-                ? ZOOM_WHITE_KEY_WIDTH
-                : Math.max(MIN_WHITE_KEY_WIDTH, Math.min(MAX_WHITE_KEY_WIDTH, computedWidth));
+            // 1. Largeur d'une touche blanche pour le niveau courant. Si le niveau
+            //    mémorisé n'est plus disponible (fenêtre étroite : moins de 8 touches
+            //    visibles), on recule au niveau inférieur.
+            lastAvailableWidth = available;
+            while (levelIndex > 0 && !isLevelAvailable(levelIndex, available)) levelIndex -= 1;
+            const keyWidth = levelWidth(ZOOM_LEVELS[levelIndex], available);
             pianoEl.style.setProperty('--wk', keyWidth + 'px');
             pianoEl.style.setProperty('--bk', Math.round(keyWidth * 0.64) + 'px');   // 18/28 = 0,64
+            syncZoomUi();
 
             // 2. L'aide au défilement ne s'affiche que si le clavier déborde, et le
             //    déclenchement tactile en dépend (voir pointerdown plus bas). Un
@@ -1003,12 +1074,11 @@ import { relativeUrl } from '../../utils/navigation';
         document.addEventListener('pointerdown', resumePianoAudio, { capture: true });
         document.addEventListener('keydown', resumePianoAudio, { capture: true });
 
-        // Bascule Vue complète / Zoom (bouton présent uniquement sur grand écran).
-        viewMode = readViewPreference();
-        syncViewToggle();
-        viewToggle.addEventListener('click', () => {
-            setViewMode(viewMode === 'zoom' ? 'full' : 'zoom');
-        });
+        // Niveaux de zoom (contrôle présent uniquement sur grand écran).
+        levelIndex = readViewPreference();
+        syncZoomUi();
+        zoomOutBtn.addEventListener('click', () => setZoomLevel(levelIndex - 1));
+        zoomInBtn.addEventListener('click', () => setZoomLevel(levelIndex + 1));
 
         // Une rotation d'écran change le nombre de portées visibles : on redessine.
         const compactStaffQuery = window.matchMedia('(pointer: coarse) and (orientation: landscape) and (max-height: 550px)');
