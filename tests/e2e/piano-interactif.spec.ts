@@ -211,12 +211,17 @@ test.describe('Piano interactif — jeu des touches et robustesse', () => {
   });
 });
 // ---------------------------------------------------------------------------
-// LOT M — bascule « Vue complète / Zoom »
+// LOT M / LOT N — niveaux de zoom « Vue complète / Zoom / Grand zoom »
 // ---------------------------------------------------------------------------
 
-/** Zoom : 52 px de touche blanche, noire = 0,64 × 52 = 33 px. */
+/** Niveaux : 0 = vue complète (calculée), 1 = 52 px (noire 33), 2 = 84 px (noire 54). */
 const ZOOM_WHITE = 52;
 const ZOOM_BLACK = 33;
+const GRAND_WHITE = 84;
+const GRAND_BLACK = 54;
+const LEVEL_LABELS = ['Vue complète', 'Zoom', 'Grand zoom'] as const;
+/** Plancher produit : aucun niveau ne doit laisser moins de 8 touches visibles. */
+const MIN_VISIBLE_KEYS = 8;
 
 const LARGE = [
   { width: 1376, height: 1032 },
@@ -242,30 +247,31 @@ const LARGE_CASES: Canvas[] = LARGE.map((v, i) => ({ ...v, mobile: i < 4 }));
 const SMALL_CASES: Canvas[] = SMALL.map((v, i) => ({ ...v, mobile: i >= 2 }));
 
 for (const c of LARGE_CASES) {
-  test(`bouton Zoom présent (${c.width}×${c.height})`, async ({ browser }) => {
+  test(`contrôle de zoom présent (${c.width}×${c.height})`, async ({ browser }) => {
     const ctx = await browser.newContext({
       viewport: { width: c.width, height: c.height },
       ...(c.mobile ? { hasTouch: true, isMobile: true, deviceScaleFactor: 2 } : {}),
     });
     const page = await ctx.newPage();
     await page.goto(URL, { waitUntil: 'load' });
-    const toggle = page.locator('#piano-view-toggle');
-    await expect(toggle).toBeVisible();
-    await expect(toggle).toHaveText('Zoom');
-    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('#piano-zoom-controls')).toBeVisible();
+    await expect(page.locator('#piano-zoom-level')).toHaveText('Vue complète');
+    // Aux extrémités : « − » inactif en vue complète, « + » actif.
+    await expect(page.locator('#piano-zoom-out')).toBeDisabled();
+    await expect(page.locator('#piano-zoom-in')).toBeEnabled();
     await ctx.close();
   });
 }
 
 for (const c of SMALL_CASES) {
-  test(`bouton Zoom absent (${c.width}×${c.height})`, async ({ browser }) => {
+  test(`contrôle de zoom absent (${c.width}×${c.height})`, async ({ browser }) => {
     const ctx = await browser.newContext({
       viewport: { width: c.width, height: c.height },
       ...(c.mobile ? { hasTouch: true, isMobile: true, deviceScaleFactor: 2 } : {}),
     });
     const page = await ctx.newPage();
     await page.goto(URL, { waitUntil: 'load' });
-    await expect(page.locator('#piano-view-toggle')).toBeHidden();
+    await expect(page.locator('#piano-zoom-controls')).toBeHidden();
     await ctx.close();
   });
 }
@@ -300,41 +306,67 @@ async function keyboardMetrics(page: import('@playwright/test').Page) {
 }
 
 for (const c of LARGE_CASES) {
-  test(`Zoom puis retour : tailles, défilement, Do4 centré (${c.width}×${c.height})`, async ({ browser }) => {
+  test(`trois niveaux : tailles, défilement, note centrale conservée (${c.width}×${c.height})`, async ({ browser }) => {
     const ctx = await browser.newContext({
       viewport: { width: c.width, height: c.height },
       ...(c.mobile ? { hasTouch: true, isMobile: true, deviceScaleFactor: 2 } : {}),
     });
     const page = await ctx.newPage();
     await page.goto(URL, { waitUntil: 'load' });
-    const toggle = page.locator('#piano-view-toggle');
+    const level = page.locator('#piano-zoom-level');
+    const zoomIn = page.locator('#piano-zoom-in');
+    const zoomOut = page.locator('#piano-zoom-out');
 
-    await toggle.click();
+    // Niveau 0 : vue complète (comportement du lot L).
+    const full = await keyboardMetrics(page);
+    expect(full.white).toBeLessThan(ZOOM_WHITE);
+    // L'aide au défilement suit le débordement réel (masquée si les 88 touches tiennent).
+    expect(full.hintVisible).toBe(full.hScroll);
+    expect(full.doc).toBeLessThanOrEqual(full.innerH + 1);
+    if (c.width >= 1366) {
+      expect(full.fully).toBe(52);
+      expect(full.hScroll).toBe(false);
+    }
+    await expect(level).toHaveText(LEVEL_LABELS[0]);
+    await expect(zoomOut).toBeDisabled();
+
+    // Niveau 1 : Zoom 52/33 px (comportement du lot M).
+    await zoomIn.click();
     await page.waitForTimeout(250);
-
     const zoom = await keyboardMetrics(page);
     expect(zoom.white).toBe(ZOOM_WHITE);
     expect(zoom.black).toBe(ZOOM_BLACK);
     expect(zoom.hScroll, 'le Zoom doit défiler').toBe(true);
     expect(zoom.hintVisible, "l'aide au défilement est utile en Zoom").toBe(true);
     expect(zoom.doc).toBeLessThanOrEqual(zoom.innerH + 1);
-    // Do central centré (tolerance 2 px)
+    expect(zoom.fully).toBeGreaterThanOrEqual(MIN_VISIBLE_KEYS);
+    // En vue complète le clavier tient : il n'y a pas de note au centre, on repart
+    // du Do central (comportement du lot M), puis on le conserve.
     expect(Math.abs(zoom.do4Offset ?? 999)).toBeLessThanOrEqual(2);
-    await expect(toggle).toHaveText('Vue complète');
-    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    await expect(level).toHaveText(LEVEL_LABELS[1]);
+    await expect(zoomOut).toBeEnabled();
 
-    await toggle.click();
+    // Niveau 2 : Grand zoom 84/54 px, note centrale conservée.
+    await zoomIn.click();
     await page.waitForTimeout(250);
-    const full = await keyboardMetrics(page);
-    expect(full.white).toBeLessThan(ZOOM_WHITE);
-    expect(full.doc).toBeLessThanOrEqual(full.innerH + 1);
-    await expect(toggle).toHaveText('Zoom');
-    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
-    // Sous 1376 : les 88 touches redeviennent visibles, sans défilement.
-    if (c.width >= 1366) {
-      expect(full.fully).toBe(52);
-      expect(full.hScroll).toBe(false);
-    }
+    const grand = await keyboardMetrics(page);
+    expect(grand.white).toBe(GRAND_WHITE);
+    expect(grand.black).toBe(GRAND_BLACK);
+    expect(grand.hScroll).toBe(true);
+    expect(grand.doc).toBeLessThanOrEqual(grand.innerH + 1);
+    expect(grand.fully).toBeGreaterThanOrEqual(MIN_VISIBLE_KEYS);
+    expect(Math.abs(grand.do4Offset ?? 999)).toBeLessThanOrEqual(2);
+    await expect(level).toHaveText(LEVEL_LABELS[2]);
+    await expect(zoomIn).toBeDisabled();
+
+    // Retour au niveau 0.
+    await zoomOut.click();
+    await zoomOut.click();
+    await page.waitForTimeout(250);
+    const back = await keyboardMetrics(page);
+    expect(back.white).toBe(full.white);
+    expect(back.doc).toBeLessThanOrEqual(back.innerH + 1);
+    await expect(level).toHaveText(LEVEL_LABELS[0]);
     await ctx.close();
   });
 }
@@ -343,7 +375,7 @@ for (const c of LARGE_CASES) {
 // Geste tactile : appui vs relâchement, glissement, multi-touch, annulation
 // ---------------------------------------------------------------------------
 
-async function openPianoWithCounter(browser: import('@playwright/test').Browser, zoom: boolean) {
+async function openPianoWithCounter(browser: import('@playwright/test').Browser, level = 0) {
   const context = await browser.newContext({
     viewport: { width: 1376, height: 1032 },
     hasTouch: true,
@@ -362,8 +394,8 @@ async function openPianoWithCounter(browser: import('@playwright/test').Browser,
   });
   await page.goto(URL, { waitUntil: 'load' });
   await page.waitForTimeout(400);
-  if (zoom) {
-    await page.locator('#piano-view-toggle').click();
+  for (let i = 0; i < level; i += 1) {
+    await page.locator('#piano-zoom-in').click();
     await page.waitForTimeout(250);
   }
   return page;
@@ -406,7 +438,7 @@ async function dispatchPointer(
 }
 
 test("vue complète (aucun défilement) : la note part à l'appui, avant le relâchement", async ({ browser }) => {
-  const page = await openPianoWithCounter(browser, false);
+  const page = await openPianoWithCounter(browser, 0);
   const pt = await touchPoint(page, '.white-key.c-key', 3);
   await dispatchPointer(page, 'pointerdown', pt);
   await page.waitForTimeout(80);
@@ -420,7 +452,7 @@ test("vue complète (aucun défilement) : la note part à l'appui, avant le rel�
 });
 
 test("Zoom (défilement actif) : la note part au relâchement, pas à l'appui", async ({ browser }) => {
-  const page = await openPianoWithCounter(browser, true);
+  const page = await openPianoWithCounter(browser, 1);
   const pt = await touchPoint(page, '.white-key.c-key', 3);
   await dispatchPointer(page, 'pointerdown', pt);
   await page.waitForTimeout(80);
@@ -431,20 +463,22 @@ test("Zoom (défilement actif) : la note part au relâchement, pas à l'appui", 
   await page.context().close();
 });
 
-test("un glissement de 30 px ne joue aucune note et ne laisse rien d'actif (Zoom)", async ({ browser }) => {
-  const page = await openPianoWithCounter(browser, true);
-  const pt = await touchPoint(page, '.white-key.c-key', 3);
-  await dispatchPointer(page, 'pointerdown', pt);
-  await dispatchPointer(page, 'pointerup', pt, 11, 30);
-  await page.waitForTimeout(400);
-  expect(await oscCount(page)).toBe(0);
-  expect(await noteText(page)).toBe('Clique sur une touche 🎹');
-  expect(await page.locator('.white-key.active, .black-key.active').count()).toBe(0);
-  await page.context().close();
+test("un glissement de 30 px ne joue aucune note et ne laisse rien d'actif (Zoom et Grand zoom)", async ({ browser }) => {
+  for (const level of [1, 2]) {
+    const page = await openPianoWithCounter(browser, level);
+    const pt = await touchPoint(page, '.white-key.c-key', 3);
+    await dispatchPointer(page, 'pointerdown', pt);
+    await dispatchPointer(page, 'pointerup', pt, 11, 30);
+    await page.waitForTimeout(400);
+    expect(await oscCount(page), `niveau ${level}`).toBe(0);
+    expect(await noteText(page)).toBe('Clique sur une touche 🎹');
+    expect(await page.locator('.white-key.active, .black-key.active').count()).toBe(0);
+    await page.context().close();
+  }
 });
 
 test('pointercancel annule la note en attente (Zoom)', async ({ browser }) => {
-  const page = await openPianoWithCounter(browser, true);
+  const page = await openPianoWithCounter(browser, 1);
   const pt = await touchPoint(page, '.white-key.c-key', 3);
   await dispatchPointer(page, 'pointerdown', pt);
   await dispatchPointer(page, 'pointercancel', pt);
@@ -456,7 +490,7 @@ test('pointercancel annule la note en attente (Zoom)', async ({ browser }) => {
 });
 
 test('deux doigts simultanés jouent deux notes (vue complète)', async ({ browser }) => {
-  const page = await openPianoWithCounter(browser, false);
+  const page = await openPianoWithCounter(browser, 0);
   const points = await page.evaluate(() => {
     const keys = [...document.querySelectorAll('.white-key')];
     const a = keys[20].getBoundingClientRect();
@@ -483,15 +517,16 @@ test('deux doigts simultanés jouent deux notes (vue complète)', async ({ brows
 test.describe('Lecture et préférence', () => {
   test.use({ viewport: { width: 1376, height: 1032 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 });
 
-  test('Do4, La0 (après défilement) et une noire sont jouables dans les deux modes', async ({ page }) => {
+  test('Do4, La0 (après défilement) et une noire sont jouables aux trois niveaux', async ({ page }) => {
     await page.goto(URL, { waitUntil: 'load' });
     const display = page.locator('#piano-note-display');
 
-    for (const zoom of [false, true]) {
-      if (zoom) {
-        await page.locator('#piano-view-toggle').click();
+    for (const level of [0, 1, 2]) {
+      if (level > 0) {
+        await page.locator('#piano-zoom-in').click();
         await page.waitForTimeout(250);
       }
+      await expect(page.locator('#piano-zoom-level')).toHaveText(LEVEL_LABELS[level]);
       // Do4
       await page.locator('.white-key.c-key').nth(3).click();
       await expect(display).toHaveText('Note : Do4');
@@ -516,68 +551,142 @@ test.describe('Lecture et préférence', () => {
     }
   });
 
-  test('la préférence Zoom est mémorisée, une valeur invalide est ignorée', async ({ page }) => {
+  test('la préférence est mémorisée et les anciennes valeurs du lot M sont migrées', async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
 
-    // Valeur valide : la page s'ouvre en Zoom.
+    const readLevel = () => page.locator('#piano-zoom-level').innerText();
+
+    // Ancienne valeur « full » (lot M) = niveau 0.
     await page.addInitScript(() => {
       if (window.localStorage.getItem('piano-interactif-view') === null) {
-        window.localStorage.setItem('piano-interactif-view', 'zoom');
+        window.localStorage.setItem('piano-interactif-view', 'full');
       }
     });
     await page.goto(URL, { waitUntil: 'load' });
-    await expect(page.locator('#piano-view-toggle')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#piano-zoom-level')).toHaveText(LEVEL_LABELS[0]);
+    expect((await keyboardMetrics(page)).white).toBeLessThan(ZOOM_WHITE);
+
+    // Ancienne valeur « zoom » (lot M) = niveau 1.
+    await page.evaluate(() => window.localStorage.setItem('piano-interactif-view', 'zoom'));
+    await page.reload({ waitUntil: 'load' });
+    await expect(page.locator('#piano-zoom-level')).toHaveText(LEVEL_LABELS[1]);
     expect((await keyboardMetrics(page)).white).toBe(ZOOM_WHITE);
 
-    // Valeur invalide : vue complète, sans erreur console.
+    // Nouvelle valeur « grand » = niveau 2.
+    await page.evaluate(() => window.localStorage.setItem('piano-interactif-view', 'grand'));
+    await page.reload({ waitUntil: 'load' });
+    await expect(page.locator('#piano-zoom-level')).toHaveText(LEVEL_LABELS[2]);
+    expect((await keyboardMetrics(page)).white).toBe(GRAND_WHITE);
+
+    // Valeur invalide : vue complète, sans erreur, valeur laissée intacte.
     await page.evaluate(() => window.localStorage.setItem('piano-interactif-view', 'n-importe-quoi'));
     await page.reload({ waitUntil: 'load' });
-    await expect(page.locator('#piano-view-toggle')).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('#piano-zoom-level')).toHaveText(LEVEL_LABELS[0]);
     expect((await keyboardMetrics(page)).white).toBeLessThan(ZOOM_WHITE);
     expect(await page.evaluate(() => window.localStorage.getItem('piano-interactif-view'))).toBe('n-importe-quoi');
 
-    // Le clic mémorise le nouveau choix.
-    await page.locator('#piano-view-toggle').click();
-    await page.waitForTimeout(250);
+    // Les boutons mémorisent le niveau atteint.
+    await page.locator('#piano-zoom-in').click();
+    await page.waitForTimeout(200);
     expect(await page.evaluate(() => window.localStorage.getItem('piano-interactif-view'))).toBe('zoom');
+    await page.locator('#piano-zoom-in').click();
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => window.localStorage.getItem('piano-interactif-view'))).toBe('grand');
+    await page.locator('#piano-zoom-out').click();
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => window.localStorage.getItem('piano-interactif-view'))).toBe('zoom');
+    expect(await readLevel()).toBe(LEVEL_LABELS[1]);
     expect(errors).toEqual([]);
   });
 });
 
-test.describe('Accessibilité du bouton', () => {
+test.describe('Accessibilité du réglage de zoom', () => {
   test.use({ viewport: { width: 1376, height: 1032 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 });
 
-  test('axe sans violation dans les deux modes', async ({ page }) => {
+  test('axe sans violation aux trois niveaux', async ({ page }) => {
     const AxeBuilder = (await import('@axe-core/playwright')).default;
     await page.goto(URL, { waitUntil: 'load' });
-    const full = await new AxeBuilder({ page }).include('#tool-piano').analyze();
-    expect(full.violations.map((v) => `${v.id} (${v.nodes.length})`)).toEqual([]);
-
-    await page.locator('#piano-view-toggle').click();
-    await page.waitForTimeout(300);
-    const zoom = await new AxeBuilder({ page }).include('#tool-piano').analyze();
-    expect(zoom.violations.map((v) => `${v.id} (${v.nodes.length})`)).toEqual([]);
+    for (let level = 0; level < 3; level += 1) {
+      if (level > 0) {
+        await page.locator('#piano-zoom-in').click();
+        await page.waitForTimeout(300);
+      }
+      const scan = await new AxeBuilder({ page }).include('#tool-piano').analyze();
+      expect(scan.violations.map((v) => `${v.id} (${v.nodes.length})`), `niveau ${level}`).toEqual([]);
+    }
   });
 
-  test('le bouton se rejoint au Tab et s\'active à Entrée et à Espace', async ({ page }) => {
+  test('les boutons se rejoignent au Tab et s\'activent à Entrée et à Espace', async ({ page }) => {
     await page.goto(URL, { waitUntil: 'load' });
     await page.locator('body').click({ position: { x: 4, y: 4 } });
-    // Parcours au Tab jusqu'au bouton (l'ordre dépend de la présence du lien retour).
+    // « − » est désactivé en vue complète : le premier bouton atteint est « + ».
     let reached = false;
-    for (let i = 0; i < 6 && !reached; i += 1) {
+    for (let i = 0; i < 8 && !reached; i += 1) {
       await page.keyboard.press('Tab');
-      reached = await page.evaluate(() => document.activeElement?.id === 'piano-view-toggle');
+      reached = await page.evaluate(() => document.activeElement?.id === 'piano-zoom-in');
     }
-    expect(reached, 'le bouton doit être atteignable au Tab').toBe(true);
+    expect(reached, 'le bouton « + » doit être atteignable au Tab').toBe(true);
 
     await page.keyboard.press('Enter');
-    await expect(page.locator('#piano-view-toggle')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#piano-zoom-level')).toHaveText(LEVEL_LABELS[1]);
     expect((await keyboardMetrics(page)).white).toBe(ZOOM_WHITE);
 
+    // Le bouton « − » devient actif : on l'atteint au Tab et on revient avec Espace.
+    reached = false;
+    for (let i = 0; i < 8 && !reached; i += 1) {
+      await page.keyboard.press('Tab');
+      reached = await page.evaluate(() => document.activeElement?.id === 'piano-zoom-out');
+    }
+    expect(reached, 'le bouton « − » doit être atteignable au Tab').toBe(true);
     await page.keyboard.press(' ');
-    await expect(page.locator('#piano-view-toggle')).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('#piano-zoom-level')).toHaveText(LEVEL_LABELS[0]);
     expect((await keyboardMetrics(page)).white).toBeLessThan(ZOOM_WHITE);
   });
+});
+
+test.describe('Marges de hauteur, polices macOS et polices plus hautes', () => {
+  const FONT_PROXY = '#tool-piano, #tool-piano * { font-family: Verdana, sans-serif !important; }';
+
+  for (const [label, withProxy] of [
+    ['polices macOS', false],
+    ['polices plus hautes (proxy CI)', true],
+  ] as const) {
+    for (const c of LARGE_CASES) {
+      test(`marge >= 0 aux trois niveaux — ${label} — ${c.width}×${c.height}`, async ({ browser }) => {
+        const ctx = await browser.newContext({
+          viewport: { width: c.width, height: c.height },
+          ...(c.mobile ? { hasTouch: true, isMobile: true, deviceScaleFactor: 2 } : {}),
+        });
+        if (withProxy) {
+          // La police est injectée dans le <head> de la réponse : elle est en place
+          // avant le premier calcul de l'outil, comme sur une CI aux polices plus hautes.
+          await ctx.route('**/education-musicale/**', async (route) => {
+            const response = await route.fetch();
+            const type = response.headers()['content-type'] ?? '';
+            if (!type.includes('text/html')) return route.fulfill({ response });
+            const body = (await response.text()).replace('</head>', `<style>${FONT_PROXY}</style></head>`);
+            return route.fulfill({
+              response,
+              body,
+              headers: { ...response.headers(), 'content-type': 'text/html; charset=utf-8' },
+            });
+          });
+        }
+        const page = await ctx.newPage();
+        await page.goto(URL, { waitUntil: 'load' });
+        for (let level = 0; level < 3; level += 1) {
+          if (level > 0) {
+            await page.locator('#piano-zoom-in').click();
+            await page.waitForTimeout(250);
+          }
+          const m = await keyboardMetrics(page);
+          expect(m.doc, `niveau ${level} : ${m.doc} px > ${m.innerH} px`).toBeLessThanOrEqual(m.innerH + 1);
+          expect(m.fully, `niveau ${level} : touches visibles`).toBeGreaterThanOrEqual(MIN_VISIBLE_KEYS);
+        }
+        await ctx.close();
+      });
+    }
+  }
 });
 
