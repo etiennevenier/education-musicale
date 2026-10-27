@@ -931,6 +931,36 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
         }
     }
 
+    /* ------------------------------------------------------------------
+       Définition des niveaux. L'index interne (1 à 6, `data-level`) reste
+       celui qui pilote la difficulté, les notes tirées et la géométrie de
+       la portée : il ne change pas ici. Le libellé affiché en est
+       explicitement découplé, car deux entrées partagent un même numéro
+       (1 Sol / 1 Fa, 2 Sol / 2 Fa) et 3 / 4 sont les niveaux « double clé ».
+       ------------------------------------------------------------------ */
+    interface LevelDefinition {
+        /** Numéro affiché dans l'en-tête du jeu (1 à 4), jamais l'index. */
+        displayLevel: number;
+        /** Précision sur la clé, pour composer un libellé complet. */
+        clefLabel: string;
+        /** Libellé complet (attribut title de l'indicateur de niveau). */
+        title: string;
+    }
+
+    const LEVEL_DEFINITIONS: Record<number, LevelDefinition> = {
+        1: { displayLevel: 1, clefLabel: 'Clé de Sol', title: 'Niveau 1 — Clé de Sol' },
+        2: { displayLevel: 1, clefLabel: 'Clé de Fa', title: 'Niveau 1 — Clé de Fa' },
+        3: { displayLevel: 2, clefLabel: 'Clé de Sol (lignes supplémentaires)', title: 'Niveau 2 — Clé de Sol (Lignes supp.)' },
+        4: { displayLevel: 2, clefLabel: 'Clé de Fa (lignes supplémentaires)', title: 'Niveau 2 — Clé de Fa (Lignes supp.)' },
+        5: { displayLevel: 3, clefLabel: 'Double clé', title: 'Niveau 3 — Évaluation (Double Clé)' },
+        6: { displayLevel: 4, clefLabel: 'Double clé élargie', title: 'Niveau 4 — Évaluation (Double Clé élargie)' },
+    };
+
+    function getLevelDefinition(level: number): LevelDefinition {
+        const definition = LEVEL_DEFINITIONS[level];
+        return definition ?? { displayLevel: level, clefLabel: '', title: `Niveau ${level}` };
+    }
+
     function getLevelPool(level: number): NoteObj[] {
         let pool: NoteObj[] = [];
         if (level === 1) { // Clé de Sol - Do3 au Do4
@@ -1022,16 +1052,9 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
         resultSection.classList.add('hidden');
         mustElement('#exercise-section').classList.remove('hidden');
 
-        const titles: Record<number, string> = {
-            1: "Niveau 1 — Clé de Sol",
-            2: "Niveau 1 — Clé de Fa",
-            3: "Niveau 2 — Clé de Sol (Lignes supp.)",
-            4: "Niveau 2 — Clé de Fa (Lignes supp.)",
-            5: "Niveau 3 — Évaluation (Double Clé)",
-            6: "Niveau 4 — Évaluation (Double Clé élargie)"
-        };
-        levelIndicator.textContent = String(lvl);
-        levelIndicator.title = titles[lvl] ?? `Niveau ${lvl}`;
+        const level = getLevelDefinition(lvl);
+        levelIndicator.textContent = String(level.displayLevel);
+        levelIndicator.title = level.title;
         progressIndicator.textContent = `1 / ${CHALLENGE_QUESTION_COUNT}`;
         scoreIndicator.textContent = `0 / ${CHALLENGE_QUESTION_COUNT}`;
         timerIndicator.textContent = '1:00';
