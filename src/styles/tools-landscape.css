@@ -800,3 +800,71 @@
     flex-wrap: nowrap !important;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Plein écran des outils : source unique
+   --------------------------------------------------------------------------
+   Ces règles vivaient dans src/layouts/Layout.astro, en doublon de celles de
+   ce fichier. Elles ne concernent que les pages qui passent
+   `mobileHeader="hidden"`, soit les 7 outils d'entraînement, seuls
+   importateurs de ce fichier. Conditions média et valeurs reprises à
+   l'identique.
+-------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+  body.mobile-header-hidden {
+    padding-top: 0.75rem;
+  }
+
+  body.mobile-header-hidden .site-header {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) and (orientation: landscape), (max-height: 500px) {
+  body.mobile-header-hidden .site-header {
+    display: none !important;
+  }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  body.mobile-header-hidden {
+    padding-top: 0.35rem;
+    padding-bottom: 0.4rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  body.mobile-header-hidden {
+    padding: 0 !important;
+    background-color: #ffffff;
+    color: #1f2a44;
+  }
+
+  body.mobile-header-hidden .site-header {
+    display: none !important;
+  }
+
+  body.mobile-header-hidden main.container {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: #ffffff;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  body.mobile-header-hidden main.container > * {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    margin: 0 !important;
+    padding: 8px !important;
+    background-color: #ffffff;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+}
