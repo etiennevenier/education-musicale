@@ -961,32 +961,48 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
         return definition ?? { displayLevel: level, clefLabel: '', title: `Niveau ${level}` };
     }
 
-    /** Hauteur plancher de la double portée : en dessous, on accepte un défilement. */
-    const MIN_DOUBLE_STAFF_HEIGHT = 220;
+    /* ------------------------------------------------------------------
+       Planchers de lisibilité (hauteur du SVG en px). En dessous, on garde le
+       plancher et on accepte un défilement : mieux vaut défiler que rendre les
+       notes illisibles.
+       Échelles minimales correspondantes (hauteur / hauteur du viewBox) :
+         portée simple  160 / 210 = 0,76  (écart entre lignes 22 → 16,8 px)
+         double portée  190 / 400 = 0,48  (écart entre lignes 22 → 10,5 px)
+       Référence déjà acceptée en production (mode paysage mobile 844×390 :
+       0,34, lignes espacées de 7,5 px) : les deux planchers restent au-dessus.
+       ------------------------------------------------------------------ */
+    const MIN_STAFF_HEIGHT = { simple: 160, double: 190 } as const;
 
     /* ------------------------------------------------------------------
-       Double portée (niveaux 3 et 4) : la partition se dimensionne sur la
-       hauteur réellement disponible. Son viewBox (480 × 400) est bien plus
-       haut que celui des portées simples (360 × 210) : à largeur de carte
-       égale, le SVG montait à 757 px et la page débordait de 95 à 495 px
-       selon la fenêtre (aucune contrainte de hauteur au-delà de 768 px de
-       haut, les blocs `100dvh` de tools-landscape.css ne couvrant que les
-       écrans bas). On mesure le dépassement du document et on retire
-       exactement ce surplus au SVG, en deux passes (la seconde absorbe le
-       reliquat) et en conservant le ratio du viewBox pour ne pas déformer
-       la portée. Aucune constante liée au header : on mesure le document réel.
-       Les portées simples (niveaux 1 et 2) ne sont pas touchées.
+       Toutes les portées (niveaux 1 à 4) : la partition se dimensionne sur la
+       hauteur réellement disponible. Le SVG est en `width: 100%; height: auto` :
+       sa hauteur découle de la largeur de la carte (jusqu'à 1024 px), soit
+       530 px pour une portée simple (viewBox 360 × 210) et 757 px pour une
+       double (480 × 400). Au-delà de 768 px de haut, aucune règle CSS ne la
+       contraint : les blocs `100dvh` de tools-landscape.css ne couvrent que les
+       écrans bas (max-height 768 px) et le portrait smartphone. D'où 268 px de
+       débordement à 1440×900 (niveau 1) et 136 à 334 px sur iPad paysage.
+
+       Méthode : on mesure le dépassement réel du document et on retire ce
+       surplus au SVG en deux passes (la seconde absorbe l'arrondi), en fixant
+       `max-width` au prorata du viewBox — le ratio est donc conservé et la
+       portée n'est jamais déformée (`preserveAspectRatio="xMidYMid meet"`).
+       Aucune constante liée au header : la mesure se fait sur le document réel,
+       ce qui suit le header, la largeur de carte et les deux géométries.
+       Quand il reste de la place (aucun dépassement), on ne touche à rien : le
+       SVG garde sa taille naturelle, qui occupe déjà toute la largeur
+       disponible — la partition ne rétrécit donc jamais plus que nécessaire.
        ------------------------------------------------------------------ */
-    function limitDoubleStaffHeight(svg: SVGSVGElement, isDouble: boolean): void {
+    function fitStaffToViewport(svg: SVGSVGElement, isDouble: boolean): void {
         svg.style.removeProperty('max-height');
         svg.style.removeProperty('max-width');
-        if (!isDouble) return;
 
         const box = (svg.getAttribute('viewBox') ?? '').trim().split(/\s+/).map(Number);
         const vbWidth = box[2];
         const vbHeight = box[3];
         if (!vbWidth || !vbHeight) return;
         const ratio = vbWidth / vbHeight;
+        const floor = isDouble ? MIN_STAFF_HEIGHT.double : MIN_STAFF_HEIGHT.simple;
 
         for (let pass = 0; pass < 2; pass += 1) {
             const overflow = document.documentElement.scrollHeight - window.innerHeight;
@@ -994,16 +1010,11 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
             const current = svg.getBoundingClientRect().height;
             const target = Math.round(current - overflow);
             if (target >= current) return;
-            if (target < MIN_DOUBLE_STAFF_HEIGHT) {
-                // Trop petit pour rester lisible : plancher + défilement accepté.
-                if (current > MIN_DOUBLE_STAFF_HEIGHT) {
-                    svg.style.maxHeight = `${MIN_DOUBLE_STAFF_HEIGHT}px`;
-                    svg.style.maxWidth = `${Math.round(MIN_DOUBLE_STAFF_HEIGHT * ratio)}px`;
-                }
-                return;
-            }
-            svg.style.maxHeight = `${target}px`;
-            svg.style.maxWidth = `${Math.round(target * ratio)}px`;
+            // Jamais sous le plancher : au-delà, le défilement est accepté.
+            const height = Math.max(target, floor);
+            svg.style.maxHeight = `${height}px`;
+            svg.style.maxWidth = `${Math.round(height * ratio)}px`;
+            if (target <= floor) return;
         }
     }
 
@@ -1293,8 +1304,8 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
             : { x1: noteX - stemOffset, y1: noteY, x2: noteX - stemOffset, y2: noteY + stemLength };
         svg.appendChild(el('line', { ...stem, stroke: '#0f172a', 'stroke-width': inkWidth }));
 
-        // Dernière étape : contenir la double portée dans la hauteur de la fenêtre.
-        limitDoubleStaffHeight(svg, isDouble);
+        // Dernière étape : contenir la portée dans la hauteur de la fenêtre.
+        fitStaffToViewport(svg, isDouble);
     }
 
     function checkAnswer(selectedNote: string | null): void {
@@ -1381,17 +1392,27 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
 
         window.addEventListener('pagehide', () => session?.cancel());
 
-        // Le passage portrait/paysage change la géométrie de la portée (simple ou double) :
-        // on redessine la note en cours, coalescé sur une frame et nettoyé à la sortie de page.
+        // Le passage portrait/paysage change la géométrie de la portée (simple ou double)
+        // et, sur iPad Safari, l'apparition/disparition des barres d'onglets et de
+        // favoris modifie innerHeight : on redessine la note en cours (donc on recalcule
+        // la hauteur disponible), coalescé sur une frame et nettoyé à la sortie de page.
+        // `visualViewport` complète `window.resize`, qui ne se déclenche pas toujours
+        // quand seule la zone visible change. Aucune boucle possible : le redessin ne
+        // modifie que des styles du SVG, jamais la taille de la fenêtre, et une rafale
+        // d'événements ne produit qu'un seul redessin (un par frame).
         const staffResizeAbort = new AbortController();
         let staffResizeFrame = 0;
-        window.addEventListener('resize', () => {
+        const redrawOnViewportChange = (): void => {
             if (!currentNoteObj || staffResizeFrame) return;
             staffResizeFrame = window.requestAnimationFrame(() => {
                 staffResizeFrame = 0;
                 if (currentNoteObj) drawStaff(currentNoteObj);
             });
-        }, { signal: staffResizeAbort.signal });
+        };
+        window.addEventListener('resize', redrawOnViewportChange, { signal: staffResizeAbort.signal });
+        window.visualViewport?.addEventListener('resize', redrawOnViewportChange, {
+            signal: staffResizeAbort.signal,
+        });
         window.addEventListener('pagehide', () => {
             if (staffResizeFrame) window.cancelAnimationFrame(staffResizeFrame);
             staffResizeAbort.abort();
