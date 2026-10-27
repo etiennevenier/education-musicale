@@ -90,6 +90,14 @@ import { relativeUrl } from '../../utils/navigation';
         flex-direction: column;
         gap: 18px;
     }
+/* Mode resserré : quand la zone de dessin ne peut plus descendre sous son
+   plancher de lisibilité (iPad paysage 1194×834 avec des polices plus hautes,
+   cas de la CI Linux), on récupère 32 px sur les quatre espacements verticaux
+   de l'outil plutôt que de laisser défiler la page. La classe est posée par
+   fitBoardToViewport(), uniquement dans ce cas précis. */
+#tool-clefs.is-dense .app {
+        gap: 10px;
+    }
 #tool-clefs .app > .tool-back {
         margin-bottom: 0;
     }
@@ -711,6 +719,8 @@ import { relativeUrl } from '../../utils/navigation';
        ------------------------------------------------------------------ */
     const MIN_BOARD_HEIGHT = 150;
     const BOARD_RATIO = 360 / 252;
+    const MAX_FIT_PASSES = 3;   // normal, resserrement, ajustement du reliquat
+    let denseApplied = false;
 
     /** Zones où la zone de dessin garde sa mise en page actuelle. */
     function keepsDefaultBoardLayout(): boolean {
@@ -728,26 +738,51 @@ import { relativeUrl } from '../../utils/navigation';
         board.style.removeProperty('max-height');
         sheet.style.removeProperty('width');
         sheet.style.removeProperty('margin-inline');
+        if (denseApplied) {
+            root.classList.remove('is-dense');
+            denseApplied = false;
+        }
     }
 
+    /** Applique une hauteur de dessin (largeur explicite : `height: auto` la déduit du ratio). */
+    function applyBoardHeight(height: number): void {
+        board.style.width = Math.round(height * BOARD_RATIO) + 'px';
+        board.style.maxWidth = '100%';
+        sheet.style.width = 'fit-content';
+        sheet.style.marginInline = 'auto';
+    }
+
+    /* Mesure le dépassement réel du document et retire ce surplus à la zone de
+       dessin, en trois passes bornées :
+       1) réduction normale ;
+       2) si la zone devrait descendre sous son plancher de lisibilité, on resserre
+          les espacements verticaux de l'outil (classe `is-dense`, -32 px) et on
+          remesure — c'est ce qui rend la CI Linux déterministe : ses polices plus
+          hautes ajoutent ~15 px au chrome, ce qui faisait buter sur le plancher et
+          laissait 7 px de défilement ;
+       3) ajustement du reliquat d'arrondi.
+       La boucle est bornée à 3 itérations : aucun risque de boucle infinie. */
     function fitBoardToViewport(): void {
         resetBoardFit();
         if (keepsDefaultBoardLayout()) return;
 
-        for (let pass = 0; pass < 2; pass += 1) {
+        for (let pass = 0; pass < MAX_FIT_PASSES; pass += 1) {
             const overflow = document.documentElement.scrollHeight - window.innerHeight;
             if (overflow <= 0) return;
             const current = board.getBoundingClientRect().height;
             const target = Math.round(current - overflow);
             if (target >= current) return;
-            const height = Math.max(target, MIN_BOARD_HEIGHT);
-            // Largeur explicite : `height: auto` la déduit du ratio du viewBox,
-            // ce qui évite le conflit 100 % / fit-content du cadre.
-            board.style.width = Math.round(height * BOARD_RATIO) + 'px';
-            board.style.maxWidth = '100%';
-            sheet.style.width = 'fit-content';
-            sheet.style.marginInline = 'auto';
-            if (target <= MIN_BOARD_HEIGHT) return;
+            if (target < MIN_BOARD_HEIGHT) {
+                if (!denseApplied) {
+                    // On resserre l'espacement de l'outil et on remesure.
+                    denseApplied = true;
+                    root.classList.add('is-dense');
+                    continue;
+                }
+                applyBoardHeight(MIN_BOARD_HEIGHT);
+                return;   // plancher atteint : défilement accepté
+            }
+            applyBoardHeight(target);
         }
     }
 
@@ -772,6 +807,15 @@ import { relativeUrl } from '../../utils/navigation';
         if (boardResizeFrame) window.cancelAnimationFrame(boardResizeFrame);
         boardResizeAbort.abort();
     }, { once: true });
+
+    // Filet de sécurité : si les métriques de police évoluaient après le premier
+    // calcul (police système chargée tardivement, future police web), on réadapte
+    // une fois les polices prêtes. Aucun impact quand elles le sont déjà.
+    document.fonts?.ready
+        .then(() => {
+            if (!boardResizeAbort.signal.aborted) fitBoardToViewport();
+        })
+        .catch(() => {});
 
     /* ---------- Portée, numéros de lignes, nom de la note ---------- */
     function buildStaff() {
