@@ -84,4 +84,4 @@ export const evaluate = (state: SongState): Result => {
 
 /** Lien de recherche YouTube pour écouter un morceau. */
 export const getListenUrl = (song: Pick<EngagementSong, 'artiste' | 'titre'>): string =>
-  `https://www.youtube.com/results?search_query=${encodeURIComponent(`${song.artiste}${song.titre} audio`)}`;
+  `https://www.youtube.com/results?search_query=${encodeURIComponent(`${song.artiste} ${song.titre} audio`)}`;
