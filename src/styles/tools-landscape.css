@@ -306,59 +306,59 @@
      curseur et explication toujours visibles.
   ------------------------------------------------------------------ */
   body.mobile-header-hidden #tool-clefs .app {
-    flex: 1 1 auto !important;
-    display: flex !important;
-    flex-direction: column !important;
-    width: 100% !important;
-    max-width: none !important;
-    min-height: 0 !important;
-    margin: 0 !important;
-    gap: 1.25rem !important;
-    justify-content: center !important;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: none;
+    min-height: 0;
+    margin: 0;
+    gap: 1.25rem;
+    justify-content: center;
   }
 
   body.mobile-header-hidden #tool-clefs .app > .tool-back {
-    align-self: flex-start !important;
-    flex: 0 0 auto !important;
-    margin: 0 0 4px !important;
+    align-self: flex-start;
+    flex: 0 0 auto;
+    margin: 0 0 4px;
   }
 
   body.mobile-header-hidden #tool-clefs .top {
-    flex: 0 0 auto !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-    gap: 8px !important;
+    flex: 0 0 auto;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
   }
 
   body.mobile-header-hidden #tool-clefs .top .ghost-hint {
-    display: none !important;
+    display: none;
   }
 
   body.mobile-header-hidden #tool-clefs .tabs {
-    width: auto !important;
-    flex: 1 1 auto !important;
-    min-width: 0 !important;
+    width: auto;
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   body.mobile-header-hidden #tool-clefs .tab {
-    min-height: 36px !important;
-    padding: 6px 14px !important;
-    font-size: 15px !important;
+    min-height: 36px;
+    padding: 6px 14px;
+    font-size: 15px;
   }
 
   body.mobile-header-hidden #tool-clefs .sheet {
-    flex: 1 1 0 !important;
+    flex: 1 1 0;
     height: 0 !important;
-    min-height: 120px !important;
+    min-height: 120px;
     max-height: 60dvh !important;
     width: 100% !important;
     max-width: 100% !important;
     margin-inline: auto !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    overflow: hidden !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
   }
 
   body.mobile-header-hidden #tool-clefs #cl-board {
@@ -369,42 +369,42 @@
   }
 
   body.mobile-header-hidden #tool-clefs .slider-row {
-    flex: 0 0 auto !important;
-    gap: 6px 12px !important;
+    flex: 0 0 auto;
+    gap: 6px 12px;
   }
 
   body.mobile-header-hidden #tool-clefs .slider {
-    flex: 1 1 220px !important;
-    min-width: 0 !important;
-    height: 28px !important;
+    flex: 1 1 220px;
+    min-width: 0;
+    height: 28px;
   }
 
   body.mobile-header-hidden #tool-clefs .pct {
-    font-size: 15px !important;
+    font-size: 15px;
   }
 
   /* Prioritaire sur la règle mobile qui masque le bloc explicatif. */
   body.mobile-header-hidden #tool-clefs .caption {
-    display: block !important;
-    flex: 0 0 auto !important;
-    min-height: 0 !important;
-    max-height: 22dvh !important;
-    padding: 8px 12px !important;
-    border-left-width: 6px !important;
-    border-radius: 10px !important;
-    overflow: hidden !important;
+    display: block;
+    flex: 0 0 auto;
+    min-height: 0;
+    max-height: 22dvh;
+    padding: 8px 12px;
+    border-left-width: 6px;
+    border-radius: 10px;
+    overflow: hidden;
   }
 
   body.mobile-header-hidden #tool-clefs .caption h2 {
-    margin-bottom: 2px !important;
-    font-size: 16px !important;
-    line-height: 1.2 !important;
+    margin-bottom: 2px;
+    font-size: 16px;
+    line-height: 1.2;
   }
 
   body.mobile-header-hidden #tool-clefs .caption p {
-    font-size: 14px !important;
-    line-height: 1.3 !important;
-    max-width: none !important;
+    font-size: 14px;
+    line-height: 1.3;
+    max-width: none;
   }
 
   /* ------------------------------------------------------------------
