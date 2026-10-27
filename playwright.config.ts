@@ -10,7 +10,10 @@ export default defineConfig({
     headless: true,
   },
   webServer: {
-    command: 'npm run build && npx astro preview --port 4323',
+    // En CI, dist/ est déjà construit par l'étape de build : on ne rebuilde pas.
+    command: process.env.CI
+      ? 'npx astro preview --port 4323'
+      : 'npm run build && npx astro preview --port 4323',
     url: 'http://localhost:4323/education-musicale/',
     reuseExistingServer: false,
     timeout: 180000,
