@@ -42,6 +42,11 @@
   /* Verrouillage de la fenêtre : aucun scroll vertical possible. */
   html:has(body.mobile-header-hidden),
   body.mobile-header-hidden {
+    /* Valeur de `gap` partagée par les gabarits paysage (9 usages).
+       Surchargeable par outil si un besoin spécifique apparaît. */
+    --tool-gap: 8px;
+    /* Interligne des blocs de jeu (6 usages). */
+    --tool-gap-lg: 1.25rem;
     height: 100dvh !important;
     max-height: 100dvh !important;
     min-height: 0 !important;
@@ -124,7 +129,7 @@
     width: 100%;
     max-width: none;
     min-height: 0;
-    gap: 1.25rem;
+    gap: var(--tool-gap-lg, 1.25rem);
   }
 
   body.mobile-header-hidden #tool-piano .piano-body > .tool-back {
@@ -315,7 +320,7 @@
     max-width: none;
     min-height: 0;
     margin: 0;
-    gap: 1.25rem;
+    gap: var(--tool-gap-lg, 1.25rem);
     justify-content: center;
   }
 
@@ -330,7 +335,7 @@
     flex-direction: row;
     flex-wrap: nowrap;
     align-items: center;
-    gap: 8px;
+    gap: var(--tool-gap, 8px);
   }
 
   body.mobile-header-hidden #tool-clefs .top .ghost-hint {
@@ -421,7 +426,7 @@
     max-width: none;
     min-height: 0;
     margin: 0;
-    gap: 1.25rem;
+    gap: var(--tool-gap-lg, 1.25rem);
     justify-content: center;
   }
 
@@ -526,14 +531,14 @@
     flex-direction: column;
     justify-content: center;
     min-height: 0;
-    gap: 8px;
+    gap: var(--tool-gap, 8px);
     overflow: hidden;
   }
 
   body.mobile-header-hidden #tool-clavier-notes .cn-levels {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    gap: var(--tool-gap, 8px);
     min-height: 0;
   }
 
@@ -548,7 +553,7 @@
     flex-direction: column;
     justify-content: center;
     min-height: 0;
-    gap: 1.25rem;
+    gap: var(--tool-gap-lg, 1.25rem);
   }
 
   body.mobile-header-hidden #tool-clavier-notes .cn-hud {
@@ -615,14 +620,14 @@
     flex-direction: column;
     justify-content: center;
     min-height: 0;
-    gap: 8px;
+    gap: var(--tool-gap, 8px);
     overflow: hidden;
   }
 
   body.mobile-header-hidden #tool-oreille-nom .on-levels {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
+    gap: var(--tool-gap, 8px);
     min-height: 0;
   }
 
@@ -637,7 +642,7 @@
     flex-direction: column;
     justify-content: center;
     min-height: 0;
-    gap: 1.25rem;
+    gap: var(--tool-gap-lg, 1.25rem);
   }
 
   body.mobile-header-hidden #tool-oreille-nom .on-hud {
@@ -651,7 +656,7 @@
   body.mobile-header-hidden #tool-oreille-nom .on-audio {
     flex: 0 0 auto;
     display: flex;
-    gap: 8px;
+    gap: var(--tool-gap, 8px);
   }
 
   body.mobile-header-hidden #tool-oreille-nom .on-audio-btn {
@@ -700,14 +705,14 @@
     flex-direction: column;
     justify-content: center;
     min-height: 0;
-    gap: 8px;
+    gap: var(--tool-gap, 8px);
     overflow: hidden;
   }
 
   body.mobile-header-hidden #tool-oreille-clavier .oc-levels {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
+    gap: var(--tool-gap, 8px);
     min-height: 0;
   }
 
@@ -722,7 +727,7 @@
     flex-direction: column;
     justify-content: center;
     min-height: 0;
-    gap: 1.25rem;
+    gap: var(--tool-gap-lg, 1.25rem);
   }
 
   body.mobile-header-hidden #tool-oreille-clavier .oc-hud {
@@ -784,7 +789,7 @@
   body.mobile-header-hidden #tool-rhythm .rhythm-top {
     flex-wrap: nowrap;
     justify-content: space-between;
-    gap: 8px;
+    gap: var(--tool-gap, 8px);
     margin: 0 0 4px;
   }
 
