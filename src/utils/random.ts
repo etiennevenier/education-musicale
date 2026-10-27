@@ -10,3 +10,14 @@ export function shuffle<T>(items: readonly T[]): T[] {
   }
   return result;
 }
+
+/**
+ * Mélange les enfants d'un conteneur (un seul appel à shuffle, donc autant
+ * d'appels à Math.random qu'un mélange de tableau de même taille), les réinsère
+ * dans l'ordre mélangé et renvoie la liste mélangée.
+ */
+export function shuffleChildren(container: HTMLElement): HTMLElement[] {
+  const children = shuffle(Array.from(container.children) as HTMLElement[]);
+  children.forEach((child) => container.appendChild(child));
+  return children;
+}

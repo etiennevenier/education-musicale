@@ -222,7 +222,7 @@ const styles = rawStyles.map(withImage);
     type HeatLevel,
   } from '../utils/rockStageEvaluation';
   import { plural } from '../utils/plural';
-  import { shuffle } from '../utils/random';
+  import { shuffleChildren } from '../utils/random';
 
   const STORAGE_KEY = 'rock-stage-builder:discovered';
 
@@ -273,12 +273,6 @@ const styles = rawStyles.map(withImage);
     const galleryCards = Array.from(root.querySelectorAll<HTMLElement>('[data-style-card]'));
     const intruderNote = root.querySelector<HTMLElement>('[data-intruder-note]');
     const galleryReset = root.querySelector<HTMLButtonElement>('[data-gallery-reset]');
-
-    const shuffleChildren = (container: HTMLElement) => {
-      const children = shuffle(Array.from(container.children));
-
-      children.forEach((child) => container.appendChild(child));
-    };
 
     // La position des cartes change à chaque chargement de page.
     root.querySelectorAll<HTMLElement>('[data-rack-grid]').forEach(shuffleChildren);

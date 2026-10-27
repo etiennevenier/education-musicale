@@ -196,7 +196,7 @@ import { gifs, musics, analyses } from '../data/laboCinematiqueData';
 
 <script>
   import { onAudioEvent, playAudio, stopAudio } from '../utils/audioManager';
-  import { shuffle } from '../utils/random';
+  import { shuffleChildren } from '../utils/random';
   import type { AnalysisId, GifId, MusicId } from '../data/laboCinematiqueData';
   const {
     analysisNames,
@@ -255,21 +255,16 @@ import { gifs, musics, analyses } from '../data/laboCinematiqueData';
     /**
      * Mélange l'ordre des extraits à chaque chargement de page.
      * Les libellés « Extrait 1/2/3 » suivent la position et ne révèlent pas le caractère de la musique.
+     * Les enfants de .labo-tracks sont exactement les boutons [data-music] du root,
+     * dans le même ordre : mélanger le conteneur revient à mélanger trackButtons.
      */
-    const shuffleTracks = () => {
-      const container = root.querySelector<HTMLElement>('.labo-tracks');
-      if (!container) return;
-
-      const ordered = shuffle([...trackButtons]);
-
-      ordered.forEach((button, index) => {
-        container.append(button);
+    const tracksContainer = root.querySelector<HTMLElement>('.labo-tracks');
+    if (tracksContainer) {
+      shuffleChildren(tracksContainer).forEach((button, index) => {
         const name = button.querySelector<HTMLElement>('.labo-track-name');
         if (name) name.textContent = `Extrait ${index + 1}`;
       });
-    };
-
-    shuffleTracks();
+    }
 
     if (reduceMotion) {
       root.querySelectorAll<HTMLVideoElement>('video').forEach((video) => video.pause());
