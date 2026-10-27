@@ -9,6 +9,8 @@
  * ce qui permet de le réutiliser dans n'importe quel outil.
  */
 
+import { formatTime } from './formatTime';
+
 /** Nombre de réponses attendues pour terminer un challenge. */
 export const CHALLENGE_QUESTION_COUNT = 10;
 
@@ -42,9 +44,13 @@ export interface ChallengeHandlers {
   onEnd?: (result: ChallengeResult) => void;
 }
 
+/**
+ * Format « m:ss » : choisit l'arrondi puis délègue à formatTime, commun à tout
+ * le site. Les entrées non finies (NaN, ±Infinity) sont donc ramenées à « 0:00 »
+ * comme partout ailleurs (avant : « NaN:NaN », « Infinity:NaN »).
+ */
 function formatMmSs(ms: number, round: (n: number) => number): string {
-  const total = Math.max(0, round(ms / 1000));
-  return `${Math.floor(total / 60)}:${(total % 60).toString().padStart(2, '0')}`;
+  return formatTime(Math.max(0, round(ms / 1000)));
 }
 
 /** Durée en « m:ss » (ex. 24 300 ms → « 0:24 »). */

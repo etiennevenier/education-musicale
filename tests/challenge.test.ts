@@ -52,10 +52,11 @@ describe('formatClock / formatCountdown', () => {
   });
 
   it('gère les entrées non finies comme formatTime (0:00)', () => {
-    expect(formatClock(Number.NaN)).toBe('NaN:NaN');
-    expect(formatCountdown(Number.NaN)).toBe('NaN:NaN');
-    expect(formatClock(Number.POSITIVE_INFINITY)).toBe('Infinity:NaN');
-    expect(formatCountdown(Number.POSITIVE_INFINITY)).toBe('Infinity:NaN');
+    // Comportement aligné sur formatTime() : plus de « NaN:NaN » ni d'« Infinity:NaN ».
+    expect(formatClock(Number.NaN)).toBe('0:00');
+    expect(formatCountdown(Number.NaN)).toBe('0:00');
+    expect(formatClock(Number.POSITIVE_INFINITY)).toBe('0:00');
+    expect(formatCountdown(Number.POSITIVE_INFINITY)).toBe('0:00');
     expect(formatClock(Number.NEGATIVE_INFINITY)).toBe('0:00');
     expect(formatCountdown(Number.NEGATIVE_INFINITY)).toBe('0:00');
   });
