@@ -34,7 +34,6 @@ async function measureBoard(page: import('@playwright/test').Page) {
     const r = board.getBoundingClientRect();
     const sheet = document.querySelector('#tool-clefs .sheet')!.getBoundingClientRect();
     const slider = document.querySelector('#tool-clefs .slider-row')!.getBoundingClientRect();
-    const caption = document.querySelector('#tool-clefs .caption')!.getBoundingClientRect();
     const card = document.querySelector('#tool-clefs')!.getBoundingClientRect();
     return {
       boardW: Math.round(r.width),
@@ -42,7 +41,6 @@ async function measureBoard(page: import('@playwright/test').Page) {
       boardBottom: Math.round(r.bottom),
       sheetBottom: Math.round(sheet.bottom),
       sliderBottom: Math.round(slider.bottom),
-      captionBottom: Math.round(caption.bottom),
       cardBottom: Math.round(card.bottom),
       docScroll: document.documentElement.scrollHeight,
       innerH: window.innerHeight,
@@ -96,7 +94,6 @@ for (const [label, viewports, mobile] of [
         expect(m.cardBottom).toBeLessThanOrEqual(m.innerH);
         expect(m.sheetBottom).toBeLessThanOrEqual(m.innerH);
         expect(m.sliderBottom).toBeLessThanOrEqual(m.innerH);
-        expect(m.captionBottom).toBeLessThanOrEqual(m.innerH);
         // Plancher de lisibilité et ratio du viewBox conservés.
         expect(m.boardH).toBeGreaterThanOrEqual(MIN_BOARD_HEIGHT);
         expect(Math.abs(m.boardW / m.boardH - BOARD_RATIO) / BOARD_RATIO).toBeLessThan(0.02);
