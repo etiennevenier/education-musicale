@@ -3,6 +3,13 @@
 export interface TabSetupOptions {
   tabSelector?: string;
   panelSelector?: string;
+  /**
+   * Nom (dataset) de l'attribut du panneau qui porte l'identifiant de son onglet :
+   * `panel` = data-panel (par défaut), `mainPanel` = data-main-panel.
+   */
+  panelKey?: string;
+  /** Garde l'onglet ouvert dans l'adresse (#id) et le rouvre au chargement de la page. */
+  syncHash?: boolean;
   before?: (tab: HTMLButtonElement) => void;
   after?: (tab: HTMLButtonElement) => void;
 }
@@ -22,7 +29,14 @@ export function setupMainTabs(
   root: HTMLElement,
   options: TabSetupOptions = {},
 ): TabsController | null {
-  const { tabSelector = '.main-tab', panelSelector = '[data-panel]', before, after } = options;
+  const {
+    tabSelector = '.main-tab',
+    panelSelector = '[data-panel]',
+    panelKey = 'panel',
+    syncHash = false,
+    before,
+    after,
+  } = options;
   const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>(tabSelector));
   const panels = Array.from(root.querySelectorAll<HTMLElement>(panelSelector));
 
@@ -32,7 +46,7 @@ export function setupMainTabs(
   const base = `tabs-${++instanceCount}`;
   tabs.forEach((tab) => {
     const id = tab.dataset.mainTab ?? '';
-    const panel = panels.find((p) => p.dataset.panel === id);
+    const panel = panels.find((p) => p.dataset[panelKey] === id);
     if (!tab.hasAttribute('role')) tab.setAttribute('role', 'tab');
     if (!tab.id) tab.id = `${base}-tab-${id}`;
     if (!panel) return;
@@ -52,35 +66,43 @@ export function setupMainTabs(
 
     const selectedTabId = tab.dataset.mainTab;
     panels.forEach((panel) => {
-      panel.hidden = panel.dataset.panel !== selectedTabId;
+      panel.hidden = panel.dataset[panelKey] !== selectedTabId;
     });
   };
 
   const selectTab = (tab: HTMLButtonElement) => {
     before?.(tab);
     applySelection(tab);
+    if (syncHash && tab.dataset.mainTab) history.replaceState(null, '', `#${tab.dataset.mainTab}`);
     after?.(tab);
   };
 
-  // État initial : onglet déjà actif dans le HTML, sinon le premier.
+  // État initial : onglet désigné par l'adresse (#id, si syncHash), sinon déjà
+  // actif dans le HTML, sinon le premier.
+  const fromHash = syncHash
+    ? tabs.find((tab) => tab.dataset.mainTab && `#${tab.dataset.mainTab}` === window.location.hash)
+    : undefined;
   const initial =
+    fromHash ??
     tabs.find(
       (tab) => tab.classList.contains('is-active') || tab.getAttribute('aria-selected') === 'true',
-    ) ?? tabs[0]!;
+    ) ??
+    tabs[0]!;
   applySelection(initial);
 
   tabs.forEach((tab, index) => {
     tab.addEventListener('click', () => selectTab(tab));
 
     tab.addEventListener('keydown', (event) => {
-      if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
+      // Haut/Bas aussi : sur téléphone, les onglets sont empilés en colonne.
+      if (!['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
       event.preventDefault();
 
       let nextIndex = index;
       if (event.key === 'Home') nextIndex = 0;
       else if (event.key === 'End') nextIndex = tabs.length - 1;
-      else if (event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
-      else if (event.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length;
+      else if (event.key === 'ArrowRight' || event.key === 'ArrowDown') nextIndex = (index + 1) % tabs.length;
+      else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') nextIndex = (index - 1 + tabs.length) % tabs.length;
 
       const nextTab = tabs[nextIndex];
       if (nextTab) {

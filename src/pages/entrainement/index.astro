@@ -41,7 +41,11 @@ import { relativeUrl } from '../../utils/navigation';
           aria-label={`Ouvrir l'outil ${tool.title}`}
         >
           <span class="training-icon" aria-hidden="true">{tool.icon}</span>
-          <span class="training-card-title">{tool.title}</span>
+          <span class="training-card-text">
+            <span class="training-card-title">{tool.title}</span>
+            {/* Une ligne pour savoir ce que fait l'outil (masquée sur téléphone, où les cartes restent compactes). */}
+            <span class="training-card-desc">{tool.description}</span>
+          </span>
         </a>
       ))}
     </div>
@@ -264,10 +268,23 @@ import { relativeUrl } from '../../utils/navigation';
     line-height: 1;
   }
 
+  .training-card-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+  }
+
   .training-card-title {
     font-size: 1.15rem;
     font-weight: 600;
     color: var(--text);
+  }
+
+  .training-card-desc {
+    font-size: 0.85rem;
+    line-height: 1.35;
+    color: var(--text-muted);
   }
 
   /* Mobile et paysage bas : cartes compactes, visibles sans défilement */
@@ -311,6 +328,10 @@ import { relativeUrl } from '../../utils/navigation';
 
     .training-card-title {
       font-size: 1rem;
+    }
+
+    .training-card-desc {
+      display: none;
     }
   }
 </style>

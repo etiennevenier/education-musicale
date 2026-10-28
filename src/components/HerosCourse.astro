@@ -244,69 +244,17 @@ const radioFranceLink = {
 </div>
 
 <script>
+  // Onglets : même code que les autres séquences (src/utils/tabs.ts) ; l'onglet ouvert reste dans l'adresse (#id).
+  import { setupMainTabs } from '../utils/tabs';
+
   const course = document.getElementById('heros-course');
-
   if (course) {
-    const tabs = Array.from(
-      course.querySelectorAll<HTMLButtonElement>('.main-tabs [role="tab"]')
-    );
-    const panels = Array.from(
-      course.querySelectorAll<HTMLElement>('.main-panel[data-main-panel]')
-    );
-
-    function activateTab(id: string, focusTab = false) {
-      tabs.forEach((tab) => {
-        const isActive = tab.dataset.mainTab === id;
-        tab.setAttribute('aria-selected', String(isActive));
-        tab.tabIndex = isActive ? 0 : -1;
-        tab.classList.toggle('is-active', isActive);
-        if (isActive && focusTab) tab.focus();
-      });
-
-      panels.forEach((panel) => {
-        const isActive = panel.dataset.mainPanel === id;
-        panel.hidden = !isActive;
-        panel.classList.toggle('is-active', isActive);
-      });
-    }
-
-    function selectTab(id: string, focusTab = false) {
-      if (!id) return;
-      activateTab(id, focusTab);
-      history.replaceState(null, '', `#${id}`);
-    }
-
-    tabs.forEach((tab) => {
-      tab.addEventListener('click', () => {
-        selectTab(tab.dataset.mainTab || '');
-      });
-
-      tab.addEventListener('keydown', (event) => {
-        const currentIndex = tabs.indexOf(tab);
-        let nextIndex: number | null = null;
-
-        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
-          nextIndex = (currentIndex + 1) % tabs.length;
-        } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
-          nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
-        } else if (event.key === 'Home') {
-          nextIndex = 0;
-        } else if (event.key === 'End') {
-          nextIndex = tabs.length - 1;
-        }
-
-        if (nextIndex !== null) {
-          event.preventDefault();
-          const nextTab = tabs[nextIndex];
-          selectTab(nextTab.dataset.mainTab || '', true);
-        }
-      });
+    setupMainTabs(course, {
+      tabSelector: '.main-tabs .main-tab',
+      panelSelector: '.main-panel[data-main-panel]',
+      panelKey: 'mainPanel',
+      syncHash: true,
     });
-
-    const initialTab = window.location.hash.replace('#', '');
-    if (tabs.some((tab) => tab.dataset.mainTab === initialTab)) {
-      activateTab(initialTab);
-    }
   }
 </script>
 

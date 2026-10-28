@@ -15,7 +15,8 @@ interface Props {
 const { level, sequence } = Astro.props;
 ---
 
-<Layout title={`${level.title} — ${sequence.title}`}>
+{/* Retour vers la page du niveau (séquence du moment + Entraînement), pas vers l'accueil. */}
+<Layout title={`${level.title} — ${sequence.title}`} backLabel={level.title} backHref={`/${level.slug}`}>
   <div class="sequence-container">
     <header class="sequence-header">
       <span class="sequence-badge">{level.title}</span>

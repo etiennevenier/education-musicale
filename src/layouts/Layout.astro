@@ -7,6 +7,8 @@ interface Props {
   description?: string;
   wide?: boolean;
   backLabel?: string;
+  /** Destination du lien retour (sans base) : l'accueil par défaut. */
+  backHref?: string;
   /** En-tête du site sur mobile : complet, réduit au lien retour, ou masqué. */
   mobileHeader?: 'full' | 'minimal' | 'hidden';
   /** Signature discrète affichée sous le titre du site (page d'accueil). */
@@ -18,6 +20,7 @@ const {
   description = "Site d'éducation musicale",
   wide = false,
   backLabel = 'Changer de niveau',
+  backHref = '/',
   mobileHeader = 'full',
   siteSubtitle,
 } = Astro.props;
@@ -55,7 +58,7 @@ const isHome =
         : <p class="site-title"><a href={relativeUrl('/')}>Éducation Musicale</a></p>}
       {siteSubtitle && <p class="site-subtitle">{siteSubtitle}</p>}
       {!isHome && (
-        <a href={relativeUrl('/')} class="back-link">&larr; {backLabel}</a>
+        <a href={relativeUrl(backHref)} class="back-link">&larr; {backLabel}</a>
       )}
     </header>
 

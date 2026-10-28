@@ -4,11 +4,11 @@
  * Objectifs :
  * - une seule instance de lecture pour tout le site (aucun chevauchement) ;
  * - volume master homogène (0.85 par défaut) + limiteur anti-saturation ;
- * - API simple : playAudio(), stopAudio(), pauseAudio(), resumeAudio(), setVolume() ;
+ * - API simple : playAudio(), stopAudio(), pauseAudio(), resumeAudio() ;
  * - événements écoutables par les composants (statechange, ended, error, ...).
  *
  * Le module est sûr côté serveur : aucun accès au DOM tant que playAudio()
- * ou loadAudio() n'est pas appelé dans le navigateur.
+ * n'est pas appelé dans le navigateur.
  */
 
 export type AudioState = 'idle' | 'loading' | 'playing' | 'paused' | 'ended' | 'error';
@@ -351,10 +351,6 @@ export function playAudio(url?: string, options?: PlayAudioOptions): Promise<boo
   return audioManager.playAudio(url, options);
 }
 
-export function loadAudio(url: string): void {
-  audioManager.loadAudio(url);
-}
-
 export function stopAudio(): void {
   audioManager.stopAudio();
 }
@@ -365,14 +361,6 @@ export function pauseAudio(): void {
 
 export function resumeAudio(): Promise<boolean> {
   return audioManager.resumeAudio();
-}
-
-export function setVolume(level: number): number {
-  return audioManager.setVolume(level);
-}
-
-export function getVolume(): number {
-  return audioManager.getVolume();
 }
 
 export function getAudioState(): AudioState {

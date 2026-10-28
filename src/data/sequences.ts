@@ -1,11 +1,5 @@
 import { moyenAgeVideos } from './moyenAgeData';
 
-export interface AudioTrack {
-  title: string;
-  subtitle?: string;
-  src: string;
-}
-
 export interface VideoTrack {
   title: string;
   url: string;
@@ -23,10 +17,7 @@ export interface Sequence {
   slug: string;
   title: string;
   description?: string;
-  audios?: AudioTrack[];
-  videos?: VideoTrack[]; // Nouveau tableau pour gérer plusieurs vidéos par séquence
-  pdfUrl?: string;
-  youtubeUrl?: string;
+  videos?: VideoTrack[];
   /** Liens d'écoute externes (podcasts, radios, plateformes). */
   resourceLinks?: ResourceLink[];
 }
