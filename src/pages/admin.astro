@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { siteData } from '../data/sequences';
+import { tools } from '../data/tools';
 import { relativeUrl } from '../utils/navigation';
 ---
 
@@ -37,48 +38,14 @@ import { relativeUrl } from '../utils/navigation';
           </a>
         </p>
         <ul>
-          <li>
-            <span class="num">🎼</span>
-            <a href={relativeUrl('/entrainement/lecture-notes')} target="_blank" rel="noopener noreferrer">
-              Lecture de Notes
-            </a>
-          </li>
-          <li>
-            <span class="num">🥁</span>
-            <a href={relativeUrl('/entrainement/lecture-rythmique')} target="_blank" rel="noopener noreferrer">
-              Lecture Rythmique
-            </a>
-          </li>
-          <li>
-            <span class="num">🎹</span>
-            <a href={relativeUrl('/entrainement/piano-interactif')} target="_blank" rel="noopener noreferrer">
-              Piano Interactif
-            </a>
-          </li>
-          <li>
-            <span class="num">✒️</span>
-            <a href={relativeUrl('/entrainement/dessiner-clefs')} target="_blank" rel="noopener noreferrer">
-              Dessiner les Clefs
-            </a>
-          </li>
-          <li>
-            <span class="num">🔴</span>
-            <a href={relativeUrl('/entrainement/clavier-notes')} target="_blank" rel="noopener noreferrer">
-              Identification Clavier
-            </a>
-          </li>
-          <li>
-            <span class="num">👂</span>
-            <a href={relativeUrl('/entrainement/oreille-nom')} target="_blank" rel="noopener noreferrer">
-              Oreille — Noms
-            </a>
-          </li>
-          <li>
-            <span class="num">🔔</span>
-            <a href={relativeUrl('/entrainement/oreille-clavier')} target="_blank" rel="noopener noreferrer">
-              Oreille — Clavier
-            </a>
-          </li>
+          {tools.map((tool) => (
+            <li>
+              <span class="num">{tool.icon}</span>
+              <a href={relativeUrl(tool.path)} target="_blank" rel="noopener noreferrer">
+                {tool.title}
+              </a>
+            </li>
+          ))}
         </ul>
       </section>
     </div>

@@ -97,5 +97,5 @@ export function createAudioQuestionBox(
 ): HTMLDivElement {
   const attrs: HAttrs = { id: buttonId, class: 'btn-play-sound' };
   if (buttonType) attrs.type = buttonType;
-  return h('div', { class: 'audio-q-box' }, h('p', {}, ...prompt), h('button', attrs, buttonLabel));
+  return h('div', { class: 'audio-q-box' }, h('p', { class: 'question-text' }, ...prompt), h('button', attrs, buttonLabel));
 }
