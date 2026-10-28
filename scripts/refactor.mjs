@@ -122,7 +122,7 @@ function walk(relDir, exts, out = []) {
 /* ------------------------------------------------------------------ */
 /** Parcourt les règles « sélecteur { corps } » (sans imbrication). `fn` renvoie la règle remplaçante ou null. */
 function mapRules(css, fn) {
-  return css.replace(/([^{}]+)\{([^{}]*)\}/g, (_all, sel, body) => {
+  return css.replace(/([^{}]+)\{([^{}]*)\}/g, (all, sel, body) => {
     const out = fn(sel, body);
     return out === null || out === undefined ? all : out;
   });
@@ -402,8 +402,8 @@ function stepStorage() {
   for (const rel of files) {
     const src = read(rel);
     if (src === null || !/localStorage|sessionStorage/.test(src)) continue;
-    let out = src.replace(call, (_all, a, q, key) => (key.startsWith(PREFIX) ? all : a + q + PREFIX + key + q));
-    out = out.replace(konst, (_all, a, q, key) => (key.startsWith(PREFIX) ? all : a + q + PREFIX + key + q));
+    let out = src.replace(call, (all, a, q, key) => (key.startsWith(PREFIX) ? all : a + q + PREFIX + key + q));
+    out = out.replace(konst, (all, a, q, key) => (key.startsWith(PREFIX) ? all : a + q + PREFIX + key + q));
     if (dynamic.test(out)) note(step, 'warn', 'clé de stockage non littérale, à vérifier à la main : ' + rel);
     write(rel, out, step);
   }

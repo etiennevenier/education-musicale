@@ -11,8 +11,8 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
-/** Plafond courant (à baisser à chaque retrait). */
-const MAX = 22;
+/** Plafond courant (à baisser à chaque retrait). Les commentaires ne comptent pas. */
+const MAX = 18;
 
 const SRC = join(process.cwd(), 'src');
 const EXT = /\.(css|astro)$/;
@@ -31,7 +31,11 @@ let total = 0;
 const perFile = [];
 
 for (const file of files) {
-  const count = (readFileSync(file, 'utf8').match(/!important/g) ?? []).length;
+  // Les mentions dans les commentaires (CSS, HTML, JS) ne sont pas des déclarations.
+  const code = readFileSync(file, 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/<!--[\s\S]*?-->/g, '');
+  const count = (code.match(/!important/g) ?? []).length;
   if (count > 0) {
     perFile.push([relative(process.cwd(), file), count]);
     total += count;

@@ -237,8 +237,6 @@ const whiteKeyCount = keyboard.filter((key) => key.type === 'white').length;
     transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.1s ease;
   }
 
-  /* --- Bilan --- */
-
   @media (max-width: 640px) {
     #tool-clavier-notes .cn-answer-btn { font-size: 1rem; padding: 0.55rem 0.2rem; }
   }
@@ -298,17 +296,6 @@ const whiteKeyCount = keyboard.filter((key) => key.type === 'white').length;
       gap: 0.4rem;
     }
 
-    /* 7 notes naturelles sur une seule ligne. */
-    #tool-clavier-notes .cn-answer-row--natural {
-      grid-template-columns: repeat(7, minmax(0, 1fr));
-    }
-
-    /* 5 altérations sur une seule ligne. */
-    #tool-clavier-notes .cn-answer-row--sharp,
-    #tool-clavier-notes .cn-answer-row--flat {
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-    }
-
     #tool-clavier-notes .cn-answer-btn {
       min-height: 48px;
       padding: 0.55rem 0.25rem;
@@ -320,8 +307,6 @@ const whiteKeyCount = keyboard.filter((key) => key.type === 'white').length;
       justify-content: center;
       padding: 0;
     }
-
-    /* Cartes empilées : libellé à gauche, valeur à droite, sans compression. */
   }
 
   /* Paysage compact : le bouton de retour reste prioritaire, tout tient
@@ -340,16 +325,6 @@ const whiteKeyCount = keyboard.filter((key) => key.type === 'white').length;
       gap: 0.3rem;
     }
 
-    /* 7 notes naturelles et 5 altérations sur une seule ligne. */
-    #tool-clavier-notes .cn-answer-row--natural {
-      grid-template-columns: repeat(7, minmax(0, 1fr));
-    }
-
-    #tool-clavier-notes .cn-answer-row--sharp,
-    #tool-clavier-notes .cn-answer-row--flat {
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-    }
-
     #tool-clavier-notes .cn-answer-btn {
       min-height: 38px;
       padding: 0.3rem 0.25rem;
@@ -362,21 +337,11 @@ const whiteKeyCount = keyboard.filter((key) => key.type === 'white').length;
   @media (pointer: coarse) and (orientation: landscape) and (max-height: 550px) {
 
     #tool-clavier-notes .cn-piano { flex: 0 0 auto; }
-
-    /* Grilles sur une ligne également sur les écrans paysage un peu plus hauts. */
-    #tool-clavier-notes .cn-answer-row--natural {
-      grid-template-columns: repeat(7, minmax(0, 1fr));
-    }
-
-    #tool-clavier-notes .cn-answer-row--sharp,
-    #tool-clavier-notes .cn-answer-row--flat {
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-    }
   }
 </style>
 
 <script>
-  import { shuffle } from '../../utils/random';
+  import { createTargetBag, renderChallengeResult, type TargetBag } from '../../utils/challengeTool';
   import {
     ChallengeSession,
     CHALLENGE_QUESTION_COUNT,
@@ -478,8 +443,7 @@ const whiteKeyCount = keyboard.filter((key) => key.type === 'white').length;
     let currentAnswerNames: string[] = [];
     let answered = false;
     let nextQuestionTimer: number | null = null;
-    let targetBag: number[] = [];
-    let lastTarget: number | null = null;
+    let targetBag: TargetBag<number> | null = null;
 
     const clearTargetMarkers = (): void => {
       root.querySelectorAll('.cn-key.is-target').forEach((key) => {
@@ -492,26 +456,6 @@ const whiteKeyCount = keyboard.filter((key) => key.type === 'white').length;
         window.clearTimeout(nextQuestionTimer);
         nextQuestionTimer = null;
       }
-    };
-
-    /** Pioche sans répétition immédiate : le sac est mélangé à chaque tour. */
-    const pickTarget = (level: LevelConfig): number => {
-      if (targetBag.length === 0) {
-        targetBag = shuffle(level.targets);
-        if (targetBag.length > 1 && targetBag[0] === lastTarget) {
-          const first = targetBag[0];
-          const second = targetBag[1];
-          if (first !== undefined && second !== undefined) {
-            targetBag[0] = second;
-            targetBag[1] = first;
-          }
-        }
-      }
-
-      const target = targetBag.shift();
-      if (target === undefined) return level.targets[0] ?? 60;
-      lastTarget = target;
-      return target;
     };
 
     const renderAnswers = (level: LevelConfig): void => {
@@ -557,7 +501,7 @@ const whiteKeyCount = keyboard.filter((key) => key.type === 'white').length;
       });
 
       clearTargetMarkers();
-      const target = pickTarget(level);
+      const target = targetBag?.next() ?? level.targets[0] ?? 60;
       currentTarget = target;
       currentAnswerNames = acceptedNamesFor(target, level);
 
@@ -614,8 +558,7 @@ const whiteKeyCount = keyboard.filter((key) => key.type === 'white').length;
       currentTarget = null;
       currentAnswerNames = [];
       answered = false;
-      targetBag = [];
-      lastTarget = null;
+      targetBag = createTargetBag(level.targets);
       setHubBackMode(backLink, 'level');
 
       levelButtons.forEach((button) => {
@@ -655,13 +598,10 @@ const whiteKeyCount = keyboard.filter((key) => key.type === 'white').length;
       gameEl.classList.add('hidden');
       resultEl.classList.remove('hidden');
 
-      resultScoreEl.textContent = `${result.score} / ${result.total}`;
-      resultPercentEl.textContent = `${result.percent} %`;
-      resultTimeEl.textContent = result.elapsedLabel;
-      resultReasonEl.textContent =
-        result.reason === 'timeout'
-          ? '⏱ Temps écoulé !'
-          : '🏁 Les 10 questions sont terminées.';
+      renderChallengeResult(
+        { score: resultScoreEl, percent: resultPercentEl, time: resultTimeEl, reason: resultReasonEl },
+        result,
+      );
 
       resultEl.focus({ preventScroll: true });
     };

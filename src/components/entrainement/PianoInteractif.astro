@@ -431,7 +431,7 @@ import { relativeUrl } from '../../utils/navigation';
 </style>
 
 <script>
-    import { getAudioContext, getMasterBus } from '../../utils/audioContext';
+    import { playPianoNote, unlockAudio } from '../../utils/pianoSynth';
     import { drawClefSymbol } from '../../utils/clefs';
 
     (function () {
@@ -460,7 +460,6 @@ import { relativeUrl } from '../../utils/navigation';
         const keyLabel = (midi: number): string => `${NOTE_FR[midi % 12]} ${Math.floor(midi / 12) - 1}`;
 
         const SVGNS = 'http://www.w3.org/2000/svg';
-        let pianoAudioCtx: AudioContext | null = null;
 
         /* ---------- Accès au DOM (garde instanceof) ---------- */
         function mustElement(selector: string): HTMLElement {
@@ -473,37 +472,6 @@ import { relativeUrl } from '../../utils/navigation';
             const el = document.querySelector(selector);
             if (!(el instanceof SVGSVGElement)) throw new Error(`SVG introuvable : ${selector}`);
             return el;
-        }
-
-        /** Contexte Web Audio partagé (contexte unique + bus master). */
-        function getPianoContext(): AudioContext {
-            const ac = getAudioContext();
-            if (!ac) throw new Error('Web Audio API non disponible');
-            return ac;
-        }
-
-        function playPianoNote(midiNumber: number): void {
-            if (!pianoAudioCtx) {
-                pianoAudioCtx = getPianoContext();
-            }
-            const ac = pianoAudioCtx;
-            if (ac.state === 'suspended') ac.resume();
-            const bus = getMasterBus() ?? ac.destination;
-
-            const freq = 440 * Math.pow(2, (midiNumber - 69) / 12);
-            const t = ac.currentTime;
-            const osc = ac.createOscillator();
-            const gain = ac.createGain();
-
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(freq, t);
-            gain.gain.setValueAtTime(0.4, t);
-            gain.gain.exponentialRampToValueAtTime(0.001, t + 1.0);
-
-            osc.connect(gain);
-            gain.connect(bus);
-            osc.start();
-            osc.stop(t + 1.0);
         }
 
         // Chaque touche gère sa propre surbrillance : on peut jouer plusieurs doigts à la fois
@@ -704,7 +672,7 @@ import { relativeUrl } from '../../utils/navigation';
             // pointerdown = souris + tactile (tablette / TNI)
             keyDiv.addEventListener('contextmenu', e => e.preventDefault());
             const trigger = () => {
-                playPianoNote(k.midi);
+                playPianoNote(k.midi, { duration: 1.2, velocity: 0.85 });
                 highlightKey(keyDiv);
                 updateStaff(k);
             };
@@ -960,45 +928,19 @@ import { relativeUrl } from '../../utils/navigation';
         }
 
 
-        // Tactile (iOS / Safari) : on relance le contexte audio au relâchement du doigt
-        const unlockPianoAudio = (): void => {
-            const ac = getAudioContext();
-            if (ac && ac.state === 'suspended') ac.resume();
-        };
-        document.addEventListener('pointerup', unlockPianoAudio, true);
-        document.addEventListener('touchend', unlockPianoAudio, true);
-
         // Première note instantanée : créer le contexte Web Audio coûte ~300 ms en
-        // Chromium (mesuré). Le faire pendant le premier appui bloquerait l'interface
-        // 300 ms ; on le crée donc pendant un temps mort après le chargement (il démarre
-        // « suspended ») et on le relance au premier geste, qui est le seul moment où
-        // les navigateurs autorisent la reprise. Résultat mesuré : 1re note 329 ms
-        // (création) -> 0 ms, sans gel de l'interface.
-        let audioPrimed = false;
-        const primePianoAudio = (): void => {
-            if (audioPrimed) return;
-            audioPrimed = true;
-            try {
-                if (!pianoAudioCtx) pianoAudioCtx = getPianoContext();
-            } catch {
-                /* Web Audio indisponible : playPianoNote signalera l'absence de son */
-            }
-        };
-        const resumePianoAudio = (): void => {
-            primePianoAudio();
-            try {
-                if (pianoAudioCtx && pianoAudioCtx.state === 'suspended') void pianoAudioCtx.resume();
-            } catch {
-                /* contexte indisponible : rien à relancer */
-            }
-        };
-        if (typeof window.requestIdleCallback === 'function') {
-            window.requestIdleCallback(() => primePianoAudio(), { timeout: 2000 });
-        } else {
-            window.setTimeout(primePianoAudio, 200);
-        }
-        document.addEventListener('pointerdown', resumePianoAudio, { capture: true });
-        document.addEventListener('keydown', resumePianoAudio, { capture: true });
+        // Chromium (mesuré). On le crée donc pendant un temps mort après le chargement
+        // (il démarre « suspended »). getAudioContext() le relance aussi s'il est
+        // suspendu : un seul gestionnaire suffit pour tous les premiers gestes
+        // (souris, tactile iOS/Safari au relâchement du doigt, clavier).
+        const idle = typeof window.requestIdleCallback === 'function'
+            ? (fn: () => void): void => { window.requestIdleCallback(fn, { timeout: 2000 }); }
+            : (fn: () => void): void => { window.setTimeout(fn, 200); };
+        idle(unlockAudio);
+        const unlockOnGesture = (): void => { unlockAudio(); };
+        (['pointerdown', 'pointerup', 'touchend', 'keydown'] as const).forEach((type) => {
+            document.addEventListener(type, unlockOnGesture, { capture: true, passive: true });
+        });
 
         // Niveaux de zoom (contrôle présent uniquement sur grand écran).
         levelIndex = readViewPreference();

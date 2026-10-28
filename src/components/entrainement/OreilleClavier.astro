@@ -336,7 +336,7 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
 </style>
 
 <script>
-  import { shuffle } from '../../utils/random';
+  import { createTargetBag, renderChallengeResult, type TargetBag } from '../../utils/challengeTool';
   import {
     ChallengeSession,
     CHALLENGE_QUESTION_COUNT,
@@ -394,8 +394,7 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
     let answered = false;
     let nextQuestionTimer: number | null = null;
     let audioTimer: number | null = null;
-    let targetBag: number[] = [];
-    let lastMidi: number | null = null;
+    let targetBag: TargetBag<number> | null = null;
 
     const clearNextTimer = (): void => {
       if (nextQuestionTimer !== null) {
@@ -437,26 +436,6 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
       }, 400);
     };
 
-    /** Pioche sans répétition immédiate : le sac est mélangé à chaque tour. */
-    const pickTarget = (level: LevelConfig): number => {
-      if (targetBag.length === 0) {
-        targetBag = shuffle(level.targets);
-        if (targetBag.length > 1 && targetBag[0] === lastMidi) {
-          const first = targetBag[0];
-          const second = targetBag[1];
-          if (first !== undefined && second !== undefined) {
-            targetBag[0] = second;
-            targetBag[1] = first;
-          }
-        }
-      }
-
-      const midi = targetBag.shift();
-      if (midi === undefined) return level.targets[0] ?? 60;
-      lastMidi = midi;
-      return midi;
-    };
-
     const showQuestion = (): void => {
       const level = LEVELS[currentLevel];
       if (!level || !session?.isRunning) return;
@@ -466,7 +445,7 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
       feedbackEl.className = 'oc-feedback';
       clearKeyStates();
 
-      const midi = pickTarget(level);
+      const midi = targetBag?.next() ?? level.targets[0] ?? 60;
       currentMidi = midi;
 
       progressEl.textContent = `${session.answered + 1} / ${CHALLENGE_QUESTION_COUNT}`;
@@ -528,8 +507,7 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
       currentLevel = levelNumber;
       currentMidi = null;
       answered = false;
-      targetBag = [];
-      lastMidi = null;
+      targetBag = createTargetBag(level.targets);
       setHubBackMode(backLink, 'level');
 
       menuEl.classList.add('hidden');
@@ -565,13 +543,10 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
       gameEl.classList.add('hidden');
       resultEl.classList.remove('hidden');
 
-      resultScoreEl.textContent = `${result.score} / ${result.total}`;
-      resultPercentEl.textContent = `${result.percent} %`;
-      resultTimeEl.textContent = result.elapsedLabel;
-      resultReasonEl.textContent =
-        result.reason === 'timeout'
-          ? '⏱ Temps écoulé !'
-          : '🏁 Les 10 questions sont terminées.';
+      renderChallengeResult(
+        { score: resultScoreEl, percent: resultPercentEl, time: resultTimeEl, reason: resultReasonEl },
+        result,
+      );
 
       resultEl.focus({ preventScroll: true });
     };
