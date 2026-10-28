@@ -64,7 +64,6 @@ const baseUrl = relativeUrl('/');
   interface TessitureProfile {
     id: TessitureId;
     label: string;
-    filePrefix: string;
   }
 
   interface AudioTrack {
@@ -74,10 +73,10 @@ const baseUrl = relativeUrl('/');
   }
 
   const TESSITURES: TessitureProfile[] = [
-    { id: 'soprano', label: 'Soprano', filePrefix: 'Soprano' },
-    { id: 'alto', label: 'Alto', filePrefix: 'Alto' },
-    { id: 'tenor', label: 'Ténor', filePrefix: 'Tenor' },
-    { id: 'basse', label: 'Basse', filePrefix: 'Basse' },
+    { id: 'soprano', label: 'Soprano' },
+    { id: 'alto', label: 'Alto' },
+    { id: 'tenor', label: 'Ténor' },
+    { id: 'basse', label: 'Basse' },
   ];
 
   const TRACKS_PER_TESSITURE = 6;
@@ -89,7 +88,7 @@ const baseUrl = relativeUrl('/');
     Array.from({ length: TRACKS_PER_TESSITURE }, (_, index) => ({
       id: tessiture.id,
       label: tessiture.label,
-      file: `/tessitures/${tessiture.filePrefix} ${index + 1}.mp3`,
+      file: `/tessitures/${tessiture.id}-${index + 1}.mp3`,
     })),
   );
 
