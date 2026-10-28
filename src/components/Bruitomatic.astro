@@ -1,0 +1,1013 @@
+---
+import { relativeUrl } from '../utils/navigation';
+import { categories, presets, rowIndexById, steps, tracks } from '../data/bruitomaticData';
+---
+
+<section class="bruitomatic" id="bruitomatic" aria-labelledby="bruitomaticTitle">
+  <header class="bruitomatic-header">
+    <p class="bruitomatic-kicker">Séquenceur d'objets</p>
+    <h3 id="bruitomaticTitle">🥁 Bruitomatic</h3>
+    <p class="bruitomatic-intro">
+      Compose ta propre boucle, règle le tempo, puis lance la lecture.
+    </p>
+  </header>
+
+  <div class="bruitomatic-transport">
+    <div class="bruitomatic-transport-buttons">
+      <button type="button" class="bruitomatic-btn bruitomatic-btn-play" id="bruitomaticPlay">▶ Lecture</button>
+      <button type="button" class="bruitomatic-btn" id="bruitomaticPause" disabled>⏸ Pause</button>
+      <button type="button" class="bruitomatic-btn bruitomatic-btn-stop" id="bruitomaticStop">⏹ Stop</button>
+      <button type="button" class="bruitomatic-btn bruitomatic-btn-clear" id="bruitomaticClear">
+        🧹 Effacer tout
+      </button>
+    </div>
+
+    <div class="bruitomatic-tempo">
+      <label for="bruitomaticBpm">Tempo</label>
+      <input
+        type="range"
+        id="bruitomaticBpm"
+        min="60"
+        max="180"
+        step="1"
+        value="100"
+        aria-describedby="bruitomaticBpmValue"
+      />
+      <output class="bruitomatic-bpm" id="bruitomaticBpmValue" for="bruitomaticBpm">100 BPM</output>
+    </div>
+
+    <p class="bruitomatic-status" id="bruitomaticStatus" aria-live="polite">
+      Prêt : choisis un modèle ou clique sur les cases, puis lance la lecture.
+    </p>
+  </div>
+
+  <div class="bruitomatic-presets-block">
+    <div class="bruitomatic-preset-row">
+      <p class="bruitomatic-presets-label">Modèles</p>
+      <div
+        class="bruitomatic-presets"
+        id="bruitomaticPresets"
+        data-presets={JSON.stringify(presets)}
+      >
+        {presets.map((preset, index) => (
+          <button
+            type="button"
+            class="bruitomatic-preset"
+            data-preset={preset.id}
+            title={`${preset.name} — ${preset.desc}`}
+            aria-label={`Modèle ${index + 1} : ${preset.name}`}
+          >
+            {index + 1}
+          </button>
+        ))}
+        <button
+          type="button"
+          class="bruitomatic-preset bruitomatic-random"
+          id="bruitomaticRandom"
+          title="Générer une séquence aléatoire"
+          aria-label="Générer une séquence aléatoire"
+        >
+          🎲
+        </button>
+      </div>
+    </div>
+
+    <div class="bruitomatic-preset-row">
+      <p class="bruitomatic-presets-label">Ma mémoire</p>
+      <div class="bruitomatic-memory" id="bruitomaticMemory">
+        {['1', '2'].map((slot) => (
+          <div class="bruitomatic-memory-slot" data-memory-slot={slot}>
+            <button
+              type="button"
+              class="bruitomatic-memory-save"
+              data-memory-save={slot}
+              title={`Mémoriser le rythme affiché dans le bouton ${slot} (temporaire)`}
+              aria-label={`Mémoriser le rythme affiché dans le bouton ${slot}`}
+            >
+              💾 {slot}
+            </button>
+            <button
+              type="button"
+              class="bruitomatic-memory-recall"
+              data-memory-recall={slot}
+              title={`Recharger le rythme mémorisé dans le bouton ${slot}`}
+              aria-label={`Recharger le rythme mémorisé dans le bouton ${slot}`}
+              disabled
+            >
+              ▶ {slot}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <p class="bruitomatic-memory-hint">
+      💾 capture le rythme affiché, même après « Effacer tout ». ▶ le recharge aussitôt.
+      Cette mémoire s’efface dès que tu quittes la page.
+    </p>
+  </div>
+
+
+  <div class="bruitomatic-board-wrap" id="bruitomaticScroll">
+    <div class="bruitomatic-board" id="bruitomaticBoard">
+      <div class="seq-ruler">
+        <button
+          type="button"
+          class="seq-label-head"
+          id="bruitomaticLabelToggle"
+          aria-expanded="true"
+          aria-label="Masquer le panneau des pistes"
+          title="Masquer le panneau des pistes"
+        >
+          <span class="seq-label-head-icon" aria-hidden="true">◀</span>
+          <span class="seq-label-head-text">Pistes</span>
+        </button>
+        {steps.map((step) => (
+          <span
+            class:list={['seq-tick', { 'is-beat': step % 4 === 0 }]}
+            data-step={step}
+            aria-hidden="true"
+          >
+            {step + 1}
+          </span>
+        ))}
+      </div>
+
+      {categories.map((category) => {
+        const categoryTracks = tracks.filter((track) => track.category === category.id);
+        return (
+          <details class="seq-group" data-category={category.id} open>
+            <summary
+              class="seq-group-summary"
+              aria-label={`${category.label} : ${categoryTracks.length} piste${categoryTracks.length > 1 ? 's' : ''}`}
+            >
+              <span class="seq-group-icon" aria-hidden="true">{category.icon}</span>
+              <span>{category.label}</span>
+              <span class="seq-group-count">
+                {categoryTracks.length} piste{categoryTracks.length > 1 ? 's' : ''}
+              </span>
+              <button
+                type="button"
+                class="seq-group-mute"
+                data-group-mute={category.id}
+                data-group-name={category.label}
+                aria-pressed="false"
+                aria-label={`Muet : couper tous les sons de la famille ${category.label}`}
+                title={`Muet : couper tous les sons de la famille ${category.label}`}
+              >
+                Muet
+              </button>
+            </summary>
+
+            <div class="seq-rows">
+              {categoryTracks.map((track) => {
+                const rowIndex = rowIndexById[track.id];
+                return (
+                  <div
+                    class="seq-row"
+                    data-row={rowIndex}
+                    data-track-id={track.id}
+                    data-src={relativeUrl(`/bruits/${track.file}`)}
+                    data-category={track.category}
+                  >
+                    <div class="seq-track">
+                      <button
+                        type="button"
+                        class="seq-preview"
+                        data-preview={track.id}
+                        aria-label={`Écouter ${track.name}`}
+                        title={`Écouter ${track.name}`}
+                      >
+                        ▶
+                      </button>
+                      <span class="seq-name" title={track.name}>{track.name}</span>
+                      <div class="seq-track-bottom">
+                        <button
+                          type="button"
+                          class="seq-ms"
+                          data-mute={track.id}
+                          aria-pressed="false"
+                          aria-label={`Couper ${track.name}`}
+                          title="Muet"
+                        >
+                          M
+                        </button>
+                        <button
+                          type="button"
+                          class="seq-ms"
+                          data-solo={track.id}
+                          aria-pressed="false"
+                          aria-label={`Isoler ${track.name}`}
+                          title="Solo"
+                        >
+                          S
+                        </button>
+                        <label class="seq-vol-wrap">
+                          <span class="visually-hidden">Volume : {track.name}</span>
+                          <input
+                            type="range"
+                            class="seq-vol"
+                            data-volume={track.id}
+                            min="0"
+                            max="100"
+                            step="5"
+                            value="80"
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    {steps.map((step) => (
+                      <button
+                        type="button"
+                        class="seq-cell"
+                        data-track={track.id}
+                        data-step={step}
+                        data-row={rowIndex}
+                        data-beat={step % 4 === 0 ? 'true' : 'false'}
+                        aria-pressed="false"
+                        aria-label={`${track.name}, pas ${step + 1}`}
+                        tabindex={rowIndex === 0 && step === 0 ? 0 : -1}
+                      />
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          </details>
+        );
+      })}
+    </div>
+  </div>
+
+  <p class="bruitomatic-help">
+    Astuce : les colonnes 1, 5, 9 et 13 marquent les quatre temps. Utilise les flèches du
+    clavier pour circuler dans la grille et <kbd>Entrée</kbd> pour cocher une case. Clique sur
+    <strong>Pistes</strong> pour replier le panneau latéral et agrandir la grille. Le bouton
+    <strong>Muet</strong> à côté d’une famille coupe ou rétablit tous ses sons d’un coup.
+    Le dé 🎲 génère une séquence aléatoire : relance-le jusqu’à trouver une idée.
+  </p>
+
+</section>
+
+<script>
+  import { initBruitomatic } from '../utils/bruitomatic';
+
+  const root = document.getElementById('bruitomatic');
+  if (root) initBruitomatic(root);
+</script>
+
+<style>
+  .bruitomatic,
+  .bruitomatic *,
+  .bruitomatic *::before,
+  .bruitomatic *::after {
+    box-sizing: border-box;
+  }
+
+  .bruitomatic {
+    --bruitomatic-bg: #070d18;
+    --bruitomatic-panel: #101a2b;
+    --bruitomatic-line: rgba(148, 163, 184, 0.16);
+    --bruitomatic-text: #e2e8f0;
+    --bruitomatic-muted: #94a3b8;
+    --label-w: 204px;
+    --cell: 30px;
+    --gap: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+    padding: clamp(1rem, 2.4vw, 1.6rem);
+    border-radius: 20px;
+    border: 1px solid rgba(56, 189, 248, 0.22);
+    background:
+      radial-gradient(circle at 12% 0%, rgba(34, 211, 238, 0.12), transparent 45%),
+      radial-gradient(circle at 92% 8%, rgba(251, 191, 36, 0.1), transparent 42%),
+      linear-gradient(160deg, #070d18, #0a1322 60%, #070d18);
+    color: var(--bruitomatic-text);
+    box-shadow: 0 18px 40px rgba(2, 8, 20, 0.45);
+  }
+
+  .bruitomatic-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .bruitomatic-kicker {
+    margin: 0;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #22d3ee;
+  }
+
+  .bruitomatic-header h3 {
+    margin: 0;
+    font-size: clamp(1.25rem, 2.4vw, 1.6rem);
+    color: #f8fafc;
+  }
+
+  .bruitomatic-intro {
+    margin: 0;
+    max-width: 62ch;
+    font-size: 0.86rem;
+    line-height: 1.5;
+    color: var(--bruitomatic-muted);
+  }
+
+  .bruitomatic-transport {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.7rem 1rem;
+    padding: 0.75rem;
+    border-radius: 14px;
+    border: 1px solid var(--bruitomatic-line);
+    background: rgba(15, 23, 42, 0.78);
+  }
+
+  .bruitomatic-transport-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .bruitomatic-btn {
+    padding: 0.5rem 0.8rem;
+    border-radius: 9px;
+    border: 1px solid var(--bruitomatic-line);
+    background: #182338;
+    color: var(--bruitomatic-text);
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.18s ease, transform 0.12s ease, background 0.18s ease;
+  }
+
+  .bruitomatic-btn:hover:not(:disabled) {
+    border-color: #38bdf8;
+    transform: translateY(-1px);
+  }
+
+  .bruitomatic-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .bruitomatic-btn-play {
+    border-color: transparent;
+    background: linear-gradient(135deg, #0ea5e9, #22d3ee);
+    color: #04121f;
+  }
+
+  .bruitomatic-btn-play.is-active {
+    box-shadow: 0 0 16px rgba(34, 211, 238, 0.55);
+  }
+
+  .bruitomatic-btn-stop {
+    color: #fecaca;
+    border-color: rgba(248, 113, 113, 0.4);
+    background: rgba(239, 68, 68, 0.12);
+  }
+
+  .bruitomatic-btn-clear {
+    color: #fde68a;
+    border-color: rgba(251, 191, 36, 0.32);
+    background: rgba(251, 191, 36, 0.1);
+  }
+
+  .bruitomatic-tempo {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--bruitomatic-muted);
+  }
+
+  .bruitomatic-tempo input[type='range'] {
+    width: 150px;
+    accent-color: #22d3ee;
+  }
+
+  .bruitomatic-bpm {
+    min-width: 4.8rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 800;
+    color: #7dd3fc;
+  }
+
+  .bruitomatic-status {
+    flex-basis: 100%;
+    margin: 0;
+    font-size: 0.76rem;
+    color: var(--bruitomatic-muted);
+  }
+
+  .bruitomatic-presets-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .bruitomatic-preset-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.65rem;
+  }
+
+  .bruitomatic-presets-label {
+    margin: 0;
+    min-width: 6rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .bruitomatic-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .bruitomatic-preset {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.2rem;
+    height: 2.2rem;
+    padding: 0;
+    border-radius: 10px;
+    border: 1px solid var(--bruitomatic-line);
+    background: #111c2f;
+    color: var(--bruitomatic-text);
+    font: inherit;
+    font-size: 0.92rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+  }
+
+  .bruitomatic-preset:hover {
+    border-color: #38bdf8;
+    background: #15243b;
+  }
+
+  .bruitomatic-preset.is-active {
+    border-color: #22d3ee;
+    background: rgba(34, 211, 238, 0.1);
+    box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.22);
+  }
+
+  .bruitomatic-random {
+    border-style: dashed;
+    border-color: rgba(251, 191, 36, 0.45);
+    font-size: 1.05rem;
+  }
+
+  .bruitomatic-random:hover {
+    border-color: #fbbf24;
+  }
+
+  .bruitomatic-random:focus-visible {
+    outline: 2px solid #fbbf24;
+    outline-offset: 2px;
+  }
+
+  /* --- Mémoire temporaire ------------------------------------------------- */
+
+  .bruitomatic-memory {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .bruitomatic-memory-slot {
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+    padding: 0.15rem;
+    border-radius: 12px;
+    border: 1px dashed var(--bruitomatic-line);
+    transition: border-color 0.18s ease, background 0.18s ease;
+  }
+
+  .bruitomatic-memory-slot.is-filled {
+    border-style: solid;
+    border-color: rgba(34, 211, 238, 0.55);
+    background: rgba(34, 211, 238, 0.07);
+  }
+
+  .bruitomatic-memory-save,
+  .bruitomatic-memory-recall {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    padding: 0.38rem 0.5rem;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--bruitomatic-text);
+    font: inherit;
+    font-size: 0.74rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .bruitomatic-memory-save:hover:not(:disabled) {
+    background: rgba(56, 189, 248, 0.16);
+  }
+
+  .bruitomatic-memory-recall {
+    color: #7dd3fc;
+  }
+
+  .bruitomatic-memory-recall:hover:not(:disabled) {
+    background: rgba(34, 211, 238, 0.16);
+  }
+
+  .bruitomatic-memory-save:disabled,
+  .bruitomatic-memory-recall:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .bruitomatic-memory-hint {
+    margin: 0;
+    font-size: 0.68rem;
+    line-height: 1.4;
+    color: var(--bruitomatic-muted);
+  }
+
+  /* --- Grille ------------------------------------------------------------ */
+
+  .bruitomatic-board-wrap {
+    position: relative;
+    max-height: 64vh;
+    overflow: auto;
+    border: 1px solid var(--bruitomatic-line);
+    border-radius: 14px;
+    background: #0a1220;
+    scrollbar-color: #334155 #0a1220;
+  }
+
+  .bruitomatic-board {
+    width: max-content;
+    min-width: 100%;
+    padding: 0.55rem;
+  }
+
+  .seq-ruler,
+  .seq-row {
+    display: grid;
+    grid-template-columns: var(--label-w) repeat(16, var(--cell));
+    gap: var(--gap);
+    align-items: center;
+  }
+
+  .seq-ruler {
+    position: sticky;
+    top: 0;
+    z-index: 6;
+    padding: 0.2rem 0 0.45rem;
+    background: #0a1220;
+  }
+
+  .seq-label-head {
+    position: sticky;
+    left: 0;
+    z-index: 7;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.35rem;
+    height: 24px;
+    padding: 0 0.35rem;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: #0a1220;
+    color: #64748b;
+    font: inherit;
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-align: left;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  }
+
+  .seq-label-head:hover {
+    border-color: var(--bruitomatic-line);
+    background: #0e1728;
+    color: #e2e8f0;
+  }
+
+  .seq-label-head:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 1px;
+  }
+
+  .seq-label-head-icon {
+    font-size: 0.62rem;
+    line-height: 1;
+    transition: transform 0.2s ease;
+  }
+
+  .bruitomatic-board.is-labels-hidden {
+    --label-w: 2rem;
+  }
+
+  .bruitomatic-board.is-labels-hidden .seq-track {
+    height: 0;
+    padding: 0;
+    visibility: hidden;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .bruitomatic-board.is-labels-hidden .seq-label-head {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .bruitomatic-board.is-labels-hidden .seq-label-head-text {
+    display: none;
+  }
+
+  .bruitomatic-board.is-labels-hidden .seq-label-head-icon {
+    transform: rotate(180deg);
+  }
+
+  .seq-tick {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+    border-radius: 6px;
+    background: #0e1728;
+    font-size: 0.64rem;
+    font-weight: 700;
+    color: #64748b;
+    transition: background 0.12s ease, color 0.12s ease;
+  }
+
+  .seq-tick.is-beat {
+    background: #152238;
+    color: #cbd5e1;
+  }
+
+  .seq-tick.is-current {
+    background: #67e8f9;
+    color: #04121f;
+    box-shadow: 0 0 10px rgba(103, 232, 249, 0.6);
+  }
+
+  .seq-group {
+    border-top: 1px solid var(--bruitomatic-line);
+    margin-top: 0.35rem;
+    padding-top: 0.35rem;
+  }
+
+  .seq-group:first-of-type {
+    border-top: 0;
+    margin-top: 0;
+    padding-top: 0;
+  }
+
+  .seq-group-summary {
+    position: sticky;
+    left: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    width: max-content;
+    padding: 0.4rem 0.35rem 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #cbd5e1;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .seq-group-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .seq-group-summary::before {
+    content: '▸';
+    color: #38bdf8;
+    transition: transform 0.2s ease;
+  }
+
+  .seq-group[open] > .seq-group-summary::before {
+    transform: rotate(90deg);
+  }
+
+  .seq-group-icon {
+    font-size: 0.85rem;
+  }
+
+  .seq-group-count {
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    color: #64748b;
+  }
+
+  .seq-group-mute {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 20px;
+    margin-left: 0.1rem;
+    padding: 0 0.45rem;
+    border: 1px solid var(--bruitomatic-line);
+    border-radius: 999px;
+    background: #16233a;
+    color: #94a3b8;
+    font: inherit;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    line-height: 1;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+  }
+
+  .seq-group-mute:hover {
+    border-color: #f87171;
+    color: #fecaca;
+  }
+
+  .seq-group-mute[aria-pressed='true'] {
+    border-color: #f87171;
+    background: #ef4444;
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(248, 113, 113, 0.35);
+  }
+
+  .seq-group-mute.is-partial {
+    border-color: rgba(248, 113, 113, 0.55);
+    background: rgba(239, 68, 68, 0.22);
+    color: #fecaca;
+  }
+
+  .seq-group-mute:focus-visible {
+    outline: 2px solid #f8fafc;
+    outline-offset: 1px;
+  }
+
+  .seq-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding-bottom: 0.3rem;
+  }
+
+  .seq-row[data-category='metal'] {
+    --accent: #fbbf24;
+    --accent-glow: rgba(251, 191, 36, 0.5);
+    --accent-soft: rgba(251, 191, 36, 0.16);
+  }
+
+  .seq-row[data-category='objets'] {
+    --accent: #38bdf8;
+    --accent-glow: rgba(56, 189, 248, 0.5);
+    --accent-soft: rgba(56, 189, 248, 0.16);
+  }
+
+  .seq-row[data-category='eau'] {
+    --accent: #2dd4bf;
+    --accent-glow: rgba(45, 212, 191, 0.5);
+    --accent-soft: rgba(45, 212, 191, 0.16);
+  }
+
+  .seq-row[data-category='signal'] {
+    --accent: #c084fc;
+    --accent-glow: rgba(192, 132, 252, 0.5);
+    --accent-soft: rgba(192, 132, 252, 0.16);
+  }
+
+  .seq-track {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.35rem;
+    padding: 0.25rem 0.45rem;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: #101a2b;
+    transition: border-color 0.15s ease;
+  }
+
+  .seq-row:hover .seq-track {
+    border-color: var(--accent-soft);
+  }
+
+  .seq-preview {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 1px solid var(--bruitomatic-line);
+    border-radius: 6px;
+    background: #1a2740;
+    color: var(--accent);
+    font-size: 0.6rem;
+    cursor: pointer;
+  }
+
+  .seq-preview:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: #223252;
+  }
+
+  .seq-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .seq-track-bottom {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    width: 100%;
+    margin-left: 1.6rem;
+  }
+
+  .seq-ms {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 1px solid var(--bruitomatic-line);
+    border-radius: 5px;
+    background: #16233a;
+    color: #94a3b8;
+    font-size: 0.6rem;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  .seq-ms:hover {
+    border-color: var(--accent);
+    color: #f8fafc;
+  }
+
+  .seq-ms[data-mute][aria-pressed='true'] {
+    border-color: #f87171;
+    background: #ef4444;
+    color: #ffffff;
+  }
+
+  .seq-ms[data-solo][aria-pressed='true'] {
+    border-color: #4ade80;
+    background: #22c55e;
+    color: #04120a;
+  }
+
+  .seq-vol-wrap {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .seq-vol {
+    width: 100%;
+    min-width: 30px;
+    height: 14px;
+    accent-color: var(--accent);
+  }
+
+  .seq-cell {
+    width: var(--cell);
+    height: 30px;
+    padding: 0;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 6px;
+    background: #141e30;
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+  }
+
+  .seq-cell[data-beat='true'] {
+    border-color: rgba(148, 163, 184, 0.26);
+    background: #1a2740;
+  }
+
+  .seq-cell:hover {
+    border-color: var(--accent);
+  }
+
+  .seq-cell[aria-pressed='true'] {
+    border-color: var(--accent);
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+
+  .seq-cell.is-current {
+    background-image: linear-gradient(
+      rgba(248, 250, 252, 0.14),
+      rgba(248, 250, 252, 0.14)
+    );
+    box-shadow:
+      inset 0 0 0 2px rgba(248, 250, 252, 0.85),
+      0 0 12px var(--accent-glow);
+  }
+
+  .seq-cell:focus-visible {
+    outline: 2px solid #f8fafc;
+    outline-offset: 1px;
+  }
+
+  .seq-row.is-unavailable .seq-track {
+    opacity: 0.5;
+  }
+
+  .seq-row.is-unavailable .seq-cell {
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
+  .bruitomatic-help {
+    margin: 0;
+    font-size: 0.72rem;
+    line-height: 1.5;
+    color: #64748b;
+  }
+
+  .bruitomatic-help kbd {
+    padding: 0.05rem 0.3rem;
+    border: 1px solid var(--bruitomatic-line);
+    border-radius: 4px;
+    background: #111c2f;
+    font-size: 0.68rem;
+    color: #cbd5e1;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  @media (max-width: 720px) {
+    .bruitomatic {
+      --label-w: 168px;
+      --cell: 28px;
+      padding: 0.8rem;
+      border-radius: 14px;
+    }
+
+    .bruitomatic-board {
+      padding: 0.4rem;
+    }
+
+    .bruitomatic-tempo {
+      width: 100%;
+    }
+
+    .bruitomatic-tempo input[type='range'] {
+      flex: 1;
+      width: auto;
+    }
+
+    .bruitomatic-preset-row {
+      gap: 0.25rem 0.5rem;
+    }
+
+    .bruitomatic-presets-label {
+      min-width: auto;
+    }
+  }
+</style>

@@ -1,0 +1,353 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { relativeUrl } from '../../utils/navigation';
+
+const tools = [
+  {
+    href: relativeUrl('/entrainement/lecture-notes'),
+    icon: '🎼',
+    title: 'Lecture de Notes',
+  },
+  {
+    href: relativeUrl('/entrainement/lecture-rythmique'),
+    icon: '🥁',
+    title: 'Lecture Rythmique',
+  },
+  {
+    href: relativeUrl('/entrainement/piano-interactif'),
+    icon: '🎹',
+    title: 'Piano Interactif',
+  },
+  {
+    href: relativeUrl('/entrainement/dessiner-clefs'),
+    icon: '✒️',
+    title: 'Dessiner les Clefs',
+  },
+  {
+    href: relativeUrl('/entrainement/clavier-notes'),
+    icon: '🔴',
+    title: 'Identification Clavier',
+  },
+  {
+    href: relativeUrl('/entrainement/oreille-nom'),
+    icon: '👂',
+    title: 'Oreille — Noms',
+  },
+  {
+    href: relativeUrl('/entrainement/oreille-clavier'),
+    icon: '🔔',
+    title: 'Oreille — Clavier',
+  },
+];
+---
+
+<Layout title="Entraînement" wide backLabel="Accueil" mobileHeader="minimal">
+  <!-- Bannière d'information : orientation de l'écran (mémorisée localement) -->
+  <aside
+    id="orientation-notice"
+    class="orientation-notice"
+    role="status"
+    aria-label="Conseil d'utilisation"
+    hidden
+  >
+    <p class="orientation-notice-text">
+      💡 N'oublie pas : selon l'outil, adapte toi-même le mode portrait ou paysage pour une expérience optimale !
+    </p>
+    <button
+      type="button"
+      id="orientation-notice-close"
+      class="orientation-notice-close"
+      aria-label="Masquer cette information"
+    >
+      <span aria-hidden="true">✕</span>
+    </button>
+  </aside>
+
+  <div id="training-hub">
+    <section class="training-header">
+      <span class="training-badge">Espace autonome</span>
+      <h2>Entraînement</h2>
+    </section>
+
+    <div class="training-grid" id="modules">
+      {tools.map((tool) => (
+        <a
+          href={tool.href}
+          class="training-card"
+          aria-label={`Ouvrir l'outil ${tool.title}`}
+        >
+          <span class="training-icon" aria-hidden="true">{tool.icon}</span>
+          <span class="training-card-title">{tool.title}</span>
+        </a>
+      ))}
+    </div>
+  </div>
+</Layout>
+
+<script>
+  const NOTICE_KEY = 'hasSeenOrientationNotice';
+
+  const notice = document.getElementById('orientation-notice');
+  const closeButton = document.getElementById('orientation-notice-close');
+
+  if (notice) {
+    let alreadySeen = false;
+    try {
+      alreadySeen = window.localStorage.getItem(NOTICE_KEY) === 'true';
+    } catch {
+      // localStorage indisponible (navigation privée stricte) : on affiche la bannière.
+      alreadySeen = false;
+    }
+
+    if (!alreadySeen) {
+      notice.hidden = false;
+    }
+
+    closeButton?.addEventListener('click', () => {
+      try {
+        window.localStorage.setItem(NOTICE_KEY, 'true');
+      } catch {
+        // Écriture impossible : la bannière reste simplement masquée pour cette visite.
+      }
+
+      // Disparition en fondu, puis retrait complet de la mise en page.
+      notice.classList.add('is-closing');
+      window.setTimeout(() => {
+        notice.hidden = true;
+        notice.classList.remove('is-closing');
+      }, 180);
+    });
+  }
+</script>
+
+<style>
+  /* Centrage global : le hub occupe toute la hauteur disponible et reste
+     centré (verticalement et horizontalement), quel que soit le nombre de cartes. */
+  :global(html body) {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+  }
+
+  :global(html main.container) {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 0;
+  }
+
+  /* Bannière d'information : orientation de l'écran */
+  #orientation-notice {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    min-width: 0;
+    margin: 0 0 1.25rem;
+    padding: 0.85rem 0.9rem 0.85rem 1.1rem;
+    background:
+      linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(168, 85, 247, 0.16)),
+      var(--card-bg);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    border-radius: 14px;
+    box-shadow: 0 14px 30px -22px rgba(56, 189, 248, 0.8);
+    color: var(--text);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+  }
+
+  /* Fondu de fermeture avant le retrait de la bannière. */
+  #orientation-notice.is-closing {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  /* L'attribut hidden doit primer sur le display: flex ci-dessus. */
+  #orientation-notice[hidden] {
+    display: none;
+  }
+
+  .orientation-notice-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.45;
+    text-wrap: pretty;
+  }
+
+  .orientation-notice-close {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--primary);
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+  }
+
+  .orientation-notice-close:hover,
+  .orientation-notice-close:focus-visible {
+    background: rgba(56, 189, 248, 0.22);
+    border-color: var(--primary);
+    outline: none;
+  }
+
+  .orientation-notice-close:active {
+    transform: scale(0.94);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #orientation-notice,
+    .orientation-notice-close {
+      transition: none;
+    }
+  }
+
+  #training-hub {
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    justify-content: safe center;
+    padding: 1rem 0;
+    overflow-x: hidden;
+  }
+
+  .training-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .training-badge {
+    display: inline-block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--primary);
+    background: #1e293b;
+    border: 1px solid var(--border);
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+  }
+
+  .training-header h2 {
+    margin: 0.75rem 0 0.4rem;
+    font-size: 1.8rem;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .training-grid {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+    gap: 1.25rem;
+  }
+
+  .training-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.85rem;
+    width: 100%;
+    min-width: 0;
+    min-height: 72px;
+    padding: 1rem 1.15rem;
+    text-align: left;
+    text-decoration: none;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .training-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary);
+    box-shadow: 0 12px 24px -12px rgba(56, 189, 248, 0.55);
+  }
+
+  .training-card:active {
+    transform: translateY(0);
+  }
+
+  .training-card:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  .training-icon {
+    font-size: 1.9rem;
+    line-height: 1;
+  }
+
+  .training-card-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* Mobile et paysage bas : cartes compactes, visibles sans défilement */
+  @media (max-width: 640px), (max-width: 900px) and (orientation: landscape), (max-height: 500px) {
+    .training-header {
+      display: none;
+    }
+
+    /* La bannière reste sur une à deux lignes, sans manger la hauteur utile. */
+    #orientation-notice {
+      gap: 0.55rem;
+      margin-bottom: 0.75rem;
+      padding: 0.6rem 0.6rem 0.6rem 0.8rem;
+      border-radius: 12px;
+    }
+
+    .orientation-notice-text {
+      font-size: 0.8rem;
+      line-height: 1.35;
+    }
+
+    .orientation-notice-close {
+      width: 30px;
+      height: 30px;
+      font-size: 0.9rem;
+    }
+
+    .training-grid {
+      gap: 0.6rem;
+    }
+
+    .training-card {
+      gap: 0.75rem;
+      padding: 0.75rem 0.9rem;
+      min-height: 56px;
+    }
+
+    .training-icon {
+      font-size: 1.5rem;
+    }
+
+    .training-card-title {
+      font-size: 1rem;
+    }
+  }
+</style>

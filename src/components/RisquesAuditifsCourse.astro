@@ -1,0 +1,760 @@
+---
+import CourseTabs from './CourseTabs.astro';
+import VideoCard from './VideoCard.astro';
+import { relativeUrl } from '../utils/navigation';
+
+interface RisquesVideo {
+  badge: string;
+  title: string;
+  youtubeId: string;
+}
+
+interface RisquesTab {
+  id: string;
+  icon: string;
+  label: string;
+  videos?: RisquesVideo[];
+}
+
+const tabs: RisquesTab[] = [
+  {
+    id: 'cours',
+    icon: '🎓',
+    label: 'Cours & Vidéos',
+    videos: [
+      {
+        badge: 'Documentaire',
+        title: 'Documentaire — Musique et Risques Auditifs',
+        youtubeId: 'bAWJtcEhWu8',
+      },
+      {
+        badge: 'Projet musical',
+        title: 'Projet musical — Musique et Risques Auditifs',
+        youtubeId: 'iCNzaVI9m9Q',
+      },
+      {
+        badge: 'Documentaire',
+        title: 'Documentaire — Risques auditifs',
+        youtubeId: '3CNcgG0G37g',
+      },
+      {
+        badge: 'Interview',
+        title: 'Interview — Musique et Risques Auditifs',
+        youtubeId: 'TH3w91cGKyM',
+      },
+    ],
+  },
+  {
+    id: 'simulateur',
+    icon: '🔊',
+    label: 'Simulateur & Capital Auditif',
+  },
+];
+---
+
+<div class="risques-course">
+  <!-- Navigation des Onglets -->
+  <CourseTabs tabs={tabs} ariaLabel="Musique et Risques Auditifs" />
+
+  <!-- Panneau 1 : Cours -->
+  <div
+    role="tabpanel"
+    id="main-panel-cours"
+    class="risques-panel"
+    aria-labelledby="main-tab-cours"
+    data-panel="cours"
+  >
+    <div class="risques-videos">
+      {tabs[0].videos?.map((video) => (
+        <VideoCard
+          badge={video.badge}
+          title={video.title}
+          url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+        />
+      ))}
+    </div>
+  </div>
+
+  <!-- Panneau 2 : Simulateur + Décibel-mètre -->
+  <div
+    role="tabpanel"
+    id="main-panel-simulateur"
+    class="risques-panel"
+    aria-labelledby="main-tab-simulateur"
+    hidden
+    data-panel="simulateur"
+  >
+    <div class="activities-wrapper">
+      
+      <!-- ACTIVITÉ 1 : SIMULATEUR DE TROUBLES -->
+      <div class="simulator-card">
+        <header class="card-header">
+          <h3>👂 1. Simulateur d'Atteintes Auditives</h3>
+          <p>Expérimentez l'impact des traumatismes sonores sur la perception de la musique.</p>
+        </header>
+
+        <div class="audio-controls">
+          <audio id="sim-audio" src={relativeUrl('/risques-auditifs/tchoupi.mp3')} preload="none"></audio>
+          <button type="button" id="btn-play-pause" class="btn-primary">
+            <span class="icon">▶</span> <span class="label">Lancer l'écoute</span>
+          </button>
+          <span id="acouphene-warning" class="acouphene-badge" hidden>
+            ⚠️ Acouphène actif (ne s'arrête pas)
+          </span>
+        </div>
+
+        <div class="modes-grid">
+          <button type="button" class="mode-card active" data-mode="normal">
+            <div class="mode-icon">🎧</div>
+            <div class="mode-title">Mode Normal</div>
+            <div class="mode-desc">Son clair et équilibré, audition saine.</div>
+          </button>
+
+          <button type="button" class="mode-card" data-mode="acouphene">
+            <div class="mode-icon">🔔</div>
+            <div class="mode-title">Acouphène</div>
+            <div class="mode-desc">Sifflement aigu continu à 8 kHz superposé à la musique.</div>
+          </button>
+
+          <button type="button" class="mode-card" data-mode="surdite">
+            <div class="mode-icon">🌊</div>
+            <div class="mode-title">Perte des Aigus</div>
+            <div class="mode-desc">Son étouffé, perte de clarté des voix.</div>
+          </button>
+
+          <button type="button" class="mode-card" data-mode="hyperacousie">
+            <div class="mode-icon">⚡</div>
+            <div class="mode-title">Hyperacousie</div>
+            <div class="mode-desc">Sensibilité accrue aux sons forts.</div>
+          </button>
+        </div>
+
+        <blockquote class="pedago-note">
+          <strong>💡 À retenir :</strong> L'acouphène est une lésion irréversible. Même lorsque la musique s'arrête, le cerveau continue de créer ce signal fantôme.
+        </blockquote>
+      </div>
+
+      <!-- ACTIVITÉ 2 : DÉCIBEL-MÈTRE & CAPITAL AUDITIF -->
+      <div class="simulator-card decibel-card">
+        <header class="card-header">
+          <h3>📊 2. Décibel-Mètre & Capital Auditif</h3>
+          <p>Ajustez le niveau sonore (jusqu'aux bruits extrêmes) pour observer l'état de vos cellules ciliées.</p>
+        </header>
+
+        <div class="db-interactive-container">
+          <div class="db-controls-side">
+            <div class="db-display-badge" id="db-level-badge">
+              <span id="db-value">75</span> <small>dB</small>
+            </div>
+
+            <div class="slider-wrapper">
+              <label for="db-slider" class="sr-only">Niveau en décibels</label>
+              <!-- Curseur étendu de 60 à 150 dB -->
+              <input 
+                type="range" 
+                id="db-slider" 
+                min="60" 
+                max="150" 
+                value="75" 
+                step="1"
+              />
+            </div>
+
+            <div class="db-info-box">
+              <div class="info-row">
+                <span class="info-label">Exemple de son :</span>
+                <span class="info-val" id="db-example">Rue calme / Conversation</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Durée sans risque :</span>
+                <span class="info-val highlight" id="db-time">Illimitée</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Visualisation des Cils Vibratiles -->
+          <div class="cilia-visualizer-side">
+            <div class="cilia-header">
+              <span>État des Cellules Ciliées (Cochlée)</span>
+              <span id="cilia-status-badge" class="status-ok">Saines</span>
+            </div>
+
+            <div class="cilia-stage">
+              <svg id="cilia-svg" viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg">
+                <rect x="10" y="100" width="280" height="12" rx="6" fill="#334155" />
+                <g id="cilia-group">
+                  <g class="cilia-item" transform="translate(35, 100)">
+                    <rect class="cilia-stem" x="-6" y="-30" width="12" height="30" rx="4" fill="#38bdf8"/>
+                    <path class="cilia-hairs" d="M-5,-30 L-5,-65 M0,-30 L0,-70 M5,-30 L5,-65" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+                  </g>
+                  <g class="cilia-item" transform="translate(80, 100)">
+                    <rect class="cilia-stem" x="-6" y="-30" width="12" height="30" rx="4" fill="#38bdf8"/>
+                    <path class="cilia-hairs" d="M-5,-30 L-5,-65 M0,-30 L0,-70 M5,-30 L5,-65" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+                  </g>
+                  <g class="cilia-item" transform="translate(125, 100)">
+                    <rect class="cilia-stem" x="-6" y="-30" width="12" height="30" rx="4" fill="#38bdf8"/>
+                    <path class="cilia-hairs" d="M-5,-30 L-5,-65 M0,-30 L0,-70 M5,-30 L5,-65" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+                  </g>
+                  <g class="cilia-item" transform="translate(170, 100)">
+                    <rect class="cilia-stem" x="-6" y="-30" width="12" height="30" rx="4" fill="#38bdf8"/>
+                    <path class="cilia-hairs" d="M-5,-30 L-5,-65 M0,-30 L0,-70 M5,-30 L5,-65" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+                  </g>
+                  <g class="cilia-item" transform="translate(215, 100)">
+                    <rect class="cilia-stem" x="-6" y="-30" width="12" height="30" rx="4" fill="#38bdf8"/>
+                    <path class="cilia-hairs" d="M-5,-30 L-5,-65 M0,-30 L0,-70 M5,-30 L5,-65" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+                  </g>
+                  <g class="cilia-item" transform="translate(260, 100)">
+                    <rect class="cilia-stem" x="-6" y="-30" width="12" height="30" rx="4" fill="#38bdf8"/>
+                    <path class="cilia-hairs" d="M-5,-30 L-5,-65 M0,-30 L0,-70 M5,-30 L5,-65" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+                  </g>
+                </g>
+              </svg>
+            </div>
+
+            <p class="cilia-warning-text" id="cilia-warning">
+              Les cils vibratiles oscillent normalement pour transmettre le son au cerveau.
+            </p>
+          </div>
+        </div>
+
+        <blockquote class="pedago-note warning-border">
+          <strong>⚠️ Rappel biologique :</strong> Les cellules ciliées détruites par un volume excessif <strong>ne se régénèrent jamais</strong>. La perte d'audition est définitive.
+        </blockquote>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  import { setupMainTabs } from '../utils/tabs';
+  import { getAudioContext, getMasterBus } from '../utils/audioContext';
+  import { stopAudio } from '../utils/audioManager';
+
+  // --- Gestion des Onglets ---
+  const risquesRoot = document.querySelector<HTMLElement>('.risques-course');
+
+  if (risquesRoot) {
+    // Quitter l'onglet simulateur doit couper la simulation (son + acouphène).
+    // Le moteur audio est branché plus bas : on passe par un relais.
+    let pauseSimulation: (() => void) | null = null;
+
+    setupMainTabs(risquesRoot, {
+      panelSelector: '.risques-panel',
+      before: () => pauseSimulation?.(),
+    });
+
+    // --- Moteur Web Audio du Simulateur ---
+    const audioElement = document.querySelector<HTMLAudioElement>('#sim-audio');
+    const btnPlayPause = document.querySelector<HTMLButtonElement>('#btn-play-pause');
+    const modeButtons = document.querySelectorAll<HTMLButtonElement>('.mode-card');
+    const acoupheneWarning = document.querySelector<HTMLElement>('#acouphene-warning');
+
+    if (audioElement && btnPlayPause) {
+      let audioCtx: AudioContext | null = null;
+      let sourceNode: MediaElementAudioSourceNode | null = null;
+      
+      let lowPassFilter: BiquadFilterNode | null = null;
+      let hyperFilter: BiquadFilterNode | null = null;
+      let oscAcouphene: OscillatorNode | null = null;
+      let gainAcouphene: GainNode | null = null;
+
+      let isPlaying = false;
+      let currentMode = 'normal';
+      let acoupheneTimeout: number | null = null;
+
+      const initAudioContext = () => {
+        if (audioCtx) return;
+
+        audioCtx = getAudioContext();
+        if (!audioCtx) return;
+        const bus = getMasterBus() ?? audioCtx.destination;
+
+        sourceNode = audioCtx.createMediaElementSource(audioElement);
+
+        lowPassFilter = audioCtx.createBiquadFilter();
+        lowPassFilter.type = 'lowpass';
+        lowPassFilter.frequency.value = 20000;
+
+        hyperFilter = audioCtx.createBiquadFilter();
+        hyperFilter.type = 'peaking';
+        hyperFilter.frequency.value = 3000;
+        hyperFilter.Q.value = 3;
+        hyperFilter.gain.value = 0;
+
+        sourceNode.connect(lowPassFilter);
+        lowPassFilter.connect(hyperFilter);
+        hyperFilter.connect(bus);
+
+        gainAcouphene = audioCtx.createGain();
+        gainAcouphene.gain.value = 0;
+        gainAcouphene.connect(bus);
+      };
+
+      const startAcouphene = () => {
+        if (!audioCtx || !gainAcouphene) return;
+        stopAcoupheneOscillator();
+
+        oscAcouphene = audioCtx.createOscillator();
+        oscAcouphene.type = 'sine';
+        oscAcouphene.frequency.value = 8000;
+        oscAcouphene.connect(gainAcouphene);
+        oscAcouphene.start();
+
+        gainAcouphene.gain.cancelScheduledValues(audioCtx.currentTime);
+        gainAcouphene.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        if (acoupheneWarning) acoupheneWarning.hidden = false;
+      };
+
+      const stopAcoupheneOscillator = () => {
+        if (oscAcouphene) {
+          try { oscAcouphene.stop(); } catch (e) {}
+          oscAcouphene.disconnect();
+          oscAcouphene = null;
+        }
+        if (acoupheneWarning) acoupheneWarning.hidden = true;
+      };
+
+      const fadeOutAcouphene = (durationSeconds = 3) => {
+        if (!audioCtx || !gainAcouphene) return;
+        gainAcouphene.gain.cancelScheduledValues(audioCtx.currentTime);
+        gainAcouphene.gain.setValueAtTime(gainAcouphene.gain.value, audioCtx.currentTime);
+        gainAcouphene.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + durationSeconds);
+
+        if (acoupheneTimeout) window.clearTimeout(acoupheneTimeout);
+        acoupheneTimeout = window.setTimeout(() => {
+          stopAcoupheneOscillator();
+        }, durationSeconds * 1000);
+      };
+
+      const applyMode = (mode: string) => {
+        currentMode = mode;
+        if (!audioCtx || !lowPassFilter || !hyperFilter) return;
+
+        lowPassFilter.frequency.setValueAtTime(20000, audioCtx.currentTime);
+        hyperFilter.gain.setValueAtTime(0, audioCtx.currentTime);
+        if (acoupheneTimeout) window.clearTimeout(acoupheneTimeout);
+
+        if (mode === 'normal') {
+          stopAcoupheneOscillator();
+        } else if (mode === 'acouphene') {
+          if (isPlaying) startAcouphene();
+        } else if (mode === 'surdite') {
+          stopAcoupheneOscillator();
+          lowPassFilter.frequency.setValueAtTime(800, audioCtx.currentTime);
+        } else if (mode === 'hyperacousie') {
+          stopAcoupheneOscillator();
+          hyperFilter.gain.setValueAtTime(16, audioCtx.currentTime);
+        }
+      };
+
+      btnPlayPause.addEventListener('click', () => {
+        initAudioContext();
+        if (audioCtx?.state === 'suspended') audioCtx.resume();
+
+        if (!isPlaying) {
+          stopAudio(); // exclusivité : coupe le lecteur partagé avant la simulation
+          audioElement.play();
+          isPlaying = true;
+          btnPlayPause.querySelector('.icon')!.textContent = '⏸';
+          btnPlayPause.querySelector('.label')!.textContent = 'Mettre en pause';
+          if (currentMode === 'acouphene') startAcouphene();
+        } else {
+          audioElement.pause();
+          isPlaying = false;
+          btnPlayPause.querySelector('.icon')!.textContent = '▶';
+          btnPlayPause.querySelector('.label')!.textContent = 'Reprendre l\'écoute';
+
+          if (currentMode === 'acouphene') {
+            fadeOutAcouphene(3);
+          }
+        }
+      });
+
+      // Même remise à zéro que le bouton lecture/pause, réutilisée au changement d'onglet.
+      pauseSimulation = () => {
+        if (!isPlaying) return;
+
+        audioElement.pause();
+        isPlaying = false;
+        btnPlayPause.querySelector('.icon')!.textContent = '▶';
+        btnPlayPause.querySelector('.label')!.textContent = "Reprendre l'écoute";
+
+        if (currentMode === 'acouphene') {
+          fadeOutAcouphene(3);
+        }
+      };
+
+      modeButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          modeButtons.forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+          const mode = btn.dataset.mode || 'normal';
+          applyMode(mode);
+        });
+      });
+    }
+
+    // --- Moteur du Décibel-mètre & Nouveaux Seuils ---
+    const dbSlider = document.querySelector<HTMLInputElement>('#db-slider');
+    const dbValue = document.querySelector<HTMLElement>('#db-value');
+    const dbBadge = document.querySelector<HTMLElement>('#db-level-badge');
+    const dbExample = document.querySelector<HTMLElement>('#db-example');
+    const dbTime = document.querySelector<HTMLElement>('#db-time');
+    const ciliaBadge = document.querySelector<HTMLElement>('#cilia-status-badge');
+    const ciliaWarning = document.querySelector<HTMLElement>('#cilia-warning');
+    const ciliaItems = document.querySelectorAll<SVGGElement>('.cilia-item');
+
+    if (dbSlider) {
+      const strokeChange = (el: SVGPathElement, color: string, opacity: number) => {
+        el.setAttribute('stroke', color);
+        el.style.opacity = opacity.toString();
+      };
+
+      const updateDecibels = (db: number) => {
+        if (dbValue) dbValue.textContent = db.toString();
+
+        // Réinitialisation des styles du badge selon les nouveaux seuils
+        if (dbBadge) {
+          dbBadge.className = 'db-display-badge';
+          if (db <= 84) dbBadge.classList.add('level-green');       // ≤ 84 dB : Vert
+          else if (db <= 119) dbBadge.classList.add('level-red');    // 85 à 119 dB : Danger / Rouge
+          else if (db <= 129) dbBadge.classList.add('level-black');  // 120 à 129 dB : Seuil de douleur (Noir)
+          else dbBadge.classList.add('level-extreme');               // 130 dB et + : Extrême / Fusées / Feux d'artifice
+        }
+
+        // Exemples et temps d'exposition actualisés
+        if (db <= 84) {
+          if (dbExample) dbExample.textContent = db < 70 ? 'Rue calme / Conversation normale' : 'Restaurant bruyant / Cantine';
+          if (dbTime) dbTime.textContent = 'Illimitée (Sans danger)';
+          if (ciliaBadge) { ciliaBadge.textContent = 'Saines'; ciliaBadge.className = 'status-ok'; }
+          if (ciliaWarning) ciliaWarning.textContent = 'Les cils vibratiles oscillent normalement pour transmettre le son au cerveau.';
+        } else if (db <= 119) {
+          if (dbExample) dbExample.textContent = db <= 95 ? 'Baladeur à fond / Concert rock' : 'Boîte de nuit / Enceinte concert';
+          if (dbTime) dbTime.textContent = db <= 90 ? '4 heures max' : '15 minutes max !';
+          if (ciliaBadge) { ciliaBadge.textContent = 'Danger / Dégradation'; ciliaBadge.className = 'status-danger'; }
+          if (ciliaWarning) ciliaWarning.textContent = 'SEUIL DE DANGER (85 dB+) : Les cils vibratiles se tordent et s\'affaiblissent durablement.';
+        } else if (db <= 129) {
+          if (dbExample) dbExample.textContent = 'Sirène de pompiers de près / Décollage avion';
+          if (dbTime) dbTime.textContent = 'DANGER IMMÉDIAT (Quelques secondes)';
+          if (ciliaBadge) { ciliaBadge.textContent = 'SEUIL DE DOULEUR'; ciliaBadge.className = 'status-critical'; }
+          if (ciliaWarning) ciliaWarning.textContent = 'SEUIL DE DOULEUR (120 dB) : Dommages quasi-immédiats, les cils cassent massivement.';
+        } else if (db <= 139) {
+          if (dbExample) dbExample.textContent = 'Feu d\'artifice (proche) / Moteur à réaction (130 dB)';
+          if (dbTime) dbTime.textContent = 'LÉSIONS IRRÉVERSIBLES INSTANTANÉES';
+          if (ciliaBadge) { ciliaBadge.textContent = 'DESTRUCTION MASSIVE'; ciliaBadge.className = 'status-extreme'; }
+          if (ciliaWarning) ciliaWarning.textContent = 'FEUX D\'ARTIFICE / RÉACTEUR (130-135 dB) : Destruction fulgurante des cellules auditives.';
+        } else {
+          if (dbExample) dbExample.textContent = 'Décollage d\'une fusée spatiale (140-150+ dB)';
+          if (dbTime) dbTime.textContent = 'EXPLOSION / SURDITÉ TOTALE';
+          if (ciliaBadge) { ciliaBadge.textContent = 'DESTABILISATION TOTALE'; ciliaBadge.className = 'status-nuclear'; }
+          if (ciliaWarning) ciliaWarning.textContent = 'FUSÉES (140+ dB) : Destruction totale et instantanée de l\'oreille interne. Surdité définitive garantie.';
+        }
+
+        // Animation dynamique des cils en SVG selon l'intensité
+        ciliaItems.forEach((cil, idx) => {
+          const stem = cil.querySelector<SVGRectElement>('.cilia-stem');
+          const hairs = cil.querySelector<SVGPathElement>('.cilia-hairs');
+          const posX = 35 + idx * 45;
+
+          if (db <= 84) {
+            cil.setAttribute('transform', `translate(${posX}, 100) rotate(0)`);
+            if (stem) stem.setAttribute('fill', '#38bdf8');
+            if (hairs) strokeChange(hairs, '#38bdf8', 1);
+          } else if (db <= 119) {
+            const angle = (idx % 2 === 0 ? 30 : -35) * ((db - 84) / 35);
+            cil.setAttribute('transform', `translate(${posX}, 100) rotate(${angle})`);
+            if (stem) stem.setAttribute('fill', '#ef4444');
+            if (hairs) strokeChange(hairs, '#ef4444', 0.8);
+          } else if (db <= 129) {
+            const angle = idx % 2 === 0 ? 60 : -65;
+            cil.setAttribute('transform', `translate(${posX}, 100) rotate(${angle})`);
+            if (stem) stem.setAttribute('fill', '#dc2626');
+            if (hairs) strokeChange(hairs, '#dc2626', 0.4);
+          } else {
+            // Brisés au sol pour 130 dB et + (feux d'artifice, fusées)
+            const angle = idx % 2 === 0 ? 85 : -90;
+            cil.setAttribute('transform', `translate(${posX}, 105) rotate(${angle})`);
+            if (stem) stem.setAttribute('fill', '#1e293b');
+            if (hairs) strokeChange(hairs, '#0f172a', 0.1);
+          }
+        });
+      };
+
+      dbSlider.addEventListener('input', (e) => {
+        const val = parseInt((e.target as HTMLInputElement).value, 10);
+        updateDecibels(val);
+      });
+
+      updateDecibels(parseInt(dbSlider.value, 10));
+    }
+  }
+</script>
+
+<style>
+  .risques-course {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .risques-panel[hidden] {
+    display: none;
+  }
+
+  .risques-videos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  .activities-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .simulator-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .card-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    color: #f8fafc;
+  }
+
+  .card-header p {
+    margin: 0.25rem 0 0;
+    color: #94a3b8;
+    font-size: 0.95rem;
+  }
+
+  .audio-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    background: #38bdf8;
+    color: #0f172a;
+    border: none;
+    padding: 0.75rem 1.25rem;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background 0.2s ease;
+  }
+
+  .btn-primary:hover {
+    background: #0ea5e9;
+  }
+
+  .acouphene-badge {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid #ef4444;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .modes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .mode-card {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: left;
+    color: #f1f5f9;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .mode-card:hover {
+    border-color: #64748b;
+  }
+
+  .mode-card.active {
+    border-color: #38bdf8;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+    background: #1e293b;
+  }
+
+  .mode-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .mode-title {
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+  }
+
+  .mode-desc {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    line-height: 1.3;
+  }
+
+  .db-interactive-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    align-items: center;
+    background: #0f172a;
+    padding: 1.25rem;
+    border-radius: 12px;
+    border: 1px solid #334155;
+  }
+
+  .db-controls-side {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .db-display-badge {
+    text-align: center;
+    padding: 0.75rem;
+    border-radius: 12px;
+    font-weight: 800;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .db-display-badge span {
+    font-size: 2.2rem;
+    line-height: 1;
+  }
+
+  .db-display-badge small {
+    font-size: 1rem;
+  }
+
+  /* Niveaux de couleur adaptés aux nouvelles limites */
+  .level-green { background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid #22c55e; }
+  .level-red { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid #ef4444; }
+  .level-black { background: #111827; color: #f87171; border: 1px solid #b91c1c; }
+  .level-extreme { background: #000000; color: #ec4899; border: 1px solid #ec4899; box-shadow: 0 0 15px rgba(236, 72, 153, 0.4); }
+
+  .slider-wrapper input[type="range"] {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    accent-color: #38bdf8;
+    cursor: pointer;
+  }
+
+  .db-info-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .info-label { color: #94a3b8; }
+  .info-val { font-weight: 600; color: #f1f5f9; text-align: right; }
+  .info-val.highlight { color: #38bdf8; }
+
+  .cilia-visualizer-side {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .cilia-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    font-weight: 600;
+  }
+
+  #cilia-status-badge {
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+  }
+
+  .status-ok { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+  .status-danger { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+  .status-critical { background: rgba(185, 28, 28, 0.3); color: #f87171; border: 1px solid #ef4444; }
+  .status-extreme { background: #111; color: #f472b6; border: 1px solid #ec4899; }
+  .status-nuclear { background: #000; color: #c084fc; border: 1px solid #a855f7; }
+
+  .cilia-stage {
+    background: #1e293b;
+    border-radius: 8px;
+    padding: 0.5rem;
+    border: 1px solid #334155;
+  }
+
+  .cilia-item {
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform-origin: bottom center;
+  }
+
+  .cilia-warning-text {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    font-style: italic;
+    min-height: 2.5em;
+  }
+
+  .pedago-note {
+    margin: 0;
+    padding: 1rem;
+    background: rgba(56, 189, 248, 0.08);
+    border-left: 4px solid #38bdf8;
+    border-radius: 0 8px 8px 0;
+    color: #cbd5e1;
+    font-size: 0.9rem;
+  }
+
+  .pedago-note.warning-border {
+    border-left-color: #ef4444;
+    background: rgba(239, 68, 68, 0.08);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+  }
+</style>

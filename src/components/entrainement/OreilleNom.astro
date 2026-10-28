@@ -1,0 +1,759 @@
+---
+import '../../styles/tools-shared.css';
+// Outil « Oreille — Noms » : l'élève écoute une note synthétisée et clique
+// sur son nom. Le Do de référence est toujours disponible.
+import { relativeUrl } from '../../utils/navigation';
+---
+
+<section id="tool-oreille-nom" class="tool-root">
+  <a id="on-back" class="hub-back tool-back" href={relativeUrl('/entrainement')} aria-label="Retour à l'entraînement">
+    <span aria-hidden="true">←</span>
+    <span class="hub-back-text">Retour à l'entraînement</span>
+    <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
+  </a>
+
+  <header class="on-header">
+    <h1>Oreille — Noms</h1>
+  </header>
+
+  <!-- MENU DES NIVEAUX -->
+  <div id="on-menu" class="on-menu">
+    <div class="on-levels">
+      <button type="button" class="on-level-btn" data-level="1">
+        <span class="on-level-title">Niveau 1</span>
+        <span class="on-level-desc">3 notes (Do, Ré, Mi)</span>
+      </button>
+      <button type="button" class="on-level-btn" data-level="2">
+        <span class="on-level-title">Niveau 2</span>
+        <span class="on-level-desc">5 notes (Do à Sol)</span>
+      </button>
+      <button type="button" class="on-level-btn" data-level="3">
+        <span class="on-level-title">Niveau 3</span>
+        <span class="on-level-desc">7 notes (Do à Si)</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- CHALLENGE -->
+  <div id="on-game" class="on-game hidden">
+    <div class="on-hud">
+      <span class="on-hud-item">Niveau <strong id="on-level-label">1</strong></span>
+      <span class="on-hud-item">Question <strong id="on-progress">1 / 10</strong></span>
+      <span class="on-hud-item">Score <strong id="on-score">0 / 10</strong></span>
+      <span class="on-hud-item on-hud-time">⏱ <strong id="on-timer">1:00</strong></span>
+    </div>
+
+    <div class="on-audio">
+      <button type="button" id="on-reference" class="on-audio-btn on-audio-btn--ref" aria-label="Écouter la note de référence Do">
+        <span class="on-audio-icon" aria-hidden="true">🎹</span>
+        <span class="on-audio-text">Note de référence<strong>Do (C)</strong></span>
+      </button>
+      <button type="button" id="on-question" class="on-audio-btn on-audio-btn--play" aria-label="Écouter la note à identifier">
+        <span class="on-audio-icon" aria-hidden="true">🔊</span>
+        <span class="on-audio-text">Écouter la note<strong>Question</strong></span>
+      </button>
+    </div>
+
+    <p id="on-feedback" class="on-feedback" aria-live="polite"></p>
+
+    <div id="on-answers" class="on-answers" aria-label="Noms de notes possibles"></div>
+  </div>
+
+  <!-- BILAN -->
+  <div id="on-result" class="on-result hidden" role="status" aria-live="polite" tabindex="-1">
+    <h2>Challenge Over !</h2>
+    <p id="on-result-reason" class="on-result-reason"></p>
+
+    <div class="on-stats">
+      <div class="on-stat">
+        <span id="on-result-score" class="on-stat-value">0 / 10</span>
+        <span class="on-stat-label">Score</span>
+      </div>
+      <div class="on-stat">
+        <span id="on-result-percent" class="on-stat-value">0 %</span>
+        <span class="on-stat-label">Réussite</span>
+      </div>
+      <div class="on-stat">
+        <span id="on-result-time" class="on-stat-value">0:00</span>
+        <span class="on-stat-label">Temps</span>
+      </div>
+    </div>
+
+    <div class="on-result-actions">
+      <button type="button" id="on-restart" class="on-primary-btn">Recommencer le challenge</button>
+    </div>
+  </div>
+</section>
+
+<style is:global>
+  #tool-oreille-nom {
+    --accent: #7e22ce;
+    --accent-strong: #a855f7;
+    --accent-soft: #faf5ff;
+    --accent-border: #e9d5ff;
+    color: #0f172a;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+
+  #tool-oreille-nom .on-levels {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  @media (min-width: 560px) {
+    #tool-oreille-nom .on-levels { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+
+  #tool-oreille-nom .on-level-btn {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-height: 64px;
+    padding: 0.9rem 1rem;
+    text-align: left;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    background: #ffffff;
+    color: #334155;
+    font: inherit;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    touch-action: manipulation;
+    transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.1s ease;
+  }
+
+  #tool-oreille-nom .on-level-title {
+    color: var(--accent);
+    font-size: 1.15rem;
+    font-weight: 800;
+  }
+
+  #tool-oreille-nom .on-level-desc {
+    color: #64748b;
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+
+  #tool-oreille-nom .on-hud {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem 1rem;
+    padding: 0.7rem 0.9rem;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-border);
+    border-radius: 14px;
+    color: #475569;
+    font-size: 0.98rem;
+    font-weight: 600;
+  }
+
+  #tool-oreille-nom .on-hud strong { color: var(--accent); font-weight: 800; }
+
+  /* --- Écoute --- */
+  #tool-oreille-nom .on-audio {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+  }
+
+  #tool-oreille-nom .on-audio-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-height: 92px;
+    padding: 0.85rem 0.5rem;
+    border: 2px solid var(--accent-border);
+    border-radius: 18px;
+    background: var(--accent-soft);
+    color: #4c1d95;
+    font: inherit;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: transform 0.1s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  #tool-oreille-nom .on-audio-btn:active { transform: scale(0.97); }
+
+  #tool-oreille-nom .on-audio-btn--play {
+    border-color: #d8b4fe;
+    background: linear-gradient(160deg, #f3e8ff, #ede9fe);
+  }
+
+  #tool-oreille-nom .on-audio-icon {
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+
+  #tool-oreille-nom .on-audio-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #6b21a8;
+    text-align: center;
+    line-height: 1.25;
+  }
+
+  #tool-oreille-nom .on-audio-text strong {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  #tool-oreille-nom .on-feedback {
+    min-height: 2rem;
+    margin: 0;
+    text-align: center;
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+
+  #tool-oreille-nom .on-answers {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(88px, 100%), 1fr));
+    gap: 0.5rem;
+  }
+
+  #tool-oreille-nom .on-answer-btn {
+    min-height: 56px;
+    padding: 0.7rem 0.35rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    background: #ffffff;
+    color: #334155;
+    font: inherit;
+    font-size: 1.15rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    touch-action: manipulation;
+    user-select: none;
+    transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.1s ease;
+  }
+
+  /* --- Bilan --- */
+
+  #tool-oreille-nom .on-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.6rem;
+    margin: 1.35rem 0;
+  }
+
+  #tool-oreille-nom .on-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.9rem 0.35rem;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-border);
+    border-radius: 16px;
+  }
+
+  @media (max-width: 640px) {
+    #tool-oreille-nom .on-hud { font-size: 0.88rem; padding: 0.6rem 0.75rem; }
+    #tool-oreille-nom .on-audio-btn { min-height: 84px; }
+  }
+
+  /* Portrait smartphone : l'outil épouse exactement la hauteur visible. */
+  @media (max-width: 640px) and (orientation: portrait) {
+
+    body:has(#tool-oreille-nom) {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding: 0.35rem 0.5rem 0.5rem;
+    }
+
+    main.container:has(#tool-oreille-nom) {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      min-height: 0;
+    }
+
+    #tool-oreille-nom .on-header { display: none; }
+
+    #tool-oreille-nom #on-menu,
+    #tool-oreille-nom #on-game,
+    #tool-oreille-nom #on-result {
+      flex: 1 1 auto;
+      min-height: 0;
+      gap: 0.5rem;
+    }
+
+    #tool-oreille-nom #on-menu {
+      display: flex;
+      flex-direction: column;
+    }
+
+    #tool-oreille-nom .on-levels {
+      flex: 1 1 auto;
+      min-height: 0;
+      grid-template-columns: 1fr;
+      grid-auto-rows: minmax(0, 1fr);
+      gap: 0.5rem;
+    }
+
+    #tool-oreille-nom .on-level-btn {
+      justify-content: center;
+      min-height: 0;
+      padding: 0.5rem 0.7rem;
+      overflow: hidden;
+    }
+
+    #tool-oreille-nom .on-level-title { font-size: 1rem; line-height: 1.2; }
+    #tool-oreille-nom .on-level-desc { font-size: 0.8rem; line-height: 1.25; }
+
+    #tool-oreille-nom #on-game { justify-content: space-between; }
+
+    #tool-oreille-nom .on-hud {
+      flex: 0 0 auto;
+      gap: 0.2rem 0.6rem;
+      padding: 0.4rem 0.55rem;
+      border-radius: 10px;
+      font-size: 0.8rem;
+    }
+
+    #tool-oreille-nom .on-audio { flex: 0 0 auto; gap: 0.4rem; }
+    #tool-oreille-nom .on-audio-btn {
+      min-height: 58px;
+      padding: 0.35rem 0.4rem;
+      gap: 0.15rem;
+      border-radius: 14px;
+    }
+    #tool-oreille-nom .on-audio-icon { font-size: 1.25rem; }
+    #tool-oreille-nom .on-audio-text { font-size: 0.78rem; gap: 0; }
+    #tool-oreille-nom .on-audio-text strong { font-size: 0.92rem; }
+
+    #tool-oreille-nom .on-feedback {
+      flex: 0 0 auto;
+      min-height: 1.4rem;
+      font-size: 1rem;
+    }
+
+    #tool-oreille-nom .on-answers {
+      flex: 1 1 auto;
+      min-height: 0;
+      align-content: center;
+      grid-auto-rows: minmax(52px, auto);
+      gap: 0.45rem;
+    }
+
+    #tool-oreille-nom .on-answer-btn {
+      min-height: 52px;
+      padding: 0.4rem 0.25rem;
+      font-size: 1.05rem;
+    }
+
+    #tool-oreille-nom #on-result {
+      justify-content: center;
+      padding: 0;
+    }
+
+    #tool-oreille-nom .on-stats {
+      grid-template-columns: 1fr;
+      gap: 0.7rem;
+      margin: 0.6rem 0;
+    }
+
+    /* Cartes empilées : libellé à gauche, valeur à droite, sans compression. */
+    #tool-oreille-nom .on-stat {
+      flex-direction: row-reverse;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+    }
+  }
+
+  /* Paysage mobile bas : aucun défilement vertical, réponses sur une ligne. */
+  @media (pointer: coarse) and (orientation: landscape) and (max-height: 550px) {
+
+    body:has(#tool-oreille-nom) {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding: 0.25rem 0.35rem;
+    }
+
+    main.container:has(#tool-oreille-nom) {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      min-height: 0;
+    }
+
+    #tool-oreille-nom .on-header { display: none; }
+
+    #tool-oreille-nom #on-menu,
+    #tool-oreille-nom #on-game,
+    #tool-oreille-nom #on-result {
+      flex: 1 1 auto;
+      min-height: 0;
+      gap: 0.3rem;
+    }
+
+    #tool-oreille-nom .on-levels { gap: 0.3rem; }
+    #tool-oreille-nom .on-level-btn { min-height: 36px; padding: 0.2rem 0.5rem; }
+    #tool-oreille-nom .on-level-title { font-size: 0.85rem; }
+    #tool-oreille-nom .on-level-desc { font-size: 0.72rem; }
+
+    #tool-oreille-nom #on-game { justify-content: space-between; }
+
+    #tool-oreille-nom .on-hud {
+      padding: 0.2rem 0.5rem;
+      font-size: 0.72rem;
+      border-radius: 8px;
+    }
+
+    #tool-oreille-nom .on-audio { gap: 0.3rem; }
+    #tool-oreille-nom .on-audio-btn {
+      min-height: 34px;
+      padding: 0.15rem 0.35rem;
+      border-radius: 10px;
+    }
+    #tool-oreille-nom .on-audio-icon { display: none; }
+    #tool-oreille-nom .on-audio-text { font-size: 0.7rem; }
+    #tool-oreille-nom .on-audio-text strong { font-size: 0.78rem; }
+
+    #tool-oreille-nom .on-feedback { min-height: 1.1rem; font-size: 0.9rem; }
+
+    #tool-oreille-nom .on-answers {
+      flex: 1 1 auto;
+      min-height: 0;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      align-content: center;
+      gap: 0.25rem;
+    }
+
+    #tool-oreille-nom .on-answer-btn {
+      min-height: 30px;
+      padding: 0.15rem 0.1rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+
+    #tool-oreille-nom #on-result {
+      justify-content: center;
+      padding: 0;
+    }
+
+    #tool-oreille-nom .on-stats { margin: 0.3rem 0; }
+    #tool-oreille-nom .on-stat { padding: 0.3rem 0.2rem; border-radius: 10px; }
+  }
+</style>
+
+<script>
+  import { shuffle } from '../../utils/random';
+  import {
+    ChallengeSession,
+    CHALLENGE_QUESTION_COUNT,
+    formatCountdown,
+    type ChallengeResult,
+  } from '../../utils/challenge';
+  import { noteName, spokenNoteName } from '../../utils/musicNotes';
+  import { playFeedback, playPianoNote, stopAllNotes, unlockAudio } from '../../utils/pianoSynth';
+  import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
+
+  /** Notes proposées à l'oreille, du grave vers l'aigu. */
+  const LEVEL_MIDIS: Record<number, number[]> = {
+    1: [60, 62, 64],
+    2: [60, 62, 64, 65, 67],
+    3: [60, 62, 64, 65, 67, 69, 71],
+  };
+
+  (() => {
+    const root = document.getElementById('tool-oreille-nom');
+    if (!root) return;
+
+    const menuEl = root.querySelector<HTMLElement>('#on-menu');
+    const gameEl = root.querySelector<HTMLElement>('#on-game');
+    const resultEl = root.querySelector<HTMLElement>('#on-result');
+    const levelLabelEl = root.querySelector<HTMLElement>('#on-level-label');
+    const progressEl = root.querySelector<HTMLElement>('#on-progress');
+    const scoreEl = root.querySelector<HTMLElement>('#on-score');
+    const timerEl = root.querySelector<HTMLElement>('#on-timer');
+    const feedbackEl = root.querySelector<HTMLElement>('#on-feedback');
+    const answersEl = root.querySelector<HTMLElement>('#on-answers');
+    const resultScoreEl = root.querySelector<HTMLElement>('#on-result-score');
+    const resultPercentEl = root.querySelector<HTMLElement>('#on-result-percent');
+    const resultTimeEl = root.querySelector<HTMLElement>('#on-result-time');
+    const resultReasonEl = root.querySelector<HTMLElement>('#on-result-reason');
+    const restartBtn = root.querySelector<HTMLButtonElement>('#on-restart');
+    const referenceBtn = root.querySelector<HTMLButtonElement>('#on-reference');
+    const questionBtn = root.querySelector<HTMLButtonElement>('#on-question');
+    const backLink = root.querySelector<HTMLAnchorElement>('#on-back');
+    const levelButtons = root.querySelectorAll<HTMLButtonElement>('[data-level]');
+
+    if (
+      !menuEl || !gameEl || !resultEl || !levelLabelEl || !progressEl || !scoreEl ||
+      !timerEl || !feedbackEl || !answersEl || !resultScoreEl || !resultPercentEl ||
+      !resultTimeEl || !resultReasonEl || !restartBtn ||
+      !referenceBtn || !questionBtn
+    ) {
+      return;
+    }
+
+    let session: ChallengeSession | null = null;
+    let currentLevel = 1;
+    let currentMidi: number | null = null;
+    let currentName = '';
+    let answered = false;
+    let nextQuestionTimer: number | null = null;
+    let audioTimer: number | null = null;
+    let targetBag: number[] = [];
+    let lastMidi: number | null = null;
+
+    const clearNextTimer = (): void => {
+      if (nextQuestionTimer !== null) {
+        window.clearTimeout(nextQuestionTimer);
+        nextQuestionTimer = null;
+      }
+    };
+
+    const clearAudioTimer = (): void => {
+      if (audioTimer !== null) {
+        window.clearTimeout(audioTimer);
+        audioTimer = null;
+      }
+    };
+
+    const flashPlaying = (button: HTMLButtonElement): void => {
+      button.classList.add('is-playing');
+      window.setTimeout(() => button.classList.remove('is-playing'), 450);
+    };
+
+    const playReference = (): void => {
+      unlockAudio();
+      stopAllNotes();
+      playPianoNote(60, { duration: 1.5, velocity: 0.8 });
+      flashPlaying(referenceBtn);
+    };
+
+    const playQuestion = (): void => {
+      if (!session?.isRunning || currentMidi === null) return;
+      unlockAudio();
+      stopAllNotes();
+      playPianoNote(currentMidi, { duration: 1.9, velocity: 0.9 });
+      flashPlaying(questionBtn);
+    };
+
+    const scheduleQuestionAudio = (): void => {
+      clearAudioTimer();
+      const midi = currentMidi;
+      if (midi === null) return;
+      audioTimer = window.setTimeout(() => {
+        audioTimer = null;
+        if (session?.isRunning && !answered && currentMidi === midi) playQuestion();
+      }, 400);
+    };
+
+    const pickMidi = (midis: number[]): number => {
+      if (targetBag.length === 0) {
+        targetBag = shuffle(midis);
+        if (targetBag.length > 1 && targetBag[0] === lastMidi) {
+          const first = targetBag[0];
+          const second = targetBag[1];
+          if (first !== undefined && second !== undefined) {
+            targetBag[0] = second;
+            targetBag[1] = first;
+          }
+        }
+      }
+
+      const midi = targetBag.shift();
+      if (midi === undefined) return midis[0] ?? 60;
+      lastMidi = midi;
+      return midi;
+    };
+
+    const renderAnswers = (midis: number[]): void => {
+      const names = Array.from(new Set(midis.map((midi) => noteName(midi, 'natural'))));
+      answersEl.replaceChildren();
+
+      names.forEach((name) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'on-answer-btn';
+        button.dataset.name = name;
+        button.textContent = name;
+        button.setAttribute('aria-label', `Répondre ${spokenNoteName(name)}`);
+        answersEl.appendChild(button);
+      });
+    };
+
+    const showQuestion = (): void => {
+      const midis = LEVEL_MIDIS[currentLevel];
+      if (!midis || !session?.isRunning) return;
+
+      answered = false;
+      feedbackEl.textContent = '';
+      feedbackEl.className = 'on-feedback';
+      answersEl.classList.remove('is-locked');
+      answersEl.querySelectorAll('.on-answer-btn').forEach((button) => {
+        button.classList.remove('is-correct', 'is-wrong');
+      });
+
+      const midi = pickMidi(midis);
+      currentMidi = midi;
+      currentName = noteName(midi, 'natural');
+
+      progressEl.textContent = `${session.answered + 1} / ${CHALLENGE_QUESTION_COUNT}`;
+      scoreEl.textContent = `${session.score} / ${CHALLENGE_QUESTION_COUNT}`;
+
+      scheduleQuestionAudio();
+    };
+
+    const handleAnswer = (button: HTMLButtonElement): void => {
+      if (!session?.isRunning || answered || currentMidi === null) return;
+      answered = true;
+      clearNextTimer();
+      clearAudioTimer();
+
+      const chosen = button.dataset.name ?? '';
+      const isCorrect = chosen === currentName;
+
+      if (isCorrect) {
+        feedbackEl.textContent = '✅ Bravo !';
+        feedbackEl.className = 'on-feedback correct';
+        button.classList.add('is-correct');
+      } else {
+        feedbackEl.textContent = `❌ C'était ${currentName}`;
+        feedbackEl.className = 'on-feedback incorrect';
+        button.classList.add('is-wrong');
+        answersEl.querySelectorAll<HTMLButtonElement>('.on-answer-btn').forEach((answer) => {
+          if (answer.dataset.name === currentName) answer.classList.add('is-correct');
+        });
+      }
+
+      playFeedback(isCorrect);
+      answersEl.classList.add('is-locked');
+
+      const continues = session.recordAnswer(isCorrect);
+      if (!continues) return;
+
+      nextQuestionTimer = window.setTimeout(() => {
+        nextQuestionTimer = null;
+        stopAllNotes();
+        showQuestion();
+      }, 950);
+    };
+
+    const startLevel = (levelNumber: number): void => {
+      const midis = LEVEL_MIDIS[levelNumber];
+      if (!midis) return;
+
+      clearNextTimer();
+      clearAudioTimer();
+      stopAllNotes();
+      session?.cancel();
+      session = null;
+
+      currentLevel = levelNumber;
+      currentMidi = null;
+      currentName = '';
+      answered = false;
+      targetBag = [];
+      lastMidi = null;
+      setHubBackMode(backLink, 'level');
+
+      menuEl.classList.add('hidden');
+      resultEl.classList.add('hidden');
+      gameEl.classList.remove('hidden');
+
+      levelLabelEl.textContent = String(levelNumber);
+      progressEl.textContent = `1 / ${CHALLENGE_QUESTION_COUNT}`;
+      scoreEl.textContent = `0 / ${CHALLENGE_QUESTION_COUNT}`;
+      timerEl.textContent = '1:00';
+      feedbackEl.textContent = '';
+      feedbackEl.className = 'on-feedback';
+
+      renderAnswers(midis);
+
+      session = new ChallengeSession({
+        onTick: ({ remainingMs, score }) => {
+          timerEl.textContent = formatCountdown(remainingMs);
+          scoreEl.textContent = `${score} / ${CHALLENGE_QUESTION_COUNT}`;
+        },
+        onEnd: showResult,
+      });
+      session.start();
+      showQuestion();
+    };
+
+    const showResult = (result: ChallengeResult): void => {
+      clearNextTimer();
+      clearAudioTimer();
+      stopAllNotes();
+      answersEl.classList.add('is-locked');
+
+      gameEl.classList.add('hidden');
+      resultEl.classList.remove('hidden');
+
+      resultScoreEl.textContent = `${result.score} / ${result.total}`;
+      resultPercentEl.textContent = `${result.percent} %`;
+      resultTimeEl.textContent = result.elapsedLabel;
+      resultReasonEl.textContent =
+        result.reason === 'timeout'
+          ? '⏱ Temps écoulé !'
+          : '🏁 Les 10 questions sont terminées.';
+
+      resultEl.focus({ preventScroll: true });
+    };
+
+    const backToMenu = (): void => {
+      clearNextTimer();
+      clearAudioTimer();
+      stopAllNotes();
+      session?.cancel();
+      session = null;
+      currentMidi = null;
+      answered = false;
+
+      gameEl.classList.add('hidden');
+      resultEl.classList.add('hidden');
+      menuEl.classList.remove('hidden');
+      setHubBackMode(backLink, 'hub');
+    };
+
+    backLink?.addEventListener('click', (event) => {
+      const link = event.currentTarget;
+      if (!(link instanceof HTMLAnchorElement) || !isHubBackInLevelMode(link)) return;
+      event.preventDefault();
+      backToMenu();
+    });
+
+    levelButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const levelNumber = Number(button.dataset.level);
+        if (Number.isFinite(levelNumber)) startLevel(levelNumber);
+      });
+    });
+
+    answersEl.addEventListener('click', (event) => {
+      const clicked = event.target;
+      if (!(clicked instanceof Element)) return;
+      const button = clicked.closest('.on-answer-btn');
+      if (button instanceof HTMLButtonElement) handleAnswer(button);
+    });
+
+    referenceBtn.addEventListener('click', playReference);
+    questionBtn.addEventListener('click', playQuestion);
+    restartBtn.addEventListener('click', () => startLevel(currentLevel));
+    window.addEventListener('pagehide', () => {
+      session?.cancel();
+      stopAllNotes();
+    });
+  })();
+</script>
+

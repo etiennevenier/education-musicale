@@ -1,0 +1,116 @@
+---
+import CourseTabs from './CourseTabs.astro';
+import OperaQuiz from './OperaQuiz.astro';
+import VideoCard from './VideoCard.astro';
+
+interface OperaVideo {
+  badge: string;
+  title: string;
+  youtubeId: string;
+}
+
+interface OperaTab {
+  id: string;
+  icon: string;
+  label: string;
+  kind: 'videos' | 'quiz';
+  videos?: OperaVideo[];
+}
+
+const tabs: OperaTab[] = [
+  {
+    id: 'cours',
+    icon: '🎬',
+    label: 'Cours',
+    kind: 'videos',
+    videos: [
+      { badge: 'Capsule', title: 'Capsule', youtubeId: 'qsfJISMPwJo' },
+      { badge: 'Écoute', title: 'Comédie musicale', youtubeId: 'vV67aiXimTw' },
+      { badge: 'Projet musical', title: 'Stromae — Carmen', youtubeId: 'UKftOH54iNU' },
+      { badge: 'Vocalise', title: 'Vocalise', youtubeId: 'CRXPn9eKCd8' },
+    ],
+  },
+  {
+    id: 'carmen',
+    icon: '💃',
+    label: 'Carmen',
+    kind: 'videos',
+    videos: [
+      { badge: 'Écoute', title: 'Carmen — Bizet', youtubeId: 'K2snTkaD64U' },
+      { badge: 'Écoute', title: 'Carmen — Bizet', youtubeId: 'POacDjS1EBo' },
+      { badge: 'Écoute', title: 'Carmen — Bizet', youtubeId: 'KJ_HHRJf0xg' },
+      { badge: 'Notions', title: 'Carmen', youtubeId: 'Gth5bcPWfJ4' },
+    ],
+  },
+  {
+    id: 'quiz',
+    icon: '🎧',
+    label: 'Quiz Opéra',
+    kind: 'quiz',
+  },
+];
+---
+
+<div class="opera-course">
+  <CourseTabs tabs={tabs} ariaLabel="Musique et Opéra" />
+
+  {tabs.map((tab, index) => (
+    <div
+      role="tabpanel"
+      id={`main-panel-${tab.id}`}
+      class="opera-panel"
+      aria-labelledby={`main-tab-${tab.id}`}
+      hidden={index !== 0}
+      data-panel={tab.id}
+    >
+      {tab.kind === 'quiz' ? (
+        <OperaQuiz />
+      ) : (
+        <div class="opera-videos">
+          {(tab.videos ?? []).map((video) => (
+            <VideoCard
+              badge={video.badge}
+              title={video.title}
+              url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  ))}
+</div>
+
+<script>
+  import { setupMainTabs } from '../utils/tabs';
+  import { stopAudio } from '../utils/audioManager';
+
+  const root = document.querySelector<HTMLElement>('.opera-course');
+
+  if (root) {
+    setupMainTabs(root, {
+      panelSelector: '.opera-panel',
+      before: (tab) => {
+        // On coupe l'extrait du quiz dès que l'on quitte son onglet.
+        if (tab.dataset.mainTab !== 'quiz') stopAudio();
+      },
+    });
+  }
+</script>
+
+<style>
+  .opera-course {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .opera-panel[hidden] {
+    display: none;
+  }
+
+  .opera-videos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+</style>

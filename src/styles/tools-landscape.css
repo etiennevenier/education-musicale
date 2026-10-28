@@ -1,0 +1,660 @@
+/* --------------------------------------------------------------------------
+   Outils d'entraînement : règles propres à chaque outil en paysage bas
+   --------------------------------------------------------------------------
+   Le squelette (page, main, racine d'outil, zone élastique, bouton retour,
+   titres masqués, plein écran ≤ 1024 px) vit dans tools-shell.css : ne rien
+   y redéclarer ici. Ce fichier ne garde que les gabarits internes à chaque
+   outil pour les fenêtres basses (501–768 px) et les téléphones paysage.
+-------------------------------------------------------------------------- */
+
+@media (orientation: landscape) and (min-height: 501px) and (max-height: 768px) {
+
+  /* ------------------------------------------------------------------
+     Piano interactif : portée flexible, clavier 88 touches visible.
+  ------------------------------------------------------------------ */
+  body.mobile-header-hidden #tool-piano {
+    --kh: clamp(84px, 18dvh, 140px);
+    --bkh: clamp(52px, 12dvh, 92px);
+  }
+
+  body.mobile-header-hidden #tool-piano .piano-body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    width: 100%;
+    max-width: none;
+    min-height: 0;
+    gap: var(--tool-gap-lg, 1.25rem);
+  }
+
+  body.mobile-header-hidden #tool-piano .piano-body > .tool-back {
+    align-self: flex-start;
+    flex: 0 0 auto;
+    margin: 0 0 4px;
+  }
+
+  body.mobile-header-hidden #tool-piano .piano-info-note {
+    flex: 0 0 auto;
+    min-height: 22px;
+    margin: 0 auto;
+    padding: 2px 12px;
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  body.mobile-header-hidden #tool-piano .piano-staff-container {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: #ffffff;
+  }
+
+  body.mobile-header-hidden #tool-piano .piano-wrapper {
+    flex: 0 0 auto;
+    width: 100%;
+    margin-top: 0;
+    margin-bottom: max(40px, env(safe-area-inset-bottom, 40px));
+    padding: 6px 8px 14px;
+    border-radius: 8px 8px 10px 10px;
+    overflow-x: auto;
+    overflow-y: visible;
+  }
+
+  body.mobile-header-hidden #tool-piano .piano {
+    height: var(--kh);
+  }
+
+  body.mobile-header-hidden #tool-piano .white-key {
+    height: var(--kh);
+  }
+
+  body.mobile-header-hidden #tool-piano .black-key {
+    height: var(--bkh);
+  }
+
+  body.mobile-header-hidden #tool-piano .piano-portrait-hint,
+  body.mobile-header-hidden #tool-piano .piano-scroll-hint {
+    display: none;
+  }
+
+  /* ------------------------------------------------------------------
+     Lecture de notes : HUD compact, portée plafonnée, réponses en bas.
+  ------------------------------------------------------------------ */
+  body.mobile-header-hidden #tool-notes .notes-card {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    padding: 0;
+  }
+
+  body.mobile-header-hidden #tool-notes #menu-section:not(.hidden),
+  body.mobile-header-hidden #tool-notes #exercise-section:not(.hidden),
+  body.mobile-header-hidden #tool-notes #score-section:not(.hidden) {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  body.mobile-header-hidden #tool-notes .notes-card > .tool-back {
+    align-self: flex-start;
+    flex: 0 0 auto;
+    margin: 0 0 4px;
+  }
+
+  body.mobile-header-hidden #tool-notes #exercise-section {
+    gap: 1.5rem;
+    justify-content: center;
+  }
+
+  body.mobile-header-hidden #tool-notes .notes-hud {
+    flex: 0 0 auto;
+    gap: 0.2rem 0.7rem;
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+  }
+
+  body.mobile-header-hidden #tool-notes .notes-staff {
+    padding: 2px;
+    border-radius: 12px;
+  }
+
+  body.mobile-header-hidden #tool-notes .feedback-msg {
+    flex: 0 0 auto;
+    height: 1.6rem;
+    line-height: 1.6rem;
+    font-size: 1.1rem;
+  }
+
+  body.mobile-header-hidden #tool-notes .notes-answers {
+    flex: 0 0 auto;
+    margin-top: 0;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  body.mobile-header-hidden #tool-notes .note-btn {
+    min-height: 44px;
+    padding: 6px 3px;
+    border-radius: 12px;
+    font-size: 1rem;
+  }
+
+  body.mobile-header-hidden #tool-notes .note-btn[data-note="Si"] {
+    grid-column: span 1;
+  }
+
+  /* Menu et bilan : compacts pour ne jamais déborder de 100dvh. */
+  body.mobile-header-hidden #tool-notes .notes-levels {
+    flex: 1 1 auto;
+    min-height: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: minmax(0, 1fr);
+    gap: 0.5rem;
+    overflow: hidden;
+  }
+
+  body.mobile-header-hidden #tool-notes .level-btn {
+    min-height: 0;
+    padding: 8px 12px;
+    overflow: hidden;
+  }
+
+  body.mobile-header-hidden #tool-notes #score-section {
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0;
+  }
+
+  body.mobile-header-hidden #tool-notes #score-section .notes-stats {
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+  }
+
+  body.mobile-header-hidden #tool-notes #score-section .notes-stat {
+    padding: 0.55rem 0.35rem;
+  }
+
+  /* ------------------------------------------------------------------
+     Dessiner les clefs : retour en tête, onglets, portée flexible,
+     curseur et explication toujours visibles.
+  ------------------------------------------------------------------ */
+  body.mobile-header-hidden #tool-clefs .app {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: none;
+    min-height: 0;
+    margin: 0;
+    gap: var(--tool-gap-lg, 1.25rem);
+    justify-content: center;
+  }
+
+  body.mobile-header-hidden #tool-clefs .app > .tool-back {
+    align-self: flex-start;
+    flex: 0 0 auto;
+    margin: 0 0 4px;
+  }
+
+  body.mobile-header-hidden #tool-clefs .top {
+    flex: 0 0 auto;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: var(--tool-gap, 8px);
+  }
+
+  body.mobile-header-hidden #tool-clefs .top .ghost-hint {
+    display: none;
+  }
+
+  body.mobile-header-hidden #tool-clefs .tabs {
+    width: auto;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  body.mobile-header-hidden #tool-clefs .tab {
+    min-height: 36px;
+    padding: 6px 14px;
+    font-size: 15px;
+  }
+
+  body.mobile-header-hidden #tool-clefs .slider-row {
+    flex: 0 0 auto;
+    gap: 6px 12px;
+  }
+
+  body.mobile-header-hidden #tool-clefs .slider {
+    flex: 1 1 220px;
+    min-width: 0;
+    height: 28px;
+  }
+
+  body.mobile-header-hidden #tool-clefs .pct {
+    font-size: 15px;
+  }
+
+  /* Prioritaire sur la règle mobile qui masque le bloc explicatif. */
+  body.mobile-header-hidden #tool-clefs .caption {
+    display: block;
+    flex: 0 0 auto;
+    min-height: 0;
+    max-height: 22dvh;
+    padding: 8px 12px;
+    border-left-width: 6px;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  body.mobile-header-hidden #tool-clefs .caption h2 {
+    margin-bottom: 2px;
+    font-size: 16px;
+    line-height: 1.2;
+  }
+
+  body.mobile-header-hidden #tool-clefs .caption p {
+    font-size: 14px;
+    line-height: 1.3;
+    max-width: none;
+  }
+
+  /* ------------------------------------------------------------------
+     Lecture rythmique : réglages compacts, partition flexible, bouton
+     TAPER toujours visible en bas de l'écran.
+  ------------------------------------------------------------------ */
+  body.mobile-header-hidden #tool-rhythm .app {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: none;
+    min-height: 0;
+    margin: 0;
+    gap: var(--tool-gap-lg, 1.25rem);
+    justify-content: center;
+  }
+
+  /* Le bouton de retour reste en tête, l'en-tête de l'outil est masqué.
+     Les réglages passent sur leur propre ligne, sous le retour. */
+  body.mobile-header-hidden #tool-rhythm .rhythm-top {
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    padding: 0;
+  }
+
+  body.mobile-header-hidden #tool-rhythm .rhythm-top > .tool-back {
+    align-self: flex-start;
+    margin: 0 0 4px;
+  }
+
+  body.mobile-header-hidden #tool-rhythm .controls {
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 6px;
+    padding: 6px;
+  }
+
+  /* Les réglages restent sous le retour sur tablette (le retour occupe la
+     première ligne, la barre de réglages toute la seconde). */
+  body.mobile-header-hidden #tool-rhythm .rhythm-top > .controls {
+    flex: 1 1 100%;
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  body.mobile-header-hidden #tool-rhythm .controls .field {
+    flex: 1 1 120px;
+    min-width: 0;
+    gap: 2px;
+    font-size: 12px;
+  }
+
+  body.mobile-header-hidden #tool-rhythm .controls .field.tempo {
+    flex: 1 1 180px;
+  }
+
+  body.mobile-header-hidden #tool-rhythm .controls .btn {
+    flex: 0 0 auto;
+    min-height: 36px;
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  body.mobile-header-hidden #tool-rhythm .status {
+    flex: 0 0 auto;
+    padding: 4px 8px;
+  }
+
+  body.mobile-header-hidden #tool-rhythm .sheet {
+    flex: 1 1 0;
+    display: flex;
+    align-items: center;
+    height: 0;
+    min-height: 120px;
+    max-height: 60dvh;
+    overflow-x: auto;
+    overflow-y: visible;
+  }
+
+  body.mobile-header-hidden #tool-rhythm #rt-board {
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+  }
+
+  body.mobile-header-hidden #tool-rhythm .rt-scroll-hint {
+    display: none;
+  }
+
+  body.mobile-header-hidden #tool-rhythm .tap-btn {
+    flex: 0 0 auto;
+    margin-top: 0.75rem;
+    min-height: 48px;
+    padding: 6px 12px;
+  }
+
+  body.mobile-header-hidden #tool-rhythm .result:not([hidden]),
+  body.mobile-header-hidden #tool-rhythm .replay:not([hidden]) {
+    flex: 0 0 auto;
+    max-height: 18dvh;
+    overflow: hidden;
+  }
+
+  /* ------------------------------------------------------------------
+     Identification clavier : clavier visible, réponses ancrées en bas.
+  ------------------------------------------------------------------ */
+  body.mobile-header-hidden #tool-clavier-notes #cn-menu:not(.hidden),
+  body.mobile-header-hidden #tool-clavier-notes #cn-result:not(.hidden) {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+    gap: var(--tool-gap, 8px);
+    overflow: hidden;
+  }
+
+  body.mobile-header-hidden #tool-clavier-notes .cn-levels {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--tool-gap, 8px);
+    min-height: 0;
+  }
+
+  body.mobile-header-hidden #tool-clavier-notes .cn-level-btn {
+    min-height: 0;
+    padding: 8px 12px;
+  }
+
+  body.mobile-header-hidden #tool-clavier-notes #cn-game:not(.hidden) {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+    gap: var(--tool-gap-lg, 1.25rem);
+  }
+
+  body.mobile-header-hidden #tool-clavier-notes .cn-hud {
+    flex: 0 0 auto;
+    gap: 0.2rem 0.7rem;
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+  }
+
+  body.mobile-header-hidden #tool-clavier-notes .cn-piano {
+    flex: 0 0 auto;
+    width: 100%;
+    height: clamp(96px, 24dvh, 170px);
+    min-height: 96px;
+    max-height: 170px;
+    margin-bottom: 4px;
+  }
+
+  body.mobile-header-hidden #tool-clavier-notes .cn-caption {
+    flex: 0 0 auto;
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  body.mobile-header-hidden #tool-clavier-notes .cn-feedback {
+    flex: 0 0 auto;
+    min-height: 1.5rem;
+    margin: 0;
+    line-height: 1.5rem;
+  }
+
+  body.mobile-header-hidden #tool-clavier-notes .cn-answers {
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-end;
+    justify-content: center;
+    margin-top: 0;
+    gap: 6px;
+  }
+
+  body.mobile-header-hidden #tool-clavier-notes .cn-answer-btn {
+    flex: 0 1 auto;
+    min-height: 44px;
+    padding: 6px 10px;
+    font-size: 1rem;
+    border-radius: 10px;
+  }
+
+  body.mobile-header-hidden #tool-clavier-notes #cn-result .cn-stats {
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+  }
+
+  /* ------------------------------------------------------------------
+     Oreille — Noms : deux boutons d'écoute compacts, réponses groupées.
+  ------------------------------------------------------------------ */
+  body.mobile-header-hidden #tool-oreille-nom #on-menu:not(.hidden),
+  body.mobile-header-hidden #tool-oreille-nom #on-result:not(.hidden) {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+    gap: var(--tool-gap, 8px);
+    overflow: hidden;
+  }
+
+  body.mobile-header-hidden #tool-oreille-nom .on-levels {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--tool-gap, 8px);
+    min-height: 0;
+  }
+
+  body.mobile-header-hidden #tool-oreille-nom .on-level-btn {
+    min-height: 0;
+    padding: 8px 10px;
+  }
+
+  body.mobile-header-hidden #tool-oreille-nom #on-game:not(.hidden) {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+    gap: var(--tool-gap-lg, 1.25rem);
+  }
+
+  body.mobile-header-hidden #tool-oreille-nom .on-hud {
+    flex: 0 0 auto;
+    gap: 0.2rem 0.7rem;
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+  }
+
+  body.mobile-header-hidden #tool-oreille-nom .on-audio {
+    flex: 0 0 auto;
+    display: flex;
+    gap: var(--tool-gap, 8px);
+  }
+
+  body.mobile-header-hidden #tool-oreille-nom .on-audio-btn {
+    flex: 1 1 0;
+    min-height: 48px;
+    padding: 6px 10px;
+  }
+
+  body.mobile-header-hidden #tool-oreille-nom .on-feedback {
+    flex: 0 0 auto;
+    min-height: 1.5rem;
+    margin: 0;
+    line-height: 1.5rem;
+  }
+
+  body.mobile-header-hidden #tool-oreille-nom .on-answers {
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-end;
+    justify-content: center;
+    margin-top: 0;
+    gap: 6px;
+  }
+
+  body.mobile-header-hidden #tool-oreille-nom .on-answer-btn {
+    flex: 0 1 auto;
+    min-height: 48px;
+    padding: 6px 12px;
+    font-size: 1rem;
+    border-radius: 10px;
+  }
+
+  body.mobile-header-hidden #tool-oreille-nom #on-result .on-stats {
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+  }
+
+  /* ------------------------------------------------------------------
+     Oreille — Clavier : le clavier reste en bas, entièrement visible.
+  ------------------------------------------------------------------ */
+  body.mobile-header-hidden #tool-oreille-clavier #oc-menu:not(.hidden),
+  body.mobile-header-hidden #tool-oreille-clavier #oc-result:not(.hidden) {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+    gap: var(--tool-gap, 8px);
+    overflow: hidden;
+  }
+
+  body.mobile-header-hidden #tool-oreille-clavier .oc-levels {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--tool-gap, 8px);
+    min-height: 0;
+  }
+
+  body.mobile-header-hidden #tool-oreille-clavier .oc-level-btn {
+    min-height: 0;
+    padding: 8px 10px;
+  }
+
+  body.mobile-header-hidden #tool-oreille-clavier #oc-game:not(.hidden) {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+    gap: var(--tool-gap-lg, 1.25rem);
+  }
+
+  body.mobile-header-hidden #tool-oreille-clavier .oc-hud {
+    order: 1;
+    flex: 0 0 auto;
+    gap: 0.2rem 0.7rem;
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+  }
+
+  body.mobile-header-hidden #tool-oreille-clavier .oc-audio-btn {
+    order: 2;
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 6px 10px;
+  }
+
+  body.mobile-header-hidden #tool-oreille-clavier .oc-caption {
+    order: 3;
+    flex: 0 0 auto;
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  body.mobile-header-hidden #tool-oreille-clavier .oc-feedback {
+    order: 4;
+    flex: 0 0 auto;
+    min-height: 1.5rem;
+    margin: 0;
+    line-height: 1.5rem;
+  }
+
+  body.mobile-header-hidden #tool-oreille-clavier .oc-piano {
+    order: 5;
+    flex: 0 0 auto;
+    width: 100%;
+    height: clamp(96px, 26dvh, 180px);
+    min-height: 96px;
+    max-height: 180px;
+    margin-top: 0;
+    margin-bottom: max(10px, env(safe-area-inset-bottom, 10px));
+  }
+
+  body.mobile-header-hidden #tool-oreille-clavier #oc-result .oc-stats {
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Téléphones en paysage (≤ 550 px de haut) : le bouton de retour et la barre
+   de réglages de la lecture rythmique partagent une seule et même ligne.
+   Ce bloc est placé après le mode compact tablette pour primer à spécificité
+   égale (et annuler le passage à la ligne de la barre de réglages).
+-------------------------------------------------------------------------- */
+@media (orientation: landscape) and (max-height: 550px) {
+  body.mobile-header-hidden #tool-rhythm .rhythm-top {
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: var(--tool-gap, 8px);
+    margin: 0 0 4px;
+  }
+
+  body.mobile-header-hidden #tool-rhythm .rhythm-top > .tool-back {
+    align-self: center;
+    flex: 0 0 auto;
+    margin: 0;
+  }
+
+  body.mobile-header-hidden #tool-rhythm .rhythm-top > .controls {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    margin: 0;
+    flex-wrap: nowrap;
+  }
+}

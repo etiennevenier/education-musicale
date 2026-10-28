@@ -1,0 +1,127 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { siteData, getActiveSequenceIndex } from '../data/sequences';
+import { relativeUrl } from '../utils/navigation';
+
+export function getStaticPaths() {
+  return Object.values(siteData).map((level) => ({
+    params: { level: level.slug },
+  }));
+}
+
+const { level } = Astro.params;
+const data = siteData[level];
+const activeIdx = getActiveSequenceIndex(level);
+const activeSeq = data.sequences[activeIdx];
+---
+
+<Layout title={data.title}>
+  <div class="header">
+    <h2>Classe de {data.title}</h2>
+  </div>
+
+  <div class="choices-container">
+    {/* Option 1 : Séquence en cours */}
+    <a href={relativeUrl(`/${data.slug}/${activeSeq.slug}`)} class="choice-card primary">
+      <span class="tag">En ce moment</span>
+      <span class="seq-num">Séquence {activeIdx + 1}</span>
+      <h3>{activeSeq.title}</h3>
+      <span class="btn-action">Accéder au cours &rarr;</span>
+    </a>
+
+    {/* Option 2 : Entraînement */}
+    <a href={relativeUrl('/entrainement')} class="choice-card secondary">
+      <span class="tag training">Espace autonome</span>
+      <h3>Entraînement</h3>
+      <p>Exercices, lecture de notes, vocalises & outils numériques</p>
+      <span class="btn-action">&rarr;</span>
+    </a>
+  </div>
+</Layout>
+
+<style>
+  .header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  .header h2 {
+    color: var(--text);
+    font-weight: 500;
+  }
+  .choices-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .choice-card {
+    border-radius: 12px;
+    padding: 1.8rem;
+    text-decoration: none;
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    display: flex;
+    flex-direction: column;
+  }
+  .choice-card.primary {
+    background: #1e293b;
+    border-color: #38bdf8;
+  }
+  /* Carte Entraînement : accent violet/indigo, distinct du cyan du cours */
+  .choice-card.secondary {
+    --accent: #c084fc;        /* violet clair : surtitre, flèche, survol (contraste AA) */
+    --accent-deep: #a855f7;   /* violet soutenu : bordure au repos, halo */
+    border-color: var(--accent-deep);
+  }
+  .choice-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+  }
+  .choice-card.secondary:hover {
+    border-color: var(--accent);
+    box-shadow: 0 12px 24px -12px rgba(168, 85, 247, 0.55);
+  }
+  .tag {
+    align-self: flex-start;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--primary);
+    margin-bottom: 0.3rem;
+  }
+  .tag.training {
+    color: var(--accent);
+    background: rgba(168, 85, 247, 0.14);
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    padding: 0.15rem 0.55rem;
+    border-radius: 9999px;
+  }
+  .seq-num {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .choice-card h3 {
+    margin: 0.4rem 0;
+    font-size: 1.5rem;
+    color: #f8fafc;
+  }
+  .choice-card p {
+    margin: 0.2rem 0 1rem 0;
+    color: var(--text-muted);
+  }
+  .btn-action {
+    margin-top: 1rem;
+    font-weight: 600;
+    color: var(--primary);
+    align-self: flex-start;
+    transition: transform 0.2s ease;
+  }
+  .choice-card.secondary .btn-action {
+    color: var(--accent);
+    font-size: 1.1rem;
+  }
+  .choice-card.secondary:hover .btn-action {
+    transform: translateX(4px);
+  }
+</style>

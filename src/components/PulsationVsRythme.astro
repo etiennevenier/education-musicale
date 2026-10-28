@@ -1,0 +1,752 @@
+---
+// src/components/PulsationVsRythme.astro
+// Pulsation vs Rythme — partition SVG unique sur fond blanc, glisser-déposer (Pointer Events)
+---
+
+<div class="pulse-rhythm-tool">
+  <div class="tool-header">
+    <span class="tool-badge">Expérimentation</span>
+    <h3>Pulsation vs Rythme</h3>
+    <p>Découvre la différence entre la vitesse globale (tempo) et la disposition des notes (rythme).</p>
+  </div>
+
+  <!-- Contrôle du Tempo -->
+  <div class="controls-card">
+    <div class="slider-group">
+      <label for="tempo-range">
+        <span>Tempo (Pulsation)</span>
+        <strong id="tempo-val">100 BPM</strong>
+      </label>
+      <input type="range" id="tempo-range" min="60" max="160" value="100" step="5" />
+    </div>
+
+     <div class="visualizer-box">
+    <div class="track">
+      <span class="track-label">Pulsation (Battement)</span>
+      <div id="pulse-dots" class="dots-row">
+        <span class="dot pulse-dot"></span>
+        <span class="dot pulse-dot"></span>
+        <span class="dot pulse-dot"></span>
+        <span class="dot pulse-dot"></span>
+      </div>
+    </div>
+  </div>
+
+    <div class="toggle-group">
+      <button id="toggle-pulse-btn" class="toggle-btn active" type="button">
+        🔊 Pulsation (Métronome) : <strong id="pulse-status">ACTIVÉE</strong>
+      </button>
+    </div>
+  </div>
+
+  <!-- Partition rythmique : UNE seule portée SVG sur fond blanc -->
+  <div class="rhythm-partition-card">
+    <div class="card-top-bar">
+      <span class="rhythm-title">Partition rythmique (4/4) — 🖐️ Glisse un temps sur un autre :</span>
+      <button id="shuffle-btn" class="action-sub-btn" type="button">🔀 Mélanger le rythme</button>
+    </div>
+
+    <div class="white-paper-container">
+      <svg
+        id="rhythm-svg"
+        class="rhythm-svg"
+        viewBox="0 0 760 190"
+        role="img"
+        aria-label="Partition rythmique en 4/4 : quatre temps déplaçables"
+      >
+        <!-- Portée continue unique -->
+        <line x1="22" y1="100" x2="718" y2="100" class="staff-line"></line>
+        <!-- Barre de début + chiffrage 4/4 -->
+        <line x1="22" y1="68" x2="22" y2="132" class="bar-thin"></line>
+        <text x="54" y="96" class="time-sig-text" text-anchor="middle">4</text>
+        <text x="54" y="134" class="time-sig-text" text-anchor="middle">4</text>
+
+        <!-- Zones d'accueil (semi-transparentes, ne masquent jamais la portée) -->
+        <rect id="origin-zone" class="origin-zone" x="0" y="22" width="142" height="156" rx="12" visibility="hidden"></rect>
+        <rect id="drop-zone" class="drop-zone" x="0" y="22" width="142" height="156" rx="12" visibility="hidden"></rect>
+
+        <!-- Les 4 temps (générés par JS) -->
+        <g id="beats-layer"></g>
+
+        <!-- Double barre de fin -->
+        <line x1="706" y1="68" x2="706" y2="132" class="bar-thin"></line>
+        <line x1="716" y1="68" x2="716" y2="132" class="bar-thick"></line>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Encart réactif dynamique -->
+  <div id="dynamic-feedback" class="feedback-card pulse-mode">
+    <span id="feedback-icon">🎛️</span>
+    <p id="feedback-text">
+      <strong>Action en cours :</strong> Déplace le curseur de tempo ou glisse un temps sur un autre pour observer l'effet !
+    </p>
+  </div>
+
+ 
+
+  <div class="play-action">
+    <button id="master-play-btn" class="master-btn" type="button">
+      ▶ Lancer la musique
+    </button>
+  </div>
+</div>
+
+<script>
+  import { shuffle } from '../utils/random';
+  import { getAudioContext, getMasterBus } from '../utils/audioContext';
+  // ---------- État ----------
+  let audioCtx: AudioContext | null = null;
+  let isPlaying = false;
+  let pulseEnabled = true;
+  let currentTempo = 100;
+  let timerId: number | null = null;
+  let currentStep = 0;
+  let nextTickTime = 0;
+
+  type BeatKey = 'noire' | 'doubles' | 'croches';
+
+  // Pattern sur 4 doubles-croches par temps (1 = une note jouée)
+  const BEAT_PATTERNS: Record<BeatKey, number[]> = {
+    noire: [1, 0, 0, 0],
+    doubles: [1, 1, 1, 1],
+    croches: [1, 0, 1, 0]
+  };
+
+  let currentBeats: BeatKey[] = ['noire', 'doubles', 'croches', 'noire'];
+
+  // Géométrie de la partition (unités du viewBox)
+  const SLOT_START = 90;
+  const SLOT_W = 150;
+  const STAFF_Y = 100;
+  const INK = '#0f172a';
+
+  // ---------- Éléments ----------
+  const svgElement = document.getElementById('rhythm-svg');
+  if (!(svgElement instanceof SVGSVGElement)) {
+    throw new Error("PulsationVsRythme : #rhythm-svg absent ou n'est pas un <svg>.");
+  }
+  const svg = svgElement;
+  const beatsLayer = document.getElementById('beats-layer')!;
+  const dropZone = document.getElementById('drop-zone')!;
+  const originZone = document.getElementById('origin-zone')!;
+  const tempoRange = document.getElementById('tempo-range') as HTMLInputElement;
+  const tempoVal = document.getElementById('tempo-val')!;
+  const togglePulseBtn = document.getElementById('toggle-pulse-btn')!;
+  const pulseStatus = document.getElementById('pulse-status')!;
+  const masterPlayBtn = document.getElementById('master-play-btn')!;
+  const shuffleBtn = document.getElementById('shuffle-btn')!;
+  const pulseDots = document.querySelectorAll('.pulse-dot');
+  const feedbackCard = document.getElementById('dynamic-feedback')!;
+  const feedbackText = document.getElementById('feedback-text')!;
+  const feedbackIcon = document.getElementById('feedback-icon')!;
+
+  let noteGroups: SVGGElement[] = [];
+
+  // ---------- Dessin SVG ----------
+  function slotX(i: number): number {
+    return SLOT_START + i * SLOT_W;
+  }
+
+  function noteSVG(cx: number, step: number, stemTop = 40): string {
+    const sx = cx + 12;
+    return `
+      <g class="note-group" data-step="${step}">
+        <ellipse class="note-head" cx="${cx}" cy="${STAFF_Y}" rx="13" ry="9" fill="${INK}" transform="rotate(-20 ${cx} ${STAFF_Y})"></ellipse>
+        <line class="note-stem" x1="${sx}" y1="${STAFF_Y - 2}" x2="${sx}" y2="${stemTop}" stroke="${INK}" stroke-width="3"></line>
+      </g>`;
+  }
+
+  function beamRect(x1: number, x2: number, y: number): string {
+    return `<rect class="note-beam" x="${x1}" y="${y}" width="${x2 - x1}" height="6" fill="${INK}"></rect>`;
+  }
+
+  function beatContent(type: BeatKey, step0: number): string {
+    if (type === 'noire') {
+      return noteSVG(70, step0);
+    }
+    if (type === 'doubles') {
+      const xs = [20, 52, 84, 116];
+      return (
+        xs.map((cx, k) => noteSVG(cx, step0 + k)).join('') +
+        beamRect(30.5, 129.5, 40) +
+        beamRect(30.5, 129.5, 51)
+      );
+    }
+    // 2 croches (steps 0 et 2 du temps)
+    return noteSVG(30, step0) + noteSVG(100, step0 + 2) + beamRect(40.5, 113.5, 40);
+  }
+
+  function renderBeats() {
+    let html = '';
+    currentBeats.forEach((type, idx) => {
+      html += `
+        <g class="beat" data-index="${idx}" transform="translate(${slotX(idx)} 0)">
+          <rect class="beat-hit" x="0" y="22" width="${SLOT_W}" height="156" rx="12"></rect>
+          ${beatContent(type, idx * 4)}
+          <text class="beat-label" x="${SLOT_W / 2}" y="168" text-anchor="middle">🖐️ Temps ${idx + 1}</text>
+        </g>`;
+    });
+    beatsLayer.innerHTML = html;
+    noteGroups = Array.from(beatsLayer.querySelectorAll<SVGGElement>('.note-group'));
+  }
+
+  // ---------- Glisser-déposer (Pointer Events) ----------
+  type DragState = {
+    index: number;
+    group: SVGGElement;
+    startX: number;
+    startY: number;
+    target: number;
+    pointerId: number;
+  };
+  let drag: DragState | null = null;
+
+  // Coalesce les déplacements sur une frame : un seul rendu par frame au lieu d'un par événement.
+  let moveFrame = 0;
+  let pendingMove: PointerEvent | null = null;
+
+  function cancelPendingMove() {
+    if (moveFrame) {
+      window.cancelAnimationFrame(moveFrame);
+      moveFrame = 0;
+    }
+    pendingMove = null;
+  }
+
+  function svgPoint(e: PointerEvent) {
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    return pt.matrixTransform(svg.getScreenCTM()!.inverse());
+  }
+
+  function slotFromX(x: number): number {
+    return Math.max(0, Math.min(3, Math.floor((x - SLOT_START) / SLOT_W)));
+  }
+
+  function placeZone(zone: Element, i: number) {
+    zone.setAttribute('x', String(slotX(i) + 4));
+    zone.setAttribute('width', String(SLOT_W - 8));
+    zone.setAttribute('visibility', 'visible');
+  }
+
+  function endDrag(commit: boolean) {
+    if (!drag) return;
+    const { index, target, group, pointerId } = drag;
+    group.classList.remove('dragging');
+    try { svg.releasePointerCapture(pointerId); } catch (_) { /* déjà relâché */ }
+    dropZone.setAttribute('visibility', 'hidden');
+    originZone.setAttribute('visibility', 'hidden');
+    drag = null;
+    cancelPendingMove();
+
+    if (commit && target !== index) {
+      const tmp = currentBeats[index];
+      currentBeats[index] = currentBeats[target];
+      currentBeats[target] = tmp;
+      triggerFeedback('rhythm');
+    }
+    // Re-rendu : chaque temps retrouve sa position exacte
+    renderBeats();
+  }
+
+  svg.addEventListener('pointerdown', (e: PointerEvent) => {
+    const group = (e.target as Element).closest('.beat') as SVGGElement | null;
+    if (!group || drag) return;
+    e.preventDefault();
+    const index = parseInt(group.dataset.index || '0', 10);
+    const p = svgPoint(e);
+    drag = { index, group, startX: p.x, startY: p.y, target: index, pointerId: e.pointerId };
+    svg.setPointerCapture(e.pointerId);
+    group.classList.add('dragging');
+    placeZone(originZone, index);
+    // Garder le temps attrapé au-dessus des autres
+    beatsLayer.appendChild(group);
+  });
+
+  svg.addEventListener('pointermove', (e: PointerEvent) => {
+    if (!drag || e.pointerId !== drag.pointerId) return;
+    pendingMove = e;
+    if (moveFrame) return;
+    moveFrame = window.requestAnimationFrame(() => {
+      moveFrame = 0;
+      const move = pendingMove;
+      pendingMove = null;
+      if (!move || !drag || move.pointerId !== drag.pointerId) return;
+      const p = svgPoint(move);
+      const dx = p.x - drag.startX;
+      const dy = Math.max(-14, Math.min(14, p.y - drag.startY));
+      // Légère élévation + suit le doigt/souris
+      drag.group.setAttribute('transform', `translate(${slotX(drag.index) + dx} ${dy - 6})`);
+
+      const target = slotFromX(p.x);
+      drag.target = target;
+      if (target !== drag.index) {
+        placeZone(dropZone, target);
+      } else {
+        dropZone.setAttribute('visibility', 'hidden');
+      }
+    });
+  });
+
+  svg.addEventListener('pointerup', (e: PointerEvent) => {
+    if (!drag || e.pointerId !== drag.pointerId) return;
+    endDrag(true);
+  });
+
+  svg.addEventListener('pointercancel', () => endDrag(false));
+
+  window.addEventListener('pagehide', cancelPendingMove, { once: true });
+
+  // ---------- Encart explicatif ----------
+  function triggerFeedback(mode: 'tempo' | 'rhythm') {
+    if (mode === 'tempo') {
+      feedbackIcon.textContent = '⏱️';
+      feedbackCard.className = 'feedback-card tempo-mode';
+      feedbackText.innerHTML = `<strong>Tu modifies le TEMPO :</strong> le métronome et la musique s'accélèrent ou ralentissent, mais la structure des notes reste identique !`;
+    } else {
+      feedbackIcon.textContent = '🎵';
+      feedbackCard.className = 'feedback-card rhythm-mode';
+      feedbackText.innerHTML = `<strong>Tu modifies le RYTHME :</strong> tu as changé l'emplacement des notes. Le tempo (vitesse) reste exactement le même !`;
+    }
+  }
+
+  // ---------- Audio ----------
+  function initAudio() {
+    if (!audioCtx) {
+      audioCtx = getAudioContext();
+    }
+  }
+
+  // Pulsation : son mat, type bloc de bois grave
+  function playPulseSound() {
+    if (!audioCtx) return;
+    const bus = getMasterBus() ?? audioCtx.destination;
+    const t = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(260, t);
+    osc.frequency.exponentialRampToValueAtTime(90, t + 0.07);
+    gain.gain.setValueAtTime(0.55, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+    osc.connect(gain);
+    gain.connect(bus);
+    osc.start(t);
+    osc.stop(t + 0.1);
+  }
+
+  // Rythme : son aigu, bref et incisif
+  function playRhythmSound() {
+    if (!audioCtx) return;
+    const bus = getMasterBus() ?? audioCtx.destination;
+    const t = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const filter = audioCtx.createBiquadFilter();
+    const gain = audioCtx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(1560, t);
+    filter.type = 'highpass';
+    filter.frequency.setValueAtTime(900, t);
+    gain.gain.setValueAtTime(0.16, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(bus);
+    osc.start(t);
+    osc.stop(t + 0.07);
+  }
+
+  // ---------- Lecture ----------
+  function getFullPattern(): number[] {
+    return currentBeats.flatMap((k) => BEAT_PATTERNS[k]);
+  }
+
+  function intervalMs(): number {
+    return (60 / currentTempo / 4) * 1000;
+  }
+
+  function tick() {
+    if (!isPlaying) return;
+    const isPulseStep = currentStep % 4 === 0;
+    const pulseIndex = Math.floor(currentStep / 4);
+
+    if (isPulseStep && pulseEnabled) playPulseSound();
+    if (getFullPattern()[currentStep] === 1) playRhythmSound();
+
+    // Pastille de pulsation allumée pendant tout le temps
+    pulseDots.forEach((dot, idx) => dot.classList.toggle('active', idx === pulseIndex));
+
+    // Note en bleu uniquement sur son tick (aucune modification de géométrie)
+    noteGroups.forEach((g) => {
+      g.classList.toggle('playing-note', parseInt(g.dataset.step || '-1', 10) === currentStep);
+    });
+
+    currentStep = (currentStep + 1) % 16;
+
+    // Planification sans dérive
+    nextTickTime += intervalMs();
+    timerId = window.setTimeout(tick, Math.max(0, nextTickTime - performance.now()));
+  }
+
+  function start() {
+    initAudio();
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    isPlaying = true;
+    currentStep = 0;
+    masterPlayBtn.textContent = '⏹ Arrêter';
+    masterPlayBtn.classList.add('playing');
+    nextTickTime = performance.now();
+    tick();
+  }
+
+  function stop() {
+    isPlaying = false;
+    if (timerId !== null) clearTimeout(timerId);
+    timerId = null;
+    masterPlayBtn.textContent = '▶ Lancer la musique';
+    masterPlayBtn.classList.remove('playing');
+    pulseDots.forEach((dot) => dot.classList.remove('active'));
+    noteGroups.forEach((g) => g.classList.remove('playing-note'));
+  }
+
+  // ---------- Événements ----------
+  tempoRange.addEventListener('input', (e) => {
+    currentTempo = parseInt((e.target as HTMLInputElement).value, 10);
+    tempoVal.textContent = `${currentTempo} BPM`;
+    triggerFeedback('tempo');
+  });
+
+  togglePulseBtn.addEventListener('click', () => {
+    pulseEnabled = !pulseEnabled;
+    togglePulseBtn.classList.toggle('active', pulseEnabled);
+    pulseStatus.textContent = pulseEnabled ? 'ACTIVÉE' : 'DÉSACTIVÉE';
+  });
+
+  shuffleBtn.addEventListener('click', () => {
+    currentBeats = shuffle(currentBeats);
+    renderBeats();
+    triggerFeedback('rhythm');
+  });
+
+  masterPlayBtn.addEventListener('click', () => {
+    if (isPlaying) stop();
+    else start();
+  });
+
+  renderBeats();
+</script>
+
+<!--
+  IMPORTANT : is:global est nécessaire. Le SVG des temps est injecté en JS (innerHTML) :
+  les styles « scopés » d'Astro (data-astro-cid) ne s'appliqueraient pas à ces éléments.
+  Tout est préfixé par .pulse-rhythm-tool pour éviter les collisions.
+-->
+<style is:global>
+  .pulse-rhythm-tool {
+    --pvr-primary: var(--primary, #38bdf8);
+    --pvr-border: var(--border, #334155);
+    --pvr-text: var(--text, #f1f5f9);
+    --pvr-muted: var(--text-muted, #94a3b8);
+
+    background: #0f172a;
+    border: 1px solid var(--pvr-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+
+  .pulse-rhythm-tool .tool-header { text-align: center; }
+
+  .pulse-rhythm-tool .tool-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--pvr-primary);
+    background: #1e293b;
+    border: 1px solid var(--pvr-border);
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+  }
+
+  .pulse-rhythm-tool .tool-header h3 {
+    margin: 0.4rem 0 0.2rem 0;
+    color: var(--pvr-text);
+  }
+
+  .pulse-rhythm-tool .tool-header p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--pvr-muted);
+  }
+
+  .pulse-rhythm-tool .controls-card {
+    background: #1e293b;
+    border: 1px solid var(--pvr-border);
+    border-radius: 10px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .pulse-rhythm-tool .slider-group label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: var(--pvr-text);
+    margin-bottom: 0.4rem;
+  }
+
+  .pulse-rhythm-tool .slider-group strong { color: var(--pvr-primary); }
+
+  .pulse-rhythm-tool input[type="range"] {
+    width: 100%;
+    accent-color: var(--pvr-primary);
+    cursor: pointer;
+  }
+
+  .pulse-rhythm-tool .toggle-btn {
+    width: 100%;
+    background: #0f172a;
+    border: 1px solid var(--pvr-border);
+    color: var(--pvr-muted);
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+
+  .pulse-rhythm-tool .toggle-btn.active {
+    border-color: var(--pvr-primary);
+    color: var(--pvr-text);
+  }
+
+  .pulse-rhythm-tool .rhythm-partition-card {
+    background: #1e293b;
+    border: 1px solid var(--pvr-border);
+    border-radius: 10px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .pulse-rhythm-tool .card-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .pulse-rhythm-tool .rhythm-title {
+    font-size: 0.85rem;
+    color: var(--pvr-text);
+    font-weight: 600;
+  }
+
+  .pulse-rhythm-tool .action-sub-btn {
+    min-height: 36px;
+    background: #0f172a;
+    border: 1px solid var(--pvr-border);
+    color: var(--pvr-primary);
+    padding: 0.3rem 0.7rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* ===== Partition : fond blanc uni ===== */
+  .pulse-rhythm-tool .white-paper-container {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 0.5rem;
+  }
+
+  .pulse-rhythm-tool .rhythm-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: #ffffff;
+    touch-action: none;           /* nécessaire pour glisser au doigt */
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .pulse-rhythm-tool .rhythm-svg .staff-line {
+    stroke: #0f172a;
+    stroke-width: 2.5;
+  }
+
+  .pulse-rhythm-tool .rhythm-svg .bar-thin {
+    stroke: #0f172a;
+    stroke-width: 3;
+  }
+
+  .pulse-rhythm-tool .rhythm-svg .bar-thick {
+    stroke: #0f172a;
+    stroke-width: 7;
+  }
+
+  .pulse-rhythm-tool .rhythm-svg .time-sig-text {
+    fill: #0f172a;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-weight: 900;
+    font-size: 42px;
+  }
+
+  .pulse-rhythm-tool .rhythm-svg .beat-label {
+    fill: #0f172a;
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-weight: 800;
+    font-size: 17px;
+  }
+
+  /* Zone cliquable invisible (ne masque rien) */
+  .pulse-rhythm-tool .rhythm-svg .beat-hit {
+    fill: transparent;
+    stroke: none;
+    transition: fill 0.15s ease;
+  }
+
+  .pulse-rhythm-tool .rhythm-svg .beat { cursor: grab; }
+  .pulse-rhythm-tool .rhythm-svg .beat:hover .beat-hit { fill: rgba(2, 132, 199, 0.07); }
+
+  /* Temps attrapé : opacité réduite + ombre portée (élévation) */
+  .pulse-rhythm-tool .rhythm-svg .beat.dragging {
+    cursor: grabbing;
+    opacity: 0.55;
+    filter: drop-shadow(0 6px 5px rgba(15, 23, 42, 0.35));
+  }
+  .pulse-rhythm-tool .rhythm-svg .beat.dragging .beat-hit { fill: rgba(2, 132, 199, 0.1); }
+
+  /* Case d'origine (pointillés gris) et case d'accueil (contour vert) */
+  .pulse-rhythm-tool .rhythm-svg .origin-zone {
+    fill: none;
+    stroke: #94a3b8;
+    stroke-width: 2;
+    stroke-dasharray: 6 5;
+    pointer-events: none;
+  }
+
+  .pulse-rhythm-tool .rhythm-svg .drop-zone {
+    fill: rgba(16, 185, 129, 0.12);
+    stroke: #10b981;
+    stroke-width: 3;
+    stroke-dasharray: 8 5;
+    pointer-events: none;
+  }
+
+  /* Notes noires par défaut, bleu #0284c7 pendant la lecture (couleur seulement, aucune géométrie) */
+  .pulse-rhythm-tool .rhythm-svg .note-head { fill: #0f172a; }
+  .pulse-rhythm-tool .rhythm-svg .note-stem { stroke: #0f172a; }
+  .pulse-rhythm-tool .rhythm-svg .note-beam { fill: #0f172a; }
+
+  .pulse-rhythm-tool .rhythm-svg .note-group.playing-note .note-head { fill: #0284c7; }
+  .pulse-rhythm-tool .rhythm-svg .note-group.playing-note .note-stem { stroke: #0284c7; }
+
+  /* ===== Encart réactif ===== */
+  .pulse-rhythm-tool .feedback-card {
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  }
+
+  .pulse-rhythm-tool .feedback-card p { margin: 0; }
+
+  .pulse-rhythm-tool .feedback-card.pulse-mode {
+    background: #1e293b;
+    border-left: 4px solid var(--pvr-primary);
+    color: var(--pvr-text);
+  }
+
+  .pulse-rhythm-tool .feedback-card.tempo-mode {
+    background: #0284c722;
+    border-left: 4px solid #38bdf8;
+    color: #f0f9ff;
+  }
+
+  .pulse-rhythm-tool .feedback-card.rhythm-mode {
+    background: #10b98122;
+    border-left: 4px solid #34d399;
+    color: #ecfdf5;
+  }
+
+  .pulse-rhythm-tool .feedback-card strong {
+    display: block;
+    font-size: 0.9rem;
+    margin-bottom: 0.1rem;
+  }
+
+  /* ===== Pulsation ===== */
+  .pulse-rhythm-tool .visualizer-box {
+    background: #020617;
+    border: 1px solid var(--pvr-border);
+    border-radius: 10px;
+    padding: 1rem;
+  }
+
+  .pulse-rhythm-tool .track {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .pulse-rhythm-tool .track-label {
+    font-size: 0.75rem;
+    color: var(--pvr-muted);
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  .pulse-rhythm-tool .dots-row {
+    display: flex;
+    justify-content: space-around;
+  }
+
+  .pulse-rhythm-tool .dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #1e293b;
+    border: 1px solid var(--pvr-border);
+    transition: background-color 0.1s ease;
+  }
+
+  .pulse-rhythm-tool .dot.active {
+    background: #ef4444;
+    border-color: #f87171;
+    box-shadow: 0 0 10px #ef4444;
+  }
+
+  .pulse-rhythm-tool .play-action { text-align: center; }
+
+  .pulse-rhythm-tool .master-btn {
+    background: var(--pvr-primary);
+    color: #0f172a;
+    border: none;
+    padding: 0.9rem 2rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .pulse-rhythm-tool .master-btn.playing {
+    background: #ef4444;
+    color: #ffffff;
+  }
+</style>

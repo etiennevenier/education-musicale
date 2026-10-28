@@ -1,0 +1,102 @@
+---
+// Standard : seuls le lecteur et le badge de catégorie sont affichés (ni titre ni description).
+interface Props {
+  badge?: string;
+  title: string; // Libellé d'accessibilité de l'iframe uniquement
+  url: string;
+}
+
+const { badge, title, url } = Astro.props;
+
+// Extraction de l'identifiant YouTube (11 caractères) depuis une URL standard.
+function getYouTubeId(youtubeUrl: string) {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = youtubeUrl.match(regExp);
+  return match && match[2].length === 11 ? match[2] : null;
+}
+
+const videoId = getYouTubeId(url);
+const thumbnail = videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : null;
+---
+
+<div class="video-card">
+  <div class="video-embed-container">
+    {videoId && thumbnail ? (
+      <>
+        <button
+          type="button"
+          class="video-facade"
+          data-video-facade
+          data-video-id={videoId}
+          data-video-title={title}
+          aria-label={`Lire la vidéo : ${title}`}
+        >
+          <img src={thumbnail} alt="" loading="lazy" decoding="async" width="480" height="360" />
+          <span class="video-facade-play" aria-hidden="true"></span>
+        </button>
+        <noscript>
+          <a class="video-facade-noscript" href={`https://www.youtube.com/watch?v=${videoId}`} target="_blank" rel="noopener noreferrer">
+            Regarder « {title} » sur YouTube
+          </a>
+        </noscript>
+      </>
+    ) : (
+      <div class="video-placeholder">Lecteur non disponible</div>
+    )}
+  </div>
+
+  <div class="video-card-content">
+    {badge && <span class="video-badge">{badge}</span>}
+  </div>
+</div>
+
+<style>
+  .video-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.2s;
+  }
+
+  .video-card:hover {
+    border-color: #38bdf8;
+  }
+
+  .video-embed-container {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%; /* Ratio 16:9 */
+    background: #0f172a;
+  }
+
+  .video-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-size: 0.85rem;
+  }
+
+  .video-card-content {
+    padding: 0.6rem 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .video-badge {
+    align-self: flex-start;
+    background: var(--accent-sky-strong);
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+  }
+</style>

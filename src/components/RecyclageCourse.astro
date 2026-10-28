@@ -1,0 +1,167 @@
+---
+import CourseTabs from './CourseTabs.astro';
+import DualAudioPlayer from './DualAudioPlayer.astro';
+import RecyclageNuancier from './RecyclageNuancier.astro';
+
+const tabs = [
+  { id: 'parametres', icon: '🎵', label: 'Paramètres du son' },
+  { id: 'emprunts', icon: '🔀', label: 'Emprunts multiples' },
+  { id: 'citation', icon: '♻️', label: 'Citation, Emprunt & Remix' },
+  { id: 'nuancier', icon: '⚖️', label: 'Le Nuancier du Recyclage' },
+];
+
+const comparaison1 = [
+  { label: 'James Bond (Dr. No) — Thème original', src: '/recyclage/Extrait1aJamesBondDrNo.mp3' },
+  { label: 'Voca People — James Bond', src: '/recyclage/Extrait1bJamesBondVocaPeople.mp3' },
+];
+
+const comparaison2 = [
+  { label: 'Charles Aznavour — La Bohème', src: '/recyclage/Extrait2bBohemeAznavour.mp3' },
+  { label: 'La Bohème (Stelios Remix)', src: '/recyclage/Extrait2aBohemeElectro.mp3' },
+];
+
+const comparaison3 = [
+  { label: 'Bedřich Smetana — La Moldau', src: '/recyclage/Extrait3bMoldauOriginal.mp3' },
+  { label: 'Luc Arbogast — La Moldau', src: '/recyclage/Extrait3aLucArbogastLamoldau.mp3' },
+];
+
+const emprunts = [
+  {
+    label: 'Serge Gainsbourg — Le Poinçonneur des Lilas',
+    src: '/recyclage/Extrait4bpoinconneur.mp3',
+  },
+  {
+    label: "Les Doigts de l'Homme — Le Poinçonneur",
+    src: '/recyclage/Extrait4aLesdoigtsdelhommepoinconneur.mp3',
+  },
+  {
+    label: 'James Bond (Dr. No) — Thème',
+    src: '/recyclage/Extrait1aJamesBondDrNo.mp3',
+  },
+];
+
+const comparaison5 = [
+  {
+    label: 'Edward Elgar — Pomp and Circumstance',
+    src: '/recyclage/Extrait5bElgarPompandcircumstanceno1D.mp3',
+  },
+  { label: 'KDD — Une princesse est morte', src: '/recyclage/Extrait5aKDDuneprincesseestmorte.mp3' },
+];
+
+const comparaison6 = [
+  {
+    label: 'Sergeï Prokofiev — Lieutenant Kijé (Romance)',
+    src: '/recyclage/Extrait6bProkofievLieutenantKijeRomance.mp3',
+  },
+  { label: 'Sting — Russians', src: '/recyclage/Extrait6aStingRussians.mp3' },
+];
+
+const comparaison7 = [
+  { label: 'J.S. Bach — Prélude n°1 en Do majeur', src: '/recyclage/Extrait7bBach.mp3' },
+  { label: 'Maurane — Sur un prélude de Bach', src: '/recyclage/Extrait7aMauraneBach.mp3' },
+];
+
+const comparaison8 = [
+  {
+    label: 'Sergeï Prokofiev — Danse des Chevaliers',
+    src: '/recyclage/Extrait8bProkofievdanceoftheknights.mp3',
+  },
+  {
+    label: 'Robbie Williams — Party Like a Russian',
+    src: '/recyclage/Extrait8aRobbieWilliamsPartylikearussian.mp3',
+  },
+];
+---
+
+<div class="recyclage-course">
+  <CourseTabs tabs={tabs} ariaLabel="Musique et Recyclage" />
+
+  <div
+    role="tabpanel"
+    id="main-panel-parametres"
+    class="recyclage-panel"
+    aria-labelledby="main-tab-parametres"
+    data-panel="parametres"
+  >
+    <div class="recyclage-comparisons">
+      <DualAudioPlayer label="Comparaison 1" tracks={comparaison1} tone={0} />
+      <DualAudioPlayer
+        label="Comparaison 2"
+        tracks={comparaison2}
+        showSimultaneousButton={true}
+        tone={1}
+      />
+      <DualAudioPlayer label="Comparaison 3" tracks={comparaison3} tone={2} />
+    </div>
+  </div>
+
+  <div
+    role="tabpanel"
+    id="main-panel-emprunts"
+    class="recyclage-panel"
+    aria-labelledby="main-tab-emprunts"
+    data-panel="emprunts"
+    hidden
+  >
+    <div class="recyclage-comparisons">
+      <DualAudioPlayer label="Emprunts croisés" tracks={emprunts} tone={0} />
+    </div>
+  </div>
+
+  <div
+    role="tabpanel"
+    id="main-panel-citation"
+    class="recyclage-panel"
+    aria-labelledby="main-tab-citation"
+    data-panel="citation"
+    hidden
+  >
+    <div class="recyclage-comparisons">
+      <DualAudioPlayer label="Comparaison 5" tracks={comparaison5} tone={0} />
+      <DualAudioPlayer label="Comparaison 6" tracks={comparaison6} tone={1} />
+      <DualAudioPlayer label="Comparaison 7" tracks={comparaison7} tone={2} />
+      <DualAudioPlayer label="Comparaison 8" tracks={comparaison8} tone={0} />
+    </div>
+  </div>
+
+  <div
+    role="tabpanel"
+    id="main-panel-nuancier"
+    class="recyclage-panel"
+    aria-labelledby="main-tab-nuancier"
+    data-panel="nuancier"
+    hidden
+  >
+    <RecyclageNuancier />
+  </div>
+</div>
+
+<script>
+  import { setupMainTabs } from '../utils/tabs';
+
+  const root = document.querySelector<HTMLElement>('.recyclage-course');
+
+  if (root) {
+    setupMainTabs(root, {
+      panelSelector: '.recyclage-panel',
+    });
+  }
+</script>
+
+<style>
+  .recyclage-course {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .recyclage-panel[hidden] {
+    display: none;
+  }
+
+  .recyclage-comparisons {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+</style>

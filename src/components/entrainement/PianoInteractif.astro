@@ -1,0 +1,1018 @@
+---
+// Outil « Piano interactif » — repris intégralement du portail pédagogique d'origine.
+import { relativeUrl } from '../../utils/navigation';
+---
+
+<div id="tool-piano" class="tool-root">
+  <div class="piano-body">
+            <a class="hub-back tool-back" href={relativeUrl('/entrainement')} aria-label="Retour à l'entraînement">
+                <span aria-hidden="true">←</span>
+                <span class="hub-back-text">Retour à l'entraînement</span>
+                <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
+            </a>
+            <div id="piano-zoom-controls" class="piano-zoom">
+                <button type="button" id="piano-zoom-out" class="piano-zoom-btn" aria-label="Réduire le zoom du clavier" aria-controls="piano">−</button>
+                <span id="piano-zoom-level" class="piano-zoom-level" aria-live="polite">Vue complète</span>
+                <button type="button" id="piano-zoom-in" class="piano-zoom-btn" aria-label="Agrandir le zoom du clavier" aria-controls="piano">+</button>
+            </div>
+            <div class="piano-head">
+                <h1 class="piano-title">Piano Interactif</h1>
+            </div>
+            <div id="piano-note-display" class="piano-info-note">Clique sur une touche 🎹</div>
+            <p class="piano-portrait-hint">📱 En mode paysage, le clavier 88 touches est bien plus confortable.</p>
+            <div class="piano-staff-container tool-fit">
+                <svg id="piano-staff-svg" viewBox="0 0 480 400"></svg>
+            </div>
+            <div class="piano-wrapper">
+                <div id="piano" class="piano"></div>
+            </div>
+            <p class="piano-scroll-hint" aria-hidden="true">↔ Fais défiler le clavier (glisser du doigt, barre de défilement ou Maj + molette) pour accéder aux 88 touches</p>
+  </div>
+</div>
+
+<style is:global>
+#tool-piano {
+  --accent: #7e22ce;
+  --accent-strong: #a855f7;
+  --accent-soft: #faf5ff;
+  --accent-border: #e9d5ff;
+  color: #0f172a;
+}
+
+        #tool-piano .piano-title {
+            margin: 0;
+            color: var(--accent);
+            font-size: clamp(1.7rem, 5vw, 2.7rem);
+            line-height: 1.1;
+            font-weight: 900;
+            text-align: center;
+        }
+        #tool-piano .piano-body > .hub-back { margin: 0; }
+        #tool-piano .piano-body { width:100%; max-width:800px; margin:0 auto; display:flex; flex-direction:column; gap:15px; align-items:center; }
+        #tool-piano .piano-info-note { font-size:14px; font-weight:700; color:#4c1d95; background:var(--accent-soft); border:1px solid var(--accent-border); padding:6px 16px; border-radius:999px; min-width:150px; text-align:center; }
+        #tool-piano .piano-staff-container { background:#ffffff; border:2px solid #e2e8f0; border-radius:14px; box-sizing:border-box; }
+        #tool-piano .piano-wrapper { background:#1e293b; padding:10px; border-radius:14px 14px 10px 10px; box-shadow:0 8px 18px -8px rgba(15,23,42,0.5); width:100%; overflow-x:auto; display:flex; justify-content:center; box-sizing:border-box; }
+        #tool-piano .piano { display:flex; position:relative; height:110px; width:max-content; }
+        #tool-piano .white-key { width:28px; height:110px; background:linear-gradient(#ffffff, #f1f5f9); border:1px solid #cbd5e1; border-top:0; border-radius:0 0 8px 8px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:6px; font-size:9px; font-weight:700; color:#64748b; cursor:pointer; box-sizing:border-box; z-index:1; user-select:none; touch-action:manipulation; transition:background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease; }
+        #tool-piano .white-key:hover { background:linear-gradient(#f8fafc, #e2e8f0); }
+        #tool-piano .white-key.active { background:linear-gradient(135deg, var(--accent-strong), var(--accent)); color:#fff; box-shadow:inset 0 0 0 2px rgba(255,255,255,0.35); }
+        #tool-piano .black-key { position:absolute; width:18px; height:65px; background:linear-gradient(#334155, #0f172a); border-radius:0 0 6px 6px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:4px; font-size:8px; color:#94a3b8; cursor:pointer; box-sizing:border-box; z-index:3; user-select:none; touch-action:manipulation; box-shadow:0 4px 8px rgba(15,23,42,0.45); transition:background 0.12s ease, color 0.12s ease; }
+        #tool-piano .black-key:hover { background:linear-gradient(#475569, #1e293b); }
+        #tool-piano .black-key.active { background:linear-gradient(135deg, var(--accent-strong), var(--accent)); color:#fff; }
+        #tool-piano { --wk: 48px; --bk: 30px; --kh: 150px; --bkh: 92px; }
+        @media (hover: hover) and (pointer: fine) and (min-width: 820px) {
+            #tool-piano { --wk: 28px; --bk: 18px; --kh: 110px; --bkh: 65px; }   /* clavier d'origine pour souris */
+        }
+        #tool-piano .piano-body { min-width: 0; }
+        #tool-piano .piano-staff-container { padding: 6px; }
+        /* flex-start + marges auto sur .piano : le début du clavier reste accessible quand il déborde */
+        #tool-piano .piano-wrapper { max-width: 100%; justify-content: flex-start; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
+        #tool-piano .piano { height: var(--kh); margin: 0 auto; flex: 0 0 auto; }
+        #tool-piano .white-key { flex: 0 0 var(--wk); width: var(--wk); height: var(--kh); font-size: 12px; -webkit-touch-callout: none; }
+        #tool-piano .black-key { width: var(--bk); height: var(--bkh); font-size: 10px; -webkit-touch-callout: none; }
+        #tool-piano .piano-wrapper { scrollbar-width: auto; scrollbar-color: #64748b #334155; padding-bottom: 12px; }
+        #tool-piano .piano-wrapper::-webkit-scrollbar { height: 14px; }
+        #tool-piano .piano-wrapper::-webkit-scrollbar-track { background: #334155; border-radius: 7px; }
+        #tool-piano .piano-wrapper::-webkit-scrollbar-thumb { background: #64748b; border-radius: 7px; }
+        #tool-piano .white-key.c-key { color: var(--accent); }   /* repère visuel : les Do portent leur numéro d'octave */
+        #tool-piano .white-key.active.c-key { color: #fff; }
+        #tool-piano .piano-scroll-hint { display: block; margin: -6px 0 0; text-align: center; font-size: 13px; color: #64748b; font-weight: 600; }
+        #tool-piano .piano-portrait-hint { display: none; margin: -4px 0 0; text-align: center; font-size: 12px; line-height: 1.35; color: #64748b; font-weight: 600; }
+        /* Mobile/paysage bas : retour compact en tête d'outil, titre et sous-titre masqués */
+        @media (max-width: 640px), (max-width: 900px) and (orientation: landscape), (max-height: 500px) {
+            #tool-piano .piano-body { gap: 8px; }
+            #tool-piano .piano-head { display: none; }
+            #tool-piano .piano-body > .hub-back { align-self: flex-start; margin: 0; }
+            #tool-piano .piano-scroll-hint { margin-top: -2px; font-size: 11px; line-height: 1.35; }
+        }
+
+        /* Portrait smartphone : le clavier occupe la hauteur restante, sans zone vide. */
+        @media (max-width: 640px) and (orientation: portrait) {
+            html:has(#tool-piano),
+            body:has(#tool-piano) {
+                height: 100dvh;
+                max-height: 100dvh;
+                overflow: hidden;
+            }
+
+            body:has(#tool-piano) {
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+                padding: 0.35rem 0.5rem 0.5rem;
+            }
+
+            main.container:has(#tool-piano) {
+                flex: 1 1 auto;
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                min-height: 0;
+            }
+
+            #tool-piano {
+                --kh: clamp(108px, 18dvh, 150px);
+                --bkh: clamp(66px, 11dvh, 92px);
+            }
+
+            #tool-piano .piano-body {
+                flex: 1 1 auto;
+                min-height: 0;
+                width: 100%;
+                gap: 6px;
+                justify-content: space-between;
+            }
+
+            #tool-piano .piano-body > .hub-back {
+                align-self: flex-start;
+                flex: 0 0 auto;
+                margin: 0;
+            }
+
+            #tool-piano .piano-head { display: none; }
+
+            #tool-piano .piano-info-note {
+                flex: 0 0 auto;
+                padding: 5px 14px;
+                font-size: 12px;
+            }
+
+            #tool-piano .piano-portrait-hint { display: block; }
+
+            #tool-piano .piano-staff-container {
+                padding: 2px;
+            }
+
+            #tool-piano .piano-wrapper {
+                flex: 0 0 auto;
+                width: 100%;
+                padding: 8px 8px 10px;
+                /* Marge de sécurité sous le clavier : évite le collage au bord
+                   de l'écran et les gestes système accidentels. */
+                margin-bottom: 40px;
+                margin-bottom: max(40px, env(safe-area-inset-bottom, 40px));
+            }
+
+            #tool-piano .piano-scroll-hint { display: none; }
+        }
+
+        /* Paysage mobile bas : zéro défilement vertical, le clavier est prioritaire. */
+        @media (pointer: coarse) and (orientation: landscape) and (max-height: 550px) {
+            html:has(#tool-piano),
+            body:has(#tool-piano) {
+                height: 100dvh;
+                max-height: 100dvh;
+                overflow: hidden;
+            }
+
+            body:has(#tool-piano) {
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                justify-content: stretch;
+                min-height: 0;
+                margin: 0;
+                padding: 0;
+            }
+
+            main.container:has(#tool-piano) {
+                flex: 1 1 auto;
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                max-width: none;
+                min-height: 0;
+            }
+
+            #tool-piano {
+                --kh: clamp(90px, 38dvh, 160px);
+                --bkh: clamp(55px, 24dvh, 100px);
+            }
+
+            #tool-piano .piano-body {
+                flex: 1 1 auto;
+                min-height: 0;
+                max-width: none;
+                width: 100%;
+                gap: 2px;
+                justify-content: space-between;
+                align-items: stretch;
+            }
+
+            #tool-piano .piano-body > .hub-back {
+                align-self: flex-start;
+                flex: 0 0 auto;
+                margin: 2px 6px;
+            }
+
+            #tool-piano .piano-head,
+            #tool-piano .piano-scroll-hint,
+            #tool-piano .piano-portrait-hint { display: none; }
+
+            #tool-piano .piano-info-note {
+                flex: 0 0 auto;
+                min-height: 22px;
+                margin: 0 auto;
+                padding: 1px 10px;
+                font-size: 11px;
+            }
+
+            #tool-piano .piano-staff-container {
+                padding: 0;
+                border: 0;
+                border-radius: 0;
+                background: #ffffff;
+            }
+
+            #tool-piano .piano-wrapper {
+                flex: 0 0 auto;
+                width: 100%;
+                padding: 3px 6px 5px;
+                border-radius: 8px 8px 0 0;
+                /* Marge de sécurité sous le clavier en paysage compact : le clavier
+                   est décollé du bord inférieur de l'écran (~1 à 2 cm) et la
+                   portée (flex: 1) se réduit d'autant. */
+                margin-bottom: 40px;
+                margin-bottom: max(40px, env(safe-area-inset-bottom, 40px));
+            }
+
+            #tool-piano .piano-wrapper::-webkit-scrollbar { height: 8px; }
+        }
+
+        /* ----- Tablette en paysage : 100dvh, portée plafonnée et clavier visible -----
+           Le titre est masqué (le retour est présent), la portée est centrée et
+           plafonnée à 60dvh, le clavier reste entièrement affiché avec sa marge
+           basse complète. */
+        /* ----- Clavier complet sur grand écran -----
+           La carte suivait un plafond (1024 px, corps 800 px) : seules 27 touches
+           blanches sur 52 tenaient à 1440 px, 15 sur iPad. Au-delà de 1024 px de
+           large et 768 px de haut (zones de bureau et iPad paysage, hors mode
+           compact), la carte et le corps suivent la fenêtre et la largeur d'une
+           touche blanche est calculée en JS (fitKeyboard) pour que les 88 touches
+           tiennent : largeur disponible / 52, entre 24 px et 48 px. Sous 24 px,
+           le clavier défile horizontalement comme avant, centré sur le Do central.
+           Le mode compact (hauteur <= 768), le téléphone et le portrait ne sont
+           pas concernés : aucune règle de ces blocs n'est modifiée ni étendue. */
+        @media (min-width: 1025px) and (min-height: 769px) and (orientation: landscape) {
+            body:has(#tool-piano) main.container.wide {
+                max-width: none;
+            }
+
+            #tool-piano {
+                max-width: min(100%, 2580px);
+            }
+
+            #tool-piano .piano-body {
+                max-width: none;
+            }
+        }
+
+        /* L'aide au défilement n'a de sens que si le clavier déborde réellement. */
+        #tool-piano .piano-scroll-hint.is-hidden {
+            display: none;
+        }
+
+        /* ----- Réglage du zoom du clavier : « −  niveau  + » -----
+           Groupe hors flux (position absolue dans la carte, qui est déjà
+           `relative`) : il ne décale aucun élément et ne crée donc aucun CLS,
+           y compris au changement de niveau. Largeur réservée (boutons de
+           40 px + libellé de 108 px) : le libellé change sans faire bouger le
+           groupe. Masqué hors de la zone grand écran du lot L : sur téléphone,
+           en portrait et en mode compact (hauteur <= 768), rien n'apparaît et
+           la mise en page reste identique. Aucun style global, aucun !important. */
+        #tool-piano .piano-zoom {
+            display: none;
+        }
+
+        @media (min-width: 1025px) and (min-height: 769px) and (orientation: landscape) {
+            #tool-piano .piano-zoom {
+                position: absolute;
+                top: 12px;
+                right: 12px;
+                z-index: 2;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 4px;
+                border: 2px solid var(--accent-border);
+                border-radius: 999px;
+                background: var(--accent-soft);
+                box-shadow: 0 6px 14px -10px rgba(126, 34, 206, 0.6);
+            }
+
+            #tool-piano .piano-zoom-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                padding: 0;
+                border: 2px solid var(--accent);
+                border-radius: 50%;
+                background: #ffffff;
+                color: #4c1d95;
+                font-family: inherit;
+                font-size: 22px;
+                font-weight: 900;
+                line-height: 1;
+                cursor: pointer;
+                transition: background 0.12s ease, color 0.12s ease;
+            }
+
+            #tool-piano .piano-zoom-btn:hover:not(:disabled) {
+                background: var(--accent);
+                color: #ffffff;
+            }
+
+            /* Bouton indisponible : contraste conservé (texte #475569 sur #f1f5f9). */
+            #tool-piano .piano-zoom-btn:disabled {
+                border-color: #cbd5e1;
+                background: #f1f5f9;
+                color: #475569;
+                cursor: default;
+            }
+
+            #tool-piano .piano-zoom-btn:focus-visible {
+                outline: 3px solid #7e22ce;
+                outline-offset: 2px;
+            }
+
+            #tool-piano .piano-zoom-level {
+                min-width: 108px;   /* place réservée : « Vue complète » tient sans bouger */
+                text-align: center;
+                color: #4c1d95;
+                font-family: inherit;
+                font-size: 14px;
+                font-weight: 800;
+                line-height: 1;
+                white-space: nowrap;
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                #tool-piano .piano-zoom-btn {
+                    transition: none;
+                }
+            }
+        }
+
+        @media (min-width: 768px) and (min-height: 551px) and (max-height: 768px) and (orientation: landscape) {
+            html:has(#tool-piano),
+            body:has(#tool-piano) {
+                height: 100dvh;
+                max-height: 100dvh;
+                overflow: hidden;
+            }
+
+            #tool-piano {
+                --kh: clamp(96px, 22dvh, 150px);
+                --bkh: clamp(62px, 14dvh, 96px);
+            }
+
+            #tool-piano .piano-body {
+                flex: 1 1 auto;
+                min-height: 0;
+                width: 100%;
+                max-width: none;
+                gap: 1.25rem;
+                justify-content: center;
+                align-items: stretch;
+            }
+
+            #tool-piano .piano-body > .tool-back {
+                align-self: flex-start;
+                flex: 0 0 auto;
+                margin: 0 0 4px;
+            }
+
+            #tool-piano .piano-head,
+            #tool-piano .piano-portrait-hint { display: none; }
+
+            #tool-piano .piano-info-note {
+                flex: 0 0 auto;
+                min-height: 22px;
+                margin: 0 auto;
+                padding: 2px 12px;
+                font-size: 12px;
+                line-height: 1.3;
+            }
+
+            #tool-piano .piano-staff-container {
+                padding: 0;
+                border: 0;
+                border-radius: 0;
+                background: #ffffff;
+            }
+
+            #tool-piano .piano-wrapper {
+                flex: 0 0 auto;
+                width: 100%;
+                margin-top: 0;
+                margin-bottom: max(10px, env(safe-area-inset-bottom, 10px));
+                padding: 6px 8px 14px;
+                border-radius: 8px 8px 10px 10px;
+                overflow-x: auto;
+                overflow-y: visible;
+            }
+
+            #tool-piano .piano-scroll-hint {
+                flex: 0 0 auto;
+                margin: 0;
+                font-size: 11px;
+                line-height: 1.3;
+            }
+        }
+</style>
+
+<script>
+    import { getAudioContext, getMasterBus } from '../../utils/audioContext';
+
+    (function () {
+        /* Types — Astro compile le contenu des balises <script> en TypeScript. */
+        type KeyType = 'white' | 'black';
+        type PianoKey = { note: string; type: KeyType; midi: number };
+        type SvgAttrs = Record<string, string | number>;
+
+        // Clavier complet de 88 touches : La0 (MIDI 21) → Do8 (MIDI 108) = 52 blanches + 36 noires
+        const NOTE_NAMES = ['Do', 'Do#', 'Ré', 'Ré#', 'Mi', 'Fa', 'Fa#', 'Sol', 'Sol#', 'La', 'La#', 'Si'];
+        const BLACK_PITCH_CLASSES = [1, 3, 6, 8, 10];
+        const keysData: PianoKey[] = [];
+        for (let midi = 21; midi <= 108; midi++) {
+            const pc = midi % 12;
+            keysData.push({
+                note: NOTE_NAMES[pc] + (Math.floor(midi / 12) - 1),   // Do4 = MIDI 60
+                type: BLACK_PITCH_CLASSES.includes(pc) ? 'black' : 'white',
+                midi: midi
+            });
+        }
+
+        const SVGNS = 'http://www.w3.org/2000/svg';
+        let pianoAudioCtx: AudioContext | null = null;
+
+        /* ---------- Accès au DOM (garde instanceof) ---------- */
+        function mustElement(selector: string): HTMLElement {
+            const el = document.querySelector(selector);
+            if (!(el instanceof HTMLElement)) throw new Error(`Élément introuvable : ${selector}`);
+            return el;
+        }
+
+        function mustSvg(selector: string): SVGSVGElement {
+            const el = document.querySelector(selector);
+            if (!(el instanceof SVGSVGElement)) throw new Error(`SVG introuvable : ${selector}`);
+            return el;
+        }
+
+        /** Contexte Web Audio partagé (contexte unique + bus master). */
+        function getPianoContext(): AudioContext {
+            const ac = getAudioContext();
+            if (!ac) throw new Error('Web Audio API non disponible');
+            return ac;
+        }
+
+        function playPianoNote(midiNumber: number): void {
+            if (!pianoAudioCtx) {
+                pianoAudioCtx = getPianoContext();
+            }
+            const ac = pianoAudioCtx;
+            if (ac.state === 'suspended') ac.resume();
+            const bus = getMasterBus() ?? ac.destination;
+
+            const freq = 440 * Math.pow(2, (midiNumber - 69) / 12);
+            const t = ac.currentTime;
+            const osc = ac.createOscillator();
+            const gain = ac.createGain();
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, t);
+            gain.gain.setValueAtTime(0.4, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 1.0);
+
+            osc.connect(gain);
+            gain.connect(bus);
+            osc.start();
+            osc.stop(t + 1.0);
+        }
+
+        // Chaque touche gère sa propre surbrillance : on peut jouer plusieurs doigts à la fois
+        function highlightKey(element: HTMLElement): void {
+            element.classList.add('active');
+            setTimeout(() => element.classList.remove('active'), 250);
+        }
+
+        function getDiatonicStep(noteName: string): number {
+            const baseName = noteName.replace(/[0-9#]/g, '');
+            const octaveMatch = noteName.match(/[0-9]+/);
+            const octave = octaveMatch ? parseInt(octaveMatch[0], 10) : 0;
+            const order: Record<string, number> = { 'Do': 0, 'Ré': 1, 'Mi': 2, 'Fa': 3, 'Sol': 4, 'La': 5, 'Si': 6 };
+            return octave * 7 + (order[baseName] || 0);
+        }
+
+        function svgEl(name: 'line', attrs: SvgAttrs): SVGLineElement;
+        function svgEl(name: 'ellipse', attrs: SvgAttrs): SVGEllipseElement;
+        function svgEl(name: 'text', attrs: SvgAttrs): SVGTextElement;
+        function svgEl(name: string, attrs: SvgAttrs): SVGElement;
+        function svgEl(name: string, attrs: SvgAttrs): SVGElement {
+            const el = document.createElementNS(SVGNS, name) as SVGElement;
+            for (const k in attrs) el.setAttribute(k, String(attrs[k]));
+            return el;
+        }
+
+        let lastStaffKey: PianoKey | null = null;
+
+        /** En paysage téléphone, une seule portée suffit et tout doit tenir sans scroll. */
+        function isCompactLandscape(): boolean {
+            return window.matchMedia('(pointer: coarse) and (orientation: landscape) and (max-height: 550px)').matches;
+        }
+
+        function updateStaff(keyObj: PianoKey | null): void {
+            lastStaffKey = keyObj;
+            const svg = mustSvg('#piano-staff-svg');
+            svg.replaceChildren();
+
+            const compact = isCompactLandscape();
+            // En portrait, la double portée occupe toute la hauteur libre entre les indications et le clavier.
+            const tall = !compact && window.matchMedia('(max-width: 640px) and (orientation: portrait)').matches;
+
+            // Paysage compact : une portée panoramique, largement respirée et parfaitement centrée.
+            // Les cinq lignes partagent la même hauteur de référence pour que la clé de sol
+            // et la clé de fa aient exactement la même assise visuelle.
+            const COMPACT_LINES = [60, 75, 90, 105, 120];
+
+            // Géométrie : compact = une seule portée ; tall = double portée portrait ; sinon double portée large.
+            const LS = compact ? 15 : tall ? 26 : 22;
+            const trebleLines = compact ? COMPACT_LINES : tall ? [64, 90, 116, 142, 168] : [56, 78, 100, 122, 144];
+            const bassLines = compact ? COMPACT_LINES : tall ? [308, 334, 360, 386, 412] : [254, 276, 298, 320, 342];
+            const staffX1 = compact ? 52 : tall ? 44 : 48;
+            const staffX2 = compact ? 740 : tall ? 390 : 470;
+            const clefX = compact ? 70 : tall ? 56 : 60;
+            const lineWidth = compact ? 3 : tall ? 2.8 : 2.4;
+            const clefFont = compact ? { treble: 140, bass: 80 } : tall ? { treble: 242, bass: 137 } : { treble: 205, bass: 116 };
+            const clefY = (clef: 'treble' | 'bass'): number => {
+                if (compact) return clef === 'treble' ? 132 : 110;
+                const lines = clef === 'treble' ? trebleLines : bassLines;
+                return clef === 'treble'
+                    ? lines[3] + (tall ? 47 : 40)
+                    : lines[1] + (tall ? 60 : 51);
+            };
+
+            const drawStaff = (lines: number[], clef: 'treble' | 'bass'): void => {
+                lines.forEach(y => svg.appendChild(svgEl('line', {
+                    x1: staffX1, y1: y, x2: staffX2, y2: y, stroke: '#334155', 'stroke-width': lineWidth
+                })));
+                const clefEl = svgEl('text', {
+                    x: clefX,
+                    y: clefY(clef),
+                    'font-family': 'serif',
+                    'font-size': clefFont[clef],
+                    fill: '#1e293b'
+                });
+                clefEl.textContent = clef === 'treble' ? '𝄞' : '𝄢';
+                svg.appendChild(clefEl);
+            };
+
+            const isBass = keyObj ? keyObj.midi < 60 : false;
+
+            if (compact) {
+                // Une seule portée, celle de la note jouée, dans un cadre panoramique commun.
+                svg.setAttribute('viewBox', '0 0 760 180');
+                drawStaff(isBass ? bassLines : trebleLines, isBass ? 'bass' : 'treble');
+            } else {
+                svg.setAttribute('viewBox', tall ? '0 0 400 482' : '0 0 480 400');
+                drawStaff(trebleLines, 'treble');
+                drawStaff(bassLines, 'bass');
+
+                // Barre de système et grande accolade verticale entre les deux portées.
+                const topY = trebleLines[0];
+                const botY = bassLines[4];
+                const braceH = botY - topY;
+                const midY = topY + braceH / 2;
+                const braceTipX = tall ? 16 : 24;
+                const braceBodyX = tall ? 30 : 40;
+                svg.appendChild(svgEl('line', {
+                    x1: staffX1, y1: topY, x2: staffX1, y2: botY,
+                    stroke: '#334155', 'stroke-width': tall ? 3 : 2.8
+                }));
+                svg.appendChild(svgEl('path', {
+                    d: `M ${staffX1} ${topY}
+                        C ${braceBodyX} ${topY + braceH * 0.03} ${braceBodyX} ${topY + braceH * 0.14} ${braceBodyX} ${topY + braceH * 0.26}
+                        C ${braceBodyX} ${topY + braceH * 0.37} ${braceBodyX * 0.82} ${topY + braceH * 0.43} ${braceTipX} ${midY}
+                        C ${braceBodyX * 0.82} ${topY + braceH * 0.57} ${braceBodyX} ${topY + braceH * 0.63} ${braceBodyX} ${topY + braceH * 0.74}
+                        C ${braceBodyX} ${topY + braceH * 0.86} ${braceBodyX} ${topY + braceH * 0.97} ${staffX1} ${botY}`,
+                    fill: 'none', stroke: '#334155', 'stroke-width': tall ? 3.2 : 3, 'stroke-linecap': 'round'
+                }));
+            }
+
+            if (!keyObj) return; // portée vide au départ
+
+            mustElement('#piano-note-display').textContent = `Note : ${keyObj.note}`;
+
+            const stepSize = compact ? 7.5 : tall ? 13 : 11;
+            const noteX = compact ? 470 : tall ? 280 : 350;
+            const activeLines = isBass ? bassLines : trebleLines;
+            // Au-delà de ce que la portée peut afficher, on note à l'octave (8va / 15ma / 8vb / 15mb)
+            let shiftOct = 0, ottava = '';
+            if (!isBass) {
+                if (keyObj.midi > 96)      { shiftOct = 2;  ottava = '15ma'; }
+                else if (keyObj.midi > 84) { shiftOct = 1;  ottava = '8va'; }
+            } else {
+                if (keyObj.midi < 24)      { shiftOct = -2; ottava = '15mb'; }
+                else if (keyObj.midi < 36) { shiftOct = -1; ottava = '8vb'; }
+            }
+            const steps = getDiatonicStep(keyObj.note) - shiftOct * 7;
+            let noteY: number;
+
+            if (!isBass) {
+                // Clé de Sol : Sol4 sur la 2e ligne depuis le bas.
+                noteY = trebleLines[3] - ((steps - getDiatonicStep('Sol4')) * stepSize);
+            } else {
+                // Clé de Fa : Ré3 sur la ligne du milieu.
+                noteY = bassLines[2] - ((steps - getDiatonicStep('Ré3')) * stepSize);
+            }
+
+            // Lignes supplémentaires
+            const ledgerHalf = compact ? 22 : tall ? 26 : 24;
+            const ledgerWidth = compact ? 3 : lineWidth;
+            const addLedger = (yPos: number): void => { svg.appendChild(svgEl('line', {
+                x1: noteX - ledgerHalf, y1: yPos, x2: noteX + ledgerHalf, y2: yPos, stroke: '#334155', 'stroke-width': ledgerWidth
+            })); };
+            if (noteY < activeLines[0] - 2) {
+                for (let y = activeLines[0] - LS; y >= noteY - 3; y -= LS) addLedger(y);
+            } else if (noteY > activeLines[4] + 2) {
+                for (let y = activeLines[4] + LS; y <= noteY + 3; y += LS) addLedger(y);
+            }
+
+            const headRx = compact ? 10 : tall ? 14 : 12.5;
+            const headRy = compact ? 7.5 : tall ? 10.5 : 9.5;
+            svg.appendChild(svgEl('ellipse', { cx: noteX, cy: noteY, rx: headRx, ry: headRy, fill: '#0f172a' }));
+
+            if (ottava) {
+                const label = svgEl('text', {
+                    x: noteX + (compact ? 26 : tall ? 28 : 26),
+                    y: noteY + (compact ? 5 : 6),
+                    'font-size': compact ? 18 : tall ? 20 : 18,
+                    'font-style': 'italic',
+                    'font-weight': 'bold',
+                    fill: '#7e22ce'
+                });
+                label.textContent = ottava;
+                svg.appendChild(label);
+            }
+
+            if (keyObj.note.includes('#')) {
+                const sharp = svgEl('text', {
+                    x: noteX - (compact ? 24 : tall ? 26 : 24),
+                    y: noteY + (compact ? 5 : 6),
+                    'font-size': compact ? 20 : tall ? 22 : 20,
+                    'font-weight': 'bold',
+                    fill: '#0f172a'
+                });
+                sharp.textContent = '♯';
+                svg.appendChild(sharp);
+            }
+
+            // Hampe : vers le haut si la note est sur/au-dessus du milieu de la portée.
+            const middleLine = activeLines[2];
+            const stemGap = compact ? 9 : tall ? 13 : 12;
+            const stemLength = compact ? 42 : tall ? 64 : 58;
+            const stemWidth = compact ? 3 : lineWidth;
+            const stem = noteY >= middleLine
+                ? svgEl('line', { x1: noteX + stemGap, y1: noteY, x2: noteX + stemGap, y2: noteY - stemLength, stroke: '#0f172a', 'stroke-width': stemWidth })
+                : svgEl('line', { x1: noteX - stemGap, y1: noteY, x2: noteX - stemGap, y2: noteY + stemLength, stroke: '#0f172a', 'stroke-width': stemWidth });
+            svg.appendChild(stem);
+        }
+
+        // Construction du clavier
+        const pianoEl = mustElement('#piano');
+        let whiteCount = 0;   // touches blanches déjà posées : sert à placer les touches noires
+        let middleCKey: HTMLDivElement | null = null;
+        const touchPending = new Map<number, { x: number; y: number }>();   // doigts posés sur une touche, en attente de savoir si c'est un appui ou un défilement
+        keysData.forEach(k => {
+            const keyDiv = document.createElement('div');
+            keyDiv.className = k.type === 'white' ? 'white-key' : 'black-key';
+            if (k.type === 'white') {
+                const isC = k.note.startsWith('Do');
+                keyDiv.textContent = isC ? k.note : k.note.replace(/[0-9]/g, '');   // les Do portent leur octave
+                if (isC) keyDiv.classList.add('c-key');
+                if (k.midi === 60) middleCKey = keyDiv;
+                whiteCount++;
+            } else {
+                // Position calculée à partir des variables CSS : le clavier s'agrandit sur écran tactile
+                keyDiv.style.left = 'calc(var(--wk) * ' + whiteCount + ' - var(--bk) / 2)';
+            }
+            // pointerdown = souris + tactile (tablette / TNI)
+            keyDiv.addEventListener('contextmenu', e => e.preventDefault());
+            const trigger = () => {
+                playPianoNote(k.midi);
+                highlightKey(keyDiv);
+                updateStaff(k);
+            };
+            keyDiv.addEventListener('pointerdown', e => {
+                if (e.pointerType === 'touch' && keyboardNeedsScroll) {
+                    // Tactile avec clavier défilant (Zoom, iPad 11") : le glissement sert
+                    // à défiler, on joue donc au relâchement et seulement si le doigt n'a
+                    // pas glissé (sinon : simple défilement, aucune note).
+                    touchPending.set(e.pointerId, { x: e.clientX, y: e.clientY });
+                    return;
+                }
+                // Souris / stylet, ou clavier entièrement visible (aucun défilement
+                // possible) : le son part à l'appui, sans attendre le relâchement.
+                trigger();
+            });
+            keyDiv.addEventListener('pointerup', e => {
+                if (e.pointerType !== 'touch') return;
+                const start = touchPending.get(e.pointerId);
+                touchPending.delete(e.pointerId);
+                if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 10) trigger();
+            });
+            keyDiv.addEventListener('pointercancel', e => touchPending.delete(e.pointerId));
+            pianoEl.appendChild(keyDiv);
+        });
+
+        // Au premier affichage de l'outil, on centre le clavier sur le Do central (Do4)
+        const pianoWrapper = mustElement('#tool-piano .piano-wrapper');
+        let pianoCentered = false;
+        const centerOnMiddleC = (): void => {
+            if (pianoCentered || !middleCKey || pianoWrapper.clientWidth === 0) return;
+            pianoCentered = true;
+            const kr = middleCKey.getBoundingClientRect();
+            const wr = pianoWrapper.getBoundingClientRect();
+            pianoWrapper.scrollLeft += (kr.left - wr.left) - (pianoWrapper.clientWidth - kr.width) / 2;
+        };
+        if (window.ResizeObserver) new ResizeObserver(centerOnMiddleC).observe(pianoWrapper);   // se déclenche quand l'outil devient visible
+        else centerOnMiddleC();
+
+        /* ------------------------------------------------------------------
+           Adaptation du clavier à l'espace disponible.
+
+           Largeur : une touche blanche vaut « largeur disponible / 52 », bornée
+           entre MIN_WHITE_KEY_WIDTH (24 px, la cible tactile du WCAG 2.5.8) et
+           MAX_WHITE_KEY_WIDTH (48 px, la taille tactile actuelle). Entre les deux,
+           l'adaptation est continue : chaque pixel de fenêtre gagné agrandit les
+           touches. Sous le minimum, on garde MIN et le clavier défile
+           horizontalement comme avant (centré sur le Do central).
+
+           Hauteur : plus de calage ici. La portée (.tool-fit) se partage la hauteur
+           par flexbox (voir tools-shell.css).
+
+           Le mode compact (hauteur <= 768 px), le téléphone et le portrait ne sont
+           pas concernés : la fonction ne touche à rien et retire ses styles inline.
+           ------------------------------------------------------------------ */
+        const WHITE_KEY_COUNT = 52;
+        const MIN_WHITE_KEY_WIDTH = 24;
+        const MAX_WHITE_KEY_WIDTH = 48;
+
+        /* ------------------------------------------------------------------
+           Niveaux de zoom du clavier. La largeur d'une touche blanche commande
+           tout le reste : .white-key (width / flex-basis), .black-key (largeur
+           = 0,64 × blanc) et la position des noires
+           (left: calc(var(--wk) * n - var(--bk) / 2)).
+             Vue complète : largeur calculée = disponible / 52, bornée 24-48 px ;
+             Zoom         : 52 px (noires 33 px) — lot M ;
+             Grand zoom   : 84 px (noires 54 px), soit au-dessus de la cible
+                            tactile de 44 px pour les noires.
+           Plancher : aucun niveau ne doit laisser moins de 8 touches blanches
+           visibles ; sinon il est indisponible (bouton « + » désactivé).
+           ------------------------------------------------------------------ */
+        const VIEW_STORAGE_KEY = 'piano-interactif-view';
+        const MIN_WHITE_KEYS_VISIBLE = 8;
+
+        type ZoomLevel = { id: 'full' | 'zoom' | 'grand'; label: string; width: number | null };
+        const ZOOM_LEVELS: readonly ZoomLevel[] = [
+            { id: 'full', label: 'Vue complète', width: null },
+            { id: 'zoom', label: 'Zoom', width: 52 },
+            { id: 'grand', label: 'Grand zoom', width: 84 },
+        ];
+        let levelIndex = 0;
+        let lastAvailableWidth = 0;
+
+        const zoomOutBtn = mustElement('#piano-zoom-out') as HTMLButtonElement;
+        const zoomInBtn = mustElement('#piano-zoom-in') as HTMLButtonElement;
+        const zoomLevelLabel = mustElement('#piano-zoom-level');
+
+        /** Vrai quand le clavier dépasse la zone visible (défilement nécessaire). */
+        let keyboardNeedsScroll = true;
+
+        /** Largeur d'une touche blanche pour un niveau donné. */
+        function levelWidth(level: ZoomLevel, available: number): number {
+            if (level.width !== null) return level.width;
+            return Math.max(MIN_WHITE_KEY_WIDTH, Math.min(MAX_WHITE_KEY_WIDTH, Math.floor(available / WHITE_KEY_COUNT)));
+        }
+
+        /** Un niveau laisse-t-il au moins MIN_WHITE_KEYS_VISIBLE blanches visibles ? */
+        function isLevelAvailable(index: number, available: number): boolean {
+            const level = ZOOM_LEVELS[index];
+            if (!level) return false;
+            if (available <= 0) return true;   // pas encore mesuré
+            return Math.floor(available / levelWidth(level, available)) >= MIN_WHITE_KEYS_VISIBLE;
+        }
+
+        /** Préférence lue une seule fois au chargement. Les valeurs du lot M
+            (« full », « zoom ») restent valides ; « grand » est le nouveau niveau. */
+        function readViewPreference(): number {
+            try {
+                const value = window.localStorage.getItem(VIEW_STORAGE_KEY);
+                if (value === 'grand') return 2;
+                if (value === 'zoom') return 1;
+                return 0;   // 'full', valeur inconnue ou absente
+            } catch {
+                return 0;
+            }
+        }
+
+        function saveViewPreference(): void {
+            try {
+                window.localStorage.setItem(VIEW_STORAGE_KEY, ZOOM_LEVELS[levelIndex].id);
+            } catch {
+                /* stockage indisponible : la préférence n'est simplement pas retenue */
+            }
+        }
+
+        /** Libellé du niveau courant et état des deux boutons. */
+        function syncZoomUi(): void {
+            zoomLevelLabel.textContent = ZOOM_LEVELS[levelIndex].label;
+            zoomOutBtn.disabled = levelIndex === 0;
+            zoomInBtn.disabled = levelIndex >= ZOOM_LEVELS.length - 1 || !isLevelAvailable(levelIndex + 1, lastAvailableWidth);
+        }
+
+        /** Touche blanche la plus proche du milieu de la zone visible. */
+        function keyAtViewportCenter(): HTMLElement | null {
+            if (pianoWrapper.clientWidth === 0) return null;
+            const wr = pianoWrapper.getBoundingClientRect();
+            const center = wr.left + pianoWrapper.clientWidth / 2;
+            const keys = Array.from(pianoEl.querySelectorAll<HTMLElement>('.white-key'));
+            let best: HTMLElement | null = null;
+            let bestDistance = Number.POSITIVE_INFINITY;
+            for (const key of keys) {
+                const r = key.getBoundingClientRect();
+                const distance = Math.abs(r.left + r.width / 2 - center);
+                if (distance < bestDistance) {
+                    bestDistance = distance;
+                    best = key;
+                }
+            }
+            return best;
+        }
+
+        /** Centre une touche dans la zone visible, sans animation (reduced-motion respecté). */
+        function centerKeyInWrapper(key: HTMLElement | null): void {
+            if (!key || pianoWrapper.clientWidth === 0) return;
+            const kr = key.getBoundingClientRect();
+            const wr = pianoWrapper.getBoundingClientRect();
+            pianoWrapper.scrollLeft += (kr.left + kr.width / 2) - (wr.left + pianoWrapper.clientWidth / 2);
+        }
+
+        /** Change de niveau en conservant la note au centre (aucun saut, aucune animation).
+            Quand le clavier tient entièrement (vue complète sans défilement), il n'existe
+            pas de « note au centre » : on repart du Do central, comme au lot M. */
+        function setZoomLevel(index: number): void {
+            const clamped = Math.max(0, Math.min(ZOOM_LEVELS.length - 1, index));
+            if (clamped === levelIndex) return;
+            const anchor = keyboardNeedsScroll ? (keyAtViewportCenter() ?? middleCKey) : middleCKey;
+            levelIndex = clamped;
+            saveViewPreference();
+            fitKeyboard();
+            centerKeyInWrapper(anchor);
+        }
+
+        const scrollHint = document.querySelector<HTMLElement>('#tool-piano .piano-scroll-hint');
+
+        /** Zones où le clavier garde sa mise en page actuelle (compact, téléphone, portrait). */
+        function keepsDefaultKeyboardLayout(): boolean {
+            if (window.innerHeight > window.innerWidth) return true;   // portrait
+            return (
+                window.matchMedia('(max-width: 640px), (max-width: 900px) and (orientation: landscape), (max-height: 500px)').matches ||
+                window.matchMedia('(pointer: coarse) and (orientation: landscape) and (max-height: 550px)').matches ||
+                window.matchMedia('(min-width: 768px) and (min-height: 551px) and (max-height: 768px) and (orientation: landscape)').matches
+            );
+        }
+
+        function resetKeyboardFit(): void {
+            pianoEl.style.removeProperty('--wk');
+            pianoEl.style.removeProperty('--bk');
+            scrollHint?.classList.remove('is-hidden');
+            keyboardNeedsScroll = true;   // en mode compact le clavier déborde toujours
+            pianoWrapper.removeAttribute('tabindex');
+            pianoWrapper.removeAttribute('aria-label');
+        }
+
+        function fitKeyboard(): void {
+            if (keepsDefaultKeyboardLayout()) {
+                resetKeyboardFit();
+                return;
+            }
+
+            // 1. Largeur d'une touche blanche : Zoom = 52 px fixes ; vue complète =
+            //    largeur disponible / 52, continue entre MIN et MAX.
+            const wrapperStyle = getComputedStyle(pianoWrapper);
+            const available = Math.round(
+                pianoWrapper.clientWidth - parseFloat(wrapperStyle.paddingLeft) - parseFloat(wrapperStyle.paddingRight),
+            );
+            // 1. Largeur d'une touche blanche pour le niveau courant. Si le niveau
+            //    mémorisé n'est plus disponible (fenêtre étroite : moins de 8 touches
+            //    visibles), on recule au niveau inférieur.
+            lastAvailableWidth = available;
+            while (levelIndex > 0 && !isLevelAvailable(levelIndex, available)) levelIndex -= 1;
+            const keyWidth = levelWidth(ZOOM_LEVELS[levelIndex], available);
+            pianoEl.style.setProperty('--wk', keyWidth + 'px');
+            pianoEl.style.setProperty('--bk', Math.round(keyWidth * 0.64) + 'px');   // 18/28 = 0,64
+            syncZoomUi();
+
+            // 2. L'aide au défilement ne s'affiche que si le clavier déborde, et le
+            //    déclenchement tactile en dépend (voir pointerdown plus bas). Un
+            //    conteneur qui défile doit être atteignable au clavier (axe :
+            //    scrollable-region-focusable) : on ne le rend focusable que dans ce cas.
+            const keyboardWidth = WHITE_KEY_COUNT * keyWidth;
+            keyboardNeedsScroll = keyboardWidth > available + 1;
+            scrollHint?.classList.toggle('is-hidden', !keyboardNeedsScroll);
+            if (keyboardNeedsScroll) {
+                pianoWrapper.tabIndex = 0;
+                pianoWrapper.setAttribute('aria-label', 'Clavier du piano, défilement horizontal');
+            } else {
+                pianoWrapper.removeAttribute('tabindex');
+                pianoWrapper.removeAttribute('aria-label');
+            }
+        }
+
+
+        // Tactile (iOS / Safari) : on relance le contexte audio au relâchement du doigt
+        const unlockPianoAudio = (): void => {
+            const ac = getAudioContext();
+            if (ac && ac.state === 'suspended') ac.resume();
+        };
+        document.addEventListener('pointerup', unlockPianoAudio, true);
+        document.addEventListener('touchend', unlockPianoAudio, true);
+
+        // Première note instantanée : créer le contexte Web Audio coûte ~300 ms en
+        // Chromium (mesuré). Le faire pendant le premier appui bloquerait l'interface
+        // 300 ms ; on le crée donc pendant un temps mort après le chargement (il démarre
+        // « suspended ») et on le relance au premier geste, qui est le seul moment où
+        // les navigateurs autorisent la reprise. Résultat mesuré : 1re note 329 ms
+        // (création) -> 0 ms, sans gel de l'interface.
+        let audioPrimed = false;
+        const primePianoAudio = (): void => {
+            if (audioPrimed) return;
+            audioPrimed = true;
+            try {
+                if (!pianoAudioCtx) pianoAudioCtx = getPianoContext();
+            } catch {
+                /* Web Audio indisponible : playPianoNote signalera l'absence de son */
+            }
+        };
+        const resumePianoAudio = (): void => {
+            primePianoAudio();
+            try {
+                if (pianoAudioCtx && pianoAudioCtx.state === 'suspended') void pianoAudioCtx.resume();
+            } catch {
+                /* contexte indisponible : rien à relancer */
+            }
+        };
+        if (typeof window.requestIdleCallback === 'function') {
+            window.requestIdleCallback(() => primePianoAudio(), { timeout: 2000 });
+        } else {
+            window.setTimeout(primePianoAudio, 200);
+        }
+        document.addEventListener('pointerdown', resumePianoAudio, { capture: true });
+        document.addEventListener('keydown', resumePianoAudio, { capture: true });
+
+        // Niveaux de zoom (contrôle présent uniquement sur grand écran).
+        levelIndex = readViewPreference();
+        syncZoomUi();
+        zoomOutBtn.addEventListener('click', () => setZoomLevel(levelIndex - 1));
+        zoomInBtn.addEventListener('click', () => setZoomLevel(levelIndex + 1));
+
+        // Une rotation d'écran change le nombre de portées visibles : on redessine.
+        const compactStaffQuery = window.matchMedia('(pointer: coarse) and (orientation: landscape) and (max-height: 550px)');
+        compactStaffQuery.addEventListener('change', () => updateStaff(lastStaffKey));
+        window.addEventListener('orientationchange', () => {
+            window.setTimeout(() => updateStaff(lastStaffKey), 120);
+        });
+
+        // Le redimensionnement (rotation, barres d'onglets Safari) change la largeur
+        // disponible et la hauteur utile : on réadapte le clavier puis on redessine
+        // la portée, coalescé sur une frame et nettoyé à la sortie de page.
+        // `visualViewport` complète `window.resize`, qui ne se déclenche pas toujours
+        // quand seule la zone visible change. Pas de boucle possible : la fonction ne
+        // modifie que des styles de la carte, jamais la taille de la fenêtre.
+        const staffResizeAbort = new AbortController();
+        let staffResizeFrame = 0;
+        const handleViewportChange = (): void => {
+            if (staffResizeFrame) return;
+            staffResizeFrame = window.requestAnimationFrame(() => {
+                staffResizeFrame = 0;
+                fitKeyboard();
+                updateStaff(lastStaffKey);
+            });
+        };
+        window.addEventListener('resize', handleViewportChange, { signal: staffResizeAbort.signal });
+        window.visualViewport?.addEventListener('resize', handleViewportChange, {
+            signal: staffResizeAbort.signal,
+        });
+        window.addEventListener('pagehide', () => {
+            if (staffResizeFrame) window.cancelAnimationFrame(staffResizeFrame);
+            staffResizeAbort.abort();
+        }, { once: true });
+
+        fitKeyboard();     // clavier adapté à la largeur réelle dès l'ouverture
+        centerKeyInWrapper(middleCKey ?? keyAtViewportCenter());   // Do4 au centre
+        updateStaff(null); // dessine la portée adaptée dès l'ouverture
+    })();
+</script>

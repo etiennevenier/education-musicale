@@ -1,0 +1,213 @@
+---
+const astuces = [
+  {
+    famille: 'Les Cuivres',
+    icon: '🎺',
+    punchline: 'Ça sonne puissant, héroïque et ça réveille tout le quartier ?',
+    reponse: 'C’est un Cuivre !',
+    memo: 'Le son vient de la vibration des lèvres dans l’embouchure (trompette, trombone, cor, tuba...).',
+    color: '#f59e0b'
+  },
+  {
+    famille: 'Les Bois',
+    icon: '🎷',
+    punchline: 'C’est feutré, expressif, parfois boisé ou très poétique ?',
+    reponse: 'C’est un Bois !',
+    memo: 'la flûte traversière et le saxophone sont des BOIS car ils utilisent un biseau ou une anche !',
+    color: '#10b981'
+  },
+  {
+    famille: 'Les Percussions',
+    icon: '🥁',
+    punchline: 'Ça claque, ça secoue, ça frappe et ça donne le tempo ?',
+    reponse: 'C’est une Percussion !',
+    memo: 'Qu’on les frappe (djembe), qu’on les secoue (maracas) ou qu’on les gratte (guiro) !',
+    color: '#ef4444'
+  },
+  {
+    famille: 'Les Cordes',
+    icon: '🎻',
+    punchline: 'Ça vibre, ça chante, c’est frotté, pincé ou martelé ?',
+    reponse: 'C’est la famille des Cordes !',
+    memo: 'Frottées (violon), pincées (guitare, harpe) ou frappées (piano) : plus la corde est longue, plus le son est grave !',
+    color: '#3b82f6'
+  }
+];
+---
+
+<div class="astuce-banner">
+  <div class="astuce-header">
+    <span class="badge-astuce">💡 L'Anti-Sèche des Timbres</span>
+    <div class="dots-nav">
+      {astuces.map((_, i) => (
+        <span class={`dot ${i === 0 ? 'active' : ''}`} data-index={i}></span>
+      ))}
+    </div>
+  </div>
+
+  <div class="astuce-content">
+    {astuces.map((astuce, i) => (
+      <div class={`astuce-slide ${i === 0 ? 'active' : ''}`} data-slide={i}>
+        <div class="astuce-icon">{astuce.icon}</div>
+        <div class="astuce-text">
+          <p class="punchline">« {astuce.punchline} »</p>
+          <h4 style={`color: ${astuce.color}`}>{astuce.reponse}</h4>
+          <p class="memo">{astuce.memo}</p>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+
+<script>
+  let currentIndex = 0;
+  const slides = document.querySelectorAll('.astuce-slide');
+  const dots = document.querySelectorAll('.dot');
+  const total = slides.length;
+
+  function showSlide(index: number) {
+    slides.forEach(s => s.classList.remove('active'));
+    dots.forEach(d => d.classList.remove('active'));
+
+    slides[index]?.classList.add('active');
+    dots[index]?.classList.add('active');
+    currentIndex = index;
+  }
+
+  // Défilement automatique toutes les 10 secondes (suspendu quand l'onglet est masqué)
+  let autoTimer: number | null = null;
+
+  function startAutoSlide() {
+    if (autoTimer !== null || total <= 1) return;
+    autoTimer = window.setInterval(() => {
+      const next = (currentIndex + 1) % total;
+      showSlide(next);
+    }, 10000);
+  }
+
+  function stopAutoSlide() {
+    if (autoTimer !== null) {
+      window.clearInterval(autoTimer);
+      autoTimer = null;
+    }
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stopAutoSlide();
+    else startAutoSlide();
+  });
+
+  window.addEventListener('pagehide', stopAutoSlide);
+
+  startAutoSlide();
+
+  // Clic sur les puces pour naviguer
+  dots.forEach(dot => {
+    dot.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      const idx = parseInt(target.dataset.index || '0', 10);
+      showSlide(idx);
+    });
+  });
+</script>
+
+<style>
+  .astuce-banner {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid #334155;
+    border-left: 4px solid #38bdf8;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0;
+  }
+
+  .astuce-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+
+  .badge-astuce {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #38bdf8;
+    letter-spacing: 0.05em;
+  }
+
+  .dots-nav {
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #475569;
+    cursor: pointer;
+    transition: background-color 0.3s ease, width 0.3s ease, border-radius 0.3s ease;
+  }
+
+  .dot.active {
+    background: #38bdf8;
+    width: 18px;
+    border-radius: 4px;
+  }
+
+  .astuce-content {
+    position: relative;
+    min-height: 85px;
+  }
+
+  .astuce-slide {
+    display: none;
+    align-items: center;
+    gap: 1.25rem;
+    animation: fadeIn 0.4s ease-in-out;
+  }
+
+  .astuce-slide.active {
+    display: flex;
+  }
+
+  .astuce-icon {
+    font-size: 2.2rem;
+    background: #0f172a;
+    padding: 0.6rem;
+    border-radius: 10px;
+    border: 1px solid #334155;
+    line-height: 1;
+  }
+
+  .astuce-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .punchline {
+    margin: 0;
+    font-size: 0.95rem;
+    font-style: italic;
+    color: #94a3b8;
+  }
+
+  .astuce-text h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 800;
+  }
+
+  .memo {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #cbd5e1;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>

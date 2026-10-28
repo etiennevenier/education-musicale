@@ -1,0 +1,360 @@
+---
+import { ostinatoQuestions, OSTINATO_QUESTIONS_PER_GAME } from '../data/ostinatoData';
+import '../styles/quiz-card.css';
+
+const questionsPerGame = Math.min(OSTINATO_QUESTIONS_PER_GAME, ostinatoQuestions.length);
+---
+
+<div class="quiz-card ostinato-card">
+  <div class="fuzeau-header">
+    <span class="badge">Atelier Ostinato</span>
+    <h4>Quiz Audio : L'Ostinato</h4>
+  </div>
+
+
+
+  <!-- Progression -->
+  <div id="ostinatoProgressBox" class="progress-box">
+    <div class="progress-text">
+      <span id="ostinatoProgressLabel">Question 1 / {questionsPerGame}</span>
+      <span id="ostinatoScoreLabel" class="score-label">Score : 0 / {questionsPerGame}</span>
+    </div>
+    <div class="progress-bar"><div id="ostinatoProgressFill" class="progress-fill"></div></div>
+  </div>
+
+  <!-- Question et lecteur audio -->
+  <div id="ostinatoQuestionContainer" class="question-container"></div>
+
+  <!-- Réponses (boutons ou saisie numérique) -->
+  <div id="ostinatoOptionsContainer" class="options-number"></div>
+
+  <div id="ostinatoFeedback" class="feedback-msg hidden" aria-live="polite"></div>
+
+  <!-- Validation / question suivante -->
+  <div id="ostinatoActionFooter" class="action-footer">
+    <button id="ostinatoBtnNext" class="btn-next" disabled>Question Suivante ➔</button>
+  </div>
+
+  <!-- Résultat final -->
+  <div id="ostinatoResultContainer" class="result-container hidden" aria-live="polite"></div>
+</div>
+
+<script>
+  import { shuffle } from '../utils/random';
+  import { showQuizResult } from '../utils/quizUi';
+  import { QuizSession } from '../utils/quizSession';
+  import type {
+    OstinatoChoiceQuestion,
+    OstinatoNumberQuestion,
+    OstinatoQuestion,
+  } from '../data/ostinatoData';
+  const { ostinatoQuestions, OSTINATO_QUESTIONS_PER_GAME } = await import('../data/ostinatoData');
+  import { relativeUrl } from '../utils/navigation';
+  import {
+    getAudioState,
+    getCurrentAudioUrl,
+    onAudioEvent,
+    pauseAudio,
+    playAudio,
+    resumeAudio,
+    stopAudio,
+  } from '../utils/audioManager';
+
+  type PlayState = 'idle' | 'playing' | 'paused' | 'ended';
+
+  const PLAY_LABELS: Record<PlayState, string> = {
+    idle: "🔊 Écouter l'extrait",
+    playing: '⏸ Mettre en pause',
+    paused: '▶️ Reprendre',
+    ended: '🔁 Réécouter',
+  };
+
+  // Passage automatique à la question suivante après une bonne réponse.
+
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+  const progressBox = $<HTMLDivElement>('ostinatoProgressBox');
+  const progressLabel = $<HTMLSpanElement>('ostinatoProgressLabel');
+  const scoreLabel = $<HTMLSpanElement>('ostinatoScoreLabel');
+  const progressFill = $<HTMLDivElement>('ostinatoProgressFill');
+  const questionContainer = $<HTMLDivElement>('ostinatoQuestionContainer');
+  const optionsContainer = $<HTMLDivElement>('ostinatoOptionsContainer');
+  const quizFeedback = $<HTMLDivElement>('ostinatoFeedback');
+  const actionFooter = $<HTMLDivElement>('ostinatoActionFooter');
+  const btnNext = $<HTMLButtonElement>('ostinatoBtnNext');
+  const resultContainer = $<HTMLDivElement>('ostinatoResultContainer');
+
+  let queue: OstinatoQuestion[] = [];
+  let currentQuestion: OstinatoQuestion | null = null;
+  let btnPlay: HTMLButtonElement | null = null;
+  let autoPlayEnabled = false;
+
+  function setPlayState(state: PlayState) {
+    if (btnPlay) btnPlay.textContent = PLAY_LABELS[state];
+  }
+
+  // Le libellé du bouton suit l'état réel du lecteur partagé.
+  onAudioEvent('statechange', ({ state }) => {
+    if (state === 'playing') setPlayState('playing');
+    else if (state === 'paused') setPlayState('paused');
+    else if (state === 'ended') setPlayState('ended');
+    else if (state === 'idle' || state === 'error') setPlayState('idle');
+  });
+
+  // Les MP3 sont dans /public : on ajoute le BASE_URL d'Astro.
+  function questionUrl(question: OstinatoQuestion): string {
+    return relativeUrl(question.audioUrl);
+  }
+
+  function sameTrack(currentUrl: string | null, expectedUrl: string): boolean {
+    if (!currentUrl) return false;
+    return currentUrl.normalize('NFC') === expectedUrl.normalize('NFC');
+  }
+
+  // Bouton unique : écouter → pause → reprendre → réécouter.
+  function togglePlay() {
+    if (!currentQuestion) return;
+
+    const url = questionUrl(currentQuestion);
+    const state = getAudioState();
+
+    if (state === 'playing') {
+      pauseAudio();
+      return;
+    }
+    if (state === 'paused' && sameTrack(getCurrentAudioUrl(), url)) {
+      void resumeAudio();
+      return;
+    }
+    void playAudio(url);
+  }
+
+  function formatAnswer(question: OstinatoQuestion): string {
+    return question.kind === 'choice'
+      ? question.correctAnswer.toLowerCase()
+      : String(question.correctAnswer);
+  }
+
+  // --- Construction des réponses ------------------------------------------
+
+  function buildChoiceOptions(question: OstinatoChoiceQuestion) {
+    question.options.forEach((label) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn-option';
+      btn.textContent = label;
+
+      btn.addEventListener('click', () => {
+        if (session.isAnswered) return;
+
+        optionsContainer.querySelectorAll<HTMLButtonElement>('.btn-option').forEach((b) => {
+          b.disabled = true;
+        });
+
+        const isCorrect = label === question.correctAnswer;
+        if (isCorrect) {
+          btn.classList.add('correct');
+        } else {
+          btn.classList.add('incorrect');
+          optionsContainer.querySelectorAll<HTMLButtonElement>('.btn-option').forEach((b) => {
+            if (b.textContent === question.correctAnswer) b.classList.add('correct');
+          });
+        }
+
+        session.answer(isCorrect, '');
+      });
+
+      optionsContainer.appendChild(btn);
+    });
+  }
+
+  function buildNumberInput(question: OstinatoNumberQuestion) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'number-box';
+    wrapper.innerHTML = `
+      <div class="number-row">
+        <input
+          type="number"
+          class="number-input"
+          min="0"
+          step="1"
+          inputmode="numeric"
+          placeholder="Entre le nombre de répétitions…"
+          aria-label="Nombre de répétitions"
+        />
+        <button type="button" class="btn-validate">Valider</button>
+      </div>
+    `;
+
+    const input = wrapper.querySelector('.number-input') as HTMLInputElement;
+    const validate = wrapper.querySelector('.btn-validate') as HTMLButtonElement;
+
+    function submit() {
+      if (session.isAnswered) return;
+
+      const raw = input.value.trim();
+      const value = Number.parseInt(raw, 10);
+
+      if (raw === '' || !Number.isFinite(value) || value < 0) {
+        quizFeedback.textContent = 'Écris un nombre entier avant de valider.';
+        quizFeedback.className = 'feedback-msg warning';
+        return;
+      }
+
+      input.disabled = true;
+      validate.disabled = true;
+
+      const isCorrect = value === question.correctAnswer;
+      input.classList.add(isCorrect ? 'correct' : 'incorrect');
+
+      if (!isCorrect) {
+        quizFeedback.textContent = `La bonne réponse était : ${formatAnswer(question)}.`;
+        quizFeedback.className = 'feedback-msg error';
+      }
+
+      session.answer(isCorrect, '');
+    }
+
+    validate.addEventListener('click', submit);
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        submit();
+      }
+    });
+
+    optionsContainer.appendChild(wrapper);
+  }
+
+  // --- Déroulement de la partie -------------------------------------------
+
+  const session = new QuizSession({
+    unit: 'question',
+    progress: { progressLabel, scoreLabel, progressFill },
+    nextBtn: btnNext,
+    feedback: quizFeedback,
+    result: {
+      hide: [progressBox, questionContainer, optionsContainer, actionFooter],
+      container: resultContainer,
+      restartId: 'ostinatoBtnRestart',
+    },
+    game: [progressBox, questionContainer, optionsContainer, actionFooter],
+    feedbackOnAnswer: false,
+    renderQuestion: (index, autoplay) => {
+      stopAudio();
+      const question = queue[index];
+      if (!question) return;
+      currentQuestion = question;
+
+      const audioBox = document.createElement('div');
+      audioBox.className = 'audio-q-box';
+      const prompt = document.createElement('p');
+      prompt.className = 'question-prompt';
+      prompt.textContent = question.prompt;
+      const playButton = document.createElement('button');
+      playButton.type = 'button';
+      playButton.id = 'ostinatoBtnPlay';
+      playButton.className = 'btn-play-sound';
+      audioBox.append(prompt, playButton);
+      questionContainer.replaceChildren(audioBox);
+      btnPlay = playButton;
+      setPlayState('idle');   // libellé initial posé en textContent
+      btnPlay.addEventListener('click', togglePlay);
+      if (autoplay) togglePlay();
+
+      optionsContainer.replaceChildren();
+
+      if (question.kind === 'choice') {
+        optionsContainer.className = 'options-choice';
+        buildChoiceOptions(question);
+      } else {
+        optionsContainer.className = 'options-number';
+        buildNumberInput(question);
+      }
+    },
+    showResult: (score, total) => {
+      stopAudio();
+      showQuizResult({
+        hide: [progressBox, questionContainer, optionsContainer, actionFooter],
+        feedback: quizFeedback,
+        container: resultContainer,
+        score,
+        total,
+        restartId: 'ostinatoBtnRestart',
+        onRestart: () => {
+          autoPlayEnabled = true;
+          startGame();
+        },
+      });
+    },
+    onRestart: () => {
+      autoPlayEnabled = true;
+      startGame();
+    },
+  });
+
+  function startGame() {
+    stopAudio();
+    // Tirage de 10 questions parmi toutes celles du quiz, dans un ordre aléatoire.
+    queue = shuffle(ostinatoQuestions).slice(0, OSTINATO_QUESTIONS_PER_GAME);
+    session.start(queue.length, autoPlayEnabled);
+  }
+
+  btnNext.addEventListener('click', () => session.next());
+
+  startGame();
+</script>
+
+<!--
+  Même charte graphique que TimbreQuiz.astro et PlansSonoresQuiz.astro.
+  is:global est nécessaire : les boutons et les champs sont créés par le script
+  et ne reçoivent donc pas l'attribut de scope d'Astro.
+-->
+<style is:global>
+  
+
+  
+
+  
+
+  
+
+  
+
+  /* --- Partie A : boutons de réponse --- */
+  
+
+  
+
+  
+
+  /* --- Parties B et C : saisie du nombre de répétitions --- */
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  /* --- Navigation et feedback --- */
+  
+
+  /* --- Écran de résultat --- */
+  </style>

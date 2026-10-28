@@ -1,0 +1,190 @@
+---
+import CourseTabs from './CourseTabs.astro';
+import VideoCard from './VideoCard.astro';
+import LaboCinematique from './LaboCinematique.astro';
+
+interface CinemaVideo {
+  badge: string;
+  title: string;
+  youtubeId: string;
+  /** Texte court affiché sous la carte (onglet « L'air de la folie » uniquement). */
+  caption?: string;
+}
+
+interface CinemaTab {
+  id: string;
+  icon: string;
+  label: string;
+  videos: CinemaVideo[];
+  /** Onglet atelier interactif : affiche le Labo Musique & Image au lieu des vidéos. */
+  kind?: 'videos' | 'labo';
+}
+
+const tabs: CinemaTab[] = [
+  {
+    id: 'air-de-la-folie',
+    icon: '🎭',
+    label: "L'air de la folie",
+    videos: [
+      {
+        badge: 'Écoute',
+        title: "L'air de la folie — Lucia di Lammermoor",
+        youtubeId: 'qc3Ml_Sse7M',
+        caption:
+          "L'air de la folie est à l'origine tiré de l'opéra <strong>Lucia di Lammermoor</strong>, composé par <strong>Gaetano Donizetti en 1835</strong>.",
+      },
+      {
+        badge: 'Écoute',
+        title: "L'air de la folie — Le 5ème élément",
+        youtubeId: 'GuvgWDlpEhw',
+        caption:
+          "L'air de la folie a ensuite été réutilisé puis modifié par le compositeur <strong>Éric Serra</strong> pour la bande son du film <strong>Le 5ème élément</strong> réalisé par Luc Besson.",
+      },
+      {
+        badge: 'Analyse',
+        title: "Analyse de la scène de l'opéra dans Le 5ème élément",
+        youtubeId: 'pfDJS_T4wg0',
+        caption: "Analyse de la scène culte de l'opéra dans Le 5ème élément.",
+      },
+      {
+        badge: 'Fun',
+        title: 'Qui peut chanter le climax de The Diva Dance ?',
+        youtubeId: 'WxXq2HCQDh0',
+        caption: 'Qui peut chanter le climax de The Diva Dance ?',
+      },
+    ],
+  },
+  {
+    id: 'role-de-la-musique',
+    icon: '🎬',
+    label: 'Le rôle de la musique',
+    videos: [
+      { badge: 'Capsule 1', title: 'Le rôle de la musique — Capsule 1', youtubeId: '-ueSPopk7Nk' },
+      { badge: 'Capsule 2', title: 'Le rôle de la musique — Capsule 2', youtubeId: 'fxwVFKN08II' },
+      { badge: 'Mickeymousing', title: 'Le mickeymousing', youtubeId: '0_XX9c90PFQ' },
+      { badge: 'Musique narrative', title: 'La musique narrative', youtubeId: 'kiV3J_e977Q' },
+      { badge: 'Musique empathique', title: 'La musique empathique', youtubeId: '84Irg8xn4bg' },
+      {
+        badge: 'Musique anempathique',
+        title: 'La musique anempathique',
+        youtubeId: '7CkOdChHrDI',
+      },
+    ],
+  },
+  {
+    id: 'leitmotiv',
+    icon: '🎼',
+    label: 'Le leitmotiv',
+    videos: [
+      { badge: 'Leitmotiv', title: 'Le leitmotiv au cinéma', youtubeId: '3ZgcyHaCdhE' },
+    ],
+  },
+  {
+    id: 'projet-musical',
+    icon: '🎤',
+    label: 'Projet musical',
+    videos: [
+      { badge: 'Projet musical', title: 'Projet musical', youtubeId: 'VZEtQo87n2I' },
+    ],
+  },
+  {
+    id: 'labo',
+    icon: '🎬',
+    label: 'Labo Musique & Image',
+    kind: 'labo',
+    videos: [],
+  },
+];
+---
+
+<div class="cinema-course">
+  <CourseTabs tabs={tabs} ariaLabel="Musique et Cinéma" />
+
+  {tabs.map((tab, index) => (
+    <div
+      role="tabpanel"
+      id={`main-panel-${tab.id}`}
+      class="cinema-panel"
+      aria-labelledby={`main-tab-${tab.id}`}
+      hidden={index !== 0}
+      data-panel={tab.id}
+    >
+      {tab.kind === 'labo' ? (
+        <LaboCinematique />
+      ) : (
+        <div class="cinema-videos">
+          {tab.videos.map((video) => (
+            <figure class="cinema-video">
+              <VideoCard
+                badge={video.badge}
+                title={video.title}
+                url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+              />
+              {video.caption && <figcaption class="cinema-caption" set:html={video.caption} />}
+            </figure>
+          ))}
+        </div>
+      )}
+    </div>
+  ))}
+</div>
+
+<script>
+  import { setupMainTabs } from '../utils/tabs';
+  import { stopAudio } from '../utils/audioManager';
+
+  const root = document.querySelector<HTMLElement>('.cinema-course');
+
+  if (root) {
+    setupMainTabs(root, {
+      panelSelector: '.cinema-panel',
+      before: (tab) => {
+        // 1. Coupe le son quand on quitte un onglet
+        if (tab.dataset.mainTab !== 'labo') stopAudio();
+
+        // 2. Émet l'événement personnalisé
+        root.dispatchEvent(
+          new CustomEvent('cinema:tab-change', {
+            detail: { tab: tab.dataset.mainTab },
+            bubbles: true,
+          }),
+        );
+      },
+    });
+  }
+</script>
+
+<style>
+  .cinema-course {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .cinema-panel[hidden] {
+    display: none;
+  }
+
+  .cinema-videos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  .cinema-video {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cinema-caption {
+    margin: 0.6rem 0 0;
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  .cinema-caption :global(strong) {
+    color: var(--text, #f1f5f9);
+  }
+</style>

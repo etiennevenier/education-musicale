@@ -1,0 +1,128 @@
+---
+import CourseTabs from './CourseTabs.astro';
+import VideoCard from './VideoCard.astro';
+import Bruitomatic from './Bruitomatic.astro';
+
+interface BruitsVideo {
+  badge: string;
+  title: string;
+  youtubeId: string;
+}
+
+interface BruitsTab {
+  id: string;
+  icon: string;
+  label: string;
+  kind?: 'videos' | 'bruitomatic';
+  videos: BruitsVideo[];
+}
+
+const tabs: BruitsTab[] = [
+  {
+    id: 'cours',
+    icon: '🎬',
+    label: 'Cours',
+    videos: [
+      { badge: 'Capsule', title: 'Capsule', youtubeId: 'KtgRKIxcDqA' },
+      { badge: 'Projet musical', title: 'Projet musical', youtubeId: 'cmSbXsFE3l8' },
+      { badge: 'Projet musical', title: 'Projet musical', youtubeId: 'pjcOzqxu4JQ' },
+      { badge: 'Écoute', title: 'Écoute', youtubeId: 'Nxgm27oWu3s' },
+    ],
+  },
+  {
+    id: 'fo-plafonds',
+    icon: '🎤',
+    label: "Les Fo'Plafonds",
+    videos: [
+      { badge: 'Écoute', title: "Les Fo'Plafonds", youtubeId: 'B4PSvN3VSyI' },
+      { badge: 'Écoute', title: "Les Fo'Plafonds", youtubeId: '73jJLspL8o8' },
+      { badge: 'Écoute', title: "Les Fo'Plafonds", youtubeId: 'g-syAK7WIXE' },
+      { badge: 'Écoute', title: "Les Fo'Plafonds", youtubeId: 'X0jnvck_hr8' },
+    ],
+  },
+  {
+    id: 'stomp',
+    icon: '🥁',
+    label: 'Stomp',
+    videos: [
+      { badge: 'Écoute', title: 'Stomp', youtubeId: 'tZ7aYQtIldg' },
+      { badge: 'Écoute', title: 'Stomp', youtubeId: '93t6bCnAvk4' },
+      { badge: 'Écoute', title: 'Stomp', youtubeId: '7NhFmARAgu0' },
+      { badge: 'Écoute', title: 'Stomp', youtubeId: 'lU4lVmQxHeI' },
+    ],
+  },
+  {
+    id: 'bruitomatic',
+    icon: '🥁',
+    label: 'Bruitomatic',
+    kind: 'bruitomatic',
+    videos: [],
+  },
+];
+---
+
+<div class="bruits-course">
+  <CourseTabs tabs={tabs} ariaLabel="Musique et Bruits" />
+
+  {tabs.map((tab, index) => (
+    <div
+      role="tabpanel"
+      id={`main-panel-${tab.id}`}
+      class="bruits-panel"
+      aria-labelledby={`main-tab-${tab.id}`}
+      hidden={index !== 0}
+      data-panel={tab.id}
+    >
+      {tab.kind === 'bruitomatic' ? (
+        <Bruitomatic />
+      ) : (
+        <div class="bruits-videos">
+          {tab.videos.map((video) => (
+            <VideoCard
+              badge={video.badge}
+              title={video.title}
+              url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  ))}
+</div>
+
+<script>
+  import { setupMainTabs } from '../utils/tabs';
+
+  const root = document.querySelector<HTMLElement>('.bruits-course');
+
+  if (root) {
+    setupMainTabs(root, {
+      panelSelector: '.bruits-panel',
+      after: (tab) => {
+        document.dispatchEvent(
+          new CustomEvent('bruits:tab-change', {
+            detail: { tab: tab.dataset.mainTab },
+          }),
+        );
+      },
+    });
+  }
+</script>
+
+<style>
+  .bruits-course {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .bruits-panel[hidden] {
+    display: none;
+  }
+
+  .bruits-videos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+</style>

@@ -1,0 +1,1307 @@
+---
+import CourseTabs from './CourseTabs.astro';
+import MoyenAgeMusicTypes from './MoyenAgeMusicTypes.astro';
+import MoyenAgeInstruments from './MoyenAgeInstruments.astro';
+import {
+  notationGlossary,
+  notationTimeline,
+  utQueantLaxis,
+  utQueantLaxisMedia,
+  type NotationGlossaryTerm,
+} from '../data/moyenAgeData';
+import { relativeUrl } from '../utils/navigation';
+
+const mainTabs = [
+  { id: 'notation', icon: '📜', label: 'La notation musicale' },
+  { id: 'types', icon: '🏰', label: 'Les types de musique' },
+  { id: 'instruments', icon: '🎺', label: 'Les instruments' },
+];
+
+type GlossarySegment =
+  | { kind: 'text'; value: string }
+  | { kind: 'term'; value: string; term: NotationGlossaryTerm };
+
+/**
+ * Découpe un texte pour rendre ses termes illustrés cliquables, y compris
+ * dans la frise chronologique dont les contenus proviennent des données.
+ */
+function splitGlossaryTerms(text: string): GlossarySegment[] {
+  const pattern = /\b(?:neumes|t[ée]tragramme)\b/giu;
+  const segments: GlossarySegment[] = [];
+  let lastIndex = 0;
+
+  for (const match of text.matchAll(pattern)) {
+    const value = match[0];
+    const index = match.index ?? 0;
+
+    if (index > lastIndex) {
+      segments.push({ kind: 'text', value: text.slice(lastIndex, index) });
+    }
+
+    segments.push({
+      kind: 'term',
+      value,
+      term: /neumes/i.test(value) ? 'neumes' : 'tetragramme',
+    });
+
+    lastIndex = index + value.length;
+  }
+
+  if (lastIndex < text.length) {
+    segments.push({ kind: 'text', value: text.slice(lastIndex) });
+  }
+
+  return segments;
+}
+---
+
+<div class="moyen-age-course" id="moyen-age-course">
+  <CourseTabs tabs={mainTabs} ariaLabel="Thèmes de la séquence Musique et Moyen Âge" />
+
+  <div
+    class="main-panel is-active"
+    role="tabpanel"
+    id="main-panel-notation"
+    aria-labelledby="main-tab-notation"
+    tabindex="0"
+    data-main-panel="notation"
+  >
+    <section class="tab-content" aria-labelledby="notation-title">
+      <h3 id="notation-title">La notation musicale</h3>
+
+      <p class="tab-intro">
+        Au Moyen Âge, la musique se transmet d’abord de mémoire. Les moines inventent les{" "}
+        <button
+          type="button"
+          class="term-link"
+          data-term="neumes"
+          aria-haspopup="dialog"
+          aria-controls="term-dialog-neumes"
+          title="Afficher l’illustration des neumes"
+        >neumes</button>, puis <strong>Guido d’Arezzo</strong> organise les hauteurs sur
+        quatre lignes : le{" "}
+        <button
+          type="button"
+          class="term-link"
+          data-term="tetragramme"
+          aria-haspopup="dialog"
+          aria-controls="term-dialog-tetragramme"
+          title="Afficher l’illustration du tétragramme"
+        >tétragramme</button>. Les noms des notes, eux, viennent d’un hymne latin.
+      </p>
+
+      <details class="history-details">
+        <summary>
+          <span class="summary-icon" aria-hidden="true">📖</span>
+          <span>Lire l’histoire complète</span>
+          <span class="summary-chevron" aria-hidden="true">▸</span>
+        </summary>
+
+        <div class="history-body">
+          <div class="course-card prose">
+            <p>
+              Pour conserver et diffuser les chants religieux, les moines imaginent des signes
+              placés au-dessus des paroles : les{" "}
+              <button
+                type="button"
+                class="term-link"
+                data-term="neumes"
+                aria-haspopup="dialog"
+                aria-controls="term-dialog-neumes"
+                title="Afficher l’illustration des neumes"
+              >neumes</button>. Ils indiquent approximativement la direction de la mélodie, mais
+              pas encore la hauteur exacte des notes.
+            </p>
+            <p>
+              Au XIᵉ siècle, le moine italien <strong>Guido d’Arezzo</strong> (vers 991–1033)
+              bouleverse l’écriture musicale. Il dispose les{" "}
+              <button
+                type="button"
+                class="term-link"
+                data-term="neumes"
+                aria-haspopup="dialog"
+                aria-controls="term-dialog-neumes"
+                title="Afficher l’illustration des neumes"
+              >neumes</button> sur quatre lignes : c’est le{" "}
+              <button
+                type="button"
+                class="term-link"
+                data-term="tetragramme"
+                aria-haspopup="dialog"
+                aria-controls="term-dialog-tetragramme"
+                title="Afficher l’illustration du tétragramme"
+              >tétragramme</button>. Chaque ligne correspond désormais à une hauteur précise. Les
+              chanteurs peuvent lire une mélodie qu’ils n’ont jamais entendue. Peu à peu, le{" "}
+              <button
+                type="button"
+                class="term-link"
+                data-term="tetragramme"
+                aria-haspopup="dialog"
+                aria-controls="term-dialog-tetragramme"
+                title="Afficher l’illustration du tétragramme"
+              >tétragramme</button> s’enrichit d’une cinquième ligne et devient la portée moderne.
+            </p>
+          </div>
+
+          <ol class="timeline">
+            {notationTimeline.map((step, index) => (
+              <li class="timeline-step">
+                <span class="timeline-index">{String(index + 1).padStart(2, '0')}</span>
+                <div class="timeline-card">
+                  <span class="timeline-period">{step.period}</span>
+                  <h4>
+                    {splitGlossaryTerms(step.title).map((segment) =>
+                      segment.kind === 'term' ? (
+                        <button
+                          type="button"
+                          class="term-link"
+                          data-term={segment.term}
+                          aria-haspopup="dialog"
+                          aria-controls={`term-dialog-${segment.term}`}
+                          title={
+                            segment.term === 'neumes'
+                              ? 'Afficher l’illustration des neumes'
+                              : 'Afficher l’illustration du tétragramme'
+                          }
+                        >{segment.value}</button>
+                      ) : (
+                        segment.value
+                      ),
+                    )}
+                  </h4>
+                  <p>
+                    {splitGlossaryTerms(step.text).map((segment) =>
+                      segment.kind === 'term' ? (
+                        <button
+                          type="button"
+                          class="term-link"
+                          data-term={segment.term}
+                          aria-haspopup="dialog"
+                          aria-controls={`term-dialog-${segment.term}`}
+                          title={
+                            segment.term === 'neumes'
+                              ? 'Afficher l’illustration des neumes'
+                              : 'Afficher l’illustration du tétragramme'
+                          }
+                        >{segment.value}</button>
+                      ) : (
+                        segment.value
+                      ),
+                    )}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </details>
+
+      <article class="hymn-card">
+        <div class="hymn-copy">
+          <span class="eyebrow">Hymne à saint Jean-Baptiste</span>
+          <h4>D’où viennent les noms des notes ?</h4>
+          <p>
+            Guido d’Arezzo remarque que chaque vers de l’hymne <strong>Ut queant laxis</strong> connu également sous le nom de <strong>L'hymne à Saint Jean-Baptiste</strong> commence
+            une note plus haut que le précédent. Il utilise la première syllabe de chaque vers pour
+            nommer les notes.
+          </p>
+          <p>
+            Les six premières syllabes donnent <strong>ut, ré, mi, fa, sol, la</strong>. Plus tard,
+            les initiales de <em>Sancte Iohannes</em> formeront le <strong>si</strong>. Bien après le Moyen Âge, au XVIIᵉ
+            siècle, « ut » devient « do » : plus facile à chanter et à prononcer.
+          </p>
+          <p class="hymn-translation">
+            « Afin que tes serviteurs puissent chanter à pleine voix les merveilles de tes actions,
+            enlève la faute de leurs lèvres souillées, saint Jean. »
+          </p>
+        </div>
+
+        <ol class="hymn-lines" aria-label="Hymne Ut queant laxis">
+          {utQueantLaxis.map((line) => (
+            <li class="hymn-line">
+              <span class="hymn-note">{line.note}</span>
+              <span class="hymn-text">
+                <strong>{line.syllable}</strong>{' '}{line.rest}
+              </span>
+            </li>
+          ))}
+        </ol>
+
+        <div class="hymn-media">
+          <div
+            class="hymn-audio"
+            data-hymn-audio
+            data-audio-url={relativeUrl(utQueantLaxisMedia.audioUrl)}
+            data-audio-title={utQueantLaxisMedia.audioTitle}
+          >
+            <button
+              type="button"
+              class="hymn-audio-toggle"
+              data-hymn-audio-toggle
+              aria-label={`Écouter : ${utQueantLaxisMedia.audioTitle}`}
+              aria-pressed="false"
+            >
+              <span class="hymn-audio-icon" aria-hidden="true">▶</span>
+            </button>
+
+            <div class="hymn-audio-main">
+              <span class="hymn-audio-line">
+                <span class="hymn-audio-eyebrow">Écoute</span>
+                <span class="hymn-audio-track">{utQueantLaxisMedia.audioTitle}</span>
+              </span>
+              <span
+                class="hymn-audio-progress"
+                data-hymn-audio-progress
+                role="progressbar"
+                aria-label={`Progression de l’écoute : ${utQueantLaxisMedia.audioTitle}`}
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+              >
+                <span class="hymn-audio-progress-fill" data-hymn-audio-progress-fill></span>
+              </span>
+            </div>
+
+            <span class="hymn-audio-tag">Chant grégorien</span>
+          </div>
+
+          <button
+            type="button"
+            class="score-open"
+            data-score-open
+            aria-haspopup="dialog"
+            aria-controls="ut-queant-laxis-score"
+          >
+            <span class="score-open-icon" aria-hidden="true">🖼</span>
+            Voir la partition d’origine
+          </button>
+        </div>
+
+        <p class="hymn-footnote">
+          * Le « si » n’apparaît pas dans la gamme de Guido : il est formé plus tard avec les
+          initiales de <em>Sancte Iohannes</em>.
+        </p>
+      </article>
+
+      <dialog
+        class="score-dialog"
+        id="ut-queant-laxis-score"
+        aria-labelledby="score-dialog-title"
+      >
+        <div class="score-dialog-head">
+          <h4 id="score-dialog-title">Ut queant laxis — la partition d’origine</h4>
+          <button
+            type="button"
+            class="score-dialog-close"
+            data-score-close
+            aria-label="Fermer la partition"
+          >
+            ✕
+          </button>
+        </div>
+        <figure class="score-figure">
+          <img
+            src={relativeUrl(utQueantLaxisMedia.scoreImage)}
+            alt={utQueantLaxisMedia.scoreAlt}
+            width="2540"
+            height="1558"
+            loading="lazy"
+            decoding="async"
+          />
+          <figcaption>{utQueantLaxisMedia.scoreCaption}</figcaption>
+        </figure>
+      </dialog>
+
+      {Object.entries(notationGlossary).map(([term, entry]) => (
+        <dialog
+          class:list={[
+            'score-dialog',
+            'term-dialog',
+            { 'term-dialog--compact': term === 'tetragramme' },
+          ]}
+          id={`term-dialog-${term}`}
+          data-term-dialog={term}
+          aria-labelledby={`term-dialog-${term}-title`}
+        >
+          <div class="score-dialog-head">
+            <h4 id={`term-dialog-${term}-title`}>{entry.title}</h4>
+            <button
+              type="button"
+              class="score-dialog-close"
+              data-term-close
+              aria-label="Fermer l’illustration"
+            >
+              ✕
+            </button>
+          </div>
+          <figure class="score-figure">
+            <img
+              src={relativeUrl(entry.image)}
+              alt={entry.alt}
+              width={entry.width}
+              height={entry.height}
+              loading="lazy"
+              decoding="async"
+            />
+            <figcaption>{entry.caption}</figcaption>
+          </figure>
+        </dialog>
+      ))}
+    </section>
+  </div>
+
+  <div
+    class="main-panel"
+    role="tabpanel"
+    id="main-panel-types"
+    aria-labelledby="main-tab-types"
+    tabindex="0"
+    data-main-panel="types"
+    hidden
+  >
+    <section class="tab-content" aria-labelledby="types-title">
+      <h3 id="types-title">Les types de musique</h3>
+
+      <p class="tab-intro">
+        Au Moyen Âge, la musique ne se pratique pas partout de la même façon. À l’église, elle sert
+        à prier ; au château, elle divertit la noblesse ; à la ferme et au village, elle accompagne
+        le travail, les fêtes et les danses. Choisis un lieu pour découvrir qui chante, dans quelle
+        langue et ce qu’il faut écouter.
+      </p>
+
+      <MoyenAgeMusicTypes />
+    </section>
+  </div>
+
+  <div
+    class="main-panel"
+    role="tabpanel"
+    id="main-panel-instruments"
+    aria-labelledby="main-tab-instruments"
+    tabindex="0"
+    data-main-panel="instruments"
+    hidden
+  >
+    <section class="tab-content" aria-labelledby="instruments-title">
+      <h3 id="instruments-title">Les instruments du Moyen Âge</h3>
+
+      <p class="tab-intro">
+        Les instruments médiévaux se classent en trois grandes familles : les{" "}<strong>cordes</strong>, les{" "}<strong>vents</strong> et les{" "}<strong>percussions</strong>.
+      </p>
+
+      <MoyenAgeInstruments />
+    </section>
+  </div>
+</div>
+
+<script>
+  const course = document.getElementById('moyen-age-course');
+
+  if (course) {
+    const tabs = Array.from(
+      course.querySelectorAll<HTMLButtonElement>('.main-tabs [role="tab"]')
+    );
+    const panels = Array.from(
+      course.querySelectorAll<HTMLElement>('.main-panel[data-main-panel]')
+    );
+    const historyDetails = course.querySelector<HTMLDetailsElement>('.history-details');
+
+    function activateTab(id: string, focusTab = false) {
+      // En quittant l'onglet de la notation, on replie l'histoire complète :
+      // le grand pavé de texte reste ainsi fermé par défaut au retour.
+      if (id !== 'notation' && historyDetails?.open) {
+        historyDetails.open = false;
+      }
+
+      tabs.forEach((tab) => {
+        const isActive = tab.dataset.mainTab === id;
+        tab.setAttribute('aria-selected', String(isActive));
+        tab.tabIndex = isActive ? 0 : -1;
+        tab.classList.toggle('is-active', isActive);
+        if (isActive && focusTab) tab.focus();
+      });
+
+      panels.forEach((panel) => {
+        const isActive = panel.dataset.mainPanel === id;
+        panel.hidden = !isActive;
+        panel.classList.toggle('is-active', isActive);
+      });
+    }
+
+    function selectTab(id: string, focusTab = false) {
+      activateTab(id, focusTab);
+      if (id) {
+        history.replaceState(null, '', `#${id}`);
+      }
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        selectTab(tab.dataset.mainTab || '');
+      });
+
+      tab.addEventListener('keydown', (event) => {
+        const currentIndex = tabs.indexOf(tab);
+        let nextIndex: number | null = null;
+
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+          nextIndex = (currentIndex + 1) % tabs.length;
+        } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+          nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+        } else if (event.key === 'Home') {
+          nextIndex = 0;
+        } else if (event.key === 'End') {
+          nextIndex = tabs.length - 1;
+        }
+
+        if (nextIndex !== null) {
+          event.preventDefault();
+          const nextTab = tabs[nextIndex];
+          selectTab(nextTab.dataset.mainTab || '', true);
+        }
+      });
+    });
+
+    const initialTab = window.location.hash.replace('#', '');
+    if (tabs.some((tab) => tab.dataset.mainTab === initialTab)) {
+      activateTab(initialTab);
+    }
+  }
+</script>
+
+<script>
+  import {
+    getAudioState,
+    getCurrentAudioUrl,
+    onAudioEvent,
+    pauseAudio,
+    playAudio,
+    resumeAudio,
+    stopAudio,
+  } from '../utils/audioManager';
+
+  const course = document.getElementById('moyen-age-course');
+
+  if (course) {
+    const bar = course.querySelector<HTMLElement>('[data-hymn-audio]');
+    const toggle = bar?.querySelector<HTMLButtonElement>('[data-hymn-audio-toggle]');
+    const icon = bar?.querySelector<HTMLElement>('.hymn-audio-icon');
+    const progress = bar?.querySelector<HTMLElement>('[data-hymn-audio-progress]');
+    const fill = bar?.querySelector<HTMLElement>('[data-hymn-audio-progress-fill]');
+    const audioUrl = bar?.dataset.audioUrl;
+    const title = bar?.dataset.audioTitle || '';
+
+    if (bar && toggle && icon && progress && fill && audioUrl) {
+      const player = { bar, toggle, icon, progress, fill, audioUrl, title };
+
+      const sameTrack = (currentUrl: string | null): boolean =>
+        !!currentUrl &&
+        currentUrl.normalize('NFC') === player.audioUrl.normalize('NFC');
+
+      // Le lecteur est partagé par tout le site : on reflète son état réel.
+      function syncPlayer() {
+        const state = getAudioState();
+        const isCurrent = sameTrack(getCurrentAudioUrl());
+        const isPlaying = isCurrent && (state === 'playing' || state === 'loading');
+
+        player.toggle.classList.toggle('is-playing', isPlaying);
+        player.toggle.setAttribute('aria-pressed', String(isPlaying));
+
+        if (isCurrent && state === 'loading') {
+          player.icon.textContent = '…';
+          player.toggle.setAttribute('aria-label', `Chargement : ${player.title}`);
+        } else if (isCurrent && state === 'playing') {
+          player.icon.textContent = '❚❚';
+          player.toggle.setAttribute('aria-label', `Mettre en pause : ${player.title}`);
+        } else if (isCurrent && state === 'paused') {
+          player.icon.textContent = '▶';
+          player.toggle.setAttribute('aria-label', `Reprendre : ${player.title}`);
+        } else {
+          player.icon.textContent = '▶';
+          player.toggle.setAttribute('aria-label', `Écouter : ${player.title}`);
+        }
+
+        if (!isCurrent || state === 'idle' || state === 'error') {
+          player.fill.style.width = '0%';
+          player.progress.setAttribute('aria-valuenow', '0');
+        }
+      }
+
+      player.toggle.addEventListener('click', () => {
+        const state = getAudioState();
+
+        if (sameTrack(getCurrentAudioUrl())) {
+          if (state === 'playing' || state === 'loading') {
+            pauseAudio();
+            return;
+          }
+          if (state === 'paused') {
+            void resumeAudio();
+            return;
+          }
+          if (state === 'ended' || state === 'idle') {
+            void playAudio();
+            return;
+          }
+        }
+
+        void playAudio(player.audioUrl);
+      });
+
+      onAudioEvent('statechange', syncPlayer);
+
+      onAudioEvent('ended', ({ url }) => {
+        if (!url || !sameTrack(url)) return;
+        player.fill.style.width = '100%';
+        player.progress.setAttribute('aria-valuenow', '100');
+      });
+
+      onAudioEvent('timeupdate', ({ audio, url }) => {
+        if (!audio || !url || !sameTrack(url)) return;
+
+        const duration = audio.duration;
+        if (!Number.isFinite(duration) || duration <= 0) return;
+
+        const percent = Math.min(100, Math.max(0, (audio.currentTime / duration) * 100));
+        player.fill.style.width = `${percent}%`;
+        player.progress.setAttribute('aria-valuenow', String(Math.round(percent)));
+      });
+
+      // Le mini-lecteur n'est visible que dans l'onglet « La notation
+      // musicale » : on coupe l'écoute dès que l'on quitte cet onglet.
+      const notationPanel = player.bar.closest<HTMLElement>('.main-panel[data-main-panel]');
+
+      if (notationPanel) {
+        const visibilityObserver = new MutationObserver(() => {
+          if (!notationPanel.hidden) return;
+
+          const currentUrl = getCurrentAudioUrl();
+          if (!currentUrl || !sameTrack(currentUrl)) return;
+
+        stopAudio();
+        });
+
+        visibilityObserver.observe(notationPanel, {
+          attributes: true,
+          attributeFilter: ['hidden'],
+        });
+      }
+
+      syncPlayer();
+    }
+
+    // Partition d'origine : ouverture dans une modale, sans quitter la page.
+    const scoreDialog = document.getElementById('ut-queant-laxis-score');
+    const scoreOpen = course.querySelector<HTMLButtonElement>('[data-score-open]');
+
+    if (scoreDialog instanceof HTMLDialogElement && scoreOpen) {
+      const scoreClose = scoreDialog.querySelector<HTMLButtonElement>('[data-score-close]');
+
+      const openScore = () => {
+        if (!scoreDialog.open) scoreDialog.showModal();
+      };
+
+      const closeScore = () => {
+        if (scoreDialog.open) scoreDialog.close();
+      };
+
+      scoreOpen.addEventListener('click', openScore);
+      scoreClose?.addEventListener('click', closeScore);
+
+      // Clic sur le fond sombre : la cible de l'événement est le <dialog>.
+      scoreDialog.addEventListener('click', (event) => {
+        if (event.target === scoreDialog) closeScore();
+      });
+    }
+
+    // Termes illustrés (neumes, tétragramme) : chaque occurrence du mot
+    // ouvre la modale qui lui correspond, y compris dans la frise.
+    course.querySelectorAll<HTMLDialogElement>('[data-term-dialog]').forEach((dialog) => {
+      const term = dialog.dataset.termDialog;
+      if (!term) return;
+
+      const openers = Array.from(
+        course.querySelectorAll<HTMLButtonElement>(`[data-term="${term}"]`),
+      );
+
+      openers.forEach((opener) => {
+        opener.addEventListener('click', () => {
+          if (!dialog.open) dialog.showModal();
+        });
+      });
+
+      const closeTerm = () => {
+        if (dialog.open) dialog.close();
+      };
+
+      dialog
+        .querySelector<HTMLButtonElement>('[data-term-close]')
+        ?.addEventListener('click', closeTerm);
+
+      // Clic sur le fond sombre : la cible de l'événement est le <dialog>.
+      dialog.addEventListener('click', (event) => {
+        if (event.target === dialog) closeTerm();
+      });
+    });
+  }
+</script>
+
+<style>
+  .moyen-age-course {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .main-panel {
+    animation: main-panel-in 0.25s ease;
+  }
+
+  .main-panel[hidden] {
+    display: none;
+  }
+
+  @keyframes main-panel-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .tab-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .tab-content > h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--text, #f1f5f9);
+    border-bottom: 2px solid var(--border, #334155);
+    padding-bottom: 0.4rem;
+  }
+
+  .tab-intro {
+    margin: 0;
+    color: #cbd5e1;
+    font-size: 0.94rem;
+    line-height: 1.7;
+  }
+
+  .tab-intro strong {
+    color: #f8fafc;
+  }
+
+  /* Bloc dépliable : histoire détaillée */
+  .history-details {
+    border: 1px solid #334155;
+    border-radius: 12px;
+    background: #1e293b;
+  }
+
+  .history-details summary {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.85rem 1.1rem;
+    color: #f8fafc;
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .history-details summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .history-details summary:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: -2px;
+    border-radius: 12px;
+  }
+
+  .summary-icon {
+    font-size: 1.05rem;
+    line-height: 1;
+  }
+
+  .summary-chevron {
+    margin-left: auto;
+    color: #38bdf8;
+    transition: transform 0.2s ease;
+  }
+
+  .history-details[open] .summary-chevron {
+    transform: rotate(90deg);
+  }
+
+  .history-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0 1.1rem 1.1rem;
+  }
+
+  .course-card {
+    padding: 1.1rem 1.2rem;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.55);
+  }
+
+  .prose p {
+    margin: 0;
+    color: #cbd5e1;
+    font-size: 0.94rem;
+    line-height: 1.7;
+  }
+
+  .prose p + p {
+    margin-top: 0.8rem;
+  }
+
+  .prose strong {
+    color: #f8fafc;
+  }
+
+  .timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .timeline-step {
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+    align-items: start;
+    gap: 0.8rem;
+  }
+
+  .timeline-index {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid #334155;
+    border-radius: 50%;
+    background: #0f172a;
+    color: #38bdf8;
+    font-size: 0.7rem;
+    font-weight: 800;
+  }
+
+  .timeline-card {
+    padding: 0.75rem 0.9rem;
+    border: 1px solid #334155;
+    border-left: 3px solid #38bdf8;
+    border-radius: 0 10px 10px 0;
+    background: rgba(30, 41, 59, 0.75);
+  }
+
+  .timeline-period {
+    color: #38bdf8;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+  }
+
+  .timeline-card h4 {
+    margin: 0.15rem 0 0.25rem;
+    color: #f8fafc;
+    font-size: 0.95rem;
+  }
+
+  .timeline-card p {
+    margin: 0;
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.83rem;
+    line-height: 1.5;
+  }
+
+  .eyebrow {
+    display: inline-block;
+    color: #fbbf24;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .hymn-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(240px, 0.9fr);
+    gap: 1.5rem;
+    padding: 1.3rem;
+    border: 1px solid #334155;
+    border-radius: 14px;
+    background:
+      radial-gradient(circle at 100% 0%, rgba(251, 191, 36, 0.1), transparent 50%),
+      #1e293b;
+  }
+
+  .hymn-copy h4 {
+    margin: 0.2rem 0 0.6rem;
+    color: #f8fafc;
+    font-size: 1.2rem;
+  }
+
+  .hymn-copy p {
+    margin: 0 0 0.6rem;
+    color: #cbd5e1;
+    font-size: 0.86rem;
+    line-height: 1.6;
+  }
+
+  .hymn-copy strong {
+    color: #fbbf24;
+  }
+
+  .hymn-translation {
+    padding-left: 0.8rem;
+    border-left: 2px solid #fbbf24;
+    color: var(--text-muted, #94a3b8) !important;
+    font-size: 0.82rem !important;
+    font-style: italic;
+  }
+
+  .hymn-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0.8rem;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    background: #0f172a;
+    list-style: none;
+  }
+
+  .hymn-line {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .hymn-note {
+    flex-shrink: 0;
+    min-width: 2.2rem;
+    padding: 0.12rem 0.35rem;
+    border-radius: 5px;
+    background: rgba(251, 191, 36, 0.14);
+    color: #fbbf24;
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  .hymn-text {
+    color: #cbd5e1;
+    font-size: 0.82rem;
+    line-height: 1.4;
+  }
+
+  .hymn-text strong {
+    color: #f8fafc;
+  }
+
+  /* Mini-lecteur et accès à la partition, sous les vers de l'hymne. */
+  .hymn-media {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .hymn-audio {
+    display: flex;
+    flex: 1 1 16rem;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.7);
+  }
+
+  .hymn-audio-toggle {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 1px solid #fbbf24;
+    border-radius: 50%;
+    background: transparent;
+    color: #fbbf24;
+    font-family: inherit;
+    font-size: 0.7rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .hymn-audio-toggle:hover,
+  .hymn-audio-toggle:focus-visible,
+  .hymn-audio-toggle.is-playing {
+    background: #fbbf24;
+    color: #0f172a;
+  }
+
+  .hymn-audio-toggle:focus-visible {
+    outline: 2px solid #fbbf24;
+    outline-offset: 2px;
+  }
+
+  .hymn-audio-icon {
+    font-size: 0.7rem;
+    line-height: 1;
+    letter-spacing: -0.08em;
+  }
+
+  .hymn-audio-main {
+    display: flex;
+    flex: 1 1 9rem;
+    flex-direction: column;
+    gap: 0.32rem;
+    min-width: 0;
+  }
+
+  .hymn-audio-line {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    min-width: 0;
+  }
+
+  .hymn-audio-eyebrow {
+    flex-shrink: 0;
+    color: #fbbf24;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .hymn-audio-track {
+    overflow: hidden;
+    color: #e2e8f0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .hymn-audio-progress {
+    display: block;
+    height: 3px;
+    border-radius: 999px;
+    background: #334155;
+    overflow: hidden;
+  }
+
+  .hymn-audio-progress-fill {
+    display: block;
+    width: 0%;
+    height: 100%;
+    border-radius: inherit;
+    background: #fbbf24;
+    transition: width 0.15s linear;
+  }
+
+  .hymn-audio-tag {
+    flex-shrink: 0;
+    margin-left: auto;
+    color: #64748b;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .score-open {
+    min-height: 38px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.75rem;
+    border: 1px solid #334155;
+    border-radius: 999px;
+    background: transparent;
+    color: #94a3b8;
+    font-family: inherit;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.25;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .score-open:hover,
+  .score-open:focus-visible {
+    border-color: #fbbf24;
+    background: rgba(251, 191, 36, 0.08);
+    color: #fbbf24;
+  }
+
+  .score-open:focus-visible {
+    outline: 2px solid #fbbf24;
+    outline-offset: 2px;
+  }
+
+  .score-open-icon {
+    font-size: 0.85rem;
+    line-height: 1;
+  }
+
+  /* Modale de la partition : même page, aucun rechargement. */
+  .score-dialog {
+    width: min(1100px, calc(100vw - 2rem));
+    max-width: 100%;
+    max-height: calc(100vh - 2rem);
+    max-height: calc(100dvh - 2rem);
+    padding: 0;
+    border: 1px solid #334155;
+    border-radius: 14px;
+    background: #0f172a;
+    color: #e2e8f0;
+    overflow: auto;
+  }
+
+  .score-dialog::backdrop {
+    background: rgba(2, 6, 23, 0.82);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+  }
+
+  .score-dialog-head {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid #334155;
+    background: #0f172a;
+  }
+
+  .score-dialog-head h4 {
+    margin: 0;
+    color: #f8fafc;
+    font-size: 0.95rem;
+  }
+
+  .score-dialog-close {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    margin-left: auto;
+    padding: 0;
+    border: 1px solid #334155;
+    border-radius: 50%;
+    background: transparent;
+    color: #94a3b8;
+    font-family: inherit;
+    font-size: 0.85rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .score-dialog-close:hover,
+  .score-dialog-close:focus-visible {
+    border-color: #fbbf24;
+    background: rgba(251, 191, 36, 0.08);
+    color: #fbbf24;
+  }
+
+  .score-dialog-close:focus-visible {
+    outline: 2px solid #fbbf24;
+    outline-offset: 2px;
+  }
+
+  .score-figure {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    margin: 0;
+    padding: 1rem;
+  }
+
+  .score-figure img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .score-figure figcaption {
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.75rem;
+    line-height: 1.5;
+    text-align: center;
+  }
+
+  /* Termes illustrés : soulignés en pointillé pour signaler l'interaction. */
+  .term-link {
+    display: inline;
+    margin: 0;
+    padding: 0 0.05em;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: 700;
+    line-height: inherit;
+    letter-spacing: inherit;
+    text-align: inherit;
+    text-decoration-line: underline;
+    text-decoration-style: dotted;
+    text-decoration-color: #38bdf8;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+    cursor: zoom-in;
+    transition: color 0.2s ease, background 0.2s ease, text-decoration-color 0.2s ease;
+  }
+
+  .term-link:hover,
+  .term-link:focus-visible {
+    background: rgba(56, 189, 248, 0.14);
+    color: #f8fafc;
+    text-decoration-style: solid;
+    text-decoration-color: #7dd3fc;
+  }
+
+  .term-link:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 2px;
+  }
+
+  /* Modales illustratives : mêmes cadres que la partition, images entières. */
+  .term-dialog {
+    width: min(920px, calc(100vw - 2rem));
+  }
+
+  .term-dialog .score-dialog-head h4 {
+    min-width: 0;
+    line-height: 1.35;
+  }
+
+  .term-dialog .score-figure {
+    align-items: center;
+  }
+
+  .term-dialog .score-figure img {
+    width: auto;
+    max-width: 100%;
+    max-height: calc(100vh - 13rem);
+    max-height: calc(100dvh - 13rem);
+    height: auto;
+    object-fit: contain;
+    margin: 0 auto;
+  }
+
+  .term-dialog--compact {
+    width: min(620px, calc(100vw - 2rem));
+  }
+
+  .term-dialog--compact .score-figure img {
+    width: 100%;
+    max-width: 540px;
+    max-height: none;
+  }
+
+  .hymn-footnote {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: #64748b;
+    font-size: 0.72rem;
+    line-height: 1.4;
+  }
+
+  @media (max-width: 760px) {
+    .hymn-card {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .course-card,
+    .hymn-card {
+      padding: 1rem;
+    }
+
+    .hymn-media {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .hymn-audio {
+      flex: 0 0 auto;
+    }
+
+    .hymn-audio-main {
+      flex: 1 1 auto;
+    }
+
+    .hymn-audio-tag {
+      display: none;
+    }
+
+    .score-open {
+      justify-content: center;
+    }
+
+    .score-dialog-head {
+      padding: 0.7rem 0.8rem;
+    }
+
+    .score-figure {
+      padding: 0.8rem;
+    }
+
+    .history-details summary {
+      padding: 0.8rem 0.9rem;
+    }
+
+    .history-body {
+      padding: 0 0.9rem 0.9rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .main-panel,
+    .summary-chevron,
+    .hymn-audio-toggle,
+    .hymn-audio-progress-fill,
+    .score-open,
+    .score-dialog-close,
+    .term-link {
+      transition: none;
+      animation: none;
+    }
+  }
+</style>

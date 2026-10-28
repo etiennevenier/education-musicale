@@ -1,0 +1,39 @@
+{
+  "name": "education-musicale",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.22.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "check:videos": "node scripts/check-videos.mjs",
+    "check:important": "node scripts/check-important.mjs",
+    "audit:important": "node scripts/audit-important.mjs --extra src/styles/tools-shared.css --extra src/layouts/Layout.astro --max 3"
+  },
+  "dependencies": {
+    "astro": "^7.4.0",
+    "d3-geo": "^3.1.1",
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.11",
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.64.1",
+    "@types/d3-geo": "^3.1.1",
+    "@types/node": "^22.20.5",
+    "@types/topojson-client": "^3.1.5",
+    "jsdom": "^30.1.3",
+    "postcss": "^8.5.32",
+    "postcss-selector-parser": "^7.1.7",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.5"
+  }
+}

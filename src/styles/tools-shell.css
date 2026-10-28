@@ -1,0 +1,201 @@
+/* ==========================================================================
+   tools-shell.css — coque unique des 7 outils d'entraînement
+   ==========================================================================
+   REMPLACE : les lignes 1–106 de tools-landscape.css (verrou 100dvh, retour,
+   en-têtes) ET le bloc « Plein écran des outils » (≈ l. 805–881, migré de
+   Layout.astro), soit 51 des 70 `!important` de ce fichier.
+
+   PRINCIPE : on ne lutte plus contre la cascade, on supprime les doublons.
+   - Une propriété du squelette (page → main → racine d'outil → zone
+     élastique) n'est déclarée QU'ICI, jamais dans un composant.
+   - La hauteur se répartit par flexbox (flex: 1 1 0 + min-height: 0) pour
+     TOUTES les tailles d'écran : plus de verrou par plage de hauteur, plus de
+     fitBoardToViewport / fitStaffToViewport, plus de lecture de scrollHeight.
+   - Plancher de lisibilité (--tool-floor) : si l'écran est vraiment trop bas,
+     la racine d'outil défile en interne au lieu de couper le contenu
+     (aujourd'hui : overflow: hidden → boutons rognés sans issue).
+
+   PRÉREQUIS (3 retouches d'une ligne) :
+   1. Ajouter `class="tool-root"` sur les 7 racines (#tool-piano, #tool-notes,
+      #tool-clefs, #tool-rhythm, #tool-clavier-notes, #tool-oreille-nom,
+      #tool-oreille-clavier).
+   2. Ajouter `class="tool-fit"` sur la zone qui absorbe la hauteur :
+      .piano-staff-container, .notes-staff, .sheet (clefs et rythme).
+   3. Dans Layout.astro, les styles « carte » de main.container ne doivent pas
+      s'appliquer aux pages à `mobileHeader="hidden"` :
+          main.container:not(.container--tool) { …carte… }
+      et poser `container--tool` quand mobileHeader === 'hidden'. C'est ce qui
+      rend inutiles les 22 `!important` du bloc ≤ 1024 px.
+   ========================================================================== */
+
+:root {
+  --tool-gap: 8px;
+  --tool-gap-lg: clamp(0.5rem, 2.2dvh, 1.25rem);
+  --tool-pad: 8px;
+  --tool-radius: 0;
+  --tool-hit: 44px;      /* cible tactile minimale (Apple HIG / WCAG 2.5.5) */
+  --tool-floor: 120px;   /* hauteur plancher de la zone élastique */
+}
+
+/* ---- Page : colonne pleine hauteur, uniquement sur les pages d'outils ---- */
+body.mobile-header-hidden {
+  display: flex;
+  flex-direction: column;
+  /* Hauteur BORNÉE : c'est ce qui permet à .tool-root de défiler en interne
+     quand l'écran est trop bas (avec un simple min-height, la page grandirait). */
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  background: #ffffff;
+  color: #1f2a44;
+  overscroll-behavior: none;
+}
+
+body.mobile-header-hidden .site-header { display: none; }
+
+body.mobile-header-hidden main.container {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* ---- Racine d'outil : remplit main, défile en interne en dernier recours ---- */
+.tool-root {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: var(--tool-pad);
+  background: #ffffff;
+  border-radius: var(--tool-radius);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Grand écran : la carte flottante d'origine (largeur bornée, ombre, marges). */
+@media (min-width: 1025px) and (min-height: 769px) {
+  body.mobile-header-hidden {
+    height: auto;          /* carte flottante : la page peut grandir et défiler */
+    min-height: 100dvh;
+    background: var(--page-bg, #f1f5f9);
+  }
+  body.mobile-header-hidden .site-header { display: block; }
+  body.mobile-header-hidden main.container { padding: 1rem; }
+  .tool-root {
+    --tool-pad: 32px;
+    --tool-radius: 24px;
+    max-width: 1024px;
+    margin-inline: auto;
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+  }
+}
+
+/* ---- Chaîne flex jusqu'à la zone élastique ----
+   Sans elle, .tool-fit (flex: 1 1 0) n'aurait rien à se partager : ses parents
+   auraient une hauteur « auto » et la portée tomberait à --tool-floor. */
+.tool-root > :where(.piano-body, .notes-card, .app) {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tool-root .notes-card > :where(#menu-section, #exercise-section, #score-section):not(.hidden) {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* ---- Position uniforme du bouton retour (remplace la liste de 7 sélecteurs) ---- */
+.tool-root > .tool-back,
+.tool-root :where(.piano-body, .notes-card, .app, .rhythm-top) > .tool-back {
+  order: -1;
+  align-self: flex-start;
+  flex: 0 0 auto;
+  margin: 0 0 var(--tool-gap);
+}
+
+/* ---- Titres internes : masqués dès que la hauteur manque ---- */
+@media (max-height: 768px) {
+  .tool-root :where(.notes-header, .piano-head, .cn-header, .on-header, .oc-header) { display: none; }
+  .tool-root #tool-clefs-title,
+  #tool-clefs .top h1,
+  #tool-rhythm .rhythm-top > header { display: none; }
+}
+
+/* ---- Zone élastique : la SEULE règle qui dimensionne portée / planche / SVG ----
+   Remplace : .piano-staff-container, .notes-staff, .sheet (×2), #piano-staff-svg,
+   #staff-svg, #cl-board, #rt-board (≈ 40 déclarations dont 18 `!important`
+   qui n'existaient que pour battre les styles inline des fit*()). */
+.tool-fit {
+  display: flex;
+  flex: 1 1 0;
+  align-self: stretch;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--tool-floor);
+  min-width: 0;
+  max-height: var(--tool-fit-max, 60dvh);
+  overflow: hidden;
+}
+
+.tool-fit > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* La planche de la lecture rythmique garde son défilement horizontal. */
+#tool-rhythm .tool-fit { overflow-x: auto; max-height: none; }
+#tool-rhythm .tool-fit > svg { min-width: 780px; width: auto; }
+
+/* ---- Cibles tactiles : un seul plancher pour tous les boutons de réponse ---- */
+@media (pointer: coarse) {
+  .tool-root :where(
+    .note-btn, .cn-answer-btn, .on-answer-btn, .on-audio-btn, .oc-audio-btn,
+    .level-btn, .cn-level-btn, .on-level-btn, .oc-level-btn,
+    .tab, .btn, .tap-btn, .hub-back, .piano-zoom-btn
+  ) { min-block-size: var(--tool-hit); }
+}
+
+/* ---- Utilitaires partagés ---- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.tool-root :focus-visible {
+  outline: 3px solid var(--accent, #7e22ce);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tool-root *,
+  .tool-root *::before,
+  .tool-root *::after {
+    animation-duration: 0.001ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.001ms;
+  }
+}

@@ -1,0 +1,340 @@
+---
+import { Image } from 'astro:assets';
+import memorialImage from '../assets/engagement/Bloody_Sunday_memorial.jpg';
+import CourseTabs from './CourseTabs.astro';
+import VideoCard from './VideoCard.astro';
+import EngagementDecrypteur from './EngagementDecrypteur.astro';
+
+interface EngagementVideo {
+  badge: string;
+  title: string;
+  youtubeId: string;
+}
+
+interface EngagementTab {
+  id: string;
+  icon: string;
+  label: string;
+  kind: 'videos' | 'decrypteur';
+  videos?: EngagementVideo[];
+}
+
+const tabs: EngagementTab[] = [
+  {
+    id: 'sunday-bloody-sunday',
+    icon: '🎸',
+    label: 'Sunday Bloody Sunday',
+    kind: 'videos',
+    videos: [
+      { badge: 'Paroles', title: 'Sunday Bloody Sunday — Paroles', youtubeId: 'zhMD7nt1LIg' },
+      { badge: 'Instrumental', title: 'Sunday Bloody Sunday — Instrumental', youtubeId: 'wQSMtpaK2VE' },
+      { badge: 'Reportage', title: 'Sunday Bloody Sunday — Reportage', youtubeId: 'VvrLpTwEwY8' },
+      { badge: 'France Culture', title: 'Sunday Bloody Sunday — France Culture', youtubeId: 'UlpmtSADI7Y' },
+    ],
+  },
+  {
+    id: 'decrypteur-engagement',
+    icon: '🔎',
+    label: "Décrypteur d'Engagement",
+    kind: 'decrypteur',
+  },
+];
+---
+
+<div class="engagement-course">
+  <CourseTabs tabs={tabs} ariaLabel="Musique et Engagement" />
+
+  {tabs.map((tab, index) => (
+    <div
+      role="tabpanel"
+      id={`main-panel-${tab.id}`}
+      class="engagement-panel"
+      aria-labelledby={`main-tab-${tab.id}`}
+      hidden={index !== 0}
+      data-panel={tab.id}
+    >
+      {tab.videos && tab.videos.length > 0 && (
+        <div class="engagement-videos">
+          {tab.videos.map((video) => (
+            <VideoCard
+              badge={video.badge}
+              title={video.title}
+              url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+            />
+          ))}
+        </div>
+      )}
+
+      {tab.kind === 'videos' && (
+        <div class="engagement-media">
+          <button
+            type="button"
+            class="engagement-thumb"
+            data-lightbox-open
+            aria-label="Agrandir l'image — Mémorial du Bloody Sunday"
+          >
+            <Image
+              src={memorialImage}
+              width="800"
+              height="1067"
+              quality={75}
+              alt="Mémorial du Bloody Sunday à Derry, avec les noms des victimes gravés dans la pierre"
+              loading="lazy"
+            />
+            <span class="engagement-thumb-badge">Mémorial du Bloody Sunday</span>
+          </button>
+        </div>
+      )}
+
+      {tab.kind === 'decrypteur' && <EngagementDecrypteur />}
+    </div>
+  ))}
+
+  <dialog class="engagement-lightbox" aria-label="Mémorial du Bloody Sunday">
+    <button type="button" class="engagement-lightbox-close" aria-label="Fermer">×</button>
+    <Image
+      src={memorialImage}
+      width="800"
+      height="1067"
+      quality={75}
+      alt="Mémorial du Bloody Sunday à Derry, avec les noms des victimes gravés dans la pierre"
+    />
+  </dialog>
+</div>
+
+<script>
+  import { setupMainTabs } from '../utils/tabs';
+
+  const engagementRoot = document.querySelector<HTMLElement>('.engagement-course');
+
+  if (engagementRoot) {
+    setupMainTabs(engagementRoot, {
+      panelSelector: '.engagement-panel',
+    });
+
+    const lightbox = engagementRoot.querySelector<HTMLDialogElement>('.engagement-lightbox');
+    const openButton = engagementRoot.querySelector<HTMLButtonElement>('[data-lightbox-open]');
+    const closeButton = lightbox?.querySelector<HTMLButtonElement>('.engagement-lightbox-close');
+
+    if (lightbox && openButton) {
+      openButton.addEventListener('click', () => lightbox.showModal());
+      closeButton?.addEventListener('click', () => lightbox.close());
+      lightbox.addEventListener('click', (event) => {
+        if (event.target === lightbox) lightbox.close();
+      });
+    }
+  }
+</script>
+
+<style>
+  .engagement-course {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .engagement-panel[hidden] {
+    display: none;
+  }
+
+  .engagement-videos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  .engagement-media {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border, #334155);
+    display: flex;
+    justify-content: center;
+  }
+
+  .engagement-thumb {
+    position: relative;
+    display: block;
+    width: 100%;
+    max-width: 260px;
+    padding: 0;
+    background: #0f172a;
+    border: 1px solid var(--border, #334155);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.32);
+    cursor: zoom-in;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .engagement-thumb::before {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    z-index: 1;
+    height: 45%;
+    background: linear-gradient(to top, rgba(15, 23, 42, 0.78), transparent);
+    pointer-events: none;
+  }
+
+  .engagement-thumb::after {
+    content: '🔍';
+    position: absolute;
+    top: 0.55rem;
+    right: 0.55rem;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.8rem;
+    height: 1.8rem;
+    background: rgba(15, 23, 42, 0.78);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 9999px;
+    font-size: 0.85rem;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .engagement-thumb img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    transition: transform 0.25s ease;
+  }
+
+  .engagement-thumb:hover {
+    border-color: var(--primary, #38bdf8);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42), 0 0 0 1px var(--primary, #38bdf8);
+    transform: translateY(-2px);
+  }
+
+  .engagement-thumb:hover img {
+    transform: scale(1.03);
+  }
+
+  .engagement-thumb:active {
+    transform: translateY(0) scale(0.99);
+  }
+
+  .engagement-thumb:focus-visible {
+    outline: 2px solid var(--primary, #38bdf8);
+    outline-offset: 2px;
+  }
+
+  .engagement-thumb-badge {
+    position: absolute;
+    left: 0.55rem;
+    bottom: 0.55rem;
+    z-index: 2;
+    max-width: calc(100% - 1.1rem);
+    padding: 0.3rem 0.55rem;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 9999px;
+    color: #e2e8f0;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: left;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    pointer-events: none;
+  }
+
+  .engagement-lightbox {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    overflow: visible;
+  }
+
+  .engagement-lightbox[open] {
+    animation: engagement-zoom 0.2s ease-out;
+  }
+
+  .engagement-lightbox::backdrop {
+    background: rgba(15, 23, 42, 0.9);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
+
+  .engagement-lightbox[open]::backdrop {
+    animation: engagement-fade 0.2s ease-out;
+  }
+
+  .engagement-lightbox img {
+    display: block;
+    width: auto;
+    max-width: min(94vw, 1100px);
+    max-height: 88vh;
+    border-radius: 14px;
+    background: #0f172a;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  }
+
+  .engagement-lightbox-close {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    background: #1e293b;
+    border: 1px solid var(--border, #334155);
+    border-radius: 9999px;
+    color: var(--text, #f1f5f9);
+    font: inherit;
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+
+  .engagement-lightbox-close:hover {
+    border-color: var(--primary, #38bdf8);
+    color: var(--primary, #38bdf8);
+  }
+
+  .engagement-lightbox-close:focus-visible {
+    outline: 2px solid var(--primary, #38bdf8);
+    outline-offset: 2px;
+  }
+
+  @keyframes engagement-zoom {
+    from {
+      opacity: 0;
+      transform: scale(0.94);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes engagement-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .engagement-lightbox[open],
+    .engagement-lightbox[open]::backdrop {
+      animation: none;
+    }
+
+    .engagement-thumb,
+    .engagement-thumb img {
+      transition: none;
+    }
+  }
+</style>

@@ -1,0 +1,37 @@
+---
+/**
+ * Titre de section « Ressources Vidéos ».
+ *
+ * Le niveau rendu doit toujours valoir « niveau du titre parent + 1 » :
+ * - 3 par défaut, sous le <h2> de la page ;
+ * - 4 dans un onglet ou une carte déjà titré en <h3>.
+ *
+ * Le style (.videos-title) est porté par ce composant : il ne dépend donc pas
+ * du niveau choisi, et reste identique d'une page à l'autre.
+ */
+interface Props {
+  /** Niveau du titre rendu (h2 à h6). Défaut : 3. */
+  headingLevel?: 2 | 3 | 4 | 5 | 6;
+  /** Libellé affiché (par défaut « Ressources Vidéos »). */
+  label?: string;
+  /** Marge supérieure renforcée, pour une section qui suit un bloc. */
+  spaced?: boolean;
+}
+
+const { headingLevel = 3, label = 'Ressources Vidéos', spaced = false } = Astro.props;
+const Tag = `h${headingLevel}` as 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+---
+
+<Tag class:list={['videos-title', { 'videos-title--spaced': spaced }]}>{label}</Tag>
+
+<style>
+  .videos-title {
+    margin: 0 0 0.7rem;
+    color: #f8fafc;
+    font-size: 1rem;
+  }
+
+  .videos-title--spaced {
+    margin-top: 1.1rem;
+  }
+</style>

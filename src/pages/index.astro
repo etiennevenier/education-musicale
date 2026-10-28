@@ -1,0 +1,215 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { relativeUrl } from '../utils/navigation';
+
+const levels = [
+  { slug: '6eme', label: '6ème' },
+  { slug: '5eme', label: '5ème' },
+  { slug: '4eme', label: '4ème' },
+  { slug: '3eme', label: '3ème' },
+];
+---
+
+<Layout title="Choix du niveau">
+  <div id="level-hub">
+    <section class="welcome">
+      <h2>Sélectionnez votre niveau</h2>
+    </section>
+
+    <div class="level-grid">
+      {levels.map((lvl) => (
+        <a href={relativeUrl(`/${lvl.slug}`)} class="level-btn">
+          <span>{lvl.label}</span>
+          <span class="arrow">&rarr;</span>
+        </a>
+      ))}
+    </div>
+  </div>
+</Layout>
+
+<style>
+  /* Centrage global : l'en-tête du site (titre) et le bloc de sélection
+     (sous-titre + cartes) forment un seul ensemble, centré verticalement
+     et horizontalement dans le viewport. */
+  :global(html body) {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    justify-content: safe center;
+    align-items: center;
+    min-height: 100dvh;
+  }
+
+  :global(html main.container) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  #level-hub {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.75rem 0;
+  }
+
+  .welcome {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+  .welcome h2 {
+    font-weight: 400;
+    color: var(--text-muted);
+  }
+
+  /* Écran large / paysage : les 4 niveaux sur une seule ligne, centrés */
+  .level-grid {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+
+  .level-btn {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem 1.5rem;
+    text-decoration: none;
+    color: var(--text);
+    font-size: 1.5rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    transition: border-color 0.2s ease, transform 0.2s ease, color 0.2s ease;
+  }
+  .level-btn > span:first-child {
+    min-width: 0;
+  }
+  .level-btn:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    color: var(--primary);
+  }
+  .arrow {
+    font-size: 1.2rem;
+    flex: 0 0 auto;
+  }
+
+  /* Téléphone / petit écran : grille 2 × 2 compacte et centrée */
+  @media (max-width: 760px) {
+    .level-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+      max-width: 520px;
+      margin-inline: auto;
+    }
+
+    .level-btn {
+      padding: 1.15rem 1.1rem;
+      font-size: 1.3rem;
+    }
+
+    .welcome {
+      margin-bottom: 1.75rem;
+    }
+  }
+
+  /* Smartphone en portrait : une seule colonne verticale, centrée */
+  @media (max-width: 640px) and (orientation: portrait) {
+    /* Bloc resserré : la signature reste collée au titre et l'ensemble
+       (titres + cartes) se centre sans grand vide au-dessus. */
+    :global(html body .site-header) {
+      margin-bottom: 1.5rem;
+    }
+
+    .level-grid {
+      grid-template-columns: 1fr;
+      width: 100%;
+      max-width: 380px;
+      gap: 1.25rem;
+      margin-inline: auto;
+    }
+
+    .level-btn {
+      width: 100%;
+      min-height: 72px;
+      padding: 1.25rem 1.5rem;
+      font-size: 1.3rem;
+    }
+
+    .welcome {
+      margin-bottom: 1.25rem;
+    }
+  }
+
+  /* Très petits écrans portrait : on resserre pour tout garder à l'écran */
+  @media (max-width: 360px) and (orientation: portrait) {
+    .level-grid {
+      gap: 1rem;
+    }
+
+    .level-btn {
+      min-height: 64px;
+      padding: 1.05rem 1.25rem;
+      font-size: 1.2rem;
+    }
+  }
+
+  /* Accueil en paysage / fenêtre basse : titre + signature + 4 niveaux
+     regroupés et compactés pour tenir ensemble à l'écran, sans défilement.
+     (Les outils d'entraînement conservent leur en-tête global masqué.) */
+  @media (max-width: 900px) and (orientation: landscape), (max-height: 500px) {
+    :global(html body) {
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+    }
+
+    /* Le titre et sa signature restent visibles sur cette page seulement */
+    :global(html body .site-header) {
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    :global(html body .site-header h1) {
+      display: block;
+      margin: 0;
+      font-size: 1.25rem;
+      line-height: 1.2;
+    }
+
+    :global(html body .site-header .site-subtitle) {
+      display: block;
+      margin: 0.1rem 0 0;
+      font-size: 0.7rem;
+    }
+
+    #level-hub {
+      padding: 0.5rem 0;
+    }
+
+    .welcome {
+      display: none;
+    }
+
+    .level-grid {
+      gap: 0.5rem;
+    }
+
+    .level-btn {
+      min-height: 44px;
+      padding: 0.55rem 0.85rem;
+      font-size: 1.05rem;
+    }
+
+    .arrow {
+      font-size: 1rem;
+    }
+  }
+</style>

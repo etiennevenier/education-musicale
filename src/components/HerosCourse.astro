@@ -1,0 +1,446 @@
+---
+import CourseTabs from './CourseTabs.astro';
+import VideoCard from './VideoCard.astro';
+import VideosHeading from './VideosHeading.astro';
+
+const mainTabs = [
+  { id: 'cours', icon: '🎬', label: 'Cours' },
+  { id: 'themes', icon: '🎼', label: 'Thèmes célèbres' },
+  { id: 'pirates', icon: '🏴‍☠️', label: 'Pirates des Caraïbes' },
+  { id: 'wonder-woman', icon: '⚡', label: 'Wonder Woman' },
+];
+
+const courseVideos = [
+  {
+    badge: 'Écoute',
+    title: 'Summon the Heroes — John Williams',
+    url: 'https://www.youtube.com/watch?v=q3kNRyh_rj8',
+  },
+  {
+    badge: 'Chronique',
+    title: 'Chronique Radio France — Harry Potter',
+    url: 'https://www.youtube.com/watch?v=Ig4GbQQu2GE',
+  },
+  {
+    badge: 'Projet musical',
+    title: "J'ai demandé à la lune — Indochine",
+    url: 'https://www.youtube.com/watch?v=ot4aDt3j1RE',
+  },
+];
+
+const famousThemeVideos = [
+  {
+    badge: 'Marvel',
+    title: 'Captain America March — Alan Silvestri',
+    url: 'https://www.youtube.com/watch?v=qrXwAeJ87Bk',
+  },
+  {
+    badge: 'DC',
+    title: 'The Batman Theme — Danny Elfman',
+    url: 'https://www.youtube.com/watch?v=8JtDHoK9KL8',
+  },
+  {
+    badge: 'Marvel',
+    title: 'Guardians of the Galaxy — Main Theme',
+    url: 'https://www.youtube.com/watch?v=GBp1Y-LoObs',
+  },
+  {
+    badge: 'Space opera',
+    title: 'Star Wars — Main Theme',
+    url: 'https://www.youtube.com/watch?v=EjMr5UVoKdI',
+  },
+  {
+    badge: 'DC',
+    title: "Wonder Woman's Wrath — Rupert Gregson-Williams",
+    url: 'https://www.youtube.com/watch?v=wSavwX4C240',
+  },
+  {
+    badge: 'Aventure',
+    title: 'Indiana Jones — Main Theme',
+    url: 'https://www.youtube.com/watch?v=-bTpp8PQSog',
+  },
+  {
+    badge: 'Pirates',
+    title: "He's a Pirate — Klaus Badelt",
+    url: 'https://www.youtube.com/watch?v=s17XDrKuqc4',
+  },
+  {
+    badge: 'Marvel',
+    title: 'Marvel — Opening Theme',
+    url: 'https://www.youtube.com/watch?v=UhVjp48U2Oc',
+  },
+  {
+    badge: 'Péplum',
+    title: 'Gladiator — Victory Theme',
+    url: 'https://www.youtube.com/watch?v=OLTZbJMQiD4',
+  },
+];
+
+const piratesVideos = [
+  {
+    badge: 'Thème principal',
+    title: "He's a Pirate — Klaus Badelt",
+    url: 'https://www.youtube.com/watch?v=s17XDrKuqc4',
+  },
+  {
+    badge: 'Reprise',
+    title: "Black Pearl (He's a Pirate) — Rebel feat. Sidney Housen",
+    url: 'https://www.youtube.com/watch?v=SfUC_4LmaIc',
+  },
+  {
+    badge: 'A cappella',
+    title: 'Pirates des Caraïbes — version vocale',
+    url: 'https://www.youtube.com/watch?v=gAyyHcdflSI',
+  },
+];
+
+const wonderWomanVideos = [
+  {
+    badge: 'Thème principal',
+    title: 'Wonder Woman — Main Theme (bande-annonce)',
+    url: 'https://www.youtube.com/watch?v=tW19zUOivX8',
+  },
+  {
+    badge: 'Instrument',
+    title: 'Le violoncelle — Orchestre National de Lille',
+    url: 'https://www.youtube.com/watch?v=NmBmjICy69w',
+  },
+  {
+    badge: 'Violoncelle électrique',
+    title: 'Tina Guo — Live (2018)',
+    url: 'https://www.youtube.com/watch?v=EoUtuK3n2sw',
+  },
+];
+
+const radioFranceLink = {
+  title: "Maxxi Classique — L'orchestre magique de Harry Potter",
+  description:
+    'Podcast France Musique consacré à la musique de Harry Potter et à l’orchestre symphonique.',
+  url: 'https://www.radiofrance.fr/francemusique/podcasts/maxxi-classique/l-orchestre-magique-de-harry-potter-7642201',
+};
+---
+
+<div class="heros-course" id="heros-course">
+  <CourseTabs tabs={mainTabs} ariaLabel="Thèmes de la séquence Musique et Héros" />
+
+  <div
+    class="main-panel is-active"
+    role="tabpanel"
+    id="main-panel-cours"
+    aria-labelledby="main-tab-cours"
+    tabindex="0"
+    data-main-panel="cours"
+  >
+    <section class="tab-content" aria-label="Cours">
+      <VideosHeading />
+      <div class="video-grid">
+        {courseVideos.map((video) => (
+          <VideoCard badge={video.badge} title={video.title} url={video.url} />
+        ))}
+      </div>
+
+      <VideosHeading label="Pour aller plus loin" spaced />
+      <a class="resource-card" href={radioFranceLink.url} target="_blank" rel="noopener noreferrer">
+        <span class="resource-icon" aria-hidden="true">🎧</span>
+        <span class="resource-body">
+          <span class="resource-title">{radioFranceLink.title}</span>
+          <span class="resource-desc">{radioFranceLink.description}</span>
+        </span>
+        <span class="resource-cta">Écouter ↗</span>
+      </a>
+    </section>
+  </div>
+
+  <div
+    class="main-panel"
+    role="tabpanel"
+    id="main-panel-themes"
+    aria-labelledby="main-tab-themes"
+    tabindex="0"
+    data-main-panel="themes"
+    hidden
+  >
+    <section class="tab-content" aria-labelledby="heros-themes-title">
+      <h3 id="heros-themes-title">Les thèmes célèbres des héros</h3>
+
+      <p class="tab-intro">
+        Les grands héros du cinéma ont souvent un thème <strong>reconnaissable entre tous</strong> :
+        quelques notes suffisent à annoncer leur arrivée. Écoute et repère les timbres qui les
+        caractérisent.
+      </p>
+
+      <VideosHeading headingLevel={4} />
+      <div class="video-grid">
+        {famousThemeVideos.map((video) => (
+          <VideoCard badge={video.badge} title={video.title} url={video.url} />
+        ))}
+      </div>
+    </section>
+  </div>
+
+  <div
+    class="main-panel"
+    role="tabpanel"
+    id="main-panel-pirates"
+    aria-labelledby="main-tab-pirates"
+    tabindex="0"
+    data-main-panel="pirates"
+    hidden
+  >
+    <section class="tab-content" aria-labelledby="heros-pirates-title">
+      <h3 id="heros-pirates-title">Pirates des Caraïbes</h3>
+
+      <p class="tab-intro">
+        Composé par <strong>Klaus Badelt</strong> avec Hans Zimmer, le thème des{' '}
+        <em>Pirates des Caraïbes</em> repose sur un ostinato de cordes et de cuivres qui donne
+        l’élan de l’aventure. Le motif est répété, accéléré et transformé au fil du film.
+      </p>
+
+      <div class="fact-chips">
+        <span class="fact-chip"><strong>Ostinato</strong> motif répété qui crée la pulsation</span>
+        <span class="fact-chip"><strong>Cuivres</strong> héroïsme</span>
+      </div>
+
+      <VideosHeading headingLevel={4} />
+      <div class="video-grid">
+        {piratesVideos.map((video) => (
+          <VideoCard badge={video.badge} title={video.title} url={video.url} />
+        ))}
+      </div>
+    </section>
+  </div>
+
+  <div
+    class="main-panel"
+    role="tabpanel"
+    id="main-panel-wonder-woman"
+    aria-labelledby="main-tab-wonder-woman"
+    tabindex="0"
+    data-main-panel="wonder-woman"
+    hidden
+  >
+    <section class="tab-content" aria-labelledby="heros-wonder-woman-title">
+      <h3 id="heros-wonder-woman-title">Wonder Woman</h3>
+
+      <p class="tab-intro">
+        Wonder Woman possède un thème immédiatement reconnaissable joué sur un{' '}
+        <strong>violoncelle électrique</strong> qui mêle puissance et modernité. La
+        violoncelliste Tina Guo en donne une interprétation spectaculaire.
+      </p>
+
+      <div class="fact-chips">
+        <span class="fact-chip"><strong>Violoncelle</strong> grave, ample et expressif</span>
+        <span class="fact-chip"><strong>Électrique</strong> timbre amplifié et saturé</span>
+      </div>
+
+      <VideosHeading headingLevel={4} />
+      <div class="video-grid">
+        {wonderWomanVideos.map((video) => (
+          <VideoCard badge={video.badge} title={video.title} url={video.url} />
+        ))}
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+  const course = document.getElementById('heros-course');
+
+  if (course) {
+    const tabs = Array.from(
+      course.querySelectorAll<HTMLButtonElement>('.main-tabs [role="tab"]')
+    );
+    const panels = Array.from(
+      course.querySelectorAll<HTMLElement>('.main-panel[data-main-panel]')
+    );
+
+    function activateTab(id: string, focusTab = false) {
+      tabs.forEach((tab) => {
+        const isActive = tab.dataset.mainTab === id;
+        tab.setAttribute('aria-selected', String(isActive));
+        tab.tabIndex = isActive ? 0 : -1;
+        tab.classList.toggle('is-active', isActive);
+        if (isActive && focusTab) tab.focus();
+      });
+
+      panels.forEach((panel) => {
+        const isActive = panel.dataset.mainPanel === id;
+        panel.hidden = !isActive;
+        panel.classList.toggle('is-active', isActive);
+      });
+    }
+
+    function selectTab(id: string, focusTab = false) {
+      if (!id) return;
+      activateTab(id, focusTab);
+      history.replaceState(null, '', `#${id}`);
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        selectTab(tab.dataset.mainTab || '');
+      });
+
+      tab.addEventListener('keydown', (event) => {
+        const currentIndex = tabs.indexOf(tab);
+        let nextIndex: number | null = null;
+
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+          nextIndex = (currentIndex + 1) % tabs.length;
+        } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+          nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+        } else if (event.key === 'Home') {
+          nextIndex = 0;
+        } else if (event.key === 'End') {
+          nextIndex = tabs.length - 1;
+        }
+
+        if (nextIndex !== null) {
+          event.preventDefault();
+          const nextTab = tabs[nextIndex];
+          selectTab(nextTab.dataset.mainTab || '', true);
+        }
+      });
+    });
+
+    const initialTab = window.location.hash.replace('#', '');
+    if (tabs.some((tab) => tab.dataset.mainTab === initialTab)) {
+      activateTab(initialTab);
+    }
+  }
+</script>
+
+<style>
+  .heros-course {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .tab-content {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 14px;
+    padding: 1.25rem;
+  }
+
+  .tab-content h3 {
+    margin: 0 0 0.5rem;
+    color: #f8fafc;
+    font-size: 1.3rem;
+  }
+
+  .tab-intro {
+    margin: 0 0 1rem;
+    color: #cbd5e1;
+    line-height: 1.6;
+  }
+
+  .tab-intro strong {
+    color: #f8fafc;
+  }
+
+  .fact-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .fact-chip {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 999px;
+    padding: 0.35rem 0.7rem;
+    color: #e2e8f0;
+    font-size: 0.8rem;
+  }
+
+  .fact-chip strong {
+    color: #38bdf8;
+    margin-right: 0.25rem;
+  }
+
+  .video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  .resource-card {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 0.9rem 1rem;
+    text-decoration: none;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .resource-card:hover {
+    border-color: #38bdf8;
+    transform: translateY(-1px);
+  }
+
+  .resource-icon {
+    font-size: 1.6rem;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .resource-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+  }
+
+  .resource-title {
+    color: #f8fafc;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .resource-desc {
+    color: #94a3b8;
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+
+  .resource-cta {
+    margin-left: auto;
+    flex-shrink: 0;
+    background: var(--accent-sky-strong);
+    color: #ffffff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.4rem 0.7rem;
+    border-radius: 6px;
+  }
+
+  @media (max-width: 720px) {
+    .tab-content {
+      padding: 1rem;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .resource-card {
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .resource-cta {
+      margin-left: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .resource-card {
+      transition: none;
+    }
+  }
+</style>
+

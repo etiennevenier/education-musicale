@@ -1,0 +1,116 @@
+---
+import CourseTabs from './CourseTabs.astro';
+import VideoCard from './VideoCard.astro';
+import PubQuiz from './PubQuiz.astro';
+
+interface PubVideo {
+  badge: string;
+  title: string;
+  youtubeId: string;
+}
+
+interface PubTab {
+  id: string;
+  icon: string;
+  label: string;
+  videos: PubVideo[];
+}
+
+const tabs: PubTab[] = [
+  {
+    id: 'cours',
+    icon: '📢',
+    label: 'Cours',
+    videos: [
+      {
+        badge: 'Capsule pédagogique',
+        title: 'Capsule pédagogique — Musique et Publicité',
+        youtubeId: 'lNpTQ6Hycg0',
+      },
+      {
+        badge: 'Projet musical',
+        title: 'Projet musical — Musique et Publicité',
+        youtubeId: 'HP-5fvykK78',
+      },
+      {
+        badge: 'Publicité Toyota',
+        title: 'Publicité Toyota',
+        youtubeId: 'J91VaDSQ6ow',
+      },
+      {
+        badge: 'Publicité Loto',
+        title: 'Publicité Loto',
+        youtubeId: 'UD8raZfrA8E',
+      },
+      {
+        badge: 'Comparaisons',
+        title: 'Comparaisons — Musique et Publicité',
+        youtubeId: 'r72Vl9MWjog',
+      },
+    ],
+  },
+  {
+    id: 'quiz',
+    icon: '🎧',
+    label: 'Blindtest',
+    videos: [],
+  },
+];
+---
+
+<div class="pub-course">
+  <CourseTabs tabs={tabs} ariaLabel="Musique et Publicité" />
+
+  {tabs.map((tab, index) => (
+    <div
+      role="tabpanel"
+      id={`main-panel-${tab.id}`}
+      class="pub-panel"
+      aria-labelledby={`main-tab-${tab.id}`}
+      hidden={index !== 0 || tab.id === 'quiz'}
+      data-panel={tab.id}
+    >
+      {tab.id === 'quiz' ? <PubQuiz /> : (
+        <div class="pub-videos">
+          {tab.videos.map((video) => (
+            <VideoCard
+              badge={video.badge}
+              title={video.title}
+              url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  ))}
+</div>
+
+<script>
+  import { setupMainTabs } from '../utils/tabs';
+
+  const root = document.querySelector<HTMLElement>('.pub-course');
+
+  if (root) {
+    setupMainTabs(root, {
+      panelSelector: '.pub-panel',
+    });
+  }
+</script>
+
+<style>
+  .pub-course {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .pub-panel[hidden] {
+    display: none;
+  }
+
+  .pub-videos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+</style>

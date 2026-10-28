@@ -1,0 +1,972 @@
+---
+import CourseTabs from './CourseTabs.astro';
+import VideoCard from './VideoCard.astro';
+import { relativeUrl } from '../utils/navigation';
+import { geoNaturalEarth1, geoPath } from 'd3-geo';
+import { feature } from 'topojson-client';
+import type { FeatureCollection, Geometry } from 'geojson';
+import type { GeometryCollection, Topology } from 'topojson-specification';
+import worldTopo from 'world-atlas/countries-110m.json';
+
+const world = worldTopo as unknown as Topology<{ countries: GeometryCollection }>;
+const allCountries = feature(world, world.objects.countries) as FeatureCollection<Geometry>;
+// Même filtre qu'avant (l'Antarctique, code « 010 ») sans muter l'objet d'origine.
+const countries: FeatureCollection<Geometry> = {
+  ...allCountries,
+  features: allCountries.features.filter((country) => country.id !== '010'),
+};
+const projection = geoNaturalEarth1().fitExtent([[10, 10], [990, 490]], countries);
+const countriesPath = geoPath(projection)(countries) ?? '';
+
+interface MetissageVideo {
+  badge: string;
+  title: string;
+  youtubeId: string;
+}
+
+interface MetissageTab {
+  id: string;
+  icon: string;
+  label: string;
+  videos: MetissageVideo[];
+}
+
+const tabs: MetissageTab[] = [
+  {
+    id: 'lennon',
+    icon: '🎸',
+    label: 'Lennon',
+    videos: [
+      { badge: 'Original', title: 'Original — John Lennon', youtubeId: 'VOgFZfRVaww' },
+      { badge: 'Reprise', title: 'Reprise — John Lennon', youtubeId: 'TdcoenxiDd8' },
+    ],
+  },
+  {
+    id: 'vivaldi',
+    icon: '🎻',
+    label: 'Vivaldi',
+    videos: [
+      { badge: 'Original', title: 'Original — Antonio Vivaldi', youtubeId: 'VBezMA7PL7c' },
+      { badge: 'Reprise', title: 'Reprise — Antonio Vivaldi', youtubeId: 'DIGfO2Dgc9Y' },
+    ],
+  },
+  {
+    id: 'brel',
+    icon: '🎤',
+    label: 'Brel',
+    videos: [
+      { badge: 'Original', title: 'Original — Jacques Brel', youtubeId: 'i2wmKcBm4Ik' },
+      { badge: 'Salsa', title: 'Version salsa — Jacques Brel', youtubeId: 's26JOW3x674' },
+      { badge: 'Raï', title: 'Version raï — Jacques Brel', youtubeId: 'dcWDaN0nwO8' },
+      { badge: 'Flamenco - Rumba Catalane', title: 'Version flamenco et rumba catalane — Jacques Brel', youtubeId: '2f93bd6Tb2s' },
+      { badge: 'Jazz', title: 'Version jazz — Jacques Brel', youtubeId: 'P_mpmKJ_ORo' },
+      { badge: 'Tango', title: 'Version tango — Jacques Brel', youtubeId: '4qxgLh8YwMU' },
+      { badge: 'Ska - Reggae', title: 'Version ska et reggae — Jacques Brel', youtubeId: 'XBxZVn7TBh4' },
+      { badge: 'Sketch', title: 'Sketch — Jacques Brel', youtubeId: 'GBmycYD_24M' },
+    ],
+  },
+  {
+    id: 'voyage',
+    icon: '🗺️',
+    label: 'Voyage',
+    videos: [],
+  },
+];
+
+type Stop = { label: string; artist: string; year: string; details: string; lonLat: [number, number] };
+
+interface VoyageData {
+  num: number;
+  title: string;
+  from: Stop;
+  to: Stop[];
+}
+
+const voyagesData: VoyageData[] = [
+  {
+    num: 1,
+    title: '1. Misirlou',
+    from: { label: 'Empire Ottoman (Izmir)', artist: 'Chanson traditionnelle Rebetiko', year: 'Début XXe', details: 'Air traditionnel partagé par les musiciens grecs, turcs et juifs', lonLat: [27.14, 38.42] },
+    to: [
+      { label: 'Californie (USA)', artist: 'Dick Dale / Pulp Fiction', year: '1962 / 1994', details: 'Accélération en Surf Rock puis réutilisé dans Pulp Fiction & Black Eyed Peas', lonLat: [-118.24, 34.05] }
+    ],
+  },
+  {
+    num: 2,
+    title: '2. The Lion Sleeps Tonight (Mbube)',
+    from: { label: 'Afrique du Sud (Johannesburg)', artist: 'Solomon Linda & Evening Birds', year: '1939', details: 'Création originale zoulou intitulée Mbube dans les townships', lonLat: [28.04, -26.20] },
+    to: [
+      { label: 'États-Unis (New York)', artist: 'The Tokens / Le Roi Lion', year: '1961', details: 'Réécrit sous le titre The Lion Sleeps Tonight, devenant l\'hymne du Roi Lion', lonLat: [-74.00, 40.71] }
+    ],
+  },
+  {
+    num: 3,
+    title: '3. Bambino (Guaglione)',
+    from: { label: 'Italie (Naples)', artist: 'Chanson napolitaine', year: '1956', details: 'Titre folklore italien Guaglione', lonLat: [14.26, 40.85] },
+    to: [
+      { label: 'Égypte (Le Caire)', artist: 'Dalida (Enfance)', year: '1956', details: 'Découvert et écouté par Dalida lors de sa jeunesse au Caire', lonLat: [31.23, 30.04] },
+      { label: 'France (Paris)', artist: 'Dalida', year: '1956', details: 'Enregistré en français sous le nom Bambino à Paris, 1er grand tube', lonLat: [2.35, 48.86] }
+    ],
+  },
+  {
+    num: 4,
+    title: '4. Comme d\'habitude ➔ My Way',
+    from: { label: 'France (Paris)', artist: 'Claude François / Jacques Revaux', year: '1967', details: 'Chanson originale française sur la routine d\'un couple', lonLat: [2.35, 48.86] },
+    to: [
+      { label: 'États-Unis (New York)', artist: 'Paul Anka & Frank Sinatra', year: '1969', details: 'Droits rachetés par Paul Anka et réécrits pour Frank Sinatra (My Way)', lonLat: [-74.00, 40.71] }
+    ],
+  },
+  {
+    num: 5,
+    title: '5. Mambo No. 5',
+    from: { label: 'Mexique / Cuba', artist: 'Pérez Prado', year: '1949', details: 'Morceau Mambo instrumental latino original', lonLat: [-99.13, 19.43] },
+    to: [
+      { label: 'Allemagne (Munich)', artist: 'Lou Bega', year: '1999', details: 'Repris avec paroles pop et synthés, hit n°1 mondial', lonLat: [11.58, 48.14] }
+    ],
+  },
+  {
+    num: 6,
+    title: '6. The Tide Is High',
+    from: { label: 'Jamaïque (Kingston)', artist: 'The Paragons / John Holt', year: '1967', details: 'Chanson originale Rocksteady / Reggae jamaïcaine', lonLat: [-76.79, 17.97] },
+    to: [
+      { label: 'Royaume-Uni (Londres)', artist: 'Blondie', year: '1980', details: 'Reprise New Wave / Pop par le groupe britannique Blondie', lonLat: [-0.12, 51.50] }
+    ],
+  },
+  {
+    num: 7,
+    title: '7. Mas que Nada',
+    from: { label: 'Brésil (Rio de Janeiro)', artist: 'Jorge Ben / Sergio Mendes', year: '1963', details: 'Samba / Bossa Nova brésilienne légendaire', lonLat: [-43.17, -22.91] },
+    to: [
+      { label: 'États-Unis (Los Angeles)', artist: 'The Black Eyed Peas', year: '2006', details: 'Fusion Bossa Nova et Hip-Hop américain avec Sergio Mendes', lonLat: [-118.24, 34.05] }
+    ],
+  },
+  {
+    num: 8,
+    title: '8. Lambada (Llorando se fue)',
+    from: { label: 'Bolivie (La Paz)', artist: 'Los Kjarkas', year: '1981', details: 'Musique andine traditionnelle "Llorando se fue"', lonLat: [-68.11, -16.49] },
+    to: [
+      { label: 'France (Paris)', artist: 'Kaoma', year: '1989', details: 'Adaptation en Lambada brésilienne / pop produite en France, tube de l\'été mondial', lonLat: [2.35, 48.86] }
+    ],
+  },
+  {
+    num: 9,
+    title: '9. Habanera (Carmen)',
+    from: { label: 'Cuba (La Havane)', artist: 'Danse Habanera traditionnelle', year: 'XIXe s.', details: 'Rythme créole traditionnel originaire de La Havane', lonLat: [-82.36, 23.11] },
+    to: [
+      { label: 'Espagne (Madrid)', artist: 'Sebastián Iradier', year: '1860', details: 'Mélodie transcrite par le compositeur espagnol Iradier (El Arreglito)', lonLat: [-3.70, 40.41] },
+      { label: 'France (Paris)', artist: 'Georges Bizet', year: '1875', details: 'Intégré dans l\'Opéra Carmen de Bizet à Paris', lonLat: [2.35, 48.86] },
+      { label: 'Belgique (Bruxelles)', artist: 'Stromae', year: '2013', details: 'Réinterprété et modernisé par Stromae dans sa chanson Carmen', lonLat: [4.35, 50.85] }
+    ],
+  },
+  {
+    num: 10,
+    title: '10. Tainted Love',
+    from: { label: 'États-Unis (Los Angeles)', artist: 'Gloria Jones', year: '1964', details: 'Chanson Soul américaine passée inaperçue à sa sortie', lonLat: [-118.24, 34.05] },
+    to: [
+      { label: 'Royaume-Uni (Northern Soul)', artist: 'Soft Cell', year: '1981', details: 'Découvert dans les clubs underground anglais et transformé en tube Synthpop', lonLat: [-2.24, 53.48] }
+    ],
+  }
+];
+
+const project = (s: Stop) => {
+  const [x, y] = projection(s.lonLat) as [number, number];
+  return { 
+    label: s.label, 
+    artist: s.artist, 
+    year: s.year, 
+    details: s.details, 
+    x: Math.round(x * 10) / 10, 
+    y: Math.round(y * 10) / 10 
+  };
+};
+
+const voyages = voyagesData.map((v) => ({
+  num: v.num,
+  title: v.title,
+  from: project(v.from),
+  to: v.to.map(project),
+}));
+
+const pairOne = {
+  base: relativeUrl('/metissage/Doc2FernandLeger.png'),
+  top: relativeUrl('/metissage/Doc1JocondeLHOOQ.png'),
+};
+
+const pairTwo = {
+  base: relativeUrl('/metissage/Doc3LesmeninesDiegoVelaz.jpg'),
+  top: relativeUrl('/metissage/Doc4LesmeninesPicasso.jpg'),
+};
+---
+
+<div class="metissage-course" data-voyages={JSON.stringify(voyages)}>
+  <CourseTabs tabs={tabs} ariaLabel="Musique et Métissage" />
+
+  {tabs.map((tab, index) => (
+    <div
+      role="tabpanel"
+      id={`main-panel-${tab.id}`}
+      class="metissage-panel"
+      aria-labelledby={`main-tab-${tab.id}`}
+      hidden={index !== 0}
+      data-panel={tab.id}
+    >
+      {tab.videos.length > 0 && (
+        <div class="metissage-videos">
+          {tab.videos.map((video) => (
+            <VideoCard
+              badge={video.badge}
+              title={video.title}
+              url={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+            />
+          ))}
+        </div>
+      )}
+
+      {tab.id === 'voyage' && (
+        <div class="metissage-voyage-content" style="display: flex; flex-direction: column; gap: 2rem;">
+          <!-- Carte interactive -->
+          <div class="metissage-carte-section">
+            <header class="carte-header">
+              <h3>🌍 La Carte du Métissage Musical</h3>
+              <p>Sélectionnez un numéro ci-dessous puis cliquez sur les marqueurs colorés pour découvrir l'histoire complète du morceau.</p>
+            </header>
+
+            <div class="voyages-numbers-bar">
+              <span class="bar-title">Voyages :</span>
+              {voyages.map((v, idx) => (
+                <button 
+                  type="button" 
+                  class={`num-pill ${idx === 0 ? 'active' : ''}`} 
+                  data-voyage-index={idx}
+                  title={v.title}
+                >
+                  {v.num}
+                </button>
+              ))}
+            </div>
+
+            <div class="map-container">
+              <svg viewBox="0 0 1000 500" id="world-map" class="world-map-svg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Carte du monde montrant le trajet des musiques métissées">
+                <path d={countriesPath} class="land" />
+
+                <g id="map-title-overlay" transform="translate(20, 35)">
+                  <rect id="map-title-bg" class="title-bg" x="-10" y="-22" width="220" height="34" rx="8" />
+                  <text id="map-song-title" class="title-text" x="0" y="0">1. Misirlou</text>
+                </g>
+
+                <g id="map-dynamic-layer"></g>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Sliders de Peinture rétablis -->
+          <div class="metissage-paintings">
+            <p class="metissage-hint">Faites glisser le curseur pour comparer les deux œuvres.</p>
+            <figure class="metissage-pair">
+              <div
+                class="metissage-compare"
+                data-compare
+                data-title-a="Fernand Léger — La Joconde aux clés"
+                data-title-b="Marcel Duchamp — L.H.O.O.Q."
+                style="--pos: 50%;"
+              >
+                <div class="metissage-layers">
+                  <img
+                    class="metissage-img metissage-img-base"
+                    src={pairOne.base}
+                    alt="Fernand Léger — La Joconde aux clés"
+                    width="515"
+                    height="650"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <img
+                    class="metissage-img metissage-img-top"
+                    src={pairOne.top}
+                    alt="Marcel Duchamp — L.H.O.O.Q., la Joconde affublée d'une moustache"
+                    width="1258"
+                    height="2000"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <div class="metissage-divider" aria-hidden="true">
+                  <span class="metissage-handle">↔</span>
+                </div>
+                <input
+                  type="range"
+                  class="metissage-range"
+                  min="0"
+                  max="100"
+                  value="50"
+                  step="1"
+                  aria-label="Comparer Fernand Léger et Marcel Duchamp"
+                />
+              </div>
+              <figcaption class="metissage-title" data-title aria-live="polite" aria-atomic="true"></figcaption>
+            </figure>
+
+            <figure class="metissage-pair">
+              <div
+                class="metissage-compare"
+                data-compare
+                data-title-a="Diego Vélasquez — Les Ménines"
+                data-title-b="Pablo Picasso — Les Ménines"
+                style="--pos: 50%;"
+              >
+                <div class="metissage-layers">
+                  <img
+                    class="metissage-img metissage-img-base"
+                    src={pairTwo.base}
+                    alt="Diego Vélasquez — Les Ménines"
+                    width="859"
+                    height="1024"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <img
+                    class="metissage-img metissage-img-top"
+                    src={pairTwo.top}
+                    alt="Pablo Picasso — Les Ménines, d'après Vélasquez"
+                    width="1005"
+                    height="743"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <div class="metissage-divider" aria-hidden="true">
+                  <span class="metissage-handle">↔</span>
+                </div>
+                <input
+                  type="range"
+                  class="metissage-range"
+                  min="0"
+                  max="100"
+                  value="50"
+                  step="1"
+                  aria-label="Comparer Diego Vélasquez et Pablo Picasso"
+                />
+              </div>
+              <figcaption class="metissage-title" data-title aria-live="polite" aria-atomic="true"></figcaption>
+            </figure>
+          </div>
+        </div>
+      )}
+    </div>
+  ))}
+</div>
+
+<script>
+  type MapPoint = { x: number; y: number };
+  type ViewBox = { x: number; y: number; w: number; h: number };
+  type VoyageStop = { label: string; artist: string; year: string; details: string; x: number; y: number };
+  type Voyage = { num: number; title: string; from: VoyageStop; to: VoyageStop[] };
+
+  const metissageRoot = document.querySelector<HTMLElement>('.metissage-course');
+
+  if (metissageRoot) {
+    const voyages = JSON.parse(metissageRoot.dataset.voyages || '[]') as Voyage[];
+    const tabs = Array.from(metissageRoot.querySelectorAll<HTMLElement>('.main-tab'));
+    const panels = Array.from(metissageRoot.querySelectorAll<HTMLElement>('.metissage-panel'));
+
+    const activateTab = (activeIndex: number, moveFocus = false) => {
+      tabs.forEach((tab, index) => {
+        const isActive = index === activeIndex;
+        tab.setAttribute('aria-selected', String(isActive));
+        tab.tabIndex = isActive ? 0 : -1;
+        tab.classList.toggle('is-active', isActive);
+        if (isActive && moveFocus) {
+          tab.focus();
+        }
+      });
+
+      panels.forEach((panel, index) => {
+        panel.hidden = index !== activeIndex;
+      });
+    };
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => activateTab(index));
+
+      tab.addEventListener('keydown', (event: KeyboardEvent) => {
+        let nextIndex: number | null = null;
+
+        if (event.key === 'ArrowRight') {
+          nextIndex = (index + 1) % tabs.length;
+        } else if (event.key === 'ArrowLeft') {
+          nextIndex = (index - 1 + tabs.length) % tabs.length;
+        } else if (event.key === 'Home') {
+          nextIndex = 0;
+        } else if (event.key === 'End') {
+          nextIndex = tabs.length - 1;
+        }
+
+        if (nextIndex !== null) {
+          event.preventDefault();
+          activateTab(nextIndex, true);
+        }
+      });
+    });
+
+    const pillBtns = metissageRoot.querySelectorAll<HTMLButtonElement>('.num-pill');
+    const svg = metissageRoot.querySelector<SVGSVGElement>('#world-map');
+    const layer = metissageRoot.querySelector<SVGGElement>('#map-dynamic-layer');
+    const songTitleEl = metissageRoot.querySelector<SVGTextElement>('#map-song-title');
+    const titleBgEl = metissageRoot.querySelector<SVGRectElement>('#map-title-bg');
+    const titleOverlayGroup = metissageRoot.querySelector<SVGGElement>('#map-title-overlay');
+    const NS = 'http://www.w3.org/2000/svg';
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let currentView: ViewBox = { x: 0, y: 0, w: 1000, h: 500 };
+    let rafId = 0;
+    let targetView: ViewBox = { x: 0, y: 0, w: 1000, h: 500 };
+
+    const setView = (v: ViewBox) => {
+      if (!svg) return;
+      svg.setAttribute('viewBox', `${v.x} ${v.y} ${v.w} ${v.h}`);
+      const k = v.w / 1000;
+      
+      if (layer) {
+        layer.querySelectorAll<SVGGElement>('.marker').forEach((m) => {
+          m.setAttribute('transform', `translate(${m.dataset.x} ${m.dataset.y}) scale(${k})`);
+        });
+      }
+
+      if (titleOverlayGroup) {
+        titleOverlayGroup.setAttribute('transform', `translate(${v.x + 15 * k}, ${v.y + 30 * k}) scale(${k})`);
+      }
+    };
+
+    const animateTo = (target: ViewBox) => {
+      cancelAnimationFrame(rafId);
+      if (reduceMotion) {
+        currentView = target;
+        setView(currentView);
+        return;
+      }
+      const start = { ...currentView };
+      const t0 = performance.now();
+      const duration = 750;
+      const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+      const step = (now: number) => {
+        const t = Math.min((now - t0) / duration, 1);
+        const e = ease(t);
+        currentView = {
+          x: start.x + (target.x - start.x) * e,
+          y: start.y + (target.y - start.y) * e,
+          w: start.w + (target.w - start.w) * e,
+          h: start.h + (target.h - start.h) * e,
+        };
+        setView(currentView);
+        if (t < 1) rafId = requestAnimationFrame(step);
+      };
+      rafId = requestAnimationFrame(step);
+    };
+
+    const computeView = (points: MapPoint[]): ViewBox => {
+      const xs = points.map((p) => p.x);
+      const ys = points.map((p) => p.y);
+      const minX = Math.min(...xs), maxX = Math.max(...xs);
+      const minY = Math.min(...ys), maxY = Math.max(...ys);
+      let w = Math.max((maxX - minX) * 1.8, 350);
+      let h = Math.max((maxY - minY) * 2.2, 180);
+      w = Math.min(Math.max(w, h * 2), 1000);
+      h = w / 2;
+      const cx = (minX + maxX) / 2;
+      const cy = (minY + maxY) / 2;
+      const x = Math.min(Math.max(cx - w / 2, 0), 1000 - w);
+      const y = Math.min(Math.max(cy - h / 2, 0), 500 - h);
+      return { x, y, w, h };
+    };
+
+    const arcPath = (a: MapPoint, b: MapPoint) => {
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const dist = Math.hypot(dx, dy) || 1;
+      let nx = -dy / dist;
+      let ny = dx / dist;
+      if (ny > 0) { nx = -nx; ny = -ny; }
+      const off = dist * 0.22;
+      const cx = (a.x + b.x) / 2 + nx * off;
+      const cy = (a.y + b.y) / 2 + ny * off;
+      return `M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`;
+    };
+
+    const wrapText = (text: string, maxChars: number): string[] => {
+      const words = text.split(' ');
+      const lines: string[] = [];
+      let currentLine = '';
+      words.forEach((word) => {
+        if ((currentLine + ' ' + word).trim().length <= maxChars) {
+          currentLine = (currentLine + ' ' + word).trim();
+        } else {
+          if (currentLine) lines.push(currentLine);
+          currentLine = word;
+        }
+      });
+      if (currentLine) lines.push(currentLine);
+      return lines;
+    };
+
+    const addMarker = (p: VoyageStop, kind: string, refX: number) => {
+      if (!layer) return;
+      const left = p.x > refX;
+      const g = document.createElementNS(NS, 'g');
+      g.setAttribute('class', `marker marker-${kind}`);
+      g.setAttribute('tabindex', '0');
+      g.dataset.x = String(p.x);
+      g.dataset.y = String(p.y);
+
+      const halo = document.createElementNS(NS, 'circle');
+      halo.setAttribute('class', 'marker-halo');
+      halo.setAttribute('r', '12');
+
+      const dot = document.createElementNS(NS, 'circle');
+      dot.setAttribute('class', 'marker-dot');
+      dot.setAttribute('r', '6');
+
+      const text = document.createElementNS(NS, 'text');
+      text.setAttribute('class', 'map-label');
+      text.setAttribute('x', left ? '-14' : '14');
+      text.setAttribute('y', '5');
+      text.setAttribute('text-anchor', left ? 'end' : 'start');
+      text.textContent = p.label;
+
+      const popover = document.createElementNS(NS, 'g');
+      popover.setAttribute('class', 'marker-popover');
+      
+      const titleTextStr = `${p.artist} (${p.year})`;
+      const lines = wrapText(p.details, 44);
+      const measureCtx = document.createElement('canvas').getContext('2d');
+      const fontFamily = svg ? (getComputedStyle(svg).fontFamily || 'sans-serif') : 'sans-serif';
+      const measure = (str: string, weight: number, size: number) => {
+        if (!measureCtx) return str.length * size * 0.6;
+        measureCtx.font = `${weight} ${size}px ${fontFamily}`;
+        return measureCtx.measureText(str).width;
+      };
+      const PAD_X = 26;
+      const textW = Math.max(
+        measure(titleTextStr, 900, 20),
+        ...lines.map((l) => measure(l, 600, 18))
+      );
+      const popWidth = Math.ceil(textW + PAD_X * 2);
+      const popHeight = 76 + (lines.length - 1) * 26 + 28;
+
+      const SAFE = 45;
+      const k = targetView.w / 1000;
+
+      const minX = (targetView.x - p.x) / k + SAFE;
+      const maxX = (targetView.x + targetView.w - p.x) / k - SAFE;
+      const minY = (targetView.y - p.y) / k + SAFE;
+      const maxY = (targetView.y + targetView.h - p.y) / k - SAFE;
+
+      let boxX = -popWidth / 2;
+      let boxY = -popHeight - 20;
+
+      if (boxY < minY) boxY = 20;
+
+      boxX = Math.max(minX, Math.min(boxX, maxX - popWidth));
+      boxY = Math.max(minY, Math.min(boxY, maxY - popHeight));
+
+      const popBg = document.createElementNS(NS, 'rect');
+      popBg.setAttribute('class', 'popover-bg');
+      popBg.setAttribute('x', String(boxX));
+      popBg.setAttribute('y', String(boxY));
+      popBg.setAttribute('width', String(popWidth));
+      popBg.setAttribute('height', String(popHeight));
+      popBg.setAttribute('rx', '14');
+
+      const titleX = boxX + popWidth / 2;
+      const descX = boxX + popWidth / 2;
+
+      const popTitle = document.createElementNS(NS, 'text');
+      popTitle.setAttribute('class', 'popover-title');
+      popTitle.setAttribute('x', String(titleX));
+      popTitle.setAttribute('y', String(boxY + 38));
+      popTitle.setAttribute('text-anchor', 'middle');
+      popTitle.textContent = titleTextStr;
+
+      const popoverText = document.createElementNS(NS, 'text');
+      popoverText.setAttribute('class', 'popover-desc');
+      popoverText.setAttribute('x', String(descX));
+      popoverText.setAttribute('y', String(boxY + 76));
+      popoverText.setAttribute('text-anchor', 'middle');
+
+      lines.forEach((line, i) => {
+        const tspan = document.createElementNS(NS, 'tspan');
+        tspan.setAttribute('x', String(descX));
+        tspan.setAttribute('dy', i === 0 ? '0' : '26');
+        tspan.textContent = line;
+        popoverText.appendChild(tspan);
+      });
+
+      popover.append(popBg, popTitle, popoverText);
+      g.append(halo, dot, text, popover);
+
+      g.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const wasActive = g.classList.contains('popover-open');
+        layer.querySelectorAll('.marker').forEach((m) => m.classList.remove('popover-open'));
+        if (!wasActive) {
+          g.classList.add('popover-open');
+          layer.appendChild(g); 
+        }
+      });
+
+      layer.appendChild(g);
+    };
+
+    if (svg) {
+      svg.addEventListener('click', () => {
+        if (layer) layer.querySelectorAll('.marker').forEach((m) => m.classList.remove('popover-open'));
+      });
+    }
+
+    const selectVoyage = (index: number) => {
+      const data = voyages[index];
+      if (!data || !layer) return;
+
+      pillBtns.forEach((btn, idx) => btn.classList.toggle('active', idx === index));
+
+      if (songTitleEl && titleBgEl) {
+        songTitleEl.textContent = data.title;
+        const textLength = songTitleEl.getComputedTextLength ? songTitleEl.getComputedTextLength() : data.title.length * 9;
+        titleBgEl.setAttribute('width', String(Math.max(textLength + 30, 100)));
+      }
+
+      layer.replaceChildren();
+
+      let previousPoint = data.from;
+      const allPoints = [data.from];
+
+      data.to.forEach((dest) => {
+        const path = document.createElementNS(NS, 'path');
+        path.setAttribute('class', 'flight-path');
+        path.setAttribute('d', arcPath(previousPoint, dest));
+        layer.appendChild(path);
+        
+        allPoints.push(dest);
+        previousPoint = dest;
+      });
+
+      targetView = computeView(allPoints);
+      const avgToX = data.to.reduce((s, d) => s + d.x, 0) / data.to.length;
+      addMarker(data.from, 'from', avgToX);
+      data.to.forEach((dest) => addMarker(dest, 'to', data.from.x));
+
+      animateTo(targetView);
+    };
+
+    pillBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.voyageIndex || '0', 10);
+        selectVoyage(idx);
+      });
+    });
+
+    if (svg && layer) selectVoyage(0);
+
+    metissageRoot.querySelectorAll<HTMLElement>('[data-compare]').forEach((comparison) => {
+      const range = comparison.querySelector<HTMLInputElement>('.metissage-range');
+      if (!range) return;
+
+      const figure = comparison.closest('.metissage-pair');
+      const title = figure?.querySelector('[data-title]');
+      const titleA = comparison.dataset.titleA ?? '';
+      const titleB = comparison.dataset.titleB ?? '';
+
+      const updatePosition = () => {
+        const value = Number(range.value);
+        comparison.style.setProperty('--pos', `${value}%`);
+        if (!title) return;
+
+        if (value <= 10) title.textContent = titleA;
+        else if (value >= 90) title.textContent = titleB;
+        else title.textContent = '';
+      };
+
+      range.addEventListener('input', updatePosition);
+      updatePosition();
+    });
+  }
+</script>
+
+<style>
+  .metissage-course {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .metissage-panel[hidden] { display: none; }
+
+  .metissage-videos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  .metissage-carte-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .carte-header h3 { margin: 0 0 0.25rem; font-size: 1.4rem; color: #f8fafc; }
+  .carte-header p { margin: 0; color: #94a3b8; font-size: 0.95rem; }
+
+  .voyages-numbers-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: #1e293b;
+    padding: 0.6rem 1rem;
+    border-radius: 12px;
+    border: 1px solid #334155;
+    flex-wrap: wrap;
+  }
+
+  .bar-title {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-right: 0.25rem;
+  }
+
+  .num-pill {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: #f1f5f9;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .num-pill:hover {
+    border-color: #f59e0b;
+    color: #f59e0b;
+    transform: scale(1.08);
+  }
+
+  .num-pill.active {
+    background: #f59e0b;
+    color: #0f172a;
+    border-color: #f59e0b;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+  }
+
+  .map-container {
+    background:
+      radial-gradient(ellipse at 50% 40%, rgba(56, 189, 248, 0.07), transparent 70%),
+      #0b1220;
+    border: 1px solid #38bdf8;
+    border-radius: 16px;
+    padding: 0.5rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  }
+
+  .world-map-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .land {
+    fill: #1b2740;
+    stroke: #3b4c6b;
+    stroke-width: 0.6;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .map-container :global(.title-bg) {
+    fill: rgba(15, 23, 42, 0.85);
+    stroke: #f59e0b;
+    stroke-width: 1.5px;
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+  }
+
+  .map-container :global(.title-text) {
+    font-size: 16px;
+    font-weight: 900;
+    fill: #f59e0b;
+    letter-spacing: 0.5px;
+    dominant-baseline: middle;
+  }
+
+  .map-container :global(.flight-path) {
+    fill: none;
+    stroke: #38bdf8;
+    stroke-width: 2.5;
+    stroke-dasharray: 7 7;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+    filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.6));
+    animation: dash 1.2s linear infinite;
+  }
+
+  .map-container :global(.marker) {
+    cursor: pointer;
+    outline: none;
+  }
+
+  .map-container :global(.marker-halo) {
+    animation: mapPulse 2s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .map-container :global(.marker-from .marker-halo) { fill: rgba(34, 197, 94, 0.35); }
+  .map-container :global(.marker-to .marker-halo) { fill: rgba(56, 189, 248, 0.35); }
+  .map-container :global(.marker-dot) { stroke: #ffffff; stroke-width: 2; }
+  .map-container :global(.marker-from .marker-dot) { fill: #22c55e; }
+  .map-container :global(.marker-to .marker-dot) { fill: #38bdf8; }
+
+  .map-container :global(.map-label) {
+    font-size: 13px;
+    font-weight: 700;
+    paint-order: stroke;
+    stroke: #0b1220;
+    stroke-width: 4px;
+    stroke-linejoin: round;
+    pointer-events: none;
+  }
+  .map-container :global(.marker-from .map-label) { fill: #86efac; }
+  .map-container :global(.marker-to .map-label) { fill: #7dd3fc; }
+
+  .map-container :global(.marker-popover) {
+    display: none;
+    pointer-events: none;
+  }
+
+  .map-container :global(.marker.popover-open .marker-popover) {
+    display: block;
+  }
+
+  .map-container :global(.popover-bg) {
+    fill: #0f172a;
+    stroke: #f59e0b;
+    stroke-width: 2.5px;
+    filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.8));
+  }
+
+  .map-container :global(.popover-title) {
+    font-size: 20px;
+    font-weight: 900;
+    fill: #f59e0b;
+  }
+
+  .map-container :global(.popover-desc) {
+    font-size: 18px;
+    fill: #f8fafc;
+    font-weight: 600;
+  }
+
+  @keyframes mapPulse {
+    0%, 100% { transform: scale(0.8); opacity: 1; }
+    50% { transform: scale(1.6); opacity: 0.35; }
+  }
+
+  @keyframes dash {
+    to { stroke-dashoffset: -28; }
+  }
+
+  .metissage-paintings {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    align-items: start;
+    margin-top: 1rem;
+  }
+
+  .metissage-hint {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    text-align: center;
+  }
+
+  .metissage-pair { display: flex; flex-direction: column; gap: 0.75rem; margin: 0; }
+
+  .metissage-compare {
+    --pos: 50%;
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border: 1px solid var(--border, #334155);
+    border-radius: 16px;
+    background: #0f172a;
+    box-shadow: 0 18px 40px rgba(2, 6, 23, 0.35);
+    isolation: isolate;
+    user-select: none;
+  }
+
+  .metissage-layers {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 40%, rgba(56, 189, 248, 0.08), transparent 60%), #0f172a;
+  }
+
+  .metissage-img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; }
+  .metissage-img-base { z-index: 0; }
+  .metissage-img-top { z-index: 1; background: #0f172a; clip-path: inset(0 calc(100% - var(--pos)) 0 0); }
+
+  .metissage-divider {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--pos);
+    z-index: 3;
+    width: 2px;
+    transform: translateX(-50%);
+    background: linear-gradient(#38bdf8, #f8fafc, #38bdf8);
+    pointer-events: none;
+  }
+
+  .metissage-handle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 2px solid #f8fafc;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.9);
+    color: #f8fafc;
+    font-size: 1.1rem;
+    transform: translate(-50%, -50%);
+  }
+
+  .metissage-range {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: ew-resize;
+  }
+
+  .metissage-title {
+    min-height: 1.5em;
+    margin: 0;
+    color: #f1f5f9;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-align: center;
+  }
+</style>

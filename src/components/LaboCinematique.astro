@@ -1,0 +1,1374 @@
+---
+import { relativeUrl } from '../utils/navigation';
+
+import { gifs, musics, analyses } from '../data/laboCinematiqueData';
+
+---
+
+<section class="labo" id="cinemaLabo" aria-labelledby="laboTitle">
+  <header class="labo-head">
+    <div class="labo-head-text">
+      <p class="labo-kicker"><span aria-hidden="true">🎬</span> Atelier interactif</p>
+      <h3 class="labo-title" id="laboTitle">Labo Musique &amp; Image</h3>
+      <p class="labo-intro">
+        Associe un visuel et une musique, lance ton montage, puis identifie la fonction de la musique.
+        Change de combinaison pour comparer les effets et découvrir les trois procédés du langage
+        cinématographique.
+      </p>
+    </div>
+    <button type="button" class="labo-reset" id="laboReset">↺ Réinitialiser</button>
+  </header>
+
+  <div class="labo-workspace">
+    <div class="labo-picker">
+      <fieldset class="labo-field">
+        <legend class="labo-legend"><span class="labo-step-num">1</span> Choisis un visuel</legend>
+        <div class="labo-gifs">
+          {gifs.map((gif) => (
+            <button
+              type="button"
+              class="labo-gif"
+              data-gif={gif.id}
+              data-kind={gif.kind}
+              data-alt={gif.alt}
+              data-src={relativeUrl(`/cinema/${gif.file}`)}
+              draggable="true"
+              aria-pressed="false"
+            >
+              {gif.kind === 'video' ? (
+                <video
+                  src={relativeUrl(`/cinema/${gif.file}`)}
+                  aria-label={gif.alt}
+                  width="320"
+                  height="180"
+                  muted
+                  loop
+                  autoplay
+                  playsinline
+                  preload="none"
+                  disablepictureinpicture
+                  draggable="false"
+                />
+              ) : (
+                <img
+                  src={relativeUrl(`/cinema/${gif.file}`)}
+                  alt={gif.alt}
+                  width="320"
+                  height="180"
+                  loading="lazy"
+                  decoding="async"
+                  draggable="false"
+                />
+              )}
+              <span class="labo-gif-check" aria-hidden="true">✓</span>
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
+      <fieldset class="labo-field">
+        <legend class="labo-legend"><span class="labo-step-num">2</span> Choisis une musique</legend>
+        <div class="labo-tracks">
+          {musics.map((music, index) => (
+            <button
+              type="button"
+              class="labo-track"
+              data-music={music.id}
+              data-src={relativeUrl(`/cinema/${music.file}`)}
+              draggable="true"
+              aria-pressed="false"
+            >
+              <span class="labo-track-icon" aria-hidden="true">🎵</span>
+              <span class="labo-track-body">
+                <span class="labo-track-name">Extrait {index + 1}</span>
+              </span>
+              <span class="labo-track-check" aria-hidden="true">✓</span>
+            </button>
+          ))}
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="labo-montage">
+      <p class="labo-legend labo-montage-title">
+        <span class="labo-step-num">3</span> Table de montage
+      </p>
+
+      <div
+        class="labo-screen"
+        id="laboScreen"
+        data-drop="gif"
+        data-filled="false"
+        tabindex="0"
+        role="group"
+        aria-label="Écran de montage : déposez un GIF ici"
+      >
+        <p class="labo-screen-empty" id="laboScreenEmpty">
+          <span class="labo-screen-icon" aria-hidden="true">🎞️</span>
+          Glisse un GIF ici ou clique sur un visuel
+        </p>
+        <img class="labo-screen-img" id="laboScreenImg" alt="" hidden decoding="async" />
+        <video
+          class="labo-screen-img"
+          id="laboScreenVideo"
+          muted
+          loop
+          playsinline
+          preload="none"
+          disablepictureinpicture
+          hidden
+        ></video>
+        <span class="labo-screen-rec" id="laboScreenRec" hidden>
+          <span class="labo-rec-dot" aria-hidden="true"></span> Montage en cours
+        </span>
+        <button
+          type="button"
+          class="labo-screen-clear"
+          id="laboScreenClear"
+          aria-label="Retirer le visuel du montage"
+          hidden
+        >×</button>
+      </div>
+
+      <div class="labo-audio" id="laboAudio" data-drop="music" data-filled="false">
+        <p class="labo-audio-empty" id="laboAudioEmpty">
+          <span aria-hidden="true">🎵</span>
+          Glisse une musique ici ou clique sur une piste
+        </p>
+        <div class="labo-audio-current" id="laboAudioCurrent" hidden>
+          <span class="labo-audio-wave" aria-hidden="true">♫</span>
+          <span class="labo-audio-label" id="laboAudioLabel"></span>
+          <button
+            type="button"
+            class="labo-audio-clear"
+            id="laboAudioClear"
+            aria-label="Retirer la musique du montage"
+          >×</button>
+        </div>
+      </div>
+
+      <div class="labo-actions">
+        <button type="button" class="labo-launch" id="laboLaunch" disabled>
+          ▶ Lancer le montage
+        </button>
+        <button type="button" class="labo-stop" id="laboStop" hidden>
+          ⏹ Arrêter le montage
+        </button>
+      </div>
+      <p class="labo-status" id="laboStatus" aria-live="polite"></p>
+    </div>
+  </div>
+
+  <fieldset class="labo-field labo-analysis" id="laboAnalysis">
+    <legend class="labo-legend">
+      <span class="labo-step-num">4</span> Analyse la fonction de la musique
+    </legend>
+    <p class="labo-hint" id="laboHint">
+      Lance d'abord ton montage, puis choisis une des trois propositions.
+    </p>
+
+    <div class="labo-choices" id="laboChoices" role="group" aria-label="Fonction de la musique">
+      {analyses.map((analysis) => (
+        <button type="button" class="labo-choice" data-analysis={analysis.id} aria-pressed="false">
+          <span class="labo-choice-icon" aria-hidden="true">{analysis.icon}</span>
+          <span class="labo-choice-body">
+            <strong>{analysis.label}</strong>
+            <small>{analysis.desc}</small>
+          </span>
+          <span class="labo-choice-badge" aria-hidden="true"></span>
+        </button>
+      ))}
+    </div>
+
+    <div class="labo-actions">
+      <button type="button" class="labo-check" id="laboCheck" disabled>
+        Vérifier mon analyse
+      </button>
+    </div>
+
+    <div class="labo-feedback" id="laboFeedback" hidden aria-live="polite">
+      <p class="labo-feedback-title" id="laboFeedbackTitle"></p>
+      <p class="labo-feedback-text" id="laboFeedbackText"></p>
+    </div>
+  </fieldset>
+
+</section>
+
+<script>
+  import { onAudioEvent, playAudio, stopAudio } from '../utils/audioManager';
+  import { shuffleChildren } from '../utils/random';
+  import type { AnalysisId, GifId, MusicId } from '../data/laboCinematiqueData';
+  const {
+    analysisNames,
+    asAnalysisId,
+    asGifId,
+    asMusicId,
+    explanations,
+    getCorrectAnalysis,
+    pairNotes,
+  } = await import('../data/laboCinematiqueData');
+
+  interface DraggedItem {
+    type: 'gif' | 'music';
+    id: GifId | MusicId;
+  }
+
+  const root = document.getElementById('cinemaLabo');
+
+  if (root) {
+    const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+    const gifButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-gif]'));
+    const trackButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-music]'));
+    const choiceButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-analysis]'));
+
+    const resetButton = $<HTMLButtonElement>('laboReset');
+    const screen = $<HTMLDivElement>('laboScreen');
+    const screenEmpty = $<HTMLParagraphElement>('laboScreenEmpty');
+    const screenImg = $<HTMLImageElement>('laboScreenImg');
+    const screenVideo = $<HTMLVideoElement>('laboScreenVideo');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const screenRec = $<HTMLSpanElement>('laboScreenRec');
+    const screenClear = $<HTMLButtonElement>('laboScreenClear');
+    const audioSlot = $<HTMLDivElement>('laboAudio');
+    const audioEmpty = $<HTMLParagraphElement>('laboAudioEmpty');
+    const audioCurrent = $<HTMLDivElement>('laboAudioCurrent');
+    const audioLabel = $<HTMLSpanElement>('laboAudioLabel');
+    const audioClear = $<HTMLButtonElement>('laboAudioClear');
+    const launchButton = $<HTMLButtonElement>('laboLaunch');
+    const stopButton = $<HTMLButtonElement>('laboStop');
+    const status = $<HTMLParagraphElement>('laboStatus');
+    const hint = $<HTMLParagraphElement>('laboHint');
+    const checkButton = $<HTMLButtonElement>('laboCheck');
+    const feedback = $<HTMLDivElement>('laboFeedback');
+    const feedbackTitle = $<HTMLParagraphElement>('laboFeedbackTitle');
+    const feedbackText = $<HTMLParagraphElement>('laboFeedbackText');
+
+    let selectedGif: GifId | null = null;
+    let selectedMusic: MusicId | null = null;
+    let selectedAnalysis: AnalysisId | null = null;
+    let montageActive = false;
+    let hasLaunched = false;
+    let playToken = 0;
+    let draggedItem: DraggedItem | null = null;
+
+    /**
+     * Mélange l'ordre des extraits à chaque chargement de page.
+     * Les libellés « Extrait 1/2/3 » suivent la position et ne révèlent pas le caractère de la musique.
+     * Les enfants de .labo-tracks sont exactement les boutons [data-music] du root,
+     * dans le même ordre : mélanger le conteneur revient à mélanger trackButtons.
+     */
+    const tracksContainer = root.querySelector<HTMLElement>('.labo-tracks');
+    if (tracksContainer) {
+      shuffleChildren(tracksContainer).forEach((button, index) => {
+        const name = button.querySelector<HTMLElement>('.labo-track-name');
+        if (name) name.textContent = `Extrait ${index + 1}`;
+      });
+    }
+
+    if (reduceMotion) {
+      root.querySelectorAll<HTMLVideoElement>('video').forEach((video) => video.pause());
+    }
+
+    const findGifButton = (id: GifId) => gifButtons.find((button) => button.dataset.gif === id);
+    const findTrackButton = (id: MusicId) =>
+      trackButtons.find((button) => button.dataset.music === id);
+
+    const clearFeedback = () => {
+      feedback.hidden = true;
+      feedback.classList.remove('is-correct', 'is-wrong');
+      feedbackTitle.textContent = '';
+      feedbackText.textContent = '';
+
+      choiceButtons.forEach((button) => {
+        button.classList.remove('is-correct', 'is-wrong', 'is-muted');
+        const badge = button.querySelector<HTMLElement>('.labo-choice-badge');
+        if (badge) badge.textContent = '';
+      });
+    };
+
+    const updateChoices = () => {
+      choiceButtons.forEach((button) => {
+        const isSelected = button.dataset.analysis === selectedAnalysis;
+        button.setAttribute('aria-pressed', String(isSelected));
+      });
+    };
+
+    const updateUi = () => {
+      gifButtons.forEach((button) => {
+        const isSelected = button.dataset.gif === selectedGif;
+        button.classList.toggle('is-selected', isSelected);
+        button.setAttribute('aria-pressed', String(isSelected));
+      });
+
+      trackButtons.forEach((button) => {
+        const isSelected = button.dataset.music === selectedMusic;
+        button.classList.toggle('is-selected', isSelected);
+        button.setAttribute('aria-pressed', String(isSelected));
+      });
+
+      const gifButton = selectedGif ? findGifButton(selectedGif) : undefined;
+      const gifSrc = gifButton?.dataset.src ?? '';
+      const isVideo = gifButton?.dataset.kind === 'video';
+      screen.dataset.filled = selectedGif ? 'true' : 'false';
+      screenEmpty.hidden = Boolean(selectedGif);
+      screenClear.hidden = !selectedGif;
+      screenImg.hidden = !gifSrc || isVideo;
+      screenVideo.hidden = !gifSrc || !isVideo;
+
+      if (gifSrc && !isVideo) {
+        if (screenImg.getAttribute('src') !== gifSrc) {
+          screenImg.src = gifSrc;
+          screenImg.alt = gifButton?.dataset.alt ?? '';
+        }
+      } else {
+        screenImg.removeAttribute('src');
+        screenImg.alt = '';
+      }
+
+      if (gifSrc && isVideo) {
+        if (screenVideo.getAttribute('src') !== gifSrc) {
+          screenVideo.src = gifSrc;
+          screenVideo.setAttribute('aria-label', gifButton?.dataset.alt ?? '');
+        }
+        if (!reduceMotion) void screenVideo.play().catch(() => {});
+      } else if (screenVideo.hasAttribute('src')) {
+        screenVideo.pause();
+        screenVideo.removeAttribute('src');
+        screenVideo.load();
+      }
+
+      const trackButton = selectedMusic ? findTrackButton(selectedMusic) : undefined;
+      const trackName = trackButton?.querySelector('.labo-track-name')?.textContent?.trim() ?? '';
+      audioSlot.dataset.filled = selectedMusic ? 'true' : 'false';
+      audioEmpty.hidden = Boolean(selectedMusic);
+      audioCurrent.hidden = !selectedMusic;
+      audioLabel.textContent = selectedMusic ? `Musique choisie : ${trackName}` : '';
+
+      screenRec.hidden = !montageActive;
+      screen.classList.toggle('is-live', montageActive);
+
+      launchButton.hidden = montageActive;
+      launchButton.disabled = montageActive || !selectedGif || !selectedMusic;
+      launchButton.textContent = hasLaunched ? '▶ Relancer le montage' : '▶ Lancer le montage';
+
+      stopButton.hidden = !montageActive;
+      checkButton.disabled = !(hasLaunched && selectedAnalysis);
+      hint.textContent = hasLaunched
+        ? 'À toi de jouer : choisis la fonction qui correspond à ce montage.'
+        : "Lance d'abord ton montage, puis choisis une des trois propositions.";
+
+      updateChoices();
+    };
+
+    const stopMontage = (message = '') => {
+      playToken += 1;
+      stopAudio();
+      montageActive = false;
+      status.textContent = message;
+      updateUi();
+    };
+    const invalidateAfterChange = () => {
+      const wasActive = montageActive;
+      stopMontage(
+        wasActive ? 'Montage arrêté : relance-le pour écouter ta nouvelle association.' : '',
+      );
+      hasLaunched = false;
+      selectedAnalysis = null;
+      clearFeedback();
+    };
+
+    const selectGif = (id: GifId) => {
+      if (selectedGif === id) return;
+      invalidateAfterChange();
+      selectedGif = id;
+      updateUi();
+    };
+
+    const clearGif = () => {
+      if (!selectedGif) return;
+      invalidateAfterChange();
+      selectedGif = null;
+      updateUi();
+    };
+
+    const selectMusic = (id: MusicId) => {
+      if (selectedMusic === id) return;
+      invalidateAfterChange();
+      selectedMusic = id;
+      updateUi();
+    };
+
+    const clearMusic = () => {
+      if (!selectedMusic) return;
+      invalidateAfterChange();
+      selectedMusic = null;
+      updateUi();
+    };
+
+    const startMontage = async () => {
+      if (!selectedGif || !selectedMusic || montageActive) return;
+
+      const trackButton = findTrackButton(selectedMusic);
+      const src = trackButton?.dataset.src;
+      if (!src) return;
+
+      const token = ++playToken;
+      const playback = playAudio(src, { loop: false, volume: 0.9 });
+
+      montageActive = true;
+      status.textContent = '♪ Montage en cours : observe le visuel et écoute la musique.';
+      updateUi();
+
+      const started = await playback;
+      if (token !== playToken) return;
+
+      if (!started) {
+        montageActive = false;
+        status.textContent =
+          "La musique n'a pas pu être lue. Vérifie le son de ton appareil, puis relance le montage.";
+        updateUi();
+        return;
+      }
+
+      hasLaunched = true;
+      updateUi();
+    };
+
+    const checkAnalysis = () => {
+      if (!selectedGif || !selectedMusic || !selectedAnalysis || !hasLaunched) return;
+
+      const correct = getCorrectAnalysis(selectedGif, selectedMusic);
+      const isCorrect = selectedAnalysis === correct;
+      const pairNote = pairNotes[`${selectedGif}|${selectedMusic}`] ?? '';
+
+      choiceButtons.forEach((button) => {
+        const id = asAnalysisId(button.dataset.analysis);
+        const badge = button.querySelector<HTMLElement>('.labo-choice-badge');
+        button.classList.remove('is-correct', 'is-wrong', 'is-muted');
+        if (badge) badge.textContent = '';
+
+        if (id === correct) {
+          button.classList.add('is-correct');
+          if (badge) badge.textContent = '✓';
+        } else if (id === selectedAnalysis) {
+          button.classList.add('is-wrong');
+          if (badge) badge.textContent = '✗';
+        } else {
+          button.classList.add('is-muted');
+        }
+      });
+
+      feedback.classList.toggle('is-correct', isCorrect);
+      feedback.classList.toggle('is-wrong', !isCorrect);
+      feedbackTitle.textContent = isCorrect ? '✅ Bien vu !' : '❌ Pas tout à fait…';
+
+      const chosenLabel = analysisNames[selectedAnalysis];
+      const correctLabel = analysisNames[correct];
+
+      feedbackText.textContent = isCorrect
+        ? `${explanations[correct]} ${pairNote}`
+        : `Tu as choisi « ${chosenLabel} », mais la bonne réponse est « ${correctLabel} ». ${explanations[correct]} ${pairNote}`;
+
+      feedback.hidden = false;
+      feedback.scrollIntoView({ block: 'nearest' });
+    };
+
+    const resetAll = () => {
+      stopMontage();
+      selectedGif = null;
+      selectedMusic = null;
+      selectedAnalysis = null;
+      hasLaunched = false;
+      clearFeedback();
+      status.textContent = 'Atelier réinitialisé. Choisis un visuel et une musique.';
+      updateUi();
+    };
+
+    onAudioEvent('ended', () => {
+      if (!montageActive) return;
+      montageActive = false;
+      status.textContent = 'Musique terminée. Relance le montage pour réécouter.';
+      updateUi();
+    });
+
+    onAudioEvent('statechange', ({ state }) => {
+      if (state !== 'error' || !montageActive) return;
+      montageActive = false;
+      status.textContent =
+        "La musique n'a pas pu être lue. Vérifie le son de ton appareil, puis relance le montage.";
+      updateUi();
+    });
+
+    document.addEventListener('cinema:tab-change', (event) => {
+      const detail = (event as CustomEvent<{ tab?: string }>).detail;
+      if (!detail || detail.tab === 'labo' || !montageActive) return;
+      stopMontage("Montage arrêté : tu as changé d'onglet.");
+    });
+    const dropTargets = [screen, audioSlot];
+
+    const readDraggedItem = (event: DragEvent): DraggedItem | null => {
+      if (draggedItem) return draggedItem;
+
+      const raw = event.dataTransfer?.getData('text/plain') ?? '';
+      const [type, id] = raw.split(':');
+
+      if (type === 'gif') {
+        const gifId = asGifId(id);
+        return gifId ? { type: 'gif', id: gifId } : null;
+      }
+
+      if (type === 'music') {
+        const musicId = asMusicId(id);
+        return musicId ? { type: 'music', id: musicId } : null;
+      }
+
+      return null;
+    };
+
+    gifButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const id = asGifId(button.dataset.gif);
+        if (id) selectGif(id);
+      });
+
+      button.addEventListener('dragstart', (event) => {
+        const id = asGifId(button.dataset.gif);
+        if (!id) return;
+        draggedItem = { type: 'gif', id };
+        if (event.dataTransfer) {
+          event.dataTransfer.effectAllowed = 'copy';
+          event.dataTransfer.setData('text/plain', `gif:${id}`);
+        }
+        button.classList.add('is-dragging');
+      });
+
+      button.addEventListener('dragend', () => {
+        draggedItem = null;
+        button.classList.remove('is-dragging');
+        dropTargets.forEach((target) => target.classList.remove('is-over'));
+      });
+    });
+
+    trackButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const id = asMusicId(button.dataset.music);
+        if (id) selectMusic(id);
+      });
+
+      button.addEventListener('dragstart', (event) => {
+        const id = asMusicId(button.dataset.music);
+        if (!id) return;
+        draggedItem = { type: 'music', id };
+        if (event.dataTransfer) {
+          event.dataTransfer.effectAllowed = 'copy';
+          event.dataTransfer.setData('text/plain', `music:${id}`);
+        }
+        button.classList.add('is-dragging');
+      });
+
+      button.addEventListener('dragend', () => {
+        draggedItem = null;
+        button.classList.remove('is-dragging');
+        dropTargets.forEach((target) => target.classList.remove('is-over'));
+      });
+    });
+
+    dropTargets.forEach((target) => {
+      target.addEventListener('dragenter', (event) => {
+        if (!draggedItem) return;
+        event.preventDefault();
+        target.classList.add('is-over');
+      });
+
+      target.addEventListener('dragover', (event) => {
+        if (!draggedItem) return;
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+        target.classList.add('is-over');
+      });
+
+      target.addEventListener('dragleave', (event) => {
+        if (event.target !== target) return;
+        target.classList.remove('is-over');
+      });
+
+      target.addEventListener('drop', (event) => {
+        event.preventDefault();
+        target.classList.remove('is-over');
+
+        const item = readDraggedItem(event);
+        draggedItem = null;
+        if (!item) return;
+
+        if (item.type === 'gif') {
+          selectGif(item.id as GifId);
+        } else {
+          selectMusic(item.id as MusicId);
+        }
+      });
+    });
+
+    choiceButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const id = asAnalysisId(button.dataset.analysis);
+        if (!id || selectedAnalysis === id) return;
+        selectedAnalysis = id;
+        clearFeedback();
+        updateUi();
+      });
+    });
+
+    launchButton.addEventListener('click', () => {
+      void startMontage();
+    });
+    stopButton.addEventListener('click', () => stopMontage('Montage arrêté.'));
+    resetButton.addEventListener('click', resetAll);
+    screenClear.addEventListener('click', clearGif);
+    audioClear.addEventListener('click', clearMusic);
+    checkButton.addEventListener('click', checkAnalysis);
+
+    clearFeedback();
+    updateUi();
+  }
+</script>
+
+<style>
+  .labo {
+    --labo-blue: #38bdf8;
+    --labo-gold: #fbbf24;
+    --labo-text: #e2e8f0;
+    --labo-muted: #94a3b8;
+    --labo-surface: #1e293b;
+    --labo-border: rgba(148, 163, 184, 0.22);
+    display: flex;
+    flex-direction: column;
+    gap: 1.6rem;
+    padding: clamp(1rem, 2.5vw, 1.75rem);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: 20px;
+    background:
+      radial-gradient(120% 90% at 100% 0%, rgba(251, 191, 36, 0.09), transparent 55%),
+      linear-gradient(155deg, #0f172a 0%, #101b31 55%, #0f172a 100%);
+    color: var(--labo-text);
+    box-shadow: 0 30px 70px -50px rgba(2, 6, 23, 0.95);
+  }
+
+  .labo [hidden] {
+    display: none !important;
+  }
+
+  .labo button:focus-visible,
+  .labo-screen:focus-visible {
+    outline: 2px solid var(--labo-blue);
+    outline-offset: 2px;
+  }
+
+  .labo-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .labo-head-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    max-width: 62ch;
+  }
+
+  .labo-kicker {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--labo-gold);
+  }
+
+  .labo-title {
+    margin: 0;
+    font-size: clamp(1.25rem, 2.6vw, 1.6rem);
+    line-height: 1.2;
+    color: #f8fafc;
+  }
+
+  .labo-intro {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--labo-muted);
+  }
+
+  .labo-reset {
+    flex-shrink: 0;
+    padding: 0.5rem 0.9rem;
+    border: 1px solid rgba(251, 191, 36, 0.45);
+    border-radius: 999px;
+    background: rgba(251, 191, 36, 0.08);
+    color: var(--labo-gold);
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .labo-reset:hover {
+    border-color: var(--labo-gold);
+    background: rgba(251, 191, 36, 0.16);
+  }
+
+  .labo-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: 1.25rem;
+    align-items: start;
+  }
+
+  .labo-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-width: 0;
+  }
+
+  .labo-field {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .labo-legend {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0 0 0.65rem;
+    padding: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #f1f5f9;
+  }
+
+  .labo-step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.55rem;
+    height: 1.55rem;
+    flex-shrink: 0;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    border-radius: 999px;
+    background: rgba(56, 189, 248, 0.14);
+    color: var(--labo-blue);
+    font-size: 0.78rem;
+    font-weight: 800;
+  }
+  .labo-gifs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+
+  .labo-gif {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.35rem;
+    border: 1px solid var(--labo-border);
+    border-radius: 12px;
+    background: var(--labo-surface);
+    color: var(--labo-text);
+    font: inherit;
+    text-align: left;
+    cursor: grab;
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .labo-gif:hover {
+    border-color: rgba(56, 189, 248, 0.65);
+    transform: translateY(-1px);
+  }
+
+  .labo-gif:active {
+    cursor: grabbing;
+  }
+
+  .labo-gif.is-selected {
+    border-color: var(--labo-blue);
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.28);
+  }
+
+  .labo-gif.is-dragging {
+    opacity: 0.55;
+  }
+
+  .labo-gif img,
+  .labo-gif video {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: 8px;
+    pointer-events: none;
+    -webkit-user-drag: none;
+  }
+
+  .labo-gif-check {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 999px;
+    background: var(--labo-blue);
+    color: #06283d;
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+
+  .labo-gif.is-selected .labo-gif-check {
+    display: inline-flex;
+  }
+
+  .labo-tracks {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .labo-track {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--labo-border);
+    border-radius: 12px;
+    background: var(--labo-surface);
+    color: var(--labo-text);
+    font: inherit;
+    text-align: left;
+    cursor: grab;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .labo-track:hover {
+    border-color: rgba(251, 191, 36, 0.55);
+  }
+
+  .labo-track.is-selected {
+    border-color: var(--labo-gold);
+    box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.2);
+  }
+
+  .labo-track.is-dragging {
+    opacity: 0.55;
+  }
+
+  .labo-track-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    border-radius: 10px;
+    background: rgba(56, 189, 248, 0.12);
+    font-size: 0.95rem;
+  }
+
+  .labo-track.is-selected .labo-track-icon {
+    background: rgba(251, 191, 36, 0.16);
+  }
+
+  .labo-track-body {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .labo-track-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .labo-track-check {
+    display: none;
+    color: var(--labo-gold);
+    font-weight: 800;
+  }
+
+  .labo-track.is-selected .labo-track-check {
+    display: inline;
+  }
+  .labo-montage {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    min-width: 0;
+  }
+
+  .labo-montage-title {
+    margin-bottom: 0.1rem;
+  }
+
+  .labo-screen {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border: 1px dashed #334155;
+    border-radius: 16px;
+    background:
+      radial-gradient(90% 90% at 50% 0%, rgba(56, 189, 248, 0.07), transparent 70%),
+      #080f1e;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .labo-screen[data-filled='true'] {
+    border-style: solid;
+    border-color: rgba(56, 189, 248, 0.4);
+  }
+
+  .labo-screen.is-over {
+    border-color: var(--labo-gold);
+    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.2);
+  }
+
+  .labo-screen.is-live {
+    border-color: rgba(248, 113, 113, 0.55);
+    box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.18);
+  }
+
+  .labo-screen-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+    padding: 1rem;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #7c8ba1;
+  }
+
+  .labo-screen-icon {
+    font-size: 2rem;
+  }
+
+  .labo-screen-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .labo-screen-rec {
+    position: absolute;
+    top: 0.6rem;
+    left: 0.6rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.6rem;
+    border: 1px solid rgba(248, 113, 113, 0.5);
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.85);
+    color: #fecaca;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+  }
+
+  .labo-rec-dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 999px;
+    background: #f87171;
+    animation: laboPulse 1.1s ease-in-out infinite;
+  }
+
+  @keyframes laboPulse {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.35;
+      transform: scale(0.75);
+    }
+  }
+
+  .labo-screen-clear,
+  .labo-audio-clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    padding: 0;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.85);
+    color: #cbd5e1;
+    font: inherit;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+  }
+
+  .labo-screen-clear {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+
+  .labo-screen-clear:hover,
+  .labo-audio-clear:hover {
+    border-color: #f87171;
+    background: rgba(239, 68, 68, 0.2);
+    color: #fecaca;
+  }
+
+  .labo-audio {
+    display: flex;
+    align-items: center;
+    min-height: 3rem;
+    padding: 0.55rem 0.75rem;
+    border: 1px dashed #334155;
+    border-radius: 12px;
+    background: #0d1728;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .labo-audio[data-filled='true'] {
+    border-style: solid;
+    border-color: rgba(251, 191, 36, 0.38);
+  }
+
+  .labo-audio.is-over {
+    border-color: var(--labo-gold);
+    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.18);
+  }
+
+  .labo-audio-empty {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+    font-size: 0.82rem;
+    color: #7c8ba1;
+  }
+
+  .labo-audio-current {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+  }
+
+  .labo-audio-wave {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.8rem;
+    height: 1.8rem;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: rgba(251, 191, 36, 0.16);
+    color: var(--labo-gold);
+  }
+
+  .labo-audio-label {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: #fde68a;
+  }
+  .labo-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .labo-launch,
+  .labo-stop,
+  .labo-check {
+    padding: 0.65rem 1.15rem;
+    border-radius: 999px;
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s ease, filter 0.2s ease, background 0.2s ease;
+  }
+
+  .labo-launch {
+    border: 1px solid rgba(56, 189, 248, 0.5);
+    background: linear-gradient(135deg, #0284c7, #38bdf8);
+    color: #04121f;
+    box-shadow: 0 12px 24px -16px rgba(56, 189, 248, 0.9);
+  }
+
+  .labo-launch:hover:not(:disabled) {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+  }
+
+  .labo-launch:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .labo-stop {
+    border: 1px solid rgba(248, 113, 113, 0.5);
+    background: rgba(239, 68, 68, 0.14);
+    color: #fecaca;
+  }
+
+  .labo-stop:hover {
+    background: rgba(239, 68, 68, 0.24);
+  }
+
+  .labo-status {
+    min-height: 1.2em;
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: var(--labo-muted);
+  }
+
+  .labo-analysis {
+    padding-top: 1.35rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.16);
+  }
+
+  .labo-hint {
+    margin: 0 0 0.75rem;
+    font-size: 0.84rem;
+    line-height: 1.45;
+    color: var(--labo-muted);
+  }
+
+  .labo-choices {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.6rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .labo-choice {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding: 0.8rem 0.85rem;
+    border: 1px solid var(--labo-border);
+    border-radius: 12px;
+    background: var(--labo-surface);
+    color: var(--labo-text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .labo-choice:hover {
+    border-color: rgba(56, 189, 248, 0.6);
+    transform: translateY(-1px);
+  }
+
+  .labo-choice[aria-pressed='true'] {
+    border-color: var(--labo-blue);
+    background: rgba(56, 189, 248, 0.1);
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.22);
+  }
+
+  .labo-choice-icon {
+    flex-shrink: 0;
+    font-size: 1.1rem;
+    line-height: 1.3;
+  }
+
+  .labo-choice-body {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .labo-choice-body strong {
+    font-size: 0.87rem;
+    line-height: 1.3;
+  }
+
+  .labo-choice-body small {
+    font-size: 0.76rem;
+    line-height: 1.4;
+    color: var(--labo-muted);
+  }
+
+  .labo-choice-badge {
+    flex-shrink: 0;
+    font-size: 0.95rem;
+    font-weight: 800;
+  }
+
+  .labo-choice.is-correct {
+    border-color: #22c55e;
+    background: rgba(34, 197, 94, 0.12);
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.22);
+  }
+
+  .labo-choice.is-correct .labo-choice-badge {
+    color: #4ade80;
+  }
+
+  .labo-choice.is-wrong {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+  }
+
+  .labo-choice.is-wrong .labo-choice-badge {
+    color: #f87171;
+  }
+
+  .labo-choice.is-muted {
+    opacity: 0.55;
+  }
+
+  .labo-check {
+    border: 1px solid rgba(251, 191, 36, 0.55);
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    color: #1c1917;
+    box-shadow: 0 12px 24px -18px rgba(251, 191, 36, 0.9);
+  }
+
+  .labo-check:hover:not(:disabled) {
+    filter: brightness(1.05);
+    transform: translateY(-1px);
+  }
+
+  .labo-check:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  .labo-feedback {
+    margin-top: 0.85rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    background: rgba(30, 41, 59, 0.6);
+  }
+
+  .labo-feedback-title {
+    margin: 0 0 0.35rem;
+    font-size: 0.9rem;
+    font-weight: 800;
+  }
+
+  .labo-feedback-text {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: #dbe4f0;
+  }
+
+  .labo-feedback.is-correct {
+    border-color: rgba(34, 197, 94, 0.5);
+    background: rgba(34, 197, 94, 0.12);
+  }
+
+  .labo-feedback.is-correct .labo-feedback-title {
+    color: #4ade80;
+  }
+
+  .labo-feedback.is-wrong {
+    border-color: rgba(239, 68, 68, 0.5);
+    background: rgba(239, 68, 68, 0.1);
+  }
+
+  .labo-feedback.is-wrong .labo-feedback-title {
+    color: #f87171;
+  }
+
+  @media (max-width: 860px) {
+    .labo-workspace {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 520px) {
+    .labo {
+      padding: 0.9rem;
+      border-radius: 16px;
+    }
+
+    .labo-gifs {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .labo-gif:last-child {
+      grid-column: 1 / -1;
+    }
+
+    .labo-gif:last-child img,
+    .labo-gif:last-child video {
+      aspect-ratio: 21 / 9;
+    }
+
+    .labo-actions {
+      flex-direction: column;
+    }
+
+    .labo-launch,
+    .labo-stop,
+    .labo-check {
+      width: 100%;
+    }
+
+    .labo-choices {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .labo-gif,
+    .labo-choice,
+    .labo-launch,
+    .labo-stop,
+    .labo-check,
+    .labo-reset {
+      transition: none;
+    }
+
+    .labo-rec-dot {
+      animation: none;
+    }
+  }
+</style>
+
+

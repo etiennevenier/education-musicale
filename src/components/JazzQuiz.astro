@@ -1,0 +1,142 @@
+---
+import { jazzQuizQuestions, JAZZ_QUESTIONS_PER_GAME } from '../data/jazzQuizData';
+import '../styles/quiz-card.css';
+
+const questionsPerGame = Math.min(JAZZ_QUESTIONS_PER_GAME, jazzQuizQuestions.length);
+---
+
+<div class="quiz-card jazz-quiz-card">
+  <div class="fuzeau-header">
+    <span class="badge">Quiz de connaissances</span>
+    <h4>Connais-tu bien le jazz ?</h4>
+  </div>
+
+  <p class="quiz-intro">
+    {questionsPerGame} questions pour vérifier ce que tu as retenu du cours. Une seule bonne réponse
+    par question.
+  </p>
+
+  <div id="jqProgressBox" class="progress-box">
+    <div class="progress-text">
+      <span id="jqProgressLabel">Question 1 / {questionsPerGame}</span>
+      <span id="jqScoreLabel" class="score-label">Score : 0 / {questionsPerGame}</span>
+    </div>
+    <div class="progress-bar"><div id="jqProgressFill" class="progress-fill"></div></div>
+  </div>
+
+  <div id="jqQuestionContainer" class="question-container"></div>
+
+  <div id="jqOptionsContainer" class="options-grid"></div>
+
+  <div id="jqFeedback" class="feedback-msg hidden" aria-live="polite"></div>
+
+  <div id="jqActionFooter" class="action-footer">
+    <button id="jqBtnNext" class="btn-next" type="button" disabled>
+      Question suivante ➔
+    </button>
+  </div>
+
+  <div id="jqResultContainer" class="result-container hidden" aria-live="polite"></div>
+</div>
+
+<script>
+  import { shuffle } from '../utils/random';
+  import { QuizSession } from '../utils/quizSession';
+  import type { JazzQuizQuestion } from '../data/jazzQuizData';
+  const { jazzQuizQuestions, JAZZ_QUESTIONS_PER_GAME } = await import('../data/jazzQuizData');
+
+  interface QuizEntry {
+    question: JazzQuizQuestion;
+    options: string[];
+  }
+
+  const QUESTIONS_PER_GAME = Math.min(JAZZ_QUESTIONS_PER_GAME, jazzQuizQuestions.length);
+
+  // Passage automatique à la question suivante après une bonne réponse.
+
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+  const progressBox = $<HTMLDivElement>('jqProgressBox');
+  const progressLabel = $<HTMLSpanElement>('jqProgressLabel');
+  const scoreLabel = $<HTMLSpanElement>('jqScoreLabel');
+  const progressFill = $<HTMLDivElement>('jqProgressFill');
+  const questionContainer = $<HTMLDivElement>('jqQuestionContainer');
+  const optionsContainer = $<HTMLDivElement>('jqOptionsContainer');
+  const quizFeedback = $<HTMLDivElement>('jqFeedback');
+  const actionFooter = $<HTMLDivElement>('jqActionFooter');
+  const btnNext = $<HTMLButtonElement>('jqBtnNext');
+  const resultContainer = $<HTMLDivElement>('jqResultContainer');
+
+  let queue: QuizEntry[] = [];
+  let currentEntry: QuizEntry | null = null;
+
+  const session = new QuizSession({
+    unit: 'question',
+    progress: { progressLabel, scoreLabel, progressFill },
+    nextBtn: btnNext,
+    feedback: quizFeedback,
+    result: {
+      hide: [progressBox, questionContainer, optionsContainer, actionFooter],
+      container: resultContainer,
+      restartId: 'jqBtnRestart',
+    },
+    game: [progressBox, questionContainer, optionsContainer, actionFooter],
+    renderQuestion: (index) => {
+      const entry = queue[index];
+      currentEntry = entry;
+
+      const kind = document.createElement('span');
+      kind.className = 'question-kind';
+      kind.textContent = `Question ${index + 1}`;
+      const text = document.createElement('p');
+      text.className = 'question-text';
+      text.textContent = entry.question.question;
+      questionContainer.replaceChildren(kind, text);
+
+      optionsContainer.replaceChildren();
+      entry.options.forEach((option) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn-option';
+        btn.dataset.option = option;
+        btn.textContent = option;
+        btn.addEventListener('click', () => checkAnswer(option, btn));
+        optionsContainer.appendChild(btn);
+      });
+    },
+    onRestart: () => startGame(),
+  });
+
+  function checkAnswer(option: string, button: HTMLButtonElement) {
+    if (session.isAnswered || !currentEntry) return;
+
+    optionsContainer
+      .querySelectorAll<HTMLButtonElement>('.btn-option')
+      .forEach((btn) => (btn.disabled = true));
+
+    const isCorrect = option === currentEntry.question.correctAnswer;
+
+    if (isCorrect) {
+      button.classList.add('correct');
+    } else {
+      button.classList.add('incorrect');
+      const goodAnswer = Array.from(
+        optionsContainer.querySelectorAll<HTMLButtonElement>('.btn-option')
+      ).find((btn) => btn.dataset.option === currentEntry?.question.correctAnswer);
+      goodAnswer?.classList.add('correct');
+    }
+
+    session.answer(isCorrect, currentEntry.question.explanation);
+  }
+
+  function startGame() {
+    queue = shuffle(jazzQuizQuestions)
+      .slice(0, QUESTIONS_PER_GAME)
+      .map((question) => ({ question, options: shuffle(question.options) }));
+    session.start(queue.length);
+  }
+
+  btnNext.addEventListener('click', () => session.next());
+
+  startGame();
+</script>
