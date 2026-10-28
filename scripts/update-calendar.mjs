@@ -19,13 +19,13 @@ import { parisToday } from '../src/utils/sequenceCalendar.ts';
 
 const FILE = 'src/data/calendrierScolaire.ts';
 
-// On garde l'année scolaire précédente et toutes les suivantes.
+// On garde l'année scolaire en cours et les suivantes (les années passées ne servent plus).
 const today = parisToday();
 const currentYear = Number(today.slice(0, 4)) - (today.slice(5, 7) < '09' ? 1 : 0);
 const keep = (calendars) =>
   Object.fromEntries(
     Object.entries(calendars)
-      .filter(([year]) => Number(year) >= currentYear - 1)
+      .filter(([year]) => Number(year) >= currentYear)
       .sort(([a], [b]) => Number(a) - Number(b)),
   );
 
