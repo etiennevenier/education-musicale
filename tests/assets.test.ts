@@ -138,9 +138,9 @@ describe('assets publics', () => {
 
   it('le contrôle détecte bien une casse ou un nom différent', () => {
     // Auto-test du garde-fou : le fichier existe, mais pas sous cette forme.
-    expect(lookup('/cinema/gifjoyeux.gif').ok).toBe(true);
-    expect(lookup('/cinema/Gifjoyeux.gif').ok).toBe(false);
-    expect(lookup('/cinema/Gifjoyeux.gif').detail).toContain('casse differente');
+    expect(lookup('/cinema/gifjoyeux.mp4').ok).toBe(true);
+    expect(lookup('/cinema/Gifjoyeux.mp4').ok).toBe(false);
+    expect(lookup('/cinema/Gifjoyeux.mp4').detail).toContain('casse differente');
     expect(lookup('/cinema/inexistant.gif').ok).toBe(false);
   });
 });

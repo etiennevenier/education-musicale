@@ -27,14 +27,14 @@ export const gifs: LaboGif[] = [
   {
     id: 'triste',
     alt: 'Visuel 1',
-    file: 'giftriste.gif',
-    kind: 'image',
+    file: 'giftriste.mp4',
+    kind: 'video',
   },
   {
     id: 'joyeux',
     alt: 'Visuel 2',
-    file: 'gifjoyeux.gif',
-    kind: 'image',
+    file: 'gifjoyeux.mp4',
+    kind: 'video',
   },
   {
     id: 'neutre',
