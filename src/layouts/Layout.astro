@@ -11,8 +11,6 @@ interface Props {
   mobileHeader?: 'full' | 'minimal' | 'hidden';
   /** Signature discrète affichée sous le titre du site (page d'accueil). */
   siteSubtitle?: string;
-  /** Demande aux moteurs de recherche de ne pas indexer la page (pages techniques). */
-  noindex?: boolean;
 }
 
 const {
@@ -22,15 +20,12 @@ const {
   backLabel = 'Changer de niveau',
   mobileHeader = 'full',
   siteSubtitle,
-  noindex = false,
 } = Astro.props;
 // Un seul <h1> par page : le titre du site n'en est un que sur les pages « full ».
 const siteTitleIsHeading = mobileHeader === 'full';
 const isHome =
   Astro.url.pathname.replace(/\/+$/, '') === import.meta.env.BASE_URL.replace(/\/+$/, '');
 
-// URL canonique absolue (Astro.site + chemin courant, base incluse).
-const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
 ---
 
 <!doctype html>
@@ -40,9 +35,9 @@ const canonicalUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).href :
     <style is:inline>@layer base, tool-components;</style>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
-    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    {/* Site réservé aux élèves : aucune page ne doit apparaître dans les moteurs de recherche. */}
+    <meta name="robots" content="noindex, nofollow" />
     <meta name="theme-color" content="#0f172a" />
-    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
     <title>{title} - Éducation Musicale</title>
     <link rel="icon" type="image/svg+xml" href={relativeUrl('/favicon.svg')} />
   </head>

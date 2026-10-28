@@ -12,6 +12,18 @@ npm run build    # génère dist/
 npx astro check  # vérifie les types et les composants
 ```
 
+## Publication
+
+Le même site est publié à deux adresses :
+
+- GitHub Pages : https://etiennevenier.github.io/education-musicale (`npm run build`, workflow `deploy.yml`) ;
+- Cloudflare Workers : https://musique.etiennevenier.com, à la racine. Cloudflare lance
+  `node scripts/build-cloudflare.mjs` (vérifications + construction avec `SITE_TARGET=cloudflare`)
+  puis publie `dist/` selon `wrangler.jsonc`.
+
+Aucune page n'est référencée par les moteurs de recherche (balise `robots` dans `Layout.astro`
+et en-tête `X-Robots-Tag` dans `public/_headers`).
+
 ## Organisation du projet
 
 - `src/data/` : contenu des séquences et des quiz (`sequences.ts` = liste des niveaux et séquences).

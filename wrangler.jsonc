@@ -1,0 +1,12 @@
+// Réglages Cloudflare Workers : site 100 % statique (aucun code serveur).
+// Cloudflare construit le site avec « node scripts/build-cloudflare.mjs »
+// puis publie le dossier dist/ sur https://musique.etiennevenier.com.
+{
+  "name": "education-musicale",
+  "compatibility_date": "2026-10-23",
+  "assets": {
+    "directory": "./dist",
+    // Adresse inconnue : page « introuvable » du site (src/pages/404.astro).
+    "not_found_handling": "404-page"
+  }
+}
