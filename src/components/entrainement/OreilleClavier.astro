@@ -464,7 +464,7 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
       const isCorrect = playedMidi === currentMidi;
 
       if (isCorrect) {
-        feedbackEl.textContent = '✅ Bravo !';
+        feedbackEl.textContent = '';
         feedbackEl.className = 'oc-feedback correct';
         key.classList.add('is-correct');
       } else {

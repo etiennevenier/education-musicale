@@ -1133,7 +1133,7 @@ import { drawClefSymbol } from '../../utils/clefs';
         const isCorrect = selectedNote === currentNoteObj.name;
 
         if (isCorrect) {
-            feedbackEl.textContent = '✅ Bravo !';
+            feedbackEl.textContent = '';
             feedbackEl.className = 'feedback-msg correct';
         } else {
             feedbackEl.textContent = `❌ C'était ${currentNoteObj.name}.`;

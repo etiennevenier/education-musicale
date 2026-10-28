@@ -521,7 +521,7 @@ const whiteKeyCount = keyboard.filter((key) => key.type === 'white').length;
       const isCorrect = currentAnswerNames.includes(chosen);
 
       if (isCorrect) {
-        feedbackEl.textContent = '✅ Bravo !';
+        feedbackEl.textContent = '';
         feedbackEl.className = 'cn-feedback correct';
         button.classList.add('is-correct');
       } else {
