@@ -1,0 +1,74 @@
+---
+// Séquences de 6ème. Chaque niveau a sa page : seuls ses composants (et leur CSS)
+// sont envoyés aux élèves. Gabarit commun : src/components/SequencePage.astro.
+import SequencePage from '../../components/SequencePage.astro';
+import { siteData } from '../../data/sequences';
+import TapTempo from '../../components/TapTempo.astro';
+import PulsationVsRythme from '../../components/PulsationVsRythme.astro';
+import NuancesInteractive from '../../components/NuancesInteractive.astro';
+import NuancesQuiz from '../../components/NuancesQuiz.astro';
+import TimbreQuiz from '../../components/TimbreQuiz.astro';
+import AstucesTimbre from '../../components/AstucesTimbre.astro';
+import PlansSonoresQuiz from '../../components/PlansSonoresQuiz.astro';
+import HymneQuiz from '../../components/HymneQuiz.astro';
+import HymneVideoAnalyzer from '../../components/HymneVideoAnalyzer.astro';
+
+const level = siteData['6eme'];
+
+export function getStaticPaths() {
+  return siteData['6eme'].sequences.map((sequence) => ({ params: { sequence: sequence.slug } }));
+}
+
+const sequence = level.sequences.find((s) => s.slug === Astro.params.sequence)!;
+const slug = sequence.slug;
+---
+
+<SequencePage level={level} sequence={sequence}>
+  {slug === 'musique-et-tempo' && (
+    <section class="section-block">
+      <h3>Outils et Expérimentations</h3>
+      <div class="tools-grid">
+        <TapTempo />
+        <PulsationVsRythme />
+      </div>
+    </section>
+  )}
+
+  {slug === 'musique-et-nuances' && (
+    <section class="section-block">
+      <h3>Outils et Expérimentations</h3>
+      <div class="tools-grid">
+        <NuancesInteractive />
+        <NuancesQuiz />
+      </div>
+    </section>
+  )}
+
+  {slug === 'musique-et-timbre' && (
+    <section class="section-block">
+      <h3>Outils et Expérimentations</h3>
+      <TimbreQuiz />
+      <AstucesTimbre />
+    </section>
+  )}
+
+  {slug === 'musique-et-plans-sonores' && (
+    <section class="section-block">
+      <h3>Outils et Expérimentations</h3>
+      <PlansSonoresQuiz />
+    </section>
+  )}
+
+  {slug === 'musique-et-hymnes' && (
+    <div class="sequence-tools">
+      <section class="section-block">
+        <h3>1. Quiz : Hymne ou Chanson personnelle ?</h3>
+        <HymneQuiz />
+      </section>
+      <section class="section-block">
+        <h3>2. Atelier d'Analyse : Le Pouvoir de Rassemblement</h3>
+        <HymneVideoAnalyzer />
+      </section>
+    </div>
+  )}
+</SequencePage>

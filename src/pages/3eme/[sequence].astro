@@ -1,0 +1,30 @@
+---
+// Séquences de 3ème (voir src/pages/6eme/[sequence].astro pour le principe).
+import SequencePage from '../../components/SequencePage.astro';
+import { siteData } from '../../data/sequences';
+import EngagementCourse from '../../components/EngagementCourse.astro';
+import PubCourse from '../../components/PubCourse.astro';
+import RisquesAuditifsCourse from '../../components/RisquesAuditifsCourse.astro';
+import RapCourse from '../../components/RapCourse.astro';
+import MetissageCourse from '../../components/MetissageCourse.astro';
+
+const level = siteData['3eme'];
+
+export function getStaticPaths() {
+  return siteData['3eme'].sequences.map((sequence) => ({ params: { sequence: sequence.slug } }));
+}
+
+const sequence = level.sequences.find((s) => s.slug === Astro.params.sequence)!;
+const courses: Record<string, typeof EngagementCourse> = {
+  'musique-et-engagement': EngagementCourse,
+  'musique-et-pub': PubCourse,
+  'musique-et-risques-auditifs': RisquesAuditifsCourse,
+  'musique-et-rap': RapCourse,
+  'musique-et-metissage': MetissageCourse,
+};
+const Course = courses[sequence.slug];
+---
+
+<SequencePage level={level} sequence={sequence}>
+  {Course && <Course />}
+</SequencePage>

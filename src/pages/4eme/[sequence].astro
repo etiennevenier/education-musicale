@@ -1,0 +1,30 @@
+---
+// Séquences de 4ème (voir src/pages/6eme/[sequence].astro pour le principe).
+import SequencePage from '../../components/SequencePage.astro';
+import { siteData } from '../../data/sequences';
+import OperaCourse from '../../components/OperaCourse.astro';
+import CinemaCourse from '../../components/CinemaCourse.astro';
+import BruitsCourse from '../../components/BruitsCourse.astro';
+import RockCourse from '../../components/RockCourse.astro';
+import RecyclageCourse from '../../components/RecyclageCourse.astro';
+
+const level = siteData['4eme'];
+
+export function getStaticPaths() {
+  return siteData['4eme'].sequences.map((sequence) => ({ params: { sequence: sequence.slug } }));
+}
+
+const sequence = level.sequences.find((s) => s.slug === Astro.params.sequence)!;
+const courses: Record<string, typeof OperaCourse> = {
+  'musique-et-opera': OperaCourse,
+  'musique-et-cinema': CinemaCourse,
+  'musique-et-bruits': BruitsCourse,
+  'musique-et-rock': RockCourse,
+  'musique-et-recyclage': RecyclageCourse,
+};
+const Course = courses[sequence.slug];
+---
+
+<SequencePage level={level} sequence={sequence}>
+  {Course && <Course />}
+</SequencePage>

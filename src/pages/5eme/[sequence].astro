@@ -1,0 +1,37 @@
+---
+// Séquences de 5ème (voir src/pages/6eme/[sequence].astro pour le principe).
+import SequencePage from '../../components/SequencePage.astro';
+import { siteData } from '../../data/sequences';
+import VoixBlindTest from '../../components/VoixBlindTest.astro';
+import OstinatoQuiz from '../../components/OstinatoQuiz.astro';
+import MoyenAgeCourse from '../../components/MoyenAgeCourse.astro';
+import JazzCourse from '../../components/JazzCourse.astro';
+import HerosCourse from '../../components/HerosCourse.astro';
+
+const level = siteData['5eme'];
+
+export function getStaticPaths() {
+  return siteData['5eme'].sequences.map((sequence) => ({ params: { sequence: sequence.slug } }));
+}
+
+const sequence = level.sequences.find((s) => s.slug === Astro.params.sequence)!;
+const courses: Record<string, typeof MoyenAgeCourse> = {
+  'musique-et-moyen-age': MoyenAgeCourse,
+  'musique-et-jazz': JazzCourse,
+  'musique-et-heros': HerosCourse,
+};
+const Course = courses[sequence.slug];
+---
+
+<SequencePage level={level} sequence={sequence}>
+  {Course && <Course />}
+
+  {sequence.slug === 'musique-et-voix' && <VoixBlindTest />}
+
+  {sequence.slug === 'musique-et-repetition' && (
+    <section class="section-block">
+      <h3>Quiz audio : L'Ostinato</h3>
+      <OstinatoQuiz />
+    </section>
+  )}
+</SequencePage>
