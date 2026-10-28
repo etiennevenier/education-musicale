@@ -35,12 +35,26 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           count=$(cat rapport-videos.md.count 2>/dev/null || echo 0)
-          echo "Vidéos en défaut : $count"
-          if [ "$count" = "0" ]; then exit 0; fi
-          title="Vidéos YouTube à remplacer"
-          existing=$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number')
-          if [ -n "$existing" ]; then
-            gh issue comment "$existing" --body-file rapport-videos.md
+          unknown=$(cat rapport-videos.md.unknown 2>/dev/null || echo 0)
+          total=$(cat rapport-videos.md.total 2>/dev/null || echo 0)
+          ok=$((total - count - unknown))
+          summary="$ok vidéo(s) sur $total fonctionnent, $count en défaut, $unknown non vérifiable(s)."
+          echo "::notice title=Vidéos YouTube::$summary"
+          { echo "### Vérification des vidéos"; echo; echo "$summary"; echo; cat rapport-videos.md 2>/dev/null; } >> "$GITHUB_STEP_SUMMARY"
+
+          # Ticket si une vidéo pose problème, ou si YouTube n'a pas pu être
+          # interrogé pour plus de la moitié des vidéos (vérification inutilisable).
+          if [ "$total" -gt 0 ] && [ "$count" = "0" ] && [ $((unknown * 2)) -le "$total" ]; then exit 0; fi
+          if [ "$count" = "0" ]; then
+            title="Vérification des vidéos impossible"
+            echo "YouTube n'a pas répondu pour $unknown vidéo(s) sur $total : la vérification automatique n'a pas pu se faire ce mois-ci." > corps.md
           else
-            gh issue create --title "$title" --body-file rapport-videos.md
+            title="Vidéos YouTube à remplacer"
+            cp rapport-videos.md corps.md
+          fi
+          existing=$(gh api "repos/${{ github.repository }}/issues?state=open&per_page=100" --jq ".[] | select(.title == \"$title\") | .number" | head -n 1)
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file corps.md
+          else
+            gh issue create --title "$title" --body-file corps.md
           fi

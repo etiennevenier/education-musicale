@@ -112,6 +112,8 @@ if (online) {
     // Signale au workflow s'il y a un vrai problème (pas seulement des « non vérifiables »).
     const real = bad.filter((r) => classify(r.status) !== 'inconnu').length;
     writeFileSync(reportPath + '.count', String(real));
+    writeFileSync(reportPath + '.unknown', String(bad.length - real));
+    writeFileSync(reportPath + '.total', String(results.length));
   }
 }
 
