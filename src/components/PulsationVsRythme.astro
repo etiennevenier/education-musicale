@@ -300,15 +300,22 @@
   window.addEventListener('pagehide', cancelPendingMove, { once: true });
 
   // ---------- Encart explicatif ----------
+  /** Titre en gras + texte, construits sans innerHTML. */
+  function setFeedbackText(title: string, text: string) {
+    const strong = document.createElement('strong');
+    strong.textContent = title;
+    feedbackText.replaceChildren(strong, text);
+  }
+
   function triggerFeedback(mode: 'tempo' | 'rhythm') {
     if (mode === 'tempo') {
       feedbackIcon.textContent = '⏱️';
       feedbackCard.className = 'feedback-card tempo-mode';
-      feedbackText.innerHTML = `<strong>Tu modifies le TEMPO :</strong> le métronome et la musique s'accélèrent ou ralentissent, mais la structure des notes reste identique !`;
+      setFeedbackText('Tu modifies le TEMPO :', " le métronome et la musique s'accélèrent ou ralentissent, mais la structure des notes reste identique !");
     } else {
       feedbackIcon.textContent = '🎵';
       feedbackCard.className = 'feedback-card rhythm-mode';
-      feedbackText.innerHTML = `<strong>Tu modifies le RYTHME :</strong> tu as changé l'emplacement des notes. Le tempo (vitesse) reste exactement le même !`;
+      setFeedbackText('Tu modifies le RYTHME :', " tu as changé l'emplacement des notes. Le tempo (vitesse) reste exactement le même !");
     }
   }
 
