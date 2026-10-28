@@ -766,6 +766,7 @@ import {
     type ChallengeResult,
 } from '../../utils/challenge';
 import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
+import { drawClefSymbol } from '../../utils/clefs';
 
 (function () {
     'use strict';
@@ -999,14 +1000,6 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
         // marges franches et clé redimensionnée pour ne plus paraître écrasée.
         const landscapeSingle = !isDouble && window.matchMedia('(orientation: landscape) and (max-height: 550px)').matches;
 
-        // === Réglage des clés ===
-        // size = font-size ; dy = distance entre la ligne de repère et la ligne de base du texte
-        const CLEF: Record<Clef, { char: string; size: number; dy: number }> = {
-            treble: { char: '𝄞', size: 205, dy: 40 },
-            bass:   { char: '𝄢', size: 116, dy: 51 }
-        };
-        const clefScale = tallDouble ? 26 / 22 : landscapeSingle ? 15 / 22 : 1;
-
         const el = (name: string, attrs: SvgAttrs): SVGElement => {
             const e = document.createElementNS(NS, name);
             if (!(e instanceof SVGElement)) throw new Error(`Élément SVG invalide : ${name}`);
@@ -1018,17 +1011,8 @@ import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
             svg.appendChild(el('line', { x1, y1: y, x2, y2: y, stroke: INK, 'stroke-width': strokeWidth })));
 
         const drawClef = (type: Clef, x: number, lines: number[]): void => {
-            const c = CLEF[type];
-            const refLine = (type === 'treble') ? lines[3] : lines[1];   // lignes classées de haut en bas
-            const t = el('text', {
-                x,
-                y: refLine + c.dy * clefScale,
-                'font-family': 'serif',
-                'font-size': c.size * clefScale,
-                fill: '#1e293b'
-            });
-            t.textContent = c.char;
-            svg.appendChild(t);
+            // Lignes classées de haut en bas : Sol = index 3, Fa = index 1
+            drawClefSymbol(svg, type, x, type === 'treble' ? lines[3] : lines[1], lines[1] - lines[0]);
         };
 
         // === Mise en page : portée simple ou double portée adaptative ===

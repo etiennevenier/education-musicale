@@ -20,13 +20,13 @@ import { relativeUrl } from '../../utils/navigation';
             <div class="piano-head">
                 <p class="piano-title tool-title" aria-hidden="true">Piano Interactif</p>
             </div>
-            <div id="piano-note-display" class="piano-info-note">Clique sur une touche 🎹</div>
+            <div id="piano-note-display" class="piano-info-note" role="status" aria-live="polite">Clique sur une touche 🎹</div>
             <p class="piano-portrait-hint">📱 En mode paysage, le clavier 88 touches est bien plus confortable.</p>
             <div class="piano-staff-container tool-fit">
                 <svg id="piano-staff-svg" viewBox="0 0 480 400"></svg>
             </div>
             <div class="piano-wrapper">
-                <div id="piano" class="piano"></div>
+                <div id="piano" class="piano" role="group" aria-label="Clavier de piano, 88 touches"></div>
             </div>
             <p class="piano-scroll-hint" aria-hidden="true">↔ Fais défiler le clavier (glisser du doigt, barre de défilement ou Maj + molette) pour accéder aux 88 touches</p>
   </div>
@@ -56,6 +56,11 @@ import { relativeUrl } from '../../utils/navigation';
         #tool-piano .piano-wrapper { background:#1e293b; padding:10px; border-radius:14px 14px 10px 10px; box-shadow:0 8px 18px -8px rgba(15,23,42,0.5); width:100%; overflow-x:auto; display:flex; justify-content:center; box-sizing:border-box; }
         #tool-piano .piano { display:flex; position:relative; height:110px; width:max-content; }
         #tool-piano .white-key { width:28px; height:110px; background:linear-gradient(#ffffff, #f1f5f9); border:1px solid #cbd5e1; border-top:0; border-radius:0 0 8px 8px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:6px; font-size:9px; font-weight:700; color:#64748b; cursor:pointer; box-sizing:border-box; z-index:1; user-select:none; touch-action:manipulation; transition:background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease; }
+        #tool-piano .white-key,
+        #tool-piano .black-key { appearance: none; font-family: inherit; cursor: pointer; }
+        #tool-piano .white-key:focus-visible,
+        #tool-piano .black-key:focus-visible { outline: 3px solid #1d4ed8; outline-offset: -3px; z-index: 3; }
+        #tool-piano .black-key:focus-visible { outline-color: #fff; box-shadow: 0 0 0 2px #1d4ed8; }
         #tool-piano .white-key:hover { background:linear-gradient(#f8fafc, #e2e8f0); }
         #tool-piano .white-key.active { background:linear-gradient(135deg, #9333ea, var(--accent)); color:#fff; box-shadow:inset 0 0 0 2px rgba(255,255,255,0.35); }
         #tool-piano .black-key { position:absolute; width:18px; height:65px; background:linear-gradient(#334155, #0f172a); border-radius:0 0 6px 6px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:4px; font-size:8px; color:#94a3b8; cursor:pointer; box-sizing:border-box; z-index:3; user-select:none; touch-action:manipulation; box-shadow:0 4px 8px rgba(15,23,42,0.45); transition:background 0.12s ease, color 0.12s ease; }
@@ -427,6 +432,7 @@ import { relativeUrl } from '../../utils/navigation';
 
 <script>
     import { getAudioContext, getMasterBus } from '../../utils/audioContext';
+    import { drawClefSymbol } from '../../utils/clefs';
 
     (function () {
         /* Types — Astro compile le contenu des balises <script> en TypeScript. */
@@ -446,6 +452,12 @@ import { relativeUrl } from '../../utils/navigation';
                 midi: midi
             });
         }
+
+        const NOTE_FR = ['Do', 'Do dièse', 'Ré', 'Ré dièse', 'Mi', 'Fa', 'Fa dièse', 'Sol', 'Sol dièse', 'La', 'La dièse', 'Si'];
+        const MIDI_MIN = 21;
+        const MIDI_MAX = 108;
+        const MIDI_START = 60;   // Do4 : seule touche avec tabindex="0" au départ
+        const keyLabel = (midi: number): string => `${NOTE_FR[midi % 12]} ${Math.floor(midi / 12) - 1}`;
 
         const SVGNS = 'http://www.w3.org/2000/svg';
         let pianoAudioCtx: AudioContext | null = null;
@@ -547,28 +559,13 @@ import { relativeUrl } from '../../utils/navigation';
             const staffX2 = compact ? 740 : tall ? 390 : 470;
             const clefX = compact ? 70 : tall ? 56 : 60;
             const lineWidth = compact ? 3 : tall ? 2.8 : 2.4;
-            const clefFont = compact ? { treble: 140, bass: 80 } : tall ? { treble: 242, bass: 137 } : { treble: 205, bass: 116 };
-            const clefY = (clef: 'treble' | 'bass'): number => {
-                if (compact) return clef === 'treble' ? 132 : 110;
-                const lines = clef === 'treble' ? trebleLines : bassLines;
-                return clef === 'treble'
-                    ? lines[3] + (tall ? 47 : 40)
-                    : lines[1] + (tall ? 60 : 51);
-            };
 
             const drawStaff = (lines: number[], clef: 'treble' | 'bass'): void => {
                 lines.forEach(y => svg.appendChild(svgEl('line', {
                     x1: staffX1, y1: y, x2: staffX2, y2: y, stroke: '#334155', 'stroke-width': lineWidth
                 })));
-                const clefEl = svgEl('text', {
-                    x: clefX,
-                    y: clefY(clef),
-                    'font-family': 'serif',
-                    'font-size': clefFont[clef],
-                    fill: '#1e293b'
-                });
-                clefEl.textContent = clef === 'treble' ? '𝄞' : '𝄢';
-                svg.appendChild(clefEl);
+                // Ligne de repère (de haut en bas) : Sol = 4e ligne (index 3), Fa = 2e ligne (index 1)
+                drawClefSymbol(svg, clef, clefX, clef === 'treble' ? lines[3] : lines[1], LS);
             };
 
             const isBass = keyObj ? keyObj.midi < 60 : false;
@@ -685,10 +682,14 @@ import { relativeUrl } from '../../utils/navigation';
         // Construction du clavier
         const pianoEl = mustElement('#piano');
         let whiteCount = 0;   // touches blanches déjà posées : sert à placer les touches noires
-        let middleCKey: HTMLDivElement | null = null;
+        let middleCKey: HTMLButtonElement | null = null;
         const touchPending = new Map<number, { x: number; y: number }>();   // doigts posés sur une touche, en attente de savoir si c'est un appui ou un défilement
         keysData.forEach(k => {
-            const keyDiv = document.createElement('div');
+            const keyDiv = document.createElement('button');
+            keyDiv.type = 'button';
+            keyDiv.dataset.midi = String(k.midi);
+            keyDiv.setAttribute('aria-label', keyLabel(k.midi));
+            keyDiv.tabIndex = k.midi === MIDI_START ? 0 : -1;   // tabindex itinérant
             keyDiv.className = k.type === 'white' ? 'white-key' : 'black-key';
             if (k.type === 'white') {
                 const isC = k.note.startsWith('Do');
@@ -726,7 +727,31 @@ import { relativeUrl } from '../../utils/navigation';
                 if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 10) trigger();
             });
             keyDiv.addEventListener('pointercancel', e => touchPending.delete(e.pointerId));
+            // Entrée / Espace : le navigateur envoie un « click » avec detail === 0
+            keyDiv.addEventListener('click', e => { if (e.detail === 0) trigger(); });
             pianoEl.appendChild(keyDiv);
+        });
+
+        // Navigation clavier entre les touches (tabindex itinérant)
+        const allKeys = Array.from(pianoEl.querySelectorAll<HTMLButtonElement>('button[data-midi]'));
+        const focusMidi = (midi: number): void => {
+            const target = allKeys[Math.min(MIDI_MAX, Math.max(MIDI_MIN, midi)) - MIDI_MIN];
+            if (!target) return;
+            allKeys.forEach(k => { k.tabIndex = -1; });
+            target.tabIndex = 0;
+            target.focus();
+            target.scrollIntoView({ block: 'nearest', inline: 'center' });
+        };
+        pianoEl.addEventListener('keydown', e => {
+            const el = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-midi]');
+            if (!el) return;
+            const m = Number(el.dataset.midi);
+            const moves: Record<string, number> = {
+                ArrowRight: m + 1, ArrowUp: m + 1, ArrowLeft: m - 1, ArrowDown: m - 1,
+                PageUp: m + 12, PageDown: m - 12, Home: MIDI_MIN, End: MIDI_MAX,
+            };
+            const next = moves[e.key];
+            if (next !== undefined) { e.preventDefault(); focusMidi(next); }
         });
 
         // Au premier affichage de l'outil, on centre le clavier sur le Do central (Do4)

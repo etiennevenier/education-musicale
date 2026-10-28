@@ -436,3 +436,23 @@
     min-height: 0;
   }
 }
+
+/*
+ * Cibles tactiles (WCAG 2.5.8). L'id est répété (:is(...):is(...), sans espace) pour monter
+ * la spécificité sans !important. Les touches du piano sont exclues : leur taille est
+ * calculée par --wk / --bk.
+ */
+:root { --tool-hit: 44px; }
+
+@media (pointer: coarse) {
+  :is(#tool-notes, #tool-clavier-notes, #tool-oreille-clavier, #tool-oreille-nom, #tool-clefs, #tool-rhythm, #tool-piano):is(#tool-notes, #tool-clavier-notes, #tool-oreille-clavier, #tool-oreille-nom, #tool-clefs, #tool-rhythm, #tool-piano)
+  :is(button, [role="button"], select, input[type="checkbox"], input[type="radio"]):not(.white-key):not(.black-key) {
+    min-block-size: var(--tool-hit);
+    min-inline-size: var(--tool-hit);
+  }
+}
+
+/* Paysage bas : on retombe à 24 px pour ne pas provoquer de défilement interne */
+@media (pointer: coarse) and (max-height: 480px) {
+  :root { --tool-hit: 24px; }
+}

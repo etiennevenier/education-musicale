@@ -454,7 +454,7 @@ import { relativeUrl } from '../../utils/navigation';
 </style>
 
 <script>
-  import { shuffle } from '../../utils/random';
+  import { createTargetBag, renderChallengeResult, type TargetBag } from '../../utils/challengeTool';
   import {
     ChallengeSession,
     CHALLENGE_QUESTION_COUNT,
@@ -511,8 +511,7 @@ import { relativeUrl } from '../../utils/navigation';
     let answered = false;
     let nextQuestionTimer: number | null = null;
     let audioTimer: number | null = null;
-    let targetBag: number[] = [];
-    let lastMidi: number | null = null;
+    let targetBag: TargetBag<number> | null = null;
 
     const clearNextTimer = (): void => {
       if (nextQuestionTimer !== null) {
@@ -558,25 +557,6 @@ import { relativeUrl } from '../../utils/navigation';
       }, 400);
     };
 
-    const pickMidi = (midis: number[]): number => {
-      if (targetBag.length === 0) {
-        targetBag = shuffle(midis);
-        if (targetBag.length > 1 && targetBag[0] === lastMidi) {
-          const first = targetBag[0];
-          const second = targetBag[1];
-          if (first !== undefined && second !== undefined) {
-            targetBag[0] = second;
-            targetBag[1] = first;
-          }
-        }
-      }
-
-      const midi = targetBag.shift();
-      if (midi === undefined) return midis[0] ?? 60;
-      lastMidi = midi;
-      return midi;
-    };
-
     const renderAnswers = (midis: number[]): void => {
       const names = Array.from(new Set(midis.map((midi) => noteName(midi, 'natural'))));
       answersEl.replaceChildren();
@@ -604,7 +584,7 @@ import { relativeUrl } from '../../utils/navigation';
         button.classList.remove('is-correct', 'is-wrong');
       });
 
-      const midi = pickMidi(midis);
+      const midi = targetBag?.next() ?? midis[0] ?? 60;
       currentMidi = midi;
       currentName = noteName(midi, 'natural');
 
@@ -663,8 +643,7 @@ import { relativeUrl } from '../../utils/navigation';
       currentMidi = null;
       currentName = '';
       answered = false;
-      targetBag = [];
-      lastMidi = null;
+      targetBag = createTargetBag(midis);
       setHubBackMode(backLink, 'level');
 
       menuEl.classList.add('hidden');
@@ -700,13 +679,10 @@ import { relativeUrl } from '../../utils/navigation';
       gameEl.classList.add('hidden');
       resultEl.classList.remove('hidden');
 
-      resultScoreEl.textContent = `${result.score} / ${result.total}`;
-      resultPercentEl.textContent = `${result.percent} %`;
-      resultTimeEl.textContent = result.elapsedLabel;
-      resultReasonEl.textContent =
-        result.reason === 'timeout'
-          ? '⏱ Temps écoulé !'
-          : '🏁 Les 10 questions sont terminées.';
+      renderChallengeResult(
+        { score: resultScoreEl, percent: resultPercentEl, time: resultTimeEl, reason: resultReasonEl },
+        result,
+      );
 
       resultEl.focus({ preventScroll: true });
     };
