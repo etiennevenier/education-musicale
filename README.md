@@ -15,6 +15,9 @@ npx astro check  # vérifie les types et les composants
 ## Organisation du projet
 
 - `src/data/` : contenu des séquences et des quiz (`sequences.ts` = liste des niveaux et séquences).
+- Séquence « En ce moment » : calculée dans le navigateur d'après le calendrier scolaire officiel
+  (zone A, lu automatiquement à chaque publication ; dates de secours dans `src/data/calendrierScolaire.ts`).
+  Pour forcer une séquence : `forceActiveSequence` dans `sequences.ts`.
 - `src/components/` : un composant par séquence (`…Course`) ou par activité (`…Quiz`, etc.).
 - `src/components/entrainement/` : outils d'entraînement (lecture de notes, clavier, piano…).
 - `src/utils/` : fonctions communes (`audioManager`, `navigation`, `random`, `musicNotes`…).

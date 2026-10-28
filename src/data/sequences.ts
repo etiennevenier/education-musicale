@@ -34,46 +34,17 @@ export interface Sequence {
 export interface LevelData {
   title: string;
   slug: string;
-  forceActiveSequence?: number; // Décommenter pour forcer une séquence (1 à 5)
+  forceActiveSequence?: number; // Ajouter (1 à 5) pour forcer une séquence, sans tenir compte du calendrier
   sequences: Sequence[];
 }
 
-export function getAutoSequenceIndex(): number {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
-  const day = now.getDate();
-
-  // Calendrier exact Zone A (Académie de Lyon)
-  const exactCalendars: Record<number, [string, string, string, string]> = {
-    2026: ['2026-10-17', '2026-12-19', '2027-02-06', '2027-04-03'],
-    2027: ['2027-10-23', '2027-12-18', '2028-02-19', '2028-04-15'],
-  };
-
-  const currentKey = month >= 9 ? year : year - 1;
-  if (exactCalendars[currentKey]) {
-    const [p1, p2, p3, p4] = exactCalendars[currentKey].map(d => new Date(d));
-    if (now <= p1) return 0;
-    if (now <= p2) return 1;
-    if (now <= p3) return 2;
-    if (now <= p4) return 3;
-    return 4;
-  }
-
-  // Bascule automatique universelle (utilisée hors calendriers exacts)
-  if (month === 9 || (month === 10 && day <= 24)) return 0;
-  if (month === 10 || month === 11 || (month === 12 && day <= 24)) return 1;
-  if (month === 12 || month === 1 || (month === 2 && day <= 15)) return 2;
-  if (month === 2 || month === 3 || (month === 4 && day <= 15)) return 3;
-  return 4;
-}
-
-export function getActiveSequenceIndex(levelKey: string): number {
-  const level = siteData[levelKey];
-  if (level && level.forceActiveSequence !== undefined) {
-    return level.forceActiveSequence - 1;
-  }
-  return getAutoSequenceIndex();
+/**
+ * Séquence forcée d'un niveau (index 0 à 4), ou undefined pour la bascule
+ * automatique selon le calendrier scolaire (voir src/utils/sequenceCalendar.ts).
+ */
+export function getForcedSequenceIndex(levelKey: string): number | undefined {
+  const forced = siteData[levelKey]?.forceActiveSequence;
+  return forced === undefined ? undefined : forced - 1;
 }
 
 export const siteData: Record<string, LevelData> = {

@@ -1,7 +1,9 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { siteData, getActiveSequenceIndex } from '../data/sequences';
+import { siteData, getForcedSequenceIndex } from '../data/sequences';
 import { relativeUrl } from '../utils/navigation';
+import { loadSchoolCalendars } from '../utils/officialCalendar';
+import { buildBoundaries, parisToday, pickSequenceIndex } from '../utils/sequenceCalendar';
 
 export function getStaticPaths() {
   return Object.values(siteData).map((level) => ({
@@ -11,8 +13,25 @@ export function getStaticPaths() {
 
 const { level } = Astro.params;
 const data = siteData[level];
-const activeIdx = getActiveSequenceIndex(level);
+const lastIdx = data.sequences.length - 1;
+
+// Bascules de l'année scolaire précédente à celle dans cinq ans : le navigateur
+// de l'élève choisit la séquence du jour, même si le site n'est pas republié.
+const today = parisToday();
+const year = Number(today.slice(0, 4));
+const boundaries = buildBoundaries(await loadSchoolCalendars(), year - 1, year + 5);
+
+// Choix fait à la publication : affiché tel quel si le navigateur ne peut pas recalculer.
+const forced = getForcedSequenceIndex(level);
+const picked = forced ?? pickSequenceIndex(boundaries, today);
+const activeIdx = Math.min(Math.max(picked, 0), lastIdx);
 const activeSeq = data.sequences[activeIdx];
+
+const cards = data.sequences.map((seq, i) => ({
+  href: relativeUrl(`/${data.slug}/${seq.slug}`),
+  num: `Séquence ${i + 1}`,
+  title: seq.title,
+}));
 ---
 
 <Layout title={data.title}>
@@ -22,12 +41,50 @@ const activeSeq = data.sequences[activeIdx];
 
   <div class="choices-container">
     {/* Option 1 : Séquence en cours */}
-    <a href={relativeUrl(`/${data.slug}/${activeSeq.slug}`)} class="choice-card primary">
+    <a href={relativeUrl(`/${data.slug}/${activeSeq.slug}`)} class="choice-card primary" id="current-seq"
+      data-calendar={forced === undefined ? JSON.stringify({ boundaries, cards }) : undefined}>
       <span class="tag">En ce moment</span>
       <span class="seq-num">Séquence {activeIdx + 1}</span>
       <h3>{activeSeq.title}</h3>
       <span class="btn-action">Accéder au cours &rarr;</span>
     </a>
+    {/* Recalcul immédiat dans le navigateur (date du jour à Paris), avant l'affichage.
+        Même règle que pickSequenceIndex ; en cas de souci, la carte ci-dessus reste. */}
+    {forced === undefined && (
+      <script is:inline>
+        try {
+          var card = document.getElementById('current-seq');
+          var cal = JSON.parse(card.getAttribute('data-calendar'));
+          var boundaries = cal.boundaries;
+          var cards = cal.cards;
+          var parts = new Intl.DateTimeFormat('fr-FR', {
+            timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit',
+          }).formatToParts(new Date());
+          var part = function (type) {
+            for (var j = 0; j < parts.length; j++) if (parts[j].type === type) return parts[j].value;
+            return '';
+          };
+          var today = part('year') + '-' + part('month') + '-' + part('day');
+          var idx = -1;
+          if (/^\d{4}-\d{2}-\d{2}$/.test(today)) {
+            for (var i = 0; i < boundaries.length; i++) {
+              if (boundaries[i][0] <= today) idx = boundaries[i][1];
+              else break;
+            }
+          }
+          if (idx >= 0) {
+            var c = cards[Math.min(idx, cards.length - 1)];
+            if (card.getAttribute('href') !== c.href) {
+              card.setAttribute('href', c.href);
+              card.querySelector('.seq-num').textContent = c.num;
+              card.querySelector('h3').textContent = c.title;
+            }
+          }
+        } catch (e) {
+          /* la carte calculée à la publication reste affichée */
+        }
+      </script>
+    )}
 
     {/* Option 2 : Entraînement */}
     <a href={relativeUrl('/entrainement')} class="choice-card secondary">
