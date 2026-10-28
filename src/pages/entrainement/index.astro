@@ -35,11 +35,7 @@ import { relativeUrl } from '../../utils/navigation';
 
     <div class="training-grid" id="modules">
       {tools.map((tool) => (
-        <a
-          href={relativeUrl(tool.path)}
-          class="training-card"
-          aria-label={`Ouvrir l'outil ${tool.title}`}
-        >
+        <a href={relativeUrl(tool.path)} class="training-card">
           <span class="training-icon" aria-hidden="true">{tool.icon}</span>
           <span class="training-card-text">
             <span class="training-card-title">{tool.title}</span>

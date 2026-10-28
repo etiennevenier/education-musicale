@@ -65,8 +65,8 @@ const firstListenUrl = firstSong
         target="_blank"
         rel="noopener noreferrer"
         aria-label={firstSong
-          ? `Écouter ${firstSong.titre} - ${firstSong.artiste} sur YouTube`
-          : 'Écouter le morceau sur YouTube'}
+          ? `Cliquez pour écouter le morceau ${firstSong.titre} - ${firstSong.artiste} sur YouTube`
+          : 'Cliquez pour écouter le morceau sur YouTube'}
         title={firstSong
           ? `Écouter ${firstSong.titre} - ${firstSong.artiste} sur YouTube`
           : 'Écouter le morceau sur YouTube'}
@@ -407,9 +407,10 @@ const firstListenUrl = firstSong
 
       listenLink.href = getListenUrl(song);
       listenLink.title = `Écouter ${song.titre} - ${song.artiste} sur YouTube`;
+      // Le nom commence par le texte affiché sur l'image (critère WCAG 2.5.3).
       listenLink.setAttribute(
         'aria-label',
-        `Écouter ${song.titre} - ${song.artiste} sur YouTube`,
+        `Cliquez pour écouter le morceau ${song.titre} - ${song.artiste} sur YouTube`,
       );
       if (song.illustrationUrl) {
         illustration.src = song.illustrationUrl;

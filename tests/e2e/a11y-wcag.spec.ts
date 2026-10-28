@@ -11,6 +11,10 @@ const DIST = join(process.cwd(), 'dist');
 const BASE = '/education-musicale';
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 const SKIP = ['color-contrast', 'heading-order', 'page-has-heading-one'];
+// Exceptions justifiées, une par une (règle + élément) :
+// - #cl-board (Dessiner les clefs) : les chiffres 1 à 5 et le nom de la note sont des
+//   repères dessinés sur la portée, pas le libellé du bouton (qui n'a pas de texte visible).
+const ALLOWED = [{ rule: 'label-content-name-mismatch', target: '#cl-board' }];
 
 function collectPages(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
@@ -39,6 +43,7 @@ test('règles WCAG A/AA (hors contraste) sur toutes les pages et tous les onglet
     for (const v of res.violations) {
       for (const n of v.nodes) {
         const target = (n.target ?? []).join(' ');
+        if (ALLOWED.some((a) => a.rule === v.id && a.target === target)) continue;
         found.set(`${path}|${v.id}|${target}`, { page: path, where, rule: v.id, target });
       }
     }

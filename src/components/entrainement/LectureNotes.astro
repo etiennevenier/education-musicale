@@ -21,48 +21,50 @@ import { relativeUrl } from '../../utils/navigation';
 
     <!-- MENU DE SELECTION DES NIVEAUX -->
     <div id="menu-section" class="notes-menu">
+      <!-- Nom de chaque bouton = son texte visible + le nom des clés dessinées
+           (pas d'aria-label qui le contredirait : critère WCAG 2.5.3). -->
       <div class="notes-levels">
-        <button class="level-btn" data-level="1" aria-label="Niveau 1, clé de sol">
+        <button class="level-btn" data-level="1">
           <span class="level-heading">
-            <svg class="level-clef level-clef--sol" viewBox="0 0 640.000000 1280.000000" aria-hidden="true" focusable="false">
+            <svg class="level-clef level-clef--sol" viewBox="0 0 640.000000 1280.000000" role="img" aria-label="clé de sol" focusable="false">
               <use href="#notes-clef-sol"></use>
             </svg>
             <span class="level-title">Niveau 1</span>
           </span>
         </button>
-        <button class="level-btn" data-level="2" aria-label="Niveau 1, clé de fa">
+        <button class="level-btn" data-level="2">
           <span class="level-heading">
-            <svg class="level-clef level-clef--fa" viewBox="0 0 18 20" aria-hidden="true" focusable="false">
+            <svg class="level-clef level-clef--fa" viewBox="0 0 18 20" role="img" aria-label="clé de fa" focusable="false">
               <use href="#notes-clef-fa"></use>
             </svg>
             <span class="level-title">Niveau 1</span>
           </span>
         </button>
-        <button class="level-btn" data-level="3" aria-label="Niveau 2, clé de sol, avec lignes supplémentaires">
+        <button class="level-btn" data-level="3">
           <span class="level-heading">
-            <svg class="level-clef level-clef--sol" viewBox="0 0 640.000000 1280.000000" aria-hidden="true" focusable="false">
+            <svg class="level-clef level-clef--sol" viewBox="0 0 640.000000 1280.000000" role="img" aria-label="clé de sol" focusable="false">
               <use href="#notes-clef-sol"></use>
             </svg>
             <span class="level-title">Niveau 2</span>
           </span>
           <span class="level-desc">Avec lignes supplémentaires</span>
         </button>
-        <button class="level-btn" data-level="4" aria-label="Niveau 2, clé de fa, avec lignes supplémentaires">
+        <button class="level-btn" data-level="4">
           <span class="level-heading">
-            <svg class="level-clef level-clef--fa" viewBox="0 0 18 20" aria-hidden="true" focusable="false">
+            <svg class="level-clef level-clef--fa" viewBox="0 0 18 20" role="img" aria-label="clé de fa" focusable="false">
               <use href="#notes-clef-fa"></use>
             </svg>
             <span class="level-title">Niveau 2</span>
           </span>
           <span class="level-desc">Avec lignes supplémentaires</span>
         </button>
-        <button class="level-btn is-eval" data-level="5" aria-label="Niveau 3, double clé, mélange basé sur le niveau 1">
+        <button class="level-btn is-eval" data-level="5">
           <span class="level-heading">
             <span class="level-clefs">
-              <svg class="level-clef level-clef--sol" viewBox="0 0 640.000000 1280.000000" aria-hidden="true" focusable="false">
+              <svg class="level-clef level-clef--sol" viewBox="0 0 640.000000 1280.000000" role="img" aria-label="clé de sol" focusable="false">
                 <use href="#notes-clef-sol"></use>
               </svg>
-              <svg class="level-clef level-clef--fa" viewBox="0 0 18 20" aria-hidden="true" focusable="false">
+              <svg class="level-clef level-clef--fa" viewBox="0 0 18 20" role="img" aria-label="clé de fa" focusable="false">
                 <use href="#notes-clef-fa"></use>
               </svg>
             </span>
@@ -70,13 +72,13 @@ import { relativeUrl } from '../../utils/navigation';
           </span>
           <span class="level-desc">Mélange basé sur niveau 1</span>
         </button>
-        <button class="level-btn is-eval" data-level="6" aria-label="Niveau 4, double clé étendue, mélange basé sur le niveau 2">
+        <button class="level-btn is-eval" data-level="6">
           <span class="level-heading">
             <span class="level-clefs">
-              <svg class="level-clef level-clef--sol" viewBox="0 0 640.000000 1280.000000" aria-hidden="true" focusable="false">
+              <svg class="level-clef level-clef--sol" viewBox="0 0 640.000000 1280.000000" role="img" aria-label="clé de sol" focusable="false">
                 <use href="#notes-clef-sol"></use>
               </svg>
-              <svg class="level-clef level-clef--fa" viewBox="0 0 18 20" aria-hidden="true" focusable="false">
+              <svg class="level-clef level-clef--fa" viewBox="0 0 18 20" role="img" aria-label="clé de fa" focusable="false">
                 <use href="#notes-clef-fa"></use>
               </svg>
             </span>
