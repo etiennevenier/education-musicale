@@ -58,6 +58,10 @@ test('règles WCAG A/AA (hors contraste) sur toutes les pages et tous les onglet
   }
 
   const violations = [...found.values()];
+  // Visible directement sur GitHub (résumé de la vérification), sans ouvrir les journaux.
+  for (const v of violations.slice(0, 30)) {
+    console.log(`::error title=Accessibilité (${v.rule})::${v.page} — ${v.where} — ${v.target}`);
+  }
   mkdirSync('lh', { recursive: true });
   writeFileSync('lh/wcag.json', JSON.stringify(violations, null, 2));
   await context.close();
