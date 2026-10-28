@@ -37,6 +37,7 @@ import '../styles/quiz-card.css';
 
 <script>
   import { shuffle } from '../utils/random';
+  import { h } from '../utils/dom';
   const { hymneQuizList } = await import('../data/hymnesData');
   import type { HymneQuizItem } from '../data/hymnesData';
   import { QuizSession } from '../utils/quizSession';
@@ -109,13 +110,14 @@ import '../styles/quiz-card.css';
       const q = queue[index];
       currentQuestion = q;
 
-      questionContainer.innerHTML = `
-        <div class="situation-q-box">
-          <p class="situation-label">Cette situation, est-ce un hymne ?</p>
-          <p class="situation-text"></p>
-        </div>
-      `;
-      questionContainer.querySelector('.situation-text')!.textContent = q.text;
+      questionContainer.replaceChildren(
+        h(
+          'div',
+          { class: 'situation-q-box' },
+          h('p', { class: 'situation-label' }, 'Cette situation, est-ce un hymne ?'),
+          h('p', { class: 'situation-text' }, q.text),
+        ),
+      );
 
       optionsContainer.replaceChildren();
       optionsContainer.className = 'options-grid';

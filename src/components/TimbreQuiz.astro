@@ -54,6 +54,7 @@
 
 <script>
   import { showQuizResult } from '../utils/quizUi';
+  import { createAudioQuestionBox, createInstrumentSearchBox } from '../utils/dom';
   import { shuffle } from '../utils/random';
   import { QuizSession } from '../utils/quizSession';
   import type { Instrument } from '../data/fuzeauInstruments';
@@ -183,24 +184,7 @@
       a.name.localeCompare(b.name, 'fr')
     );
 
-    const wrapper = document.createElement('div');
-    wrapper.className = 'search-box';
-    wrapper.innerHTML = `
-      <div class="search-row">
-        <input
-          type="text"
-          class="search-input"
-          placeholder="Écris le nom de l'instrument…"
-          autocomplete="off"
-          autocapitalize="off"
-          autocorrect="off"
-          spellcheck="false"
-          aria-label="Nom de l'instrument"
-        />
-        <button type="button" class="btn-validate">Valider</button>
-      </div>
-      <ul class="search-list hidden" role="listbox"></ul>
-    `;
+    const wrapper = createInstrumentSearchBox();
 
     const input = wrapper.querySelector('.search-input') as HTMLInputElement;
     const list = wrapper.querySelector('.search-list') as HTMLUListElement;
@@ -350,12 +334,9 @@
 
       // 1. Question Audio : saisie libre, suggestions seulement pendant la frappe
       if (currentMode === 'audio') {
-        questionContainer.innerHTML = `
-          <div class="audio-q-box">
-            <p>Écoute l'extrait audio et écris quel instrument joue :</p>
-            <button id="btnPlaySound" class="btn-play-sound">🔊 Écouter l'extrait</button>
-          </div>
-        `;
+        questionContainer.replaceChildren(
+          createAudioQuestionBox(["Écoute l'extrait audio et écris quel instrument joue :"], "🔊 Écouter l'extrait", 'btnPlaySound'),
+        );
         (document.getElementById('btnPlaySound') as HTMLButtonElement).addEventListener('click', () => playSound(instrument.audioUrl));
         if (autoplay) playSound(instrument.audioUrl);
 
@@ -392,12 +373,9 @@
       else {
         const options = getRandomOptions(instrument, 4);
 
-        questionContainer.innerHTML = `
-          <div class="audio-q-box">
-            <p>Écoute le son et clique sur la bonne image :</p>
-            <button id="btnPlaySound" class="btn-play-sound">🔊 Écouter le son</button>
-          </div>
-        `;
+        questionContainer.replaceChildren(
+          createAudioQuestionBox(['Écoute le son et clique sur la bonne image :'], '🔊 Écouter le son', 'btnPlaySound'),
+        );
         (document.getElementById('btnPlaySound') as HTMLButtonElement).addEventListener('click', () => playSound(instrument.audioUrl));
         if (autoplay) playSound(instrument.audioUrl);
 

@@ -45,3 +45,57 @@ export function svgEl(name: string, attrs: SvgAttrs = {}, parent?: SVGElement): 
   if (parent) parent.appendChild(el);
   return el;
 }
+
+export type HAttrs = Record<string, string | number | boolean>;
+
+/** Crée un élément HTML, ses attributs et ses enfants (texte ou nœuds) : alternative à innerHTML. */
+export function h<K extends keyof HTMLElementTagNameMap>(
+  tag: K,
+  attrs: HAttrs = {},
+  ...children: Array<Node | string>
+): HTMLElementTagNameMap[K] {
+  const el = document.createElement(tag);
+  for (const key in attrs) {
+    const value = attrs[key];
+    if (value === false) continue;
+    el.setAttribute(key, value === true ? '' : String(value));
+  }
+  el.append(...children);
+  return el;
+}
+
+/** Zone de saisie « nom de l'instrument » + bouton Valider + liste de suggestions (quiz Timbre et Plans sonores). */
+export function createInstrumentSearchBox(): HTMLDivElement {
+  return h(
+    'div',
+    { class: 'search-box' },
+    h(
+      'div',
+      { class: 'search-row' },
+      h('input', {
+        type: 'text',
+        class: 'search-input',
+        placeholder: "Écris le nom de l'instrument…",
+        autocomplete: 'off',
+        autocapitalize: 'off',
+        autocorrect: 'off',
+        spellcheck: 'false',
+        'aria-label': "Nom de l'instrument",
+      }),
+      h('button', { type: 'button', class: 'btn-validate' }, 'Valider'),
+    ),
+    h('ul', { class: 'search-list hidden', role: 'listbox' }),
+  );
+}
+
+/** Encadré « question audio » : consigne + bouton d'écoute. */
+export function createAudioQuestionBox(
+  prompt: Array<Node | string>,
+  buttonLabel: string,
+  buttonId: string,
+  buttonType: 'button' | null = null,
+): HTMLDivElement {
+  const attrs: HAttrs = { id: buttonId, class: 'btn-play-sound' };
+  if (buttonType) attrs.type = buttonType;
+  return h('div', { class: 'audio-q-box' }, h('p', {}, ...prompt), h('button', attrs, buttonLabel));
+}

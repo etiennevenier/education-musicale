@@ -187,6 +187,7 @@
           <text class="beat-label" x="${SLOT_W / 2}" y="168" text-anchor="middle">🖐️ Temps ${idx + 1}</text>
         </g>`;
     });
+    // Le SVG n'est fabriqué qu'à partir de nombres calculés ici : aucune donnée externe ni saisie utilisateur.
     beatsLayer.innerHTML = html;
     noteGroups = Array.from(beatsLayer.querySelectorAll<SVGGElement>('.note-group'));
   }

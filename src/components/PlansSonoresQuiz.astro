@@ -50,6 +50,7 @@ import '../styles/quiz-card.css';
 <script>
   import { shuffle } from '../utils/random';
   import { showQuizResult } from '../utils/quizUi';
+  import { createAudioQuestionBox, createInstrumentSearchBox, h } from '../utils/dom';
   import { QuizSession } from '../utils/quizSession';
   const { plansSonoresList, allInstrumentsList } = await import('../data/plansSonoresData');
   import type { PlansSonoresItem } from '../data/plansSonoresData';
@@ -200,24 +201,7 @@ import '../styles/quiz-card.css';
   function buildSearchBox(): HTMLDivElement {
     const pool = [...allInstrumentsList].sort((a, b) => a.localeCompare(b, 'fr'));
 
-    const wrapper = document.createElement('div');
-    wrapper.className = 'search-box';
-    wrapper.innerHTML = `
-      <div class="search-row">
-        <input
-          type="text"
-          class="search-input"
-          placeholder="Écris le nom de l'instrument…"
-          autocomplete="off"
-          autocapitalize="off"
-          autocorrect="off"
-          spellcheck="false"
-          aria-label="Nom de l'instrument"
-        />
-        <button type="button" class="btn-validate">Valider</button>
-      </div>
-      <ul class="search-list hidden" role="listbox"></ul>
-    `;
+    const wrapper = createInstrumentSearchBox();
 
     const input = wrapper.querySelector('.search-input') as HTMLInputElement;
     const list = wrapper.querySelector('.search-list') as HTMLUListElement;
@@ -377,16 +361,11 @@ import '../styles/quiz-card.css';
       optionsContainer.replaceChildren();
 
       const isInstrumentQuestion = q.type === 'theme-instrument';
-      const prompt = isInstrumentQuestion
-        ? "Écoute l'extrait : quel instrument joue le <strong>thème</strong> (la mélodie principale) ?"
-        : "Écoute l'extrait : qu'entends-tu ?";
+      const prompt: Array<Node | string> = isInstrumentQuestion
+        ? ["Écoute l'extrait : quel instrument joue le ", h('strong', {}, 'thème'), ' (la mélodie principale) ?']
+        : ["Écoute l'extrait : qu'entends-tu ?"];
 
-      questionContainer.innerHTML = `
-        <div class="audio-q-box">
-          <p>${prompt}</p>
-          <button type="button" id="psBtnPlay" class="btn-play-sound">${PLAY_LABELS.idle}</button>
-        </div>
-      `;
+      questionContainer.replaceChildren(createAudioQuestionBox(prompt, PLAY_LABELS.idle, 'psBtnPlay', 'button'));
       btnPlay = $<HTMLButtonElement>('psBtnPlay');
       btnPlay.addEventListener('click', togglePlay);
       if (autoplay) playSound(q.audioUrl);

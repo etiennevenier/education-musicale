@@ -459,6 +459,7 @@ const timelineSteps = [
           pointsEl.replaceChildren(
             ...step.points.map((pt: string) => {
               const li = liTemplate.cloneNode(false) as HTMLElement;
+              // Les puces contiennent du gras / italique écrits dans ce fichier (timelineSteps) : HTML voulu, aucune saisie utilisateur.
               li.innerHTML = pt;
               return li;
             })
