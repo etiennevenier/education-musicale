@@ -1,0 +1,46 @@
+name: Vérification mensuelle des vidéos
+
+# Une fois par mois, vérifie que chaque vidéo YouTube du site existe encore et
+# peut être lue sur le site. En cas de problème, un ticket (« issue ») est ouvert
+# sur GitHub : vous recevez un e-mail avec la liste des vidéos à remplacer.
+on:
+  schedule:
+    - cron: '17 6 1 * *' # le 1er de chaque mois, vers 7 h (heure de Paris)
+  workflow_dispatch: # bouton « Run workflow » pour la lancer à la main
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  videos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      # Le script n'utilise que Node : pas besoin d'installer les dépendances.
+      - name: Vérifier les vidéos YouTube
+        continue-on-error: true
+        run: node scripts/check-videos.mjs --online --report rapport-videos.md
+
+      - name: Ouvrir ou mettre à jour le ticket si une vidéo pose problème
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          count=$(cat rapport-videos.md.count 2>/dev/null || echo 0)
+          echo "Vidéos en défaut : $count"
+          if [ "$count" = "0" ]; then exit 0; fi
+          title="Vidéos YouTube à remplacer"
+          existing=$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file rapport-videos.md
+          else
+            gh issue create --title "$title" --body-file rapport-videos.md
+          fi
