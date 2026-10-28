@@ -765,6 +765,7 @@ import {
     formatCountdown,
     type ChallengeResult,
 } from '../../utils/challenge';
+import { renderChallengeResult } from '../../utils/challengeTool';
 import { isHubBackInLevelMode, setHubBackMode } from '../../utils/navigation';
 import { drawClefSymbol } from '../../utils/clefs';
 
@@ -1156,13 +1157,15 @@ import { drawClefSymbol } from '../../utils/clefs';
         mustElement('#exercise-section').classList.add('hidden');
         resultSection.classList.remove('hidden');
 
-        mustElement('#final-score').textContent = `${result.score} / ${result.total}`;
-        mustElement('#final-percent').textContent = `${result.percent} %`;
-        mustElement('#final-time').textContent = result.elapsedLabel;
-        mustElement('#score-reason').textContent =
-            result.reason === 'timeout'
-                ? '⏱ Temps écoulé !'
-                : '🏁 Les 10 questions sont terminées.';
+        renderChallengeResult(
+            {
+                score: mustElement('#final-score'),
+                percent: mustElement('#final-percent'),
+                time: mustElement('#final-time'),
+                reason: mustElement('#score-reason'),
+            },
+            result,
+        );
 
         setHubBackMode(hubBackLink, 'level');
         resultSection.focus({ preventScroll: true });
