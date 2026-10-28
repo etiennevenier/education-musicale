@@ -13,7 +13,7 @@ import { relativeUrl } from '../../utils/navigation';
   </a>
 
   <header class="on-header">
-    <h1>Oreille — Noms</h1>
+    <p class="tool-title" aria-hidden="true">Oreille — Noms</p>
   </header>
 
   <!-- MENU DES NIVEAUX -->
@@ -61,7 +61,7 @@ import { relativeUrl } from '../../utils/navigation';
 
   <!-- BILAN -->
   <div id="on-result" class="on-result hidden" role="status" aria-live="polite" tabindex="-1">
-    <h2>Challenge Over !</h2>
+    <h2>Défi terminé !</h2>
     <p id="on-result-reason" class="on-result-reason"></p>
 
     <div class="on-stats">
@@ -753,6 +753,10 @@ import { relativeUrl } from '../../utils/navigation';
     window.addEventListener('pagehide', () => {
       session?.cancel();
       stopAllNotes();
+    });
+    // bfcache : à la restauration depuis le cache, la session est morte : retour au menu.
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted) backToMenu();
     });
   })();
 </script>

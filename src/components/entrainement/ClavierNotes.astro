@@ -17,7 +17,7 @@ const whiteKeyCount = keyboard.filter((key) => key.type === 'white').length;
   </a>
 
   <header class="cn-header">
-    <h1>Identification Clavier</h1>
+    <p class="tool-title" aria-hidden="true">Identification Clavier</p>
   </header>
 
   <!-- MENU DES NIVEAUX -->
@@ -71,7 +71,7 @@ const whiteKeyCount = keyboard.filter((key) => key.type === 'white').length;
 
   <!-- BILAN -->
   <div id="cn-result" class="cn-result hidden" role="status" aria-live="polite" tabindex="-1">
-    <h2>Challenge Over !</h2>
+    <h2>Défi terminé !</h2>
     <p id="cn-result-reason" class="cn-result-reason"></p>
 
     <div class="cn-stats">
@@ -705,6 +705,10 @@ const whiteKeyCount = keyboard.filter((key) => key.type === 'white').length;
 
     restartBtn.addEventListener('click', () => startLevel(currentLevel));
     window.addEventListener('pagehide', () => session?.cancel());
+    // bfcache : à la restauration depuis le cache, la session est morte : retour au menu.
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted) backToMenu();
+    });
   })();
 </script>
 

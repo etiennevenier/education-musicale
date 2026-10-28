@@ -12,7 +12,7 @@ import { relativeUrl } from '../../utils/navigation';
             <span class="hub-back-text-short" aria-hidden="true">Entraînement</span>
         </a>
         <header>
-            <h1>Lecture Rythmique</h1>
+            <p class="tool-title" aria-hidden="true">Lecture Rythmique</p>
         </header>
 
         <section class="controls" aria-label="Réglages">
@@ -57,7 +57,7 @@ import { relativeUrl } from '../../utils/navigation';
 
     <div class="sheet tool-fit">
         <svg id="rt-board" viewBox="0 0 1060 275" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Rythme à reproduire">
-            <rect id="rt-hl" visibility="hidden" rx="12" ry="12" fill="#1f9d62" fill-opacity="0.10" stroke="#1f9d62" stroke-width="2.5"/>
+            <rect id="rt-hl" visibility="hidden" rx="12" ry="12" fill="#15803d" fill-opacity="0.10" stroke="#15803d" stroke-width="2.5"/>
             <g id="rt-gStatic"></g>
             <g id="rt-gNotes"></g>
             <g id="rt-gResults"></g>
@@ -109,8 +109,8 @@ import { relativeUrl } from '../../utils/navigation';
         --blue-soft: #faf5ff;
         --accent: #7e22ce;
         --accent-strong: #a855f7;
-        --green: #1f9d62;
-        --orange: #e8890c;
+        --green: #15803d;
+        --orange: #b45309;
         --red: #d9382f;
     }
 #tool-rhythm .app { width: 100%; max-width: min(1040px, 100%); min-width: 0; display: flex; flex-direction: column; gap: 16px; }
@@ -120,7 +120,7 @@ import { relativeUrl } from '../../utils/navigation';
 /* Sur desktop/tablette, les réglages restent sur leur propre ligne, juste sous
    le titre ; en paysage téléphone (≤ 550 px), ils passent à côté du retour. */
 #tool-rhythm .rhythm-top > .controls { flex: 1 1 100%; margin-top: 6px; }
-#tool-rhythm h1 { margin: 0; color: var(--accent); font-size: clamp(22px, 4vw, 30px); font-weight: 900; letter-spacing: -0.01em; }
+#tool-rhythm .tool-title { margin: 0; color: var(--accent); font-size: clamp(22px, 4vw, 30px); font-weight: 900; letter-spacing: -0.01em; }
 #tool-rhythm .controls {
         background: #fff;
         border: 2px solid var(--line);
@@ -154,7 +154,7 @@ import { relativeUrl } from '../../utils/navigation';
 #tool-rhythm .btn:active:not(:disabled) { transform: scale(0.98); }
 #tool-rhythm .btn:disabled { opacity: 0.4; cursor: default; }
 #tool-rhythm .btn.primary {
-        background: linear-gradient(135deg, var(--accent-strong), var(--blue));
+        background: linear-gradient(135deg, #9333ea, var(--blue));
         border-color: transparent;
         color: #fff;
         font-size: 16px;
@@ -190,7 +190,7 @@ import { relativeUrl } from '../../utils/navigation';
 #tool-rhythm #rt-board { display: block; width: 100%; min-width: 780px; height: auto; }
 #tool-rhythm .tap-btn {
         width: 100%; border: 0; border-radius: 20px;
-        background: linear-gradient(135deg, var(--accent-strong), var(--blue));
+        background: linear-gradient(135deg, #9333ea, var(--blue));
         color: #fff; font: inherit; font-size: 26px; font-weight: 800;
         padding: 26px 16px 22px; cursor: pointer;
         box-shadow: 0 6px 0 #581c87, 0 12px 24px rgba(126, 34, 206, 0.25);
@@ -213,7 +213,7 @@ import { relativeUrl } from '../../utils/navigation';
 #tool-rhythm .chip.green { background: var(--green); }
 #tool-rhythm .chip.orange { background: var(--orange); }
 #tool-rhythm .chip.red { background: var(--red); }
-#tool-rhythm .chip.gray { background: #7a879f; }
+#tool-rhythm .chip.gray { background: #64748b; }
 #tool-rhythm .replay {
         background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 14px 20px;
         display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px;
@@ -249,7 +249,7 @@ import { relativeUrl } from '../../utils/navigation';
             #tool-rhythm .app { gap: 10px; }
             #tool-rhythm .rhythm-top { gap: 8px; }
             #tool-rhythm .rhythm-top > header { text-align: left; }
-            #tool-rhythm header h1 { font-size: 18px; }
+            #tool-rhythm header .tool-title { font-size: 18px; }
 
             #tool-rhythm .controls { gap: 6px 8px; padding: 8px; border-radius: 12px; }
 
@@ -323,7 +323,7 @@ import { relativeUrl } from '../../utils/navigation';
                 padding: 0 22px;
                 border: 0;
                 border-radius: 9999px;
-                background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+                background: linear-gradient(135deg, #9333ea, var(--accent));
                 color: #ffffff;
                 font: inherit;
                 font-size: 0.95rem;

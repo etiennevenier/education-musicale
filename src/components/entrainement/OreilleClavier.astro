@@ -19,7 +19,7 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
   </a>
 
   <header class="oc-header">
-    <h1>Oreille — Clavier</h1>
+    <p class="tool-title" aria-hidden="true">Oreille — Clavier</p>
   </header>
 
   <!-- MENU DES NIVEAUX -->
@@ -74,7 +74,7 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
 
   <!-- BILAN -->
   <div id="oc-result" class="oc-result hidden" role="status" aria-live="polite" tabindex="-1">
-    <h2>Challenge Over !</h2>
+    <h2>Défi terminé !</h2>
     <p id="oc-result-reason" class="oc-result-reason"></p>
 
     <div class="oc-stats">
@@ -617,6 +617,10 @@ const BLACK_KEY_WIDTH = (100 / WHITE_KEY_COUNT) * 0.62;
     window.addEventListener('pagehide', () => {
       session?.cancel();
       stopAllNotes();
+    });
+    // bfcache : à la restauration depuis le cache, la session est morte : retour au menu.
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted) backToMenu();
     });
   })();
 </script>

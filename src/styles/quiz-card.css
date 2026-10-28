@@ -10,7 +10,7 @@
   --qc-muted: #cbd5e1;
   --qc-accent: #38bdf8;
   --qc-accent-strong: var(--accent-sky-strong);
-  --qc-accent-hover: #0369a1;
+  --qc-accent-hover: #075985;
   --qc-badge: #e11d48;
   --qc-ok-bg: #064e3b;
   --qc-ok-border: #10b981;
@@ -187,7 +187,7 @@
    Éléments communs à TOUS les quiz (v2) — ne pas redéfinir dans les composants
    ========================================================================== */
 .quiz-card [hidden] { display: none !important; }
-.quiz-card [tabindex='-1']:focus { outline: none; }
+.quiz-card [tabindex='-1']:focus:not(:focus-visible) { outline: none; }
 .quiz-card .fuzeau-header { flex-wrap: wrap; }
 .quiz-card .progress-text { gap: 0.5rem; }
 
@@ -356,7 +356,7 @@
   font-weight: 600;
 }
 .quiz-card .number-input { text-align: center; font-weight: 700; }
-.quiz-card :is(.search-input, .number-input):focus { outline: none; border-color: var(--qc-accent); }
+.quiz-card :is(.search-input, .number-input):focus:not(:focus-visible) { outline: none; border-color: var(--qc-accent); }
 .quiz-card :is(.search-input, .number-input)::placeholder { color: #94a3b8; font-weight: 400; }
 .quiz-card :is(.search-input, .number-input):disabled { opacity: 1; cursor: default; }
 .quiz-card :is(.search-input, .number-input).correct {

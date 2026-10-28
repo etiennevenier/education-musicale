@@ -1,9 +1,11 @@
 ---
+import ClefSprite from './ClefSprite.astro';
 // Outil « Piano interactif » — repris intégralement du portail pédagogique d'origine.
 import { relativeUrl } from '../../utils/navigation';
 ---
 
 <div id="tool-piano" class="tool-root">
+  <ClefSprite />
   <div class="piano-body">
             <a class="hub-back tool-back" href={relativeUrl('/entrainement')} aria-label="Retour à l'entraînement">
                 <span aria-hidden="true">←</span>
@@ -16,7 +18,7 @@ import { relativeUrl } from '../../utils/navigation';
                 <button type="button" id="piano-zoom-in" class="piano-zoom-btn" aria-label="Agrandir le zoom du clavier" aria-controls="piano">+</button>
             </div>
             <div class="piano-head">
-                <h1 class="piano-title">Piano Interactif</h1>
+                <p class="piano-title tool-title" aria-hidden="true">Piano Interactif</p>
             </div>
             <div id="piano-note-display" class="piano-info-note">Clique sur une touche 🎹</div>
             <p class="piano-portrait-hint">📱 En mode paysage, le clavier 88 touches est bien plus confortable.</p>
@@ -55,10 +57,10 @@ import { relativeUrl } from '../../utils/navigation';
         #tool-piano .piano { display:flex; position:relative; height:110px; width:max-content; }
         #tool-piano .white-key { width:28px; height:110px; background:linear-gradient(#ffffff, #f1f5f9); border:1px solid #cbd5e1; border-top:0; border-radius:0 0 8px 8px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:6px; font-size:9px; font-weight:700; color:#64748b; cursor:pointer; box-sizing:border-box; z-index:1; user-select:none; touch-action:manipulation; transition:background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease; }
         #tool-piano .white-key:hover { background:linear-gradient(#f8fafc, #e2e8f0); }
-        #tool-piano .white-key.active { background:linear-gradient(135deg, var(--accent-strong), var(--accent)); color:#fff; box-shadow:inset 0 0 0 2px rgba(255,255,255,0.35); }
+        #tool-piano .white-key.active { background:linear-gradient(135deg, #9333ea, var(--accent)); color:#fff; box-shadow:inset 0 0 0 2px rgba(255,255,255,0.35); }
         #tool-piano .black-key { position:absolute; width:18px; height:65px; background:linear-gradient(#334155, #0f172a); border-radius:0 0 6px 6px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:4px; font-size:8px; color:#94a3b8; cursor:pointer; box-sizing:border-box; z-index:3; user-select:none; touch-action:manipulation; box-shadow:0 4px 8px rgba(15,23,42,0.45); transition:background 0.12s ease, color 0.12s ease; }
         #tool-piano .black-key:hover { background:linear-gradient(#475569, #1e293b); }
-        #tool-piano .black-key.active { background:linear-gradient(135deg, var(--accent-strong), var(--accent)); color:#fff; }
+        #tool-piano .black-key.active { background:linear-gradient(135deg, #9333ea, var(--accent)); color:#fff; }
         #tool-piano { --wk: 48px; --bk: 30px; --kh: 150px; --bkh: 92px; }
         @media (hover: hover) and (pointer: fine) and (min-width: 820px) {
             #tool-piano { --wk: 28px; --bk: 18px; --kh: 110px; --bkh: 65px; }   /* clavier d'origine pour souris */
@@ -772,7 +774,7 @@ import { relativeUrl } from '../../utils/navigation';
            Plancher : aucun niveau ne doit laisser moins de 8 touches blanches
            visibles ; sinon il est indisponible (bouton « + » désactivé).
            ------------------------------------------------------------------ */
-        const VIEW_STORAGE_KEY = 'piano-interactif-view';
+        const VIEW_STORAGE_KEY = 'education-musicale:piano-interactif-view';
         const MIN_WHITE_KEYS_VISIBLE = 8;
 
         type ZoomLevel = { id: 'full' | 'zoom' | 'grand'; label: string; width: number | null };
@@ -1006,10 +1008,12 @@ import { relativeUrl } from '../../utils/navigation';
         window.visualViewport?.addEventListener('resize', handleViewportChange, {
             signal: staffResizeAbort.signal,
         });
-        window.addEventListener('pagehide', () => {
+        window.addEventListener('pagehide', (event) => {
             if (staffResizeFrame) window.cancelAnimationFrame(staffResizeFrame);
-            staffResizeAbort.abort();
-        }, { once: true });
+            staffResizeFrame = 0;
+            // bfcache : si la page peut être restaurée, les écouteurs doivent survivre.
+            if (!event.persisted) staffResizeAbort.abort();
+        });
 
         fitKeyboard();     // clavier adapté à la largeur réelle dès l'ouverture
         centerKeyInWrapper(middleCKey ?? keyAtViewportCenter());   // Do4 au centre

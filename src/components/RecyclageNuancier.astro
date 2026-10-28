@@ -1324,7 +1324,7 @@ const slots = Array.from({ length: CARDS_PER_GAME }, (_, index) => index);
     animation: tribunal-enter 0.25s ease-out;
   }
 
-  .tribunal-dialog:focus {
+  .tribunal-dialog:focus:not(:focus-visible) {
     outline: none;
   }
 

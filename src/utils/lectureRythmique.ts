@@ -72,7 +72,7 @@ export function initLectureRythmique(): void {
     const REPLAY_TAIL = 0.45;       // s : on laisse sonner la fin avant d'arrêter une réécoute
     const USER_OFFSET_MS = 0;       // décalage manuel de tous les temps de frappe, si besoin (ms)
     
-    const GREEN = '#1f9d62', ORANGE = '#e8890c', RED = '#d9382f', INK = '#1b2a8a', PAPER = '#fbfcff';
+    const GREEN = '#15803d', ORANGE = '#b45309', RED = '#d9382f', INK = '#1b2a8a', PAPER = '#fbfcff';
 
     /* =====================================================================
        2. GÉOMÉTRIE DE LA PARTITION (SVG)
@@ -224,7 +224,7 @@ export function initLectureRythmique(): void {
             // Numéro de chaque mesure, en petit, en haut à gauche de la mesure
             for (let mi = 0; mi < MEASURES_PER_ROW; mi++) {
                 const mx = (mi === 0 ? XS - BAR_PAD : XS + mi * measSlots * geo.slotW - BAR_PAD) + 12;
-                const t = el('text', { x: mx, y: 34, 'font-size': 13, 'font-weight': 800, fill: '#8b98b5', 'font-family': 'system-ui, sans-serif' }, g);
+                const t = el('text', { x: mx, y: 34, 'font-size': 13, 'font-weight': 800, fill: '#64748b', 'font-family': 'system-ui, sans-serif' }, g);
                 t.textContent = String(r * MEASURES_PER_ROW + mi + 1);
             }
 
@@ -234,7 +234,7 @@ export function initLectureRythmique(): void {
                 const t = el('text', {
                     x: XS + s * geo.slotW, y: 168, 'text-anchor': 'middle',
                     'font-size': onBeat ? 20 : 17, 'font-weight': onBeat ? 800 : 600,
-                    fill: onBeat ? '#6b7a99' : '#a3afc6', 'font-family': 'system-ui, sans-serif'
+                    fill: onBeat ? '#6b7a99' : '#64748b', 'font-family': 'system-ui, sans-serif'
                 }, g);
                 t.textContent = onBeat ? String((s / 2) % ts + 1) : '+';
             }
@@ -283,7 +283,7 @@ export function initLectureRythmique(): void {
         if (key === hlKey) return;
         hlKey = key;
         const b = measureBox(m);
-        const color = mode === 'replay' ? '#7e22ce' : '#1f9d62';
+        const color = mode === 'replay' ? '#7e22ce' : '#15803d';
         hl.setAttribute('x', String(b.x)); hl.setAttribute('y', String(b.y));
         hl.setAttribute('width', String(b.w)); hl.setAttribute('height', String(b.h));
         hl.setAttribute('fill', color); hl.setAttribute('stroke', color);
@@ -774,7 +774,7 @@ export function initLectureRythmique(): void {
     const rotatePortraitMq = window.matchMedia('(max-width: 640px) and (orientation: portrait)');
     let ignoreRotateHint = false;
     try {
-        ignoreRotateHint = localStorage.getItem('ignore-rotate-hint') === 'true';
+        ignoreRotateHint = localStorage.getItem('education-musicale:ignore-rotate-hint') === 'true';
     } catch {
         // Stockage indisponible (navigation privée restrictive) : l'avertissement reste fermable.
     }
@@ -793,7 +793,7 @@ export function initLectureRythmique(): void {
             ignoreRotateHint = true;
             if (rotateHint instanceof HTMLElement) rotateHint.hidden = true;
             try {
-                localStorage.setItem('ignore-rotate-hint', 'true');
+                localStorage.setItem('education-musicale:ignore-rotate-hint', 'true');
             } catch {
                 // La préférence ne pourra pas être mémorisée, mais le calque est bien fermé.
             }

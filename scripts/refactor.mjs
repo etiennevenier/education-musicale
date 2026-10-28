@@ -122,7 +122,7 @@ function walk(relDir, exts, out = []) {
 /* ------------------------------------------------------------------ */
 /** Parcourt les règles « sélecteur { corps } » (sans imbrication). `fn` renvoie la règle remplaçante ou null. */
 function mapRules(css, fn) {
-  return css.replace(/([^{}]+)\{([^{}]*)\}/g, (all, sel, body) => {
+  return css.replace(/([^{}]+)\{([^{}]*)\}/g, (_all, sel, body) => {
     const out = fn(sel, body);
     return out === null || out === undefined ? all : out;
   });
@@ -130,7 +130,7 @@ function mapRules(css, fn) {
 
 /** Applique `fn` au contenu de chaque bloc <style> d'un fichier .astro. */
 function mapStyleBlocks(src, fn) {
-  return src.replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/g, (all, a, b, c) => a + fn(b) + c);
+  return src.replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style>)/g, (_all, a, b, c) => a + fn(b) + c);
 }
 
 /** Applique `fn` au balisage uniquement (hors frontmatter, <style> et <script>). */
@@ -204,7 +204,7 @@ function stepH1() {
   for (const rel of TOOL_COMPONENTS) {
     update(rel, step, (s) => {
       let out = mapMarkup(s, (markup) =>
-        markup.replace(/<h1(?:\s+class="([^"]*)")?>([\s\S]*?)<\/h1>/g, (all, cls, inner) =>
+        markup.replace(/<h1(?:\s+class="([^"]*)")?>([\s\S]*?)<\/h1>/g, (_all, cls, inner) =>
           '<p class="' + ((cls ? cls + ' ' : '') + 'tool-title') + '" aria-hidden="true">' + inner + '</p>',
         ),
       );
@@ -402,8 +402,8 @@ function stepStorage() {
   for (const rel of files) {
     const src = read(rel);
     if (src === null || !/localStorage|sessionStorage/.test(src)) continue;
-    let out = src.replace(call, (all, a, q, key) => (key.startsWith(PREFIX) ? all : a + q + PREFIX + key + q));
-    out = out.replace(konst, (all, a, q, key) => (key.startsWith(PREFIX) ? all : a + q + PREFIX + key + q));
+    let out = src.replace(call, (_all, a, q, key) => (key.startsWith(PREFIX) ? all : a + q + PREFIX + key + q));
+    out = out.replace(konst, (_all, a, q, key) => (key.startsWith(PREFIX) ? all : a + q + PREFIX + key + q));
     if (dynamic.test(out)) note(step, 'warn', 'clé de stockage non littérale, à vérifier à la main : ' + rel);
     write(rel, out, step);
   }
@@ -487,7 +487,7 @@ function stepContrast() {
       mapCss(rel, s, (css) =>
         mapRules(css, (sel, body) =>
           /color\s*:\s*#059669\s*;/i.test(body) && /feedback/.test(sel)
-            ? sel + '{' + body.replace(/color(\s*:\s*)#059669/i, (all, c) => 'color' + c + '#047857') + '}'
+            ? sel + '{' + body.replace(/color(\s*:\s*)#059669/i, (_all, c) => 'color' + c + '#047857') + '}'
             : null,
         ),
       ),
@@ -498,7 +498,7 @@ function stepContrast() {
   update('src/styles/tools-shared.css', step, (s) =>
     mapRules(s, (sel, body) =>
       /stat-label/.test(sel) && /color\s*:\s*#64748b/i.test(body)
-        ? sel + '{' + body.replace(/color(\s*:\s*)#64748b/i, (all, c) => 'color' + c + '#475569') + '}'
+        ? sel + '{' + body.replace(/color(\s*:\s*)#64748b/i, (_all, c) => 'color' + c + '#475569') + '}'
         : null,
     ),
   );
@@ -513,7 +513,7 @@ function stepContrast() {
 
   // Survol des quiz : --qc-accent-hover était identique à la couleur de repos.
   update('src/styles/quiz-card.css', step, (s) =>
-    s.replace(/(--qc-accent-hover\s*:\s*)#0369a1/i, (all, a) => a + '#075985'),
+    s.replace(/(--qc-accent-hover\s*:\s*)#0369a1/i, (_all, a) => a + '#075985'),
   );
 }
 

@@ -1,0 +1,26 @@
+---
+// Gabarit commun des 7 pages d'outils d'entraînement : feuilles de style du shell,
+// métadonnées issues de src/data/tools.ts et h1 unique (invisible : le titre visible
+// est un <p class="tool-title"> décoratif dans chaque composant).
+import Layout from './Layout.astro';
+import '../styles/tools-shell.css';
+import '../styles/tools-landscape.css';
+import { getTool, type ToolSlug } from '../data/tools';
+
+interface Props {
+  slug: ToolSlug;
+}
+
+const tool = getTool(Astro.props.slug);
+---
+
+<Layout
+  title={tool.title}
+  description={tool.description}
+  wide
+  backLabel="Accueil"
+  mobileHeader="hidden"
+>
+  <h1 class="visually-hidden">{tool.title}</h1>
+  <slot />
+</Layout>

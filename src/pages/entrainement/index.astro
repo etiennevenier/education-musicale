@@ -1,44 +1,8 @@
 ---
+import { tools } from '../../data/tools';
 import Layout from '../../layouts/Layout.astro';
 import { relativeUrl } from '../../utils/navigation';
 
-const tools = [
-  {
-    href: relativeUrl('/entrainement/lecture-notes'),
-    icon: '🎼',
-    title: 'Lecture de Notes',
-  },
-  {
-    href: relativeUrl('/entrainement/lecture-rythmique'),
-    icon: '🥁',
-    title: 'Lecture Rythmique',
-  },
-  {
-    href: relativeUrl('/entrainement/piano-interactif'),
-    icon: '🎹',
-    title: 'Piano Interactif',
-  },
-  {
-    href: relativeUrl('/entrainement/dessiner-clefs'),
-    icon: '✒️',
-    title: 'Dessiner les Clefs',
-  },
-  {
-    href: relativeUrl('/entrainement/clavier-notes'),
-    icon: '🔴',
-    title: 'Identification Clavier',
-  },
-  {
-    href: relativeUrl('/entrainement/oreille-nom'),
-    icon: '👂',
-    title: 'Oreille — Noms',
-  },
-  {
-    href: relativeUrl('/entrainement/oreille-clavier'),
-    icon: '🔔',
-    title: 'Oreille — Clavier',
-  },
-];
 ---
 
 <Layout title="Entraînement" wide backLabel="Accueil" mobileHeader="minimal">
@@ -72,7 +36,7 @@ const tools = [
     <div class="training-grid" id="modules">
       {tools.map((tool) => (
         <a
-          href={tool.href}
+          href={relativeUrl(tool.path)}
           class="training-card"
           aria-label={`Ouvrir l'outil ${tool.title}`}
         >
@@ -85,7 +49,7 @@ const tools = [
 </Layout>
 
 <script>
-  const NOTICE_KEY = 'hasSeenOrientationNotice';
+  const NOTICE_KEY = 'education-musicale:hasSeenOrientationNotice';
 
   const notice = document.getElementById('orientation-notice');
   const closeButton = document.getElementById('orientation-notice-close');
@@ -202,7 +166,6 @@ const tools = [
   .orientation-notice-close:focus-visible {
     background: rgba(56, 189, 248, 0.22);
     border-color: var(--primary);
-    outline: none;
   }
 
   .orientation-notice-close:active {

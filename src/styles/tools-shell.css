@@ -129,7 +129,7 @@ body.mobile-header-hidden main.container {
 @media (max-height: 768px) {
   .tool-root :where(.notes-header, .piano-head, .cn-header, .on-header, .oc-header) { display: none; }
   .tool-root #tool-clefs-title,
-  #tool-clefs .top h1,
+  #tool-clefs .top .tool-title,
   #tool-rhythm .rhythm-top > header { display: none; }
 }
 

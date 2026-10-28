@@ -22,10 +22,10 @@
   margin-bottom: 1.75rem;
 }
 
-#tool-notes .notes-header h1,
-#tool-clavier-notes .cn-header h1,
-#tool-oreille-clavier .oc-header h1,
-#tool-oreille-nom .on-header h1 {
+#tool-notes .notes-header .tool-title,
+#tool-clavier-notes .cn-header .tool-title,
+#tool-oreille-clavier .oc-header .tool-title,
+#tool-oreille-nom .on-header .tool-title {
   margin: 0;
   font-size: clamp(1.7rem, 5vw, 2.7rem);
   line-height: 1.1;
@@ -41,7 +41,6 @@
 #tool-oreille-nom .on-level-btn:focus-visible {
   border-color: var(--accent-strong);
   background: var(--accent-soft);
-  outline: none;
 }
 
 #tool-clavier-notes .cn-level-btn:active,
@@ -122,7 +121,7 @@
 #tool-clavier-notes .cn-feedback.correct,
 #tool-oreille-clavier .oc-feedback.correct,
 #tool-oreille-nom .on-feedback.correct {
-  color: #059669;
+  color: #047857;
 }
 
 #tool-clavier-notes .cn-feedback.incorrect,
@@ -142,7 +141,6 @@
 #tool-oreille-nom .on-answer-btn:focus-visible {
   border-color: var(--accent-strong);
   background: var(--accent-soft);
-  outline: none;
 }
 
 #tool-clavier-notes .cn-answer-btn:active,
@@ -171,8 +169,8 @@
   text-align: center;
 }
 
-#tool-oreille-clavier .oc-result:focus,
-#tool-oreille-nom .on-result:focus {
+#tool-oreille-clavier .oc-result:focus:not(:focus-visible),
+#tool-oreille-nom .on-result:focus:not(:focus-visible) {
   outline: none;
 }
 
@@ -227,7 +225,7 @@
 #tool-clavier-notes .cn-stat-label,
 #tool-oreille-clavier .oc-stat-label,
 #tool-oreille-nom .on-stat-label {
-  color: #64748b;
+  color: #475569;
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -252,7 +250,7 @@
   padding: 0.9rem 1.25rem;
   border: 0;
   border-radius: 9999px;
-  background: linear-gradient(135deg, var(--accent-strong), #7e22ce);
+  background: linear-gradient(135deg, #9333ea, #7e22ce);
   color: #ffffff;
   font: inherit;
   font-size: 1.1rem;

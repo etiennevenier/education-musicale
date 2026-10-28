@@ -1,10 +1,8 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import '../../styles/tools-shell.css';
-import '../../styles/tools-landscape.css';
+import ToolPage from '../../layouts/ToolPage.astro';
 import LectureNotes from '../../components/entrainement/LectureNotes.astro';
 ---
 
-<Layout title="Lecture de Notes" wide backLabel="Accueil" mobileHeader="hidden">
+<ToolPage slug="lecture-notes">
   <LectureNotes />
-</Layout>
+</ToolPage>

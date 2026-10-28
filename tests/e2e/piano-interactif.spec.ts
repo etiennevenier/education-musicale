@@ -559,8 +559,8 @@ test.describe('Lecture et préférence', () => {
 
     // Ancienne valeur « full » (lot M) = niveau 0.
     await page.addInitScript(() => {
-      if (window.localStorage.getItem('piano-interactif-view') === null) {
-        window.localStorage.setItem('piano-interactif-view', 'full');
+      if (window.localStorage.getItem('education-musicale:piano-interactif-view') === null) {
+        window.localStorage.setItem('education-musicale:piano-interactif-view', 'full');
       }
     });
     await page.goto(URL, { waitUntil: 'load' });
@@ -568,34 +568,34 @@ test.describe('Lecture et préférence', () => {
     expect((await keyboardMetrics(page)).white).toBeLessThan(ZOOM_WHITE);
 
     // Ancienne valeur « zoom » (lot M) = niveau 1.
-    await page.evaluate(() => window.localStorage.setItem('piano-interactif-view', 'zoom'));
+    await page.evaluate(() => window.localStorage.setItem('education-musicale:piano-interactif-view', 'zoom'));
     await page.reload({ waitUntil: 'load' });
     await expect(page.locator('#piano-zoom-level')).toHaveText(LEVEL_LABELS[1]);
     expect((await keyboardMetrics(page)).white).toBe(ZOOM_WHITE);
 
     // Nouvelle valeur « grand » = niveau 2.
-    await page.evaluate(() => window.localStorage.setItem('piano-interactif-view', 'grand'));
+    await page.evaluate(() => window.localStorage.setItem('education-musicale:piano-interactif-view', 'grand'));
     await page.reload({ waitUntil: 'load' });
     await expect(page.locator('#piano-zoom-level')).toHaveText(LEVEL_LABELS[2]);
     expect((await keyboardMetrics(page)).white).toBe(GRAND_WHITE);
 
     // Valeur invalide : vue complète, sans erreur, valeur laissée intacte.
-    await page.evaluate(() => window.localStorage.setItem('piano-interactif-view', 'n-importe-quoi'));
+    await page.evaluate(() => window.localStorage.setItem('education-musicale:piano-interactif-view', 'n-importe-quoi'));
     await page.reload({ waitUntil: 'load' });
     await expect(page.locator('#piano-zoom-level')).toHaveText(LEVEL_LABELS[0]);
     expect((await keyboardMetrics(page)).white).toBeLessThan(ZOOM_WHITE);
-    expect(await page.evaluate(() => window.localStorage.getItem('piano-interactif-view'))).toBe('n-importe-quoi');
+    expect(await page.evaluate(() => window.localStorage.getItem('education-musicale:piano-interactif-view'))).toBe('n-importe-quoi');
 
     // Les boutons mémorisent le niveau atteint.
     await page.locator('#piano-zoom-in').click();
     await page.waitForTimeout(200);
-    expect(await page.evaluate(() => window.localStorage.getItem('piano-interactif-view'))).toBe('zoom');
+    expect(await page.evaluate(() => window.localStorage.getItem('education-musicale:piano-interactif-view'))).toBe('zoom');
     await page.locator('#piano-zoom-in').click();
     await page.waitForTimeout(200);
-    expect(await page.evaluate(() => window.localStorage.getItem('piano-interactif-view'))).toBe('grand');
+    expect(await page.evaluate(() => window.localStorage.getItem('education-musicale:piano-interactif-view'))).toBe('grand');
     await page.locator('#piano-zoom-out').click();
     await page.waitForTimeout(200);
-    expect(await page.evaluate(() => window.localStorage.getItem('piano-interactif-view'))).toBe('zoom');
+    expect(await page.evaluate(() => window.localStorage.getItem('education-musicale:piano-interactif-view'))).toBe('zoom');
     expect(await readLevel()).toBe(LEVEL_LABELS[1]);
     expect(errors).toEqual([]);
   });

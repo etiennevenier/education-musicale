@@ -13,7 +13,7 @@ import { relativeUrl } from '../../utils/navigation';
     </a>
 
     <div class="top">
-        <h1>Dessiner les Clefs</h1>
+        <p class="tool-title" aria-hidden="true">Dessiner les Clefs</p>
         <div class="tabs" role="tablist" aria-label="Choisir la clef">
             <button class="tab" role="tab" id="cl-tab-sol" data-clef="sol" aria-selected="true">Clef de Sol</button>
             <button class="tab" role="tab" id="cl-tab-fa" data-clef="fa" aria-selected="false">Clef de Fa</button>
@@ -88,7 +88,7 @@ import { relativeUrl } from '../../utils/navigation';
         justify-content: flex-start;
         gap: 12px;
     }
-#tool-clefs .top h1 { text-align: center; }
+#tool-clefs .top .tool-title { text-align: center; }
 #tool-clefs .ghost-hint {
         flex: 1 1 100%;
         margin: -2px 0 0;
@@ -102,7 +102,7 @@ import { relativeUrl } from '../../utils/navigation';
         touch-action: none;
         -webkit-tap-highlight-color: transparent;
     }
-#tool-clefs h1 {
+#tool-clefs .tool-title {
         margin: 0;
         font-size: clamp(22px, 4vw, 30px);
         line-height: 1.15;
@@ -233,7 +233,7 @@ import { relativeUrl } from '../../utils/navigation';
         stroke-dasharray: 0.1 11;
     }
 #tool-clefs .ghost-dot { fill: #ddd6fe; }
-#tool-clefs .line-no { font-size: 13px; fill: #8b98b5; text-anchor: middle; }
+#tool-clefs .line-no { font-size: 13px; fill: #64748b; text-anchor: middle; }
 #tool-clefs .line-no.target { fill: var(--pen); font-weight: 800; }
 #tool-clefs .note-name { font-size: 18px; font-weight: 800; fill: var(--ink); }
 #tool-clefs .caption {
@@ -279,7 +279,7 @@ import { relativeUrl } from '../../utils/navigation';
         /* Mobile/paysage bas : retour compact sur la ligne des onglets, titre masqué */
         @media (max-width: 640px), (max-width: 900px) and (orientation: landscape), (max-height: 500px) {
             #tool-clefs .top { gap: 8px; }
-            #tool-clefs .top h1 { display: none; }
+            #tool-clefs .top .tool-title { display: none; }
             #tool-clefs .tabs { flex: 1 1 auto; min-width: 0; }
             #tool-clefs .tab { flex: 1 1 0; min-width: 0; padding: 7px 10px; font-size: 14px; }
             #tool-clefs .slider { min-width: 0; }
@@ -383,7 +383,7 @@ import { relativeUrl } from '../../utils/navigation';
                 gap: 8px;
             }
 
-            #tool-clefs .top h1 { display: none; }
+            #tool-clefs .top .tool-title { display: none; }
             #tool-clefs .top .ghost-hint { display: none; }
 
             #tool-clefs .tabs {
