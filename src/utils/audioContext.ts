@@ -67,10 +67,6 @@ export function setMasterVolume(level: number): number {
   return volume;
 }
 
-export function getMasterVolume(): number {
-  return volume;
-}
-
 /** Bascule la sourdine globale (MP3 + synthés). Retourne le nouvel état. */
 export function toggleGlobalMute(): boolean {
   muted = !muted;

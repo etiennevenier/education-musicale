@@ -14,8 +14,7 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "check:videos": "node scripts/check-videos.mjs",
-    "check:important": "node scripts/check-important.mjs",
-    "audit:important": "node scripts/audit-important.mjs --extra src/styles/tools-shared.css --extra src/layouts/Layout.astro --max 3"
+    "check:important": "node scripts/check-important.mjs"
   },
   "dependencies": {
     "astro": "^7.4.0",
@@ -31,8 +30,6 @@
     "@types/node": "^22.20.5",
     "@types/topojson-client": "^3.1.5",
     "jsdom": "^30.1.3",
-    "postcss": "^8.5.32",
-    "postcss-selector-parser": "^7.1.7",
     "typescript": "^6.0.3",
     "vitest": "^5.0.5"
   }

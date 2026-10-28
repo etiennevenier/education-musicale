@@ -17,9 +17,3 @@ export function isCorrectSelection(
 ): boolean {
   return selected.size === correct.size && [...selected].every((option) => correct.has(option));
 }
-
-export function formatNote(noteValue: number, total: number): string {
-  if (!total) return '0';
-  const note = Math.round((noteValue / total) * 20 * 2) / 2;
-  return Number.isInteger(note) ? String(note) : note.toFixed(1).replace('.', ',');
-}
