@@ -52,7 +52,8 @@ export function getAudioContext(): AudioContext | null {
     }
   }
 
-  if (context.state === 'suspended') void context.resume().catch(() => {});
+  // « suspended » (onglet caché) ou « interrupted » (iPhone : appel, alarme…) : on relance.
+  if (context.state !== 'running' && context.state !== 'closed') void context.resume().catch(() => {});
   return context;
 }
 

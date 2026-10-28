@@ -2,7 +2,7 @@ import { defineConfig } from 'astro/config';
 
 // Deux adresses possibles pour le même site :
 // - par défaut : GitHub Pages, https://etiennevenier.github.io/education-musicale
-// - SITE_TARGET=cloudflare (commande « npm run build:cloudflare ») :
+// - SITE_TARGET=cloudflare (commande « node scripts/build-cloudflare.mjs ») :
 //   https://musique.etiennevenier.com, à la racine.
 const cloudflare = process.env.SITE_TARGET === 'cloudflare';
 

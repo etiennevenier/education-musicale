@@ -666,7 +666,6 @@ import { relativeUrl } from '../../utils/navigation';
 
     /** Dessine la clef jusqu'à `p` (0 → 1) et synchronise le texte d'explication. */
     function draw(p: number): void {
-        const steps = CLEFS[clefKey].steps;
         const active = stepIndexAt(p);
 
         for (const sg of segments) {

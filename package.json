@@ -9,6 +9,8 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
+    "check": "astro check",
+    "lint": "node scripts/check-important.mjs",
     "preview": "astro preview",
     "astro": "astro",
     "test": "vitest run",

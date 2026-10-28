@@ -6,6 +6,9 @@
   "compatibility_date": "2026-10-23",
   "assets": {
     "directory": "./dist",
+    // Les liens du site n'ont pas de « / » final (/6eme) : servis directement,
+    // sans redirection vers /6eme/ (un aller-retour réseau de moins par clic).
+    "html_handling": "drop-trailing-slash",
     // Adresse inconnue : page « introuvable » du site (src/pages/404.astro).
     "not_found_handling": "404-page"
   }

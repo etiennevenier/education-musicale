@@ -4,9 +4,21 @@
 # (complète la balise <meta name="robots"> de chaque page).
 /*
   X-Robots-Tag: noindex, nofollow
+  Strict-Transport-Security: max-age=31536000
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
 
 # Fichiers d'Astro dont le nom change à chaque modification : cache long.
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
+
+# Sons, vidéos et images (noms fixes) : gardés 1 jour, puis revérifiés en
+# arrière-plan. Un fichier remplacé sous le même nom est vu dès la visite suivante.
+/*.mp3
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/*.mp4
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/*.jpg
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/*.png
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800

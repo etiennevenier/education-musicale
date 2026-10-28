@@ -358,7 +358,7 @@ export const siteData: Record<string, LevelData> = {
         slug: 'musique-et-heros',
         title: 'Musique et Héros',
         description:
-          'C‘est quoi une musique héroïque ? Pourquoi certains éléments la rendent héroïque ?',
+          'C’est quoi une musique héroïque ? Pourquoi certains éléments la rendent héroïque ?',
       },
     ],
   },

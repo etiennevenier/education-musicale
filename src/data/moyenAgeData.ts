@@ -223,7 +223,7 @@ export const musicTypes: MusicType[] = [
     listeningFocus: "Repère la voix unique, le texte latin et l'absence d'accompagnement instrumental.",
     audioUrl: '/moyen-age/ChantGregorienUtQueantLaxis.mp3',
     audioTitle: 'Ut queant laxis',
-    youtubeUrl: 'https://youtu.be/B0D2Rly51Cs?si=y3IzoayQSK5h_VRg',
+    youtubeUrl: 'https://youtu.be/B0D2Rly51Cs',
   },
   {
     id: 'profane',
@@ -243,7 +243,7 @@ export const musicTypes: MusicType[] = [
     listeningFocus: "Écoute la langue ancienne, la prononciation et la présence éventuelle d'instruments.",
     audioUrl: '/moyen-age/ChantProfaneMultEstesGuariz.mp3',
     audioTitle: 'Mult estes guariz',
-    youtubeUrl: 'https://youtu.be/rbjFZuHA008?si=Y3KkT6u6ZLw6ll6J',
+    youtubeUrl: 'https://youtu.be/rbjFZuHA008',
   },
   {
     id: 'traditionnel',
@@ -263,7 +263,7 @@ export const musicTypes: MusicType[] = [
     listeningFocus: 'Repère le rythme de danse, les répétitions et les moments où le groupe reprend le chant en chœur.',
     audioUrl: '/moyen-age/ChantTraditionneljaivuleloup.mp3',
     audioTitle: "J'ai vu le loup, le r'nard, le lièvre",
-    youtubeUrl: 'https://youtu.be/pJ9JmcYTE1g?si=HRLBTo7U6qIFTEfL',
+    youtubeUrl: 'https://youtu.be/pJ9JmcYTE1g',
   },
 ];
 
