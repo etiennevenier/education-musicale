@@ -455,4 +455,11 @@
 /* Paysage bas : on retombe à 24 px pour ne pas provoquer de défilement interne */
 @media (pointer: coarse) and (max-height: 480px) {
   :root { --tool-hit: 24px; }
+
+  /* Boutons d'action : ils gardent 44 px. La variable est posée sur l'élément lui-même,
+     car la règle ci-dessus (très spécifique) lit --tool-hit au niveau du bouton. */
+  .tool-root :is(.level-btn, .cn-level-btn, .on-level-btn, .oc-level-btn, .note-btn,
+                 .tap-btn, .btn, .tab, .hub-back) {
+    --tool-hit: 44px;
+  }
 }

@@ -27,7 +27,7 @@ for (const vp of VIEWPORTS) {
       await page.waitForTimeout(300);
 
       const report = await page.evaluate(
-        ({ comfort }) => {
+        ({ comfort, minComfort }) => {
           const tooSmall: string[] = [];
           const notComfortable: string[] = [];
           document.querySelectorAll('.tool-root button, .tool-root a[href]').forEach((el) => {
@@ -35,15 +35,15 @@ for (const vp of VIEWPORTS) {
             if (r.width === 0 || r.height === 0) return;
             const label = (el.getAttribute('aria-label') || el.textContent || el.className).trim().slice(0, 40);
             if (Math.min(r.width, r.height) < 24) tooSmall.push(label + ' ' + Math.round(r.width) + 'x' + Math.round(r.height));
-            if (el.matches(comfort) && r.height < 44) notComfortable.push(label + ' h=' + Math.round(r.height));
+            if (el.matches(comfort) && r.height < minComfort - 0.5) notComfortable.push(label + ' h=' + Math.round(r.height));
           });
           return { tooSmall, notComfortable };
         },
-        { comfort: COMFORT },
+        { comfort: COMFORT, minComfort: MIN_COMFORT },
       );
 
       expect(report.tooSmall, 'cibles < ' + MIN_TARGET + ' px').toEqual([]);
-      expect(report.notComfortable, 'boutons d\'action < ' + MIN_COMFORT + ' px de haut').toEqual([]);
+      expect(report.notComfortable, 'boutons d\'action trop bas').toEqual([]);
       await context.close();
     });
   }

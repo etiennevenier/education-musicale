@@ -165,11 +165,16 @@ body.mobile-header-hidden main.container {
 
 /* ---- Cibles tactiles : un seul plancher pour tous les boutons de réponse ---- */
 @media (pointer: coarse) {
-  .tool-root :where(
+  .tool-root :is(
     .note-btn, .cn-answer-btn, .on-answer-btn, .on-audio-btn, .oc-audio-btn,
     .level-btn, .cn-level-btn, .on-level-btn, .oc-level-btn,
     .tab, .btn, .tap-btn, .hub-back, .piano-zoom-btn
   ) { min-block-size: var(--tool-hit); }
+}
+
+/* Le bouton de retour garde 44 px même en paysage bas (où --tool-hit retombe à 24 px). */
+@media (pointer: coarse) {
+  .tool-root .hub-back { min-block-size: 44px; }
 }
 
 /* ---- Utilitaires partagés ---- */

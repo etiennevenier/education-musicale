@@ -662,6 +662,8 @@ import { relativeUrl } from '../../utils/navigation';
             if (k.type === 'white') {
                 const isC = k.note.startsWith('Do');
                 keyDiv.textContent = isC ? k.note : k.note.replace(/[0-9]/g, '');   // les Do portent leur octave
+                // WCAG 2.5.3 : le nom accessible doit contenir le texte visible tel quel (« Do4 », pas « Do 4 »).
+                if (isC) keyDiv.setAttribute('aria-label', k.note);
                 if (isC) keyDiv.classList.add('c-key');
                 if (k.midi === 60) middleCKey = keyDiv;
                 whiteCount++;
