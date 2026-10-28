@@ -6,8 +6,10 @@
  * on garde les dates de secours de src/data/calendrierScolaire.ts. La
  * publication ne peut donc jamais échouer à cause de ce service.
  */
-import { FALLBACK_CALENDARS } from '../data/calendrierScolaire';
-import { isPlausibleCalendar, type SchoolCalendars } from './sequenceCalendar';
+// Extensions « .ts » explicites : ce fichier est aussi lu directement par Node
+// (scripts/update-calendar.mjs, mise à jour mensuelle des dates de secours).
+import { FALLBACK_CALENDARS } from '../data/calendrierScolaire.ts';
+import { isPlausibleCalendar, type SchoolCalendars } from './sequenceCalendar.ts';
 
 const API =
   'https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/fr-en-calendrier-scolaire/records';
@@ -87,6 +89,30 @@ async function fetchOfficial(): Promise<SchoolCalendars> {
   return parseOfficialRecords(json.results ?? []);
 }
 
+/**
+ * Dates officielles vérifiées : plausibles et, pour une année déjà connue,
+ * à 7 jours au plus des dates de secours (sinon jugées suspectes et ignorées).
+ * Objet vide si le service du ministère ne répond pas.
+ */
+export async function readOfficialCalendars(): Promise<SchoolCalendars> {
+  let official: SchoolCalendars = {};
+  try {
+    official = await fetchOfficial();
+  } catch (error) {
+    console.warn(`[calendrier] service du ministère indisponible (${String(error)}) : dates de secours.`);
+  }
+  for (const [yearText, starts] of Object.entries(official)) {
+    const known = FALLBACK_CALENDARS[Number(yearText)];
+    if (!known) continue;
+    const days = (a: string, b: string) => Math.abs(Date.parse(a) - Date.parse(b)) / 86400000;
+    if (starts.some((d, i) => days(d, known[i]) > 7)) {
+      console.warn(`[calendrier] dates officielles ${yearText} incohérentes, dates de secours gardées.`);
+      delete official[Number(yearText)];
+    }
+  }
+  return official;
+}
+
 let cache: Promise<SchoolCalendars> | undefined;
 
 /**
@@ -95,23 +121,7 @@ let cache: Promise<SchoolCalendars> | undefined;
  */
 export function loadSchoolCalendars(): Promise<SchoolCalendars> {
   cache ??= (async () => {
-    let official: SchoolCalendars = {};
-    try {
-      official = await fetchOfficial();
-    } catch (error) {
-      console.warn(`[calendrier] service du ministère indisponible (${String(error)}) : dates de secours.`);
-    }
-    // Garde-fou : pour une année déjà connue, une date officielle trop éloignée
-    // (plus de 7 jours) de la date de secours est jugée suspecte et ignorée.
-    for (const [yearText, starts] of Object.entries(official)) {
-      const known = FALLBACK_CALENDARS[Number(yearText)];
-      if (!known) continue;
-      const days = (a: string, b: string) => Math.abs(Date.parse(a) - Date.parse(b)) / 86400000;
-      if (starts.some((d, i) => days(d, known[i]) > 7)) {
-        console.warn(`[calendrier] dates officielles ${yearText} incohérentes, dates de secours gardées.`);
-        delete official[Number(yearText)];
-      }
-    }
+    const official = await readOfficialCalendars();
     const merged: SchoolCalendars = { ...FALLBACK_CALENDARS, ...official };
     const years = Object.keys(official);
     const summary = years.length

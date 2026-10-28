@@ -1,0 +1,50 @@
+name: Mise à jour du calendrier scolaire
+
+# Une fois par mois, ajoute les dates de vacances que le ministère vient de
+# publier (zone A, académie de Lyon) dans src/data/calendrierScolaire.ts.
+# S'il y a du nouveau, un commit est poussé sur master : Cloudflare republie
+# alors le site tout seul. Sinon, rien ne se passe.
+on:
+  schedule:
+    - cron: '43 5 2 * *' # le 2 de chaque mois, vers 6 h 45 (heure de Paris)
+  workflow_dispatch: # bouton « Run workflow » pour la lancer à la main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: calendar
+  cancel-in-progress: false
+
+jobs:
+  calendar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Lire le calendrier officiel
+        id: update
+        run: node scripts/update-calendar.mjs
+
+      - name: Vérifier les nouvelles dates
+        if: steps.update.outputs.changed == 'true'
+        run: |
+          npm ci
+          npx vitest run tests/sequenceCalendar.test.ts
+
+      - name: Enregistrer et publier
+        if: steps.update.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/calendrierScolaire.ts
+          git commit -m "Calendrier scolaire : nouvelles dates officielles"
+          git push
