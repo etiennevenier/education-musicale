@@ -123,7 +123,7 @@ test.describe('Dessiner les clefs — tracé, modèle et onglets', () => {
     // Tracé complet : il descend plus bas et couvre plus haut que la moitié.
     expect(full.y).toBeLessThan(half.y);
     expect(full.h).toBeGreaterThan(half.h);
-    await expect(page.locator('#cl-caption')).toHaveClass(/final/);
+    
   });
 
   test('les onglets Clef de Sol / Clef de Fa remettent la progression à zéro', async ({ page }) => {

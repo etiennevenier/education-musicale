@@ -150,7 +150,7 @@
 
       if (consecutiveValidMs >= REQUIRED_STABILITY_MS) {
         isSuccess = true;
-        feedbackMsg.textContent = `🎯 Bravo ! Tu as maintenu le tempo ${target.term} pendant 8 secondes !`;
+        feedbackMsg.textContent = `🎯 Tempo ${target.term} tenu pendant 8 secondes !`;
         feedbackMsg.className = 'feedback-msg success';
         nextBtn.style.display = 'inline-block';
       } else {

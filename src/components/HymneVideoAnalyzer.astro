@@ -269,11 +269,11 @@ import '../styles/quiz-card.css';
 
     if (isCorrect) {
       score++;
-      quizFeedback.textContent = `✨ Bravo ! ${currentVideo.explanation}`;
+      quizFeedback.textContent = currentVideo.explanation;
       quizFeedback.className = 'feedback-msg success';
       autoNextTimer = scheduleAutoNext(goToNext, quizFeedback.textContent ?? '');
     } else {
-      quizFeedback.textContent = `❌ Dommage ! ${currentVideo.explanation}`;
+      quizFeedback.textContent = currentVideo.explanation;
       quizFeedback.className = 'feedback-msg error';
     }
 

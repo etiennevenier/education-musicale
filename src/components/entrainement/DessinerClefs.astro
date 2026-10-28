@@ -39,14 +39,10 @@ import { relativeUrl } from '../../utils/navigation';
 
     <div class="slider-row">
         <input type="range" id="cl-slider" class="slider" min="0" max="100" step="1" value="0"
-               aria-label="Progression du tracé de la clef" aria-describedby="cl-caption">
+               aria-label="Progression du tracé de la clef">
         <output id="cl-pct" class="pct" for="cl-slider">0 %</output>
     </div>
 
-    <section class="caption" id="cl-caption" aria-live="polite">
-        <h2 id="cl-stepTitle"></h2>
-        <p id="cl-stepText"></p>
-    </section>
   </div>
 </div>
 
@@ -236,29 +232,8 @@ import { relativeUrl } from '../../utils/navigation';
 #tool-clefs .line-no { font-size: 13px; fill: #64748b; text-anchor: middle; }
 #tool-clefs .line-no.target { fill: var(--pen); font-weight: 800; }
 #tool-clefs .note-name { font-size: 18px; font-weight: 800; fill: var(--ink); }
-#tool-clefs .caption {
-        background: var(--blue-soft);
-        border: 2px solid var(--accent-border);
-        border-left: 8px solid var(--blue);
-        border-radius: 14px;
-        padding: 16px 20px 18px;
-        min-height: 128px;
-    }
-#tool-clefs .caption.final { border-left-color: var(--done); }
-#tool-clefs .caption h2 {
-        margin: 0 0 6px;
-        font-size: 20px;
-        font-weight: 800;
-    }
-#tool-clefs .caption p {
-        margin: 0;
-        font-size: 18px;
-        line-height: 1.5;
-        max-width: 62ch;
-    }
 #tool-clefs :focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 @media (max-width: 560px) {
-#tool-clefs .caption p { font-size: 17px; }
 }
 @media (prefers-reduced-motion: reduce) {
 #tool-clefs .dot.pop { animation: none; }
@@ -272,7 +247,6 @@ import { relativeUrl } from '../../utils/navigation';
         #tool-clefs .slider { touch-action: pan-y; }
         @media (max-width: 560px) {
             #tool-clefs .top { gap: 10px; }
-            #tool-clefs .caption { padding: 12px 14px 14px; min-height: 112px; }
             #tool-clefs .line-no { font-size: 16px; }
             #tool-clefs .note-name { font-size: 21px; }
         }
@@ -296,16 +270,6 @@ import { relativeUrl } from '../../utils/navigation';
             }
             #tool-clefs .tabs { width: auto; flex: 1 1 auto; min-width: 0; }
         }
-        /* ------------------------------------------------------------------
-           Smartphone (portrait et paysage) : les blocs de texte explicatifs
-           (étapes de cours, descriptions, commentaires) sont totalement
-           masqués. Ne restent à l'écran que le sélecteur de clef, la portée,
-           le curseur et les boutons d'action.
-        ------------------------------------------------------------------ */
-        @media (max-width: 640px), (max-width: 900px) and (orientation: landscape), (max-height: 500px) {
-            #tool-clefs .caption { display: none !important; }
-        }
-
         /* ------------------------------------------------------------------
            Portrait sur téléphone : l'outil occupe toute la hauteur visible et
            son contenu (sélecteur, portée, curseur) est centré verticalement.
@@ -358,8 +322,8 @@ import { relativeUrl } from '../../utils/navigation';
         }
 
         /* ----- Tablette en paysage : tout tient sur 100dvh, sans scroll vertical -----
-           Titre masqué, retour en tête, portée plafonnée à 60dvh. Le slider et
-           le bloc explicatif restent visibles et compacts. */
+           Titre masqué, retour en tête, portée plafonnée à 60dvh. Le slider
+           reste visible et compact. */
         @media (min-width: 768px) and (max-height: 768px) and (orientation: landscape) {
             html:has(#tool-clefs),
             body:has(#tool-clefs) {
@@ -410,27 +374,8 @@ import { relativeUrl } from '../../utils/navigation';
 
             #tool-clefs .pct { font-size: 15px; }
 
-            /* Prioritaire sur la règle mobile qui masque le bloc explicatif. */
-            #tool-clefs .caption {
-                display: block !important;
-                flex: 0 0 auto;
-                min-height: 0;
-                padding: 10px 14px;
-                border-left-width: 6px;
-                border-radius: 12px;
-            }
 
-            #tool-clefs .caption h2 {
-                margin-bottom: 3px;
-                font-size: 17px;
-                line-height: 1.2;
-            }
 
-            #tool-clefs .caption p {
-                font-size: 15px;
-                line-height: 1.35;
-                max-width: none;
-            }
         }
 
 /* Planche à ratio fixe dans la zone élastique (.tool-fit). Le shell étire les SVG à
@@ -458,7 +403,7 @@ import { relativeUrl } from '../../utils/navigation';
     type DotItem = { t: 'dot'; cx: number; cy: number; r: number };
     type PathItem = { t: 'path'; d: string };
     type StepItem = DotItem | PathItem;
-    type Step = { title: string; text: string; items: StepItem[]; final?: boolean };
+    type Step = { items: StepItem[] };
     type ClefData = { note: string; ligne: number; ligneY: number; steps: Step[] };
     type ClefKey = 'sol' | 'fa';
     type SvgAttrs = Record<string, string | number>;
@@ -539,55 +484,27 @@ import { relativeUrl } from '../../utils/navigation';
         sol: {
             note: 'SOL', ligne: 2, ligneY: 192,
             steps: [
-                { title: 'Le point de départ',
-                  text: "La clef de Sol indique où se trouve la note SOL : sur la deuxième ligne de la portée, en comptant depuis le bas. On commence donc par dessiner un point sur cette ligne.",
-                  items: [ { t: 'dot', cx: 170, cy: 192, r: 7 } ] },
-                { title: 'Le tour du point',
-                  text: "On dessine un trait qui fait le tour du point dans le sens des aiguilles d'une montre.",
-                  items: [ { t: 'path', d: 'M170 192 C172 164 204 160 204 194' } ] },
-                { title: 'On continue autour du point',
-                  text: "On continue le trait autour du point central, en redescendant jusqu'à la dernière ligne.",
-                  items: [ { t: 'path', d: 'M204 194 C204 208 196 218 180 217' } ] },
-                { title: 'La spirale se ferme',
-                  text: "Encore un peu plus : on repart vers la gauche, puis on remonte sur le côté pour fermer la spirale.",
-                  items: [ { t: 'path', d: 'M180 217 C160 216 138 206 138 186' } ] },
-                { title: 'On monte au-dessus de la portée',
-                  text: "On prolonge le trait vers le haut, en diagonale, jusqu'au-dessus de la portée.",
-                  items: [ { t: 'path', d: 'M138 186 C136 152 166 130 204 106' } ] },
-                { title: 'La boucle du haut',
-                  text: "Notre clef de Sol est à moitié dessinée ! On arrondit le trait pour faire une jolie boucle qui dépasse bien en hauteur la portée, puis on revient vers la gauche.",
-                  items: [ { t: 'path', d: 'M204 106 C213 100 213 80 197 80' },
+                { items: [ { t: 'dot', cx: 170, cy: 192, r: 7 } ] },
+                { items: [ { t: 'path', d: 'M170 192 C172 164 204 160 204 194' } ] },
+                { items: [ { t: 'path', d: 'M204 194 C204 208 196 218 180 217' } ] },
+                { items: [ { t: 'path', d: 'M180 217 C160 216 138 206 138 186' } ] },
+                { items: [ { t: 'path', d: 'M138 186 C136 152 166 130 204 106' } ] },
+                { items: [ { t: 'path', d: 'M204 106 C213 100 213 80 197 80' },
                            { t: 'path', d: 'M197 80 C184 80 175 94 175 118' } ] },
-                { title: 'Le long trait vers le bas',
-                  text: "On redescend avec un long trait presque droit. Il traverse toute la portée, passe par le point, et dépasse sous la dernière ligne.",
-                  items: [ { t: 'path', d: 'M175 118 C175 155 172 200 170 234' } ] },
-                { title: 'La petite queue',
-                  text: "Pour finir, on arrondit le bas du trait vers la gauche et on termine par un petit rond. Bravo, ta clef de Sol est terminée !",
-                  items: [ { t: 'path', d: 'M170 234 C168 262 144 264 142 246' },
-                           { t: 'dot', cx: 142, cy: 246, r: 5.5 } ],
-                  final: true }
+                { items: [ { t: 'path', d: 'M175 118 C175 155 172 200 170 234' } ] },
+                { items: [ { t: 'path', d: 'M170 234 C168 262 144 264 142 246' },
+                           { t: 'dot', cx: 142, cy: 246, r: 5.5 } ] }
             ]
         },
         fa: {
             note: 'FA', ligne: 4, ligneY: 144,
             steps: [
-                { title: 'Le point de départ',
-                  text: "La clef de Fa indique où se trouve la note FA : sur la quatrième ligne de la portée, en comptant depuis le bas. On commence par dessiner un gros point sur cette ligne.",
-                  items: [ { t: 'dot', cx: 150, cy: 144, r: 8 } ] },
-                { title: 'On monte en arrondi',
-                  text: "Depuis le point, on trace un trait qui monte en arrondi jusqu'à la ligne du haut, puis qui redescend vers la droite.",
-                  items: [ { t: 'path', d: 'M150 144 C152 118 200 112 214 142' } ] },
-                { title: 'On redescend de l\'autre côté',
-                  text: "On continue la courbe en redescendant, du côté droit, en traversant la portée.",
-                  items: [ { t: 'path', d: 'M214 142 C221 157 217.5 173 205 187.25' } ] },
-                { title: 'La queue vers la gauche',
-                  text: "On termine le trait en l'incurvant vers la gauche, jusqu'en bas de la portée.",
-                  items: [ { t: 'path', d: 'M205 187.25 C192.5 201.5 171 214 142 222' } ] },
-                { title: 'Les deux points',
-                  text: "On ajoute deux points à droite de la clef, de chaque côté de la quatrième ligne : un dans l'espace au-dessus, un dans l'espace en dessous. Bravo, ta clef de Fa est terminée !",
-                  items: [ { t: 'dot', cx: 236, cy: 132, r: 5 },
-                           { t: 'dot', cx: 236, cy: 156, r: 5 } ],
-                  final: true }
+                { items: [ { t: 'dot', cx: 150, cy: 144, r: 8 } ] },
+                { items: [ { t: 'path', d: 'M150 144 C152 118 200 112 214 142' } ] },
+                { items: [ { t: 'path', d: 'M214 142 C221 157 217.5 173 205 187.25' } ] },
+                { items: [ { t: 'path', d: 'M205 187.25 C192.5 201.5 171 214 142 222' } ] },
+                { items: [ { t: 'dot', cx: 236, cy: 132, r: 5 },
+                           { t: 'dot', cx: 236, cy: 156, r: 5 } ] }
             ]
         }
     };
@@ -603,9 +520,6 @@ import { relativeUrl } from '../../utils/navigation';
     const ghostG = mustGroup('#cl-ghostG');
     const drawG = mustGroup('#cl-drawG');
     const board = mustSvg('#cl-board');
-    const captionEl = mustElement('#cl-caption');
-    const stepTitleEl = mustElement('#cl-stepTitle');
-    const stepTextEl = mustElement('#cl-stepText');
     const slider = mustInput('#cl-slider');
     const pctEl = mustElement('#cl-pct');
     let ghostVisible = false;
@@ -785,10 +699,6 @@ import { relativeUrl } from '../../utils/navigation';
             sg.shown = shown;
         }
 
-        const s = steps[active];
-        stepTitleEl.textContent = 'Étape ' + (active + 1) + ' sur ' + steps.length + ' : ' + s.title;
-        stepTextEl.textContent = s.text;
-        captionEl.classList.toggle('final', !!s.final);
     }
 
     /** Change de clef et remet la progression à zéro. */
