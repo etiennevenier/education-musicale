@@ -4,7 +4,7 @@ import { siteData } from '../data/sequences';
 import { relativeUrl } from '../utils/navigation';
 ---
 
-<Layout title="Sommaire Admin - Toutes les pages">
+<Layout title="Sommaire Admin - Toutes les pages" noindex>
   <div class="admin-page">
     <h2>Sommaire technique du site</h2>
     <p class="subtitle">Page réservée au professeur pour tester toutes les URLs en un clic.</p>
@@ -14,13 +14,13 @@ import { relativeUrl } from '../utils/navigation';
         <section class="level-box">
           <h3>{level.title}</h3>
           <p class="level-url">
-            <a href={relativeUrl(`/${level.slug}`)} target="_blank">📄 Page d'accueil du niveau (/{level.slug})</a>
+            <a href={relativeUrl(`/${level.slug}`)} target="_blank" rel="noopener noreferrer">📄 Page d'accueil du niveau (/{level.slug})</a>
           </p>
           <ul>
             {level.sequences.map((seq, idx) => (
               <li>
                 <span class="num">S{idx + 1}</span>
-                <a href={relativeUrl(`/${level.slug}/${seq.slug}`)} target="_blank">
+                <a href={relativeUrl(`/${level.slug}/${seq.slug}`)} target="_blank" rel="noopener noreferrer">
                   {seq.title}
                 </a>
               </li>
@@ -32,50 +32,50 @@ import { relativeUrl } from '../utils/navigation';
       <section class="level-box training-box">
         <h3>Entraînement</h3>
         <p class="level-url">
-          <a href={relativeUrl('/entrainement')} target="_blank">
+          <a href={relativeUrl('/entrainement')} target="_blank" rel="noopener noreferrer">
             📄 Hub d'entraînement (/entrainement)
           </a>
         </p>
         <ul>
           <li>
             <span class="num">🎼</span>
-            <a href={relativeUrl('/entrainement/lecture-notes')} target="_blank">
+            <a href={relativeUrl('/entrainement/lecture-notes')} target="_blank" rel="noopener noreferrer">
               Lecture de Notes
             </a>
           </li>
           <li>
             <span class="num">🥁</span>
-            <a href={relativeUrl('/entrainement/lecture-rythmique')} target="_blank">
+            <a href={relativeUrl('/entrainement/lecture-rythmique')} target="_blank" rel="noopener noreferrer">
               Lecture Rythmique
             </a>
           </li>
           <li>
             <span class="num">🎹</span>
-            <a href={relativeUrl('/entrainement/piano-interactif')} target="_blank">
+            <a href={relativeUrl('/entrainement/piano-interactif')} target="_blank" rel="noopener noreferrer">
               Piano Interactif
             </a>
           </li>
           <li>
             <span class="num">✒️</span>
-            <a href={relativeUrl('/entrainement/dessiner-clefs')} target="_blank">
+            <a href={relativeUrl('/entrainement/dessiner-clefs')} target="_blank" rel="noopener noreferrer">
               Dessiner les Clefs
             </a>
           </li>
           <li>
             <span class="num">🔴</span>
-            <a href={relativeUrl('/entrainement/clavier-notes')} target="_blank">
+            <a href={relativeUrl('/entrainement/clavier-notes')} target="_blank" rel="noopener noreferrer">
               Identification Clavier
             </a>
           </li>
           <li>
             <span class="num">👂</span>
-            <a href={relativeUrl('/entrainement/oreille-nom')} target="_blank">
+            <a href={relativeUrl('/entrainement/oreille-nom')} target="_blank" rel="noopener noreferrer">
               Oreille — Noms
             </a>
           </li>
           <li>
             <span class="num">🔔</span>
-            <a href={relativeUrl('/entrainement/oreille-clavier')} target="_blank">
+            <a href={relativeUrl('/entrainement/oreille-clavier')} target="_blank" rel="noopener noreferrer">
               Oreille — Clavier
             </a>
           </li>
