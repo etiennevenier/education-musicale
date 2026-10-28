@@ -324,6 +324,20 @@ export function initBruitomatic(root: HTMLElement): void {
       );
     };
 
+    // Repli / dépli d'une famille de sons (remplace l'ancien <details>).
+    const setGroupOpen = (group: Element | null, open: boolean) => {
+      const toggle = group?.querySelector<HTMLButtonElement>('[data-group-toggle]');
+      const rows = group?.querySelector<HTMLElement>('.seq-rows');
+      if (!toggle || !rows) return;
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      rows.hidden = !open;
+    };
+    root.querySelectorAll<HTMLButtonElement>('[data-group-toggle]').forEach((toggle) => {
+      toggle.addEventListener('click', () => {
+        setGroupOpen(toggle.closest('.seq-group'), toggle.getAttribute('aria-expanded') !== 'true');
+      });
+    });
+
     groupMuteButtons.forEach((button) => {
       button.addEventListener('click', (event) => {
         event.preventDefault();
@@ -885,8 +899,7 @@ export function initBruitomatic(root: HTMLElement): void {
         `.seq-cell[data-row="${row}"][data-step="${step}"]`,
       );
       if (!target) return;
-      const group = target.closest('details');
-      if (group) group.open = true;
+      setGroupOpen(target.closest('.seq-group'), true);
       cells.forEach((cell) => {
         cell.tabIndex = -1;
       });
@@ -947,9 +960,7 @@ export function initBruitomatic(root: HTMLElement): void {
       root.querySelectorAll<HTMLInputElement>('[data-volume]').forEach((input) => {
         input.value = '80';
       });
-      root.querySelectorAll<HTMLDetailsElement>('details').forEach((details) => {
-        details.open = true;
-      });
+      root.querySelectorAll('.seq-group').forEach((group) => setGroupOpen(group, true));
 
       applyVolumes();
       applyPresetById('groove');

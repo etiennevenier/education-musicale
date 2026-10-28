@@ -232,7 +232,7 @@ const timelineSteps = [
                 <h3 id="slide-title">{timelineSteps[0].title}</h3>
               </header>
 
-              <div class="card-body-scroll">
+              <div class="card-body-scroll" tabindex="0" role="region" aria-labelledby="slide-title">
                 <ul class="points-list" id="slide-points">
                   {timelineSteps[0].points.map((pt) => (
                     <li class="point-item" set:html={pt}></li>
@@ -316,7 +316,7 @@ const timelineSteps = [
                 <div class="track-label">🥁 Kick (Grosse Caisse)</div>
                 <div class="steps-container">
                   {Array.from({ length: 16 }).map((_, i) => (
-                    <button type="button" class={`step-btn ${i === 0 || i === 10 ? 'active' : ''}`} data-step={i}></button>
+                    <button type="button" class={`step-btn ${i === 0 || i === 10 ? 'active' : ''}`} data-step={i} aria-label={`Grosse caisse, temps ${i + 1}`} aria-pressed={i === 0 || i === 10 ? 'true' : 'false'}></button>
                   ))}
                 </div>
               </div>
@@ -326,7 +326,7 @@ const timelineSteps = [
                 <div class="track-label">💥 Snare (Caisse Claire)</div>
                 <div class="steps-container">
                   {Array.from({ length: 16 }).map((_, i) => (
-                    <button type="button" class={`step-btn ${i === 4 || i === 12 ? 'active' : ''}`} data-step={i}></button>
+                    <button type="button" class={`step-btn ${i === 4 || i === 12 ? 'active' : ''}`} data-step={i} aria-label={`Caisse claire, temps ${i + 1}`} aria-pressed={i === 4 || i === 12 ? 'true' : 'false'}></button>
                   ))}
                 </div>
               </div>
@@ -336,7 +336,7 @@ const timelineSteps = [
                 <div class="track-label">🎩 Hi-Hat (Charleston)</div>
                 <div class="steps-container">
                   {Array.from({ length: 16 }).map((_, i) => (
-                    <button type="button" class={`step-btn ${i % 2 === 0 ? 'active' : ''}`} data-step={i}></button>
+                    <button type="button" class={`step-btn ${i % 2 === 0 ? 'active' : ''}`} data-step={i} aria-label={`Charleston, temps ${i + 1}`} aria-pressed={i % 2 === 0 ? 'true' : 'false'}></button>
                   ))}
                 </div>
               </div>
@@ -346,7 +346,7 @@ const timelineSteps = [
                 <div class="track-label">✨ Open Hat (Ouvert)</div>
                 <div class="steps-container">
                   {Array.from({ length: 16 }).map((_, i) => (
-                    <button type="button" class={`step-btn ${i === 14 ? 'active' : ''}`} data-step={i}></button>
+                    <button type="button" class={`step-btn ${i === 14 ? 'active' : ''}`} data-step={i} aria-label={`Charleston ouvert, temps ${i + 1}`} aria-pressed={i === 14 ? 'true' : 'false'}></button>
                   ))}
                 </div>
               </div>
@@ -452,6 +452,7 @@ const timelineSteps = [
         const step = timelineSteps[i];
         if (!step) return;
         if (periodEl) periodEl.textContent = step.period;
+        rangeInput.setAttribute('aria-valuetext', `${step.period} : ${step.title}`);
         if (counterEl) counterEl.textContent = `Étape ${i + 1} sur ${timelineSteps.length}`;
         if (tagEl) tagEl.textContent = step.badge;
         if (titleEl) titleEl.textContent = step.title;
@@ -485,6 +486,19 @@ const timelineSteps = [
   let currentSeqStep = 0;
   let bpm = 90;
   let seqIntervalId: number | null = null;
+  // Horloge du séquenceur : un minuteur court (25 ms) programme les sons un peu
+  // à l'avance sur l'horloge audio, au temps exact : le beat ne « boite » plus
+  // quand le téléphone est occupé (setInterval seul peut dériver de plusieurs ms).
+  const LOOKAHEAD_MS = 25;
+  const SCHEDULE_AHEAD_S = 0.1;
+  let nextStepTime = 0;
+  const visualTimers = new Set<number>();
+
+  /** Allume/éteint une case et l'annonce aux lecteurs d'écran (aria-pressed). */
+  const setStepActive = (btn: HTMLElement, on: boolean) => {
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  };
 
   const userMemories: (GridConfig | null)[] = [null, null, null, null];
 
@@ -504,10 +518,10 @@ const timelineSteps = [
     if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
   };
 
-  const playSound = (type: string) => {
+  const playSound = (type: string, when?: number) => {
     if (!audioCtx) return;
     const bus = getMasterBus() ?? audioCtx.destination;
-    const now = audioCtx.currentTime;
+    const now = when ?? audioCtx.currentTime;
 
     if (type === 'kick') {
       const osc = audioCtx.createOscillator();
@@ -585,11 +599,7 @@ const timelineSteps = [
     rows.forEach((row, rIdx) => {
       const buttons = row.querySelectorAll<HTMLElement>('.step-btn');
       buttons.forEach((btn, sIdx) => {
-        if (config[rIdx] && config[rIdx][sIdx]) {
-          btn.classList.add('active');
-        } else {
-          btn.classList.remove('active');
-        }
+        setStepActive(btn, Boolean(config[rIdx] && config[rIdx][sIdx]));
       });
     });
   };
@@ -680,31 +690,41 @@ const timelineSteps = [
       rows.forEach((row) => {
         const buttons = row.querySelectorAll('.step-btn');
         buttons.forEach((btn) => {
-          if (Math.random() < 0.25) {
-            btn.classList.add('active');
-          } else {
-            btn.classList.remove('active');
-          }
+          setStepActive(btn as HTMLElement, Math.random() < 0.25);
         });
       });
     });
   }
 
-  const stepTick = () => {
-    document.querySelectorAll<HTMLElement>('.step-btn').forEach((btn) => btn.classList.remove('playing'));
-    document.querySelectorAll<HTMLElement>(`.step-btn[data-step="${currentSeqStep}"]`).forEach((btn) => {
-      btn.classList.add('playing');
-      if (btn.classList.contains('active')) {
-        const trackType = (btn.closest('.seq-row') as HTMLElement | null)?.dataset.track;
-        if (trackType) playSound(trackType);
-      }
+  /** Programme les sons d'un pas au temps `when` et allume la colonne à ce moment-là. */
+  const scheduleStep = (step: number, when: number) => {
+    document.querySelectorAll<HTMLElement>(`.step-btn[data-step="${step}"]`).forEach((btn) => {
+      if (!btn.classList.contains('active')) return;
+      const trackType = (btn.closest('.seq-row') as HTMLElement | null)?.dataset.track;
+      if (trackType) playSound(trackType, when);
     });
+    const delay = Math.max(0, (when - (audioCtx?.currentTime ?? when)) * 1000);
+    const timer = window.setTimeout(() => {
+      visualTimers.delete(timer);
+      if (!isPlayingSeq) return;
+      document.querySelectorAll<HTMLElement>('.step-btn.playing').forEach((btn) => btn.classList.remove('playing'));
+      document.querySelectorAll<HTMLElement>(`.step-btn[data-step="${step}"]`).forEach((btn) => btn.classList.add('playing'));
+    }, delay);
+    visualTimers.add(timer);
+  };
 
-    currentSeqStep = (currentSeqStep + 1) % 16;
+  const scheduler = () => {
+    if (!audioCtx) return;
+    while (nextStepTime < audioCtx.currentTime + SCHEDULE_AHEAD_S) {
+      scheduleStep(currentSeqStep, nextStepTime);
+      nextStepTime += 60 / bpm / 4; // une double croche ; lit le tempo en direct
+      currentSeqStep = (currentSeqStep + 1) % 16;
+    }
   };
 
   const startSequencer = () => {
     initAudio();
+    if (!audioCtx) return; // navigateur sans Web Audio : rien à jouer
     isPlayingSeq = true;
     if (playBtn) {
       const icon = playBtn.querySelector<HTMLElement>('.icon');
@@ -713,13 +733,17 @@ const timelineSteps = [
       if (label) label.textContent = 'Stopper';
       playBtn.classList.add('playing');
     }
-    const intervalMs = (60 / bpm / 4) * 1000;
-    seqIntervalId = window.setInterval(stepTick, intervalMs);
+    nextStepTime = audioCtx.currentTime + 0.05;
+    scheduler();
+    seqIntervalId = window.setInterval(scheduler, LOOKAHEAD_MS);
   };
 
   const stopSequencer = () => {
     isPlayingSeq = false;
     if (seqIntervalId !== null) window.clearInterval(seqIntervalId);
+    seqIntervalId = null;
+    visualTimers.forEach((timer) => window.clearTimeout(timer));
+    visualTimers.clear();
     if (playBtn) {
       const icon = playBtn.querySelector<HTMLElement>('.icon');
       const label = playBtn.querySelector<HTMLElement>('.label');
@@ -734,7 +758,7 @@ const timelineSteps = [
   stepBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
       initAudio();
-      btn.classList.toggle('active');
+      setStepActive(btn, !btn.classList.contains('active'));
       if (btn.classList.contains('active')) {
         const trackType = (btn.closest('.seq-row') as HTMLElement | null)?.dataset.track;
         if (trackType) playSound(trackType);
@@ -753,17 +777,13 @@ const timelineSteps = [
     bpmSlider.addEventListener('input', (e: Event) => {
       bpm = parseInt((e.target as HTMLInputElement).value, 10);
       bpmVal.textContent = bpm.toString();
-      if (isPlayingSeq) {
-        if (seqIntervalId !== null) window.clearInterval(seqIntervalId);
-        const intervalMs = (60 / bpm / 4) * 1000;
-        seqIntervalId = window.setInterval(stepTick, intervalMs);
-      }
+      // Le séquenceur lit `bpm` à chaque pas : rien à relancer.
     });
   }
 
   if (clearBtn) {
     clearBtn.addEventListener('click', () => {
-      stepBtns.forEach((btn) => btn.classList.remove('active'));
+      stepBtns.forEach((btn) => setStepActive(btn, false));
     });
   }
 
@@ -896,6 +916,11 @@ const timelineSteps = [
     border: 1px solid #334155;
   }
 
+  input[type="range"]#timeline-range:focus-visible {
+    outline: 3px solid #38bdf8;
+    outline-offset: 4px;
+  }
+
   .range-ticks { display: flex; justify-content: space-between; padding: 0 0.2rem; }
 
   .tick-mark {
@@ -941,6 +966,7 @@ const timelineSteps = [
 
   .card-top h3 { margin: 0; font-size: 1.15rem; color: #f8fafc; }
   .card-body-scroll { overflow-y: auto; max-height: 160px; }
+  .card-body-scroll:focus-visible { outline: 2px solid #38bdf8; outline-offset: 2px; border-radius: 6px; }
   .points-list { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.6rem; }
   .point-item { color: #cbd5e1; font-size: 0.9rem; line-height: 1.45; }
   .point-item :global(strong) { color: #38bdf8; }

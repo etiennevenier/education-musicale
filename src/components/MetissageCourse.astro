@@ -16,7 +16,8 @@ const countries: FeatureCollection<Geometry> = {
   features: allCountries.features.filter((country) => country.id !== '010'),
 };
 const projection = geoNaturalEarth1().fitExtent([[10, 10], [990, 490]], countries);
-const countriesPath = geoPath(projection)(countries) ?? '';
+// 1 décimale suffit (0,1 px sur une carte de 1000 px) : tracé 27 % plus léger (152 → 112 Ko).
+const countriesPath = geoPath(projection).digits(1)(countries) ?? '';
 
 interface MetissageVideo {
   badge: string;
@@ -514,6 +515,10 @@ const pairTwo = {
       const g = document.createElementNS(NS, 'g');
       g.setAttribute('class', `marker marker-${kind}`);
       g.setAttribute('tabindex', '0');
+      // Repère utilisable au clavier et annoncé par les lecteurs d'écran.
+      g.setAttribute('role', 'button');
+      g.setAttribute('aria-label', `${p.label} : ${p.artist} (${p.year})`);
+      g.setAttribute('aria-expanded', 'false');
       g.dataset.x = String(p.x);
       g.dataset.y = String(p.y);
 
@@ -603,13 +608,29 @@ const pairTwo = {
       popover.append(popBg, popTitle, popoverText);
       g.append(halo, dot, text, popover);
 
-      g.addEventListener('click', (e) => {
-        e.stopPropagation();
+      const toggle = () => {
         const wasActive = g.classList.contains('popover-open');
-        layer.querySelectorAll('.marker').forEach((m) => m.classList.remove('popover-open'));
+        layer.querySelectorAll('.marker').forEach((m) => {
+          m.classList.remove('popover-open');
+          m.setAttribute('aria-expanded', 'false');
+        });
         if (!wasActive) {
           g.classList.add('popover-open');
-          layer.appendChild(g); 
+          g.setAttribute('aria-expanded', 'true');
+          layer.appendChild(g);
+          g.focus({ preventScroll: true }); // appendChild retire le focus : on le rend
+        }
+      };
+      g.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggle();
+      });
+      g.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggle();
+        } else if (e.key === 'Escape' && g.classList.contains('popover-open')) {
+          toggle();
         }
       });
 
@@ -818,6 +839,16 @@ const pairTwo = {
   .map-container :global(.marker) {
     cursor: pointer;
     outline: none;
+  }
+
+  /* Repère sélectionné au clavier : halo blanc bien visible (WCAG 2.4.7). */
+  .map-container :global(.marker:focus-visible .marker-dot) {
+    stroke: #ffffff;
+    stroke-width: 4;
+  }
+  .map-container :global(.marker:focus-visible .marker-halo) {
+    stroke: #ffffff;
+    stroke-width: 2;
   }
 
   .map-container :global(.marker-halo) {

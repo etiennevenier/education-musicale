@@ -136,16 +136,23 @@ import { categories, presets, rowIndexById, steps, tracks } from '../data/bruito
       {categories.map((category) => {
         const categoryTracks = tracks.filter((track) => track.category === category.id);
         return (
-          <details class="seq-group" data-category={category.id} open>
-            <summary
-              class="seq-group-summary"
-              aria-label={`${category.label} : ${categoryTracks.length} piste${categoryTracks.length > 1 ? 's' : ''}`}
-            >
-              <span class="seq-group-icon" aria-hidden="true">{category.icon}</span>
-              <span>{category.label}</span>
-              <span class="seq-group-count">
-                {categoryTracks.length} piste{categoryTracks.length > 1 ? 's' : ''}
-              </span>
+          <div class="seq-group" data-category={category.id}>
+            {/* Deux boutons côte à côte (et non un bouton dans un <summary>) :
+                chacun est annoncé et utilisable seul au clavier. */}
+            <div class="seq-group-summary">
+              <button
+                type="button"
+                class="seq-group-toggle"
+                data-group-toggle
+                aria-expanded="true"
+                aria-controls={`seq-rows-${category.id}`}
+              >
+                <span class="seq-group-icon" aria-hidden="true">{category.icon}</span>
+                <span>{category.label}</span>
+                <span class="seq-group-count">
+                  {categoryTracks.length} piste{categoryTracks.length > 1 ? 's' : ''}
+                </span>
+              </button>
               <button
                 type="button"
                 class="seq-group-mute"
@@ -157,9 +164,9 @@ import { categories, presets, rowIndexById, steps, tracks } from '../data/bruito
               >
                 Muet
               </button>
-            </summary>
+            </div>
 
-            <div class="seq-rows">
+            <div class="seq-rows" id={`seq-rows-${category.id}`}>
               {categoryTracks.map((track) => {
                 const rowIndex = rowIndexById[track.id];
                 return (
@@ -234,7 +241,7 @@ import { categories, presets, rowIndexById, steps, tracks } from '../data/bruito
                 );
               })}
             </div>
-          </details>
+          </div>
         );
       })}
     </div>
@@ -677,7 +684,8 @@ import { categories, presets, rowIndexById, steps, tracks } from '../data/bruito
     padding-top: 0.35rem;
   }
 
-  .seq-group:first-of-type {
+  /* Premier groupe (juste après la règle des temps) : pas de séparateur. */
+  .seq-ruler + .seq-group {
     border-top: 0;
     margin-top: 0;
     padding-top: 0;
@@ -700,18 +708,39 @@ import { categories, presets, rowIndexById, steps, tracks } from '../data/bruito
     list-style: none;
   }
 
-  .seq-group-summary::-webkit-details-marker {
-    display: none;
+  .seq-group-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 24px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    cursor: pointer;
   }
 
-  .seq-group-summary::before {
+  .seq-group-toggle::before {
     content: '▸';
     color: #38bdf8;
     transition: transform 0.2s ease;
   }
 
-  .seq-group[open] > .seq-group-summary::before {
+  .seq-group-toggle[aria-expanded='true']::before {
     transform: rotate(90deg);
+  }
+
+  .seq-group-toggle:focus-visible {
+    outline: 2px solid #f8fafc;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  .seq-rows[hidden] {
+    display: none;
   }
 
   .seq-group-icon {
@@ -730,7 +759,7 @@ import { categories, presets, rowIndexById, steps, tracks } from '../data/bruito
     align-items: center;
     justify-content: center;
     min-width: 34px;
-    height: 20px;
+    min-height: 24px; /* cible tactile ≥ 24 px (WCAG 2.5.8) */
     margin-left: 0.1rem;
     padding: 0 0.45rem;
     border: 1px solid var(--bruitomatic-line);
