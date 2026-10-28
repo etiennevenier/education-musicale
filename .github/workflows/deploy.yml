@@ -24,6 +24,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Garde-fous : on ne publie pas un site qui ne passe pas les contrôles de qualité.
+      - name: Astro check
+        run: npx astro check
+
+      - name: Vitest
+        run: npm test
+
+      - name: Garde-fou !important
+        run: npm run check:important
+
       - name: Build site
         run: npm run build
 
